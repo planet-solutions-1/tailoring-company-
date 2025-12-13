@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,7 +10,9 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
     <style>
         :root {
             --ink-black: #1c1917;
@@ -18,14 +21,18 @@
             --gold-accent: #b45309;
             --indigo-ink: #312e81;
         }
+
         body {
             font-family: 'Inter', sans-serif;
             background-color: var(--rice-paper);
             background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23e7e5e4' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
             color: var(--ink-black);
         }
-        .font-ink { font-family: 'Noto Serif JP', serif; }
-        
+
+        .font-ink {
+            font-family: 'Noto Serif JP', serif;
+        }
+
         /* Glassmorphism */
         .glass-panel {
             background: rgba(255, 255, 255, 0.65);
@@ -33,6 +40,7 @@
             border: 1px solid rgba(255, 255, 255, 0.4);
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
         }
+
         .glass-panel-dark {
             background: rgba(28, 25, 23, 0.95);
             backdrop-filter: blur(16px);
@@ -40,66 +48,139 @@
         }
 
         /* Brush Stroke Title */
-        .ink-brush-title { position: relative; display: inline-block; }
+        .ink-brush-title {
+            position: relative;
+            display: inline-block;
+        }
+
         .ink-brush-title::after {
-            content: ''; position: absolute; bottom: -2px; left: 0; width: 60%; height: 4px;
-            background-color: var(--seal-red); border-radius: 2px; opacity: 0.8;
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 60%;
+            height: 4px;
+            background-color: var(--seal-red);
+            border-radius: 2px;
+            opacity: 0.8;
         }
 
         /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #d6d3d1; border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: #a8a29e; }
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #d6d3d1;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a8a29e;
+        }
 
         /* Loader */
         .enso-loader {
-            width: 40px; height: 40px; border: 3px solid rgba(190, 18, 60, 0.1);
-            border-left-color: var(--seal-red); border-radius: 50%; animation: spin 1s linear infinite;
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(190, 18, 60, 0.1);
+            border-left-color: var(--seal-red);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
         }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        @keyframes spin {
+            100% {
+                transform: rotate(360deg);
+            }
+        }
 
         /* Status Badges */
-        .status-badge { @apply px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border; }
-        .status-pending { @apply bg-gray-50 text-gray-600 border-gray-200; }
-        .status-stitching { @apply bg-indigo-50 text-indigo-600 border-indigo-200; }
-        .status-completed { @apply bg-green-50 text-green-600 border-green-200; }
-        .status-active { @apply bg-emerald-50 text-emerald-600 border-emerald-200; }
-        .status-inactive { @apply bg-rose-50 text-rose-600 border-rose-200; }
+        .status-badge {
+            @apply px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border;
+        }
+
+        .status-pending {
+            @apply bg-gray-50 text-gray-600 border-gray-200;
+        }
+
+        .status-stitching {
+            @apply bg-indigo-50 text-indigo-600 border-indigo-200;
+        }
+
+        .status-completed {
+            @apply bg-green-50 text-green-600 border-green-200;
+        }
+
+        .status-active {
+            @apply bg-emerald-50 text-emerald-600 border-emerald-200;
+        }
+
+        .status-inactive {
+            @apply bg-rose-50 text-rose-600 border-rose-200;
+        }
 
         /* Navigation */
-        .nav-item { @apply flex items-center gap-3 px-4 py-3 text-stone-400 hover:text-stone-100 transition-all cursor-pointer border-l-4 border-transparent; }
-        .nav-item.active { @apply bg-white/5 text-white border-seal-red; }
+        .nav-item {
+            @apply flex items-center gap-3 px-4 py-3 text-stone-400 hover:text-stone-100 transition-all cursor-pointer border-l-4 border-transparent;
+        }
+
+        .nav-item.active {
+            @apply bg-white/5 text-white border-seal-red;
+        }
     </style>
 </head>
+
 <body class="h-screen flex overflow-hidden">
 
     <!-- Sidebar (Imperial Style) -->
     <aside class="w-20 lg:w-64 glass-panel-dark flex flex-col z-50 transition-all duration-300">
         <div class="p-6 flex items-center gap-3 border-b border-white/10">
-            <div class="w-8 h-8 rounded bg-gradient-to-br from-rose-700 to-rose-900 flex items-center justify-center shrink-0 shadow-lg shadow-rose-900/50">
+            <div
+                class="w-8 h-8 rounded bg-gradient-to-br from-rose-700 to-rose-900 flex items-center justify-center shrink-0 shadow-lg shadow-rose-900/50">
                 <span class="text-white font-ink font-bold text-lg">S</span>
             </div>
-            <h1 class="font-ink text-white text-lg hidden lg:block tracking-wide">School<span class="text-rose-500">Admin</span></h1>
+            <h1 class="font-ink text-white text-lg hidden lg:block tracking-wide">School<span
+                    class="text-rose-500">Admin</span></h1>
         </div>
 
         <nav class="flex-1 py-6 space-y-2">
             <div onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-item active">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="14" width="7" height="7"></rect>
+                    <rect x="3" y="14" width="7" height="7"></rect>
+                </svg>
                 <span class="hidden lg:inline text-sm font-medium">Dashboard</span>
             </div>
             <div onclick="switchTab('students')" id="nav-students" class="nav-item">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
                 <span class="hidden lg:inline text-sm font-medium">Student Data</span>
             </div>
             <div onclick="switchTab('support')" id="nav-support" class="nav-item">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path
+                        d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z">
+                    </path>
+                </svg>
                 <span class="hidden lg:inline text-sm font-medium">Support</span>
             </div>
         </nav>
 
         <div class="p-4 border-t border-white/10">
-            <div class="glass-panel bg-white/5 border-white/10 p-3 rounded-lg cursor-pointer hover:bg-white/10 transition-colors" onclick="logout()">
+            <div class="glass-panel bg-white/5 border-white/10 p-3 rounded-lg cursor-pointer hover:bg-white/10 transition-colors"
+                onclick="logout()">
                 <div class="flex items-center gap-3">
                     <img src="https://ui-avatars.com/api/?name=Admin&background=random" class="w-8 h-8 rounded-full">
                     <div class="hidden lg:block overflow-hidden">
@@ -114,15 +195,23 @@
     <!-- Main Content -->
     <main class="flex-1 h-full overflow-hidden flex flex-col relative w-full">
         <!-- Background Decor -->
-        <div class="absolute top-0 right-0 w-96 h-96 bg-rose-200/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
+        <div
+            class="absolute top-0 right-0 w-96 h-96 bg-rose-200/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none">
+        </div>
 
         <!-- Header -->
-        <header class="h-16 border-b border-stone-200/50 bg-white/50 backdrop-blur-sm flex items-center justify-between px-8 z-10 shrink-0">
+        <header
+            class="h-16 border-b border-stone-200/50 bg-white/50 backdrop-blur-sm flex items-center justify-between px-8 z-10 shrink-0">
             <h2 class="font-ink text-xl font-bold text-stone-800" id="pageTitle">Overview</h2>
             <div class="flex items-center gap-4">
-                <button onclick="window.location.href='planet_editor.html'" class="glass-panel hover:bg-white transition-colors px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider text-indigo-700 border-indigo-100 flex items-center gap-2 shadow-sm">
+                <button onclick="window.location.href='planet_editor.html'"
+                    class="glass-panel hover:bg-white transition-colors px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wider text-indigo-700 border-indigo-100 flex items-center gap-2 shadow-sm">
                     Open Editor
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                        <polyline points="15 3 21 3 21 9"></polyline>
+                        <line x1="10" y1="14" x2="21" y2="3"></line>
+                    </svg>
                 </button>
             </div>
         </header>
@@ -142,19 +231,25 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <!-- Total Students -->
                 <div class="glass-panel p-6 rounded-2xl relative overflow-hidden group">
-                    <div class="absolute right-0 top-0 w-24 h-24 bg-rose-100/50 rounded-full -mr-8 -mt-8 transition-transform group-hover:scale-110"></div>
+                    <div
+                        class="absolute right-0 top-0 w-24 h-24 bg-rose-100/50 rounded-full -mr-8 -mt-8 transition-transform group-hover:scale-110">
+                    </div>
                     <p class="text-stone-500 text-xs font-bold uppercase tracking-widest mb-1">Total Students</p>
                     <h3 class="font-ink text-4xl font-bold text-stone-800" id="dashTotal">--</h3>
                 </div>
                 <!-- Orders Pending -->
                 <div class="glass-panel p-6 rounded-2xl relative overflow-hidden group">
-                     <div class="absolute right-0 top-0 w-24 h-24 bg-amber-100/50 rounded-full -mr-8 -mt-8 transition-transform group-hover:scale-110"></div>
+                    <div
+                        class="absolute right-0 top-0 w-24 h-24 bg-amber-100/50 rounded-full -mr-8 -mt-8 transition-transform group-hover:scale-110">
+                    </div>
                     <p class="text-stone-500 text-xs font-bold uppercase tracking-widest mb-1">Orders Pending</p>
                     <h3 class="font-ink text-4xl font-bold text-amber-600" id="dashPending">--</h3>
                 </div>
                 <!-- Completed -->
                 <div class="glass-panel p-6 rounded-2xl relative overflow-hidden group">
-                     <div class="absolute right-0 top-0 w-24 h-24 bg-emerald-100/50 rounded-full -mr-8 -mt-8 transition-transform group-hover:scale-110"></div>
+                    <div
+                        class="absolute right-0 top-0 w-24 h-24 bg-emerald-100/50 rounded-full -mr-8 -mt-8 transition-transform group-hover:scale-110">
+                    </div>
                     <p class="text-stone-500 text-xs font-bold uppercase tracking-widest mb-1">Completed</p>
                     <h3 class="font-ink text-4xl font-bold text-emerald-600" id="dashCompleted">--</h3>
                 </div>
@@ -162,24 +257,38 @@
 
             <!-- Quick Actions -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                 <div class="glass-panel p-8 rounded-2xl flex flex-col items-center text-center hover:shadow-lg transition-all cursor-pointer border-t-4 border-indigo-500" onclick="document.getElementById('fileImport').click()">
-                    <div class="w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center mb-4 text-indigo-600">
-                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                <div class="glass-panel p-8 rounded-2xl flex flex-col items-center text-center hover:shadow-lg transition-all cursor-pointer border-t-4 border-indigo-500"
+                    onclick="document.getElementById('fileImport').click()">
+                    <div
+                        class="w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center mb-4 text-indigo-600">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="17 8 12 3 7 8"></polyline>
+                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                        </svg>
                     </div>
                     <h3 class="font-ink text-xl font-bold mb-2">Bulk Import Students</h3>
                     <p class="text-stone-500 text-sm mb-4">Upload an Excel file to instantly add student records.</p>
-                     <input type="file" id="fileImport" accept=".xlsx, .xls" class="hidden" onchange="handleBulkImport(event)">
+                    <input type="file" id="fileImport" accept=".xlsx, .xls" class="hidden"
+                        onchange="handleBulkImport(event)">
                     <span class="text-indigo-600 text-xs font-bold uppercase tracking-wider">Select File</span>
-                 </div>
+                </div>
 
-                 <div class="glass-panel p-8 rounded-2xl flex flex-col items-center text-center hover:shadow-lg transition-all cursor-pointer border-t-4 border-rose-500" onclick="switchTab('support')">
+                <div class="glass-panel p-8 rounded-2xl flex flex-col items-center text-center hover:shadow-lg transition-all cursor-pointer border-t-4 border-rose-500"
+                    onclick="switchTab('support')">
                     <div class="w-16 h-16 bg-rose-50 rounded-full flex items-center justify-center mb-4 text-rose-600">
-                         <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path
+                                d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z">
+                            </path>
+                        </svg>
                     </div>
                     <h3 class="font-ink text-xl font-bold mb-2">Report Issue</h3>
                     <p class="text-stone-500 text-sm mb-4">Submit feedback or complaints directly to the admin team.</p>
                     <span class="text-rose-600 text-xs font-bold uppercase tracking-wider">Open Support</span>
-                 </div>
+                </div>
             </div>
         </div>
     </template>
@@ -190,20 +299,47 @@
             <!-- Toolbar -->
             <div class="glass-panel p-4 rounded-xl flex flex-wrap gap-4 items-center justify-between shrink-0">
                 <div class="flex items-center gap-2 flex-1 min-w-[200px]">
-                    <svg class="text-stone-400" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                    <input type="text" id="searchInput" placeholder="Search by Name, Roll No..." class="bg-transparent border-none outline-none text-sm w-full placeholder-stone-400" oninput="renderStudents()">
+                    <svg class="text-stone-400" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input type="text" id="searchInput" placeholder="Search by Name, Roll No..."
+                        class="bg-transparent border-none outline-none text-sm w-full placeholder-stone-400"
+                        oninput="renderStudents()">
                 </div>
                 <div class="flex items-center gap-2">
-                     <select id="filterClass" class="bg-white/50 border border-stone-200 rounded text-xs px-3 py-2 outline-none" onchange="renderStudents()">
-                         <option value="">All Classes</option>
-                     </select>
-                     <select id="filterSection" class="bg-white/50 border border-stone-200 rounded text-xs px-3 py-2 outline-none" onchange="renderStudents()">
+                    <select id="filterClass"
+                        class="bg-white/50 border border-stone-200 rounded text-xs px-3 py-2 outline-none"
+                        onchange="renderStudents()">
+                        <option value="">All Classes</option>
+                    </select>
+                    <select id="filterSection"
+                        class="bg-white/50 border border-stone-200 rounded text-xs px-3 py-2 outline-none"
+                        onchange="renderStudents()">
                         <option value="">All Sections</option>
                     </select>
                 </div>
                 <div class="flex items-center gap-2 border-l border-stone-200 pl-4">
-                    <button onclick="exportData('pdf')" class="p-2 rounded hover:bg-rose-50 text-rose-600 transition-colors" title="Export PDF"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg></button>
-                    <button onclick="exportData('excel')" class="p-2 rounded hover:bg-emerald-50 text-emerald-600 transition-colors" title="Export Excel"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="8" y1="13" x2="16" y2="17"></line><line x1="16" y1="13" x2="8" y2="17"></line></svg></button>
+                    <button onclick="exportData('pdf')"
+                        class="p-2 rounded hover:bg-rose-50 text-rose-600 transition-colors" title="Export PDF"><svg
+                            width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg></button>
+                    <button onclick="exportData('excel')"
+                        class="p-2 rounded hover:bg-emerald-50 text-emerald-600 transition-colors"
+                        title="Export Excel"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="8" y1="13" x2="16" y2="17"></line>
+                            <line x1="16" y1="13" x2="8" y2="17"></line>
+                        </svg></button>
                 </div>
             </div>
 
@@ -214,13 +350,15 @@
                         <thead class="bg-stone-50/80 sticky top-0 z-10 backdrop-blur-sm border-b border-stone-200">
                             <tr>
                                 <th class="p-4 text-xs font-bold text-stone-500 uppercase tracking-wider">Roll No</th>
-                                <th class="p-4 text-xs font-bold text-stone-500 uppercase tracking-wider">Admission No</th>
+                                <th class="p-4 text-xs font-bold text-stone-500 uppercase tracking-wider">Admission No
+                                </th>
                                 <th class="p-4 text-xs font-bold text-stone-500 uppercase tracking-wider">Name</th>
                                 <th class="p-4 text-xs font-bold text-stone-500 uppercase tracking-wider">Gender</th>
                                 <th class="p-4 text-xs font-bold text-stone-500 uppercase tracking-wider">Class</th>
                                 <th class="p-4 text-xs font-bold text-stone-500 uppercase tracking-wider">Section</th>
                                 <th class="p-4 text-xs font-bold text-stone-500 uppercase tracking-wider">House</th>
-                                <th class="p-4 text-xs font-bold text-stone-500 uppercase tracking-wider">Order Status</th>
+                                <th class="p-4 text-xs font-bold text-stone-500 uppercase tracking-wider">Order Status
+                                </th>
                             </tr>
                         </thead>
                         <tbody id="studentsTableBody" class="text-sm divide-y divide-stone-100">
@@ -228,7 +366,8 @@
                         </tbody>
                     </table>
                 </div>
-                <div class="p-3 border-t border-stone-200 bg-stone-50 flex justify-between items-center text-xs text-stone-500">
+                <div
+                    class="p-3 border-t border-stone-200 bg-stone-50 flex justify-between items-center text-xs text-stone-500">
                     <span id="recordCount">0 Students</span>
                 </div>
             </div>
@@ -237,35 +376,43 @@
 
     <!-- 3. SUPPORT VIEW -->
     <template id="view-support">
-        <div class="max-w-4xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500 h-full">
+        <div
+            class="max-w-4xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500 h-full">
             <!-- Form -->
             <div class="lg:col-span-1 glass-panel p-6 rounded-2xl h-fit">
                 <h3 class="font-ink text-lg font-bold mb-4 ink-brush-title">New Request</h3>
                 <form onsubmit="submitComplaint(event)" class="space-y-4">
-                     <div>
+                    <div>
                         <label class="block text-xs font-bold text-stone-400 uppercase mb-1">Priority Rating</label>
-                        <select id="compRating" class="w-full bg-white/50 border border-stone-200 rounded p-2 text-sm outline-none focus:border-rose-500">
+                        <select id="compRating"
+                            class="w-full bg-white/50 border border-stone-200 rounded p-2 text-sm outline-none focus:border-rose-500">
                             <option value="1">Low Priority</option>
                             <option value="3" selected>Normal Issue</option>
                             <option value="5">Critical / Urgent</option>
                         </select>
-                     </div>
-                     <div>
+                    </div>
+                    <div>
                         <label class="block text-xs font-bold text-stone-400 uppercase mb-1">Description</label>
-                        <textarea id="compComment" required rows="4" class="w-full bg-white/50 border border-stone-200 rounded p-2 text-sm outline-none focus:border-rose-500" placeholder="Describe the issue..."></textarea>
-                     </div>
-                     <div>
+                        <textarea id="compComment" required rows="4"
+                            class="w-full bg-white/50 border border-stone-200 rounded p-2 text-sm outline-none focus:border-rose-500"
+                            placeholder="Describe the issue..."></textarea>
+                    </div>
+                    <div>
                         <label class="block text-xs font-bold text-stone-400 uppercase mb-1">Attachments</label>
-                        <div class="border-2 border-dashed border-stone-300 rounded-lg p-3 text-center cursor-pointer hover:border-rose-400 transition-colors" onclick="document.getElementById('compFiles').click()">
+                        <div class="border-2 border-dashed border-stone-300 rounded-lg p-3 text-center cursor-pointer hover:border-rose-400 transition-colors"
+                            onclick="document.getElementById('compFiles').click()">
                             <p class="text-xs text-stone-500">Click to upload photos</p>
-                            <input type="file" id="compFiles" multiple accept="image/*" class="hidden" onchange="handleFileSelect(event)">
+                            <input type="file" id="compFiles" multiple accept="image/*" class="hidden"
+                                onchange="handleFileSelect(event)">
                         </div>
                         <div id="imagePreviewContainer" class="flex gap-2 mt-2 overflow-x-auto h-12"></div>
-                     </div>
-                     <button type="submit" class="w-full bg-stone-900 text-white py-2.5 rounded shadow-lg hover:bg-rose-700 transition-all font-bold text-xs uppercase tracking-wider">Submit Ticket</button>
+                    </div>
+                    <button type="submit"
+                        class="w-full bg-stone-900 text-white py-2.5 rounded shadow-lg hover:bg-rose-700 transition-all font-bold text-xs uppercase tracking-wider">Submit
+                        Ticket</button>
                 </form>
             </div>
-            
+
             <!-- History -->
             <div class="lg:col-span-2 glass-panel p-6 rounded-2xl flex flex-col h-[600px] lg:h-auto">
                 <h3 class="font-ink text-lg font-bold mb-4">Ticket History</h3>
@@ -290,17 +437,17 @@
                 window.location.href = 'index.html';
                 return;
             }
-            
+
             try {
                 // Fetch Data
                 await fetchData();
-                
+
                 // Show Default Tab
                 switchTab('dashboard');
-                
+
                 // Set Header
                 document.getElementById('userSchoolName').innerText = `School #${schoolId}`; // Ideally fetch name
-                
+
             } catch (e) {
                 console.error("Init Error", e);
                 alert("Failed to load data. Please refresh.");
@@ -308,12 +455,13 @@
         }
 
         async function fetchData() {
+            console.log(`Fetching data for School #${schoolId} with token: ${token ? 'Present' : 'Missing'}`);
             const res = await fetch(`/api/data/students/${schoolId}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (!res.ok) throw new Error("Fetch failed");
             allStudents = await res.json();
-            
+
             // Populate Filters on Load
             populateFilters();
         }
@@ -321,7 +469,7 @@
         // === NAVIGATION ===
         function switchTab(tabId) {
             currentView = tabId;
-            
+
             // Update Active State
             ['dashboard', 'students', 'support'].forEach(t => {
                 const el = document.getElementById(`nav-${t}`);
@@ -349,11 +497,11 @@
         function renderDashboardStats() {
             const total = allStudents.length;
             const completed = allStudents.filter(s => s.status === 'Completed').length; // Check exact status string
-            
+
             // Fallback for status if not exists
             const pending = allStudents.filter(s => !s.status || s.status !== 'Completed').length;
-            const done = allStudents.filter(s => s.order_status === 'Completed').length; 
-            const active = allStudents.length; 
+            const done = allStudents.filter(s => s.order_status === 'Completed').length;
+            const active = allStudents.length;
 
             // Update DOM (use requestAnimationFrame for smooth)
             document.getElementById('dashTotal').innerText = total;
@@ -373,19 +521,19 @@
 
         function renderStudents() {
             const tbody = document.getElementById('studentsTableBody');
-            if(!tbody) return;
-            
+            if (!tbody) return;
+
             const search = document.getElementById('searchInput').value.toLowerCase();
             const fClass = document.getElementById('filterClass').value;
             const fSec = document.getElementById('filterSection').value;
 
             // Populate options if empty
-             const classSelect = document.getElementById('filterClass');
-             if(classSelect.options.length === 1) {
-                 const classes = [...new Set(allStudents.map(s => s.class).filter(Boolean))].sort();
-                 classes.forEach(c => classSelect.add(new Option(c, c)));
-             }
-             // Section populate logic could be dynamic based on Class
+            const classSelect = document.getElementById('filterClass');
+            if (classSelect.options.length === 1) {
+                const classes = [...new Set(allStudents.map(s => s.class).filter(Boolean))].sort();
+                classes.forEach(c => classSelect.add(new Option(c, c)));
+            }
+            // Section populate logic could be dynamic based on Class
 
             const filtered = allStudents.filter(s => {
                 const matchSearch = (s.name?.toLowerCase().includes(search) || s.roll_no?.toLowerCase().includes(search));
@@ -453,10 +601,10 @@
                             success++;
                         }
                     }
-                    
+
                     alert(`Imported ${success} students successfully!`);
                     await fetchData();
-                    if(currentView === 'dashboard') renderDashboardStats();
+                    if (currentView === 'dashboard') renderDashboardStats();
                 } catch (err) {
                     console.error(err);
                     alert("Import failed: " + err.message);
@@ -467,7 +615,7 @@
 
         function exportData(type) {
             // Basic Export Logic
-            if(type === 'excel') {
+            if (type === 'excel') {
                 const ws = XLSX.utils.json_to_sheet(allStudents);
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, ws, "Students");
@@ -523,34 +671,34 @@
                         image_url: JSON.stringify(imageUrls)
                     })
                 });
-                
+
                 alert("Submitted!");
                 e.target.reset();
                 selectedFiles = [];
                 document.getElementById('imagePreviewContainer').innerHTML = '';
                 fetchMyComplaints();
 
-            } catch(e) { alert("Error: " + e.message); }
+            } catch (e) { alert("Error: " + e.message); }
         }
 
         async function fetchMyComplaints() {
             const list = document.getElementById('complaintsList');
-            if(!list) return;
+            if (!list) return;
 
             try {
-                const res = await fetch('/api/data/my_complaints', { headers: { 'Authorization': `Bearer ${token}` }});
+                const res = await fetch('/api/data/my_complaints', { headers: { 'Authorization': `Bearer ${token}` } });
                 const data = await res.json();
-                
-                if(!Array.isArray(data) || data.length === 0) {
+
+                if (!Array.isArray(data) || data.length === 0) {
                     list.innerHTML = '<p class="text-center text-stone-400 py-4 text-xs">No tickets found.</p>';
                     return;
                 }
 
                 list.innerHTML = data.map(c => {
                     let imgs = [];
-                    try { imgs = JSON.parse(c.image_url || '[]'); } catch(e) {}
+                    try { imgs = JSON.parse(c.image_url || '[]'); } catch (e) { }
                     if (!Array.isArray(imgs)) imgs = [c.image_url];
-                    
+
                     return `
                     <div class="glass-panel bg-white/50 p-4 rounded-xl border-l-4 ${c.status === 'Resolved' ? 'border-green-500' : 'border-rose-500'}">
                         <div class="flex justify-between items-start mb-2">
@@ -563,7 +711,7 @@
                     </div>
                 `}).join('');
 
-            } catch(e) { console.error(e); }
+            } catch (e) { console.error(e); }
         }
 
         function logout() { sessionStorage.clear(); window.location.href = 'index.html'; }
@@ -572,4 +720,5 @@
         init();
     </script>
 </body>
+
 </html>

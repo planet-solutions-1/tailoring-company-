@@ -217,6 +217,7 @@ router.get('/logs', authenticateToken, requireRole('company'), (req, res) => {
 
 // GET /api/data/students/:schoolId
 router.get('/students/:schoolId', authenticateToken, (req, res) => {
+    console.log(`GET /students/${req.params.schoolId} hit by ${req.user.username}`);
     const requestedSchoolId = parseInt(req.params.schoolId);
     const user = req.user;
 

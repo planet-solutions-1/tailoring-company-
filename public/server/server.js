@@ -38,6 +38,7 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 // Routes
 const authRoutes = require('./routes/auth_v2');
 const dataRoutes = require('./routes/data');
+console.log("Mounting /api/auth and /api/data routes...");
 app.use('/api/auth', authRoutes);
 app.use('/api/data', dataRoutes);
 
