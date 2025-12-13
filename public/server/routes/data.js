@@ -477,21 +477,33 @@ router.get('/complaints', authenticateToken, requireRole('company'), (req, res) 
 });
 
 // POST /api/data/complaints - Create (School)
+// POST /api/data/complaints - Create (School)
 router.post('/complaints', authenticateToken, (req, res) => {
-    const { rating, comment, image_url } = req.body;
+    const {
+        student_name, student_reg_no, pattern_name, gender, issue_type, class: cls, section, house,
+        rating, comment, image_url
+    } = req.body;
+
     // Auto-detect school ID from user
     const schoolId = req.user.schoolId || req.body.school_id; // Fallback for debug
 
     if (!schoolId) return res.status(400).json({ error: "School ID required" });
 
-    db.run("INSERT INTO complaints (school_id, rating, comment, image_url) VALUES (?, ?, ?, ?)",
-        [schoolId, rating, comment, image_url],
-        function (err) {
-            if (err) return res.status(500).json({ error: err.message });
-            if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'CREATE_COMPLAINT', `Complaint from School #${schoolId}`);
-            res.json({ id: this.lastID, message: "Complaint Submitted" });
-        }
-    );
+    const sql = `INSERT INTO complaints (
+        school_id, student_name, student_reg_no, pattern_name, gender, issue_type, class, section, house,
+        rating, comment, image_url
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+
+    const params = [
+        schoolId, student_name, student_reg_no, pattern_name, gender, issue_type, cls, section, house,
+        rating, comment, image_url
+    ];
+
+    db.run(sql, params, function (err) {
+        if (err) return res.status(500).json({ error: err.message });
+        if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'CREATE_COMPLAINT', `Complaint from School #${schoolId}`);
+        res.json({ id: this.lastID, message: "Complaint Submitted" });
+    });
 });
 
 // DELETE /api/data/complaints/:id - Delete (School)
@@ -515,19 +527,29 @@ router.delete('/complaints/:id', authenticateToken, (req, res) => {
 // PUT /api/data/complaints/:id - Update (School - Edit own complaint)
 router.put('/complaints/:id', authenticateToken, (req, res) => {
     const { id } = req.params;
-    const { rating, comment, image_url } = req.body;
+    const {
+        student_name, student_reg_no, pattern_name, gender, issue_type, class: cls, section, house,
+        rating, comment, image_url
+    } = req.body;
     const schoolId = req.user.schoolId;
 
     if (!schoolId) return res.status(403).json({ error: "Unauthorized" });
 
-    db.run("UPDATE complaints SET rating = ?, comment = ?, image_url = ? WHERE id = ? AND school_id = ?",
-        [rating, comment, image_url, id, schoolId],
-        function (err) {
-            if (err) return res.status(500).json({ error: err.message });
-            if (this.changes === 0) return res.status(404).json({ error: "Not found or unauthorized" });
-            res.json({ message: "Updated successfully" });
-        }
-    );
+    const sql = `UPDATE complaints SET 
+        student_name=?, student_reg_no=?, pattern_name=?, gender=?, issue_type=?, class=?, section=?, house=?,
+        rating=?, comment=?, image_url=? 
+        WHERE id = ? AND school_id = ?`;
+
+    const params = [
+        student_name, student_reg_no, pattern_name, gender, issue_type, cls, section, house,
+        rating, comment, image_url, id, schoolId
+    ];
+
+    db.run(sql, params, function (err) {
+        if (err) return res.status(500).json({ error: err.message });
+        if (this.changes === 0) return res.status(404).json({ error: "Not found or unauthorized" });
+        res.json({ message: "Updated successfully" });
+    });
 });
 
 // PUT /api/data/complaints/:id/reply - Reply (Company)

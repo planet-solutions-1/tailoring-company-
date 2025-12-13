@@ -151,6 +151,14 @@ if (process.env.RAILWAY_ENVIRONMENT || process.env.NODE_ENV === 'production') {
                 `CREATE TABLE IF NOT EXISTS complaints (
                     id INT AUTO_INCREMENT PRIMARY KEY,
                     school_id INT NOT NULL,
+                    student_name VARCHAR(255),
+                    student_reg_no VARCHAR(255),
+                    pattern_name VARCHAR(255),
+                    gender VARCHAR(50),
+                    issue_type VARCHAR(100),
+                    class VARCHAR(50),
+                    section VARCHAR(50),
+                    house VARCHAR(100),
                     rating INT,
                     comment TEXT,
                     image_url TEXT,
@@ -165,6 +173,21 @@ if (process.env.RAILWAY_ENVIRONMENT || process.env.NODE_ENV === 'production') {
             for (const sql of queries) {
                 await promisePool.execute(sql);
             }
+
+            // MySQL Migration: Attempt to add columns to existing table
+            const newCols = [
+                'student_name VARCHAR(255)', 'student_reg_no VARCHAR(255)', 'pattern_name VARCHAR(255)',
+                'gender VARCHAR(50)', 'issue_type VARCHAR(100)', 'class VARCHAR(50)', 'section VARCHAR(50)', 'house VARCHAR(100)'
+            ];
+            for (const colDef of newCols) {
+                try {
+                    // Simple unconditional add - will fail if exists, which is fine
+                    await promisePool.execute(`ALTER TABLE complaints ADD COLUMN ${colDef}`);
+                } catch (e) {
+                    // Ignore duplicate column error 
+                }
+            }
+
             console.log("MySQL Tables Initialized.");
 
             // Seed OR Reset Admin
@@ -299,6 +322,14 @@ function initSqliteDb(database) {
         CREATE TABLE IF NOT EXISTS complaints (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             school_id INTEGER NOT NULL,
+            student_name TEXT,
+            student_reg_no TEXT,
+            pattern_name TEXT,
+            gender TEXT,
+            issue_type TEXT,
+            class TEXT,
+            section TEXT,
+            house TEXT,
             rating INTEGER,
             comment TEXT,
             image_url TEXT,
@@ -315,6 +346,11 @@ function initSqliteDb(database) {
             // SQLite Auto-Migration
             database.run("ALTER TABLE schools ADD COLUMN priority TEXT DEFAULT 'Normal'", () => { });
             database.run("ALTER TABLE schools ADD COLUMN status TEXT DEFAULT 'Pending'", () => { });
+
+            // Complaints Migration
+            ['student_name', 'student_reg_no', 'pattern_name', 'gender', 'issue_type', 'class', 'section', 'house'].forEach(col => {
+                database.run(`ALTER TABLE complaints ADD COLUMN ${col} TEXT`, () => { });
+            });
 
             database.get("SELECT count(*) as count FROM users", (err, row) => {
                 if (row && row.count == 0) {
