@@ -490,7 +490,7 @@
                             <div>
                                 <label
                                     class="block text-xs font-bold text-stone-400 uppercase tracking-wider mb-2">Gender</label>
-                                <select id="c_gender"
+                                <select id="c_gender" onchange="updatePatternOptions()"
                                     class="w-full bg-stone-50 border border-stone-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-rose-500 cursor-pointer">
                                     <option value="Male">Male</option>
                                     <option value="Female">Female</option>
@@ -532,8 +532,10 @@
                                 <label
                                     class="block text-xs font-bold text-stone-400 uppercase tracking-wider mb-2">Pattern
                                     Name</label>
-                                <input type="text" id="c_pattern" placeholder="e.g. Regular Uniform"
-                                    class="w-full bg-stone-50 border border-stone-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-rose-500 transition-all">
+                                <select id="c_pattern"
+                                    class="w-full bg-stone-50 border border-stone-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-rose-500 cursor-pointer">
+                                    <!-- Populated by JS -->
+                                </select>
                             </div>
                             <div>
                                 <label
@@ -841,11 +843,36 @@
         }
 
         // === MODAL LOGIC ===
+        const boysPatterns = [
+            "BOYS - FORMAL SHIRT", "BOYS - TRACK T-SHIRT", "BOYS - UNIFORM T-SHIRT",
+            "BOYS - JERKIN", "BOYS - PULLOVER", "BOYS - FORMAL PANT",
+            "BOYS - TRACK PANT", "BOYS - FORMAL SHORTS", "BOYS - TRACK SHORTS",
+            "BOYS - PANT SPECIAL CASE"
+        ];
+        const girlsPatterns = [
+            "GIRLS - FORMAL SHIRT", "GIRLS - TRACK T-SHIRT", "GIRLS - UNIFORM T-SHIRT",
+            "GIRLS - JERKIN", "GIRLS - FULL SLEEVE SHIRT", "GIRLS - PULLOVER",
+            "GIRLS - KURTHA SHIRT", "GIRLS - SPECIAL FROCKS", "GIRLS - FORMAL PANT",
+            "GIRLS - TRACK PANT", "GIRLS - TRACK SHORTS", "GIRLS - PINOFORE",
+            "GIRLS - SKIRT", "GIRLS - PANT SPECIAL CASE"
+        ];
+
+        function updatePatternOptions() {
+            const gender = document.getElementById('c_gender').value;
+            const select = document.getElementById('c_pattern');
+            const patterns = gender === 'Male' ? boysPatterns : girlsPatterns;
+
+            select.innerHTML = patterns.map(p => `<option value="${p}">${p}</option>`).join('');
+        }
+
         function openComplaintModal() {
             const modal = document.getElementById('complaintModal');
             if (modal) {
+                // Initialize patterns based on default gender (Male)
+                if (document.getElementById('c_pattern').options.length === 0) {
+                    updatePatternOptions();
+                }
                 modal.showModal();
-                // Reset styling/scroll if needed
             }
         }
 
