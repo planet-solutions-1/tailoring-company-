@@ -526,8 +526,31 @@
                             </div>
                         </div>
 
+                        <!-- Dynamic Defective Items List -->
+                        <div class="col-span-full bg-stone-50 rounded-xl p-4 border border-stone-200">
+                            <div class="flex justify-between items-center mb-2">
+                                <label class="text-xs font-bold text-stone-500 uppercase tracking-wider">Defective
+                                    Items</label>
+                                <button type="button" onclick="addDefectRow()"
+                                    class="text-xs font-bold text-rose-600 hover:text-rose-700 flex items-center gap-1">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    </svg>
+                                    Add Item
+                                </button>
+                            </div>
+
+                            <div id="defectItemsContainer" class="space-y-3">
+                                <!-- Rows injected via JS -->
+                            </div>
+                            <p id="emptyItemsMsg" class="text-xs text-stone-400 italic text-center py-2">No items added.
+                                Click "Add Item" to start.</p>
+                        </div>
+
                         <!-- Issue Details -->
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 hidden">
                             <div>
                                 <label
                                     class="block text-xs font-bold text-stone-400 uppercase tracking-wider mb-2">Pattern
@@ -857,22 +880,89 @@
             "GIRLS - SKIRT", "GIRLS - PANT SPECIAL CASE"
         ];
 
+        // Ensure gender change updates existing rows or warns? 
+        // For simplicity, we just re-render or let user manage.
+        // Actually, let's refresh ALL pattern dropdowns when gender changes
         function updatePatternOptions() {
             const gender = document.getElementById('c_gender').value;
-            const select = document.getElementById('c_pattern');
             const patterns = gender === 'Male' ? boysPatterns : girlsPatterns;
 
-            select.innerHTML = patterns.map(p => `<option value="${p}">${p}</option>`).join('');
+            // Update all existing pattern selects
+            document.querySelectorAll('.pattern-select').forEach(select => {
+                const currentVal = select.value;
+                select.innerHTML = patterns.map(p => `<option value="${p}">${p}</option>`).join('');
+                if (patterns.includes(currentVal)) select.value = currentVal;
+            });
+        }
+
+        function addDefectRow() {
+            const container = document.getElementById('defectItemsContainer');
+            const documentFragment = document.createDocumentFragment();
+            const rowId = 'row_' + Date.now();
+
+            const div = document.createElement('div');
+            div.className = "defect-row grid grid-cols-1 md:grid-cols-12 gap-2 items-start bg-white p-3 rounded-lg border border-stone-100 shadow-sm animate-in slide-in-from-right-2";
+            div.id = rowId;
+
+            const gender = document.getElementById('c_gender').value;
+            const patterns = gender === 'Male' ? boysPatterns : girlsPatterns;
+            const patternOptions = patterns.map(p => `<option value="${p}">${p}</option>`).join('');
+
+            div.innerHTML = `
+                <div class="md:col-span-5">
+                    <label class="block text-[10px] font-bold text-stone-400 uppercase mb-1">Pattern</label>
+                    <select class="pattern-select w-full bg-stone-50 border border-stone-200 rounded px-3 py-2 text-sm outline-none focus:border-rose-500">
+                        ${patternOptions}
+                    </select>
+                </div>
+                <div class="md:col-span-6">
+                    <label class="block text-[10px] font-bold text-stone-400 uppercase mb-1">Issue</label>
+                    <select onchange="handleIssueChange(this)" class="issue-select w-full bg-stone-50 border border-stone-200 rounded px-3 py-2 text-sm outline-none focus:border-rose-500">
+                        <option value="Size Mismatch">Size Mismatch</option>
+                        <option value="Stiching Defect">Stiching Defect</option>
+                        <option value="Fabric Issue">Fabric Issue</option>
+                        <option value="Missing Item">Missing Item</option>
+                        <option value="Other">Other (Specify)</option>
+                    </select>
+                    <input type="text" placeholder="Specify issue..." class="other-issue-input hidden w-full mt-2 bg-stone-50 border border-stone-200 rounded px-3 py-2 text-sm focus:border-rose-500 outline-none">
+                </div>
+                <div class="md:col-span-1 flex items-center justify-center pt-6">
+                     <button type="button" onclick="document.getElementById('${rowId}').remove(); checkEmptyMsg();" class="text-stone-400 hover:text-rose-500 p-1">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                    </button>
+                </div>
+            `;
+
+            container.appendChild(div);
+            checkEmptyMsg();
+        }
+
+        function checkEmptyMsg() {
+            const count = document.getElementById('defectItemsContainer').children.length;
+            const msg = document.getElementById('emptyItemsMsg');
+            if (count === 0) msg.classList.remove('hidden');
+            else msg.classList.add('hidden');
+        }
+
+        function handleIssueChange(select) {
+            const input = select.closest('div').querySelector('.other-issue-input');
+            if (select.value === 'Other') {
+                input.classList.remove('hidden');
+                input.required = true;
+            } else {
+                input.classList.add('hidden');
+                input.required = false;
+            }
         }
 
         function openComplaintModal() {
             const modal = document.getElementById('complaintModal');
             if (modal) {
-                // Initialize patterns based on default gender (Male)
-                if (document.getElementById('c_pattern').options.length === 0) {
-                    updatePatternOptions();
-                }
                 modal.showModal();
+                // If empty, add one row by default
+                if (document.getElementById('defectItemsContainer').children.length === 0) {
+                    addDefectRow();
+                }
             }
         }
 
@@ -884,6 +974,8 @@
             selectedFiles = [];
             renderImagePreviews();
             editingComplaintId = null;
+            document.getElementById('defectItemsContainer').innerHTML = '';
+            checkEmptyMsg(); // Ensure empty message is shown if container is cleared
         }
 
         async function submitComplaint(e) {
@@ -900,10 +992,32 @@
             const cls = document.getElementById('c_class').value;
             const section = document.getElementById('c_sec').value;
             const house = document.getElementById('c_house').value;
-            const pattern_name = document.getElementById('c_pattern').value;
-            const issue_type = document.getElementById('c_issue_type').value;
-            // Map Issue Type to Rating for backward compatibility if needed, or just set default
-            const rating = issue_type === 'Critical' ? 5 : 3;
+
+            // Gather Defect Items
+            const rows = document.querySelectorAll('.defect-row');
+            if (rows.length === 0) {
+                alert("Please add at least one item defect.");
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+                return;
+            }
+
+            const items = Array.from(rows).map(row => {
+                const p = row.querySelector('.pattern-select').value;
+                const iSelect = row.querySelector('.issue-select');
+                const issueVal = iSelect.value;
+                const otherVal = row.querySelector('.other-issue-input').value;
+                const finalIssue = (issueVal === 'Other' && otherVal) ? otherVal : issueVal;
+                return { pattern: p, issue: finalIssue };
+            });
+
+            // Aggregate for Legacy DB Columns
+            const pattern_name = items.map(x => x.pattern).join(', ');
+            // Format Issue Type clearly: "Shirt (Size), Pant (Tear)"
+            const issue_type = items.map(x => `${x.pattern.split('-').pop().trim()} (${x.issue})`).join(', ');
+
+            // Calculate Max Rating based on issues (e.g. if any logic needed, otherwise default 3)
+            const rating = 3;
 
             const comment = document.getElementById('c_desc').value;
             let imageUrls = [];
@@ -943,6 +1057,9 @@
 
                 closeComplaintModal();
                 fetchMyComplaints();
+
+                // Clear dynamic items
+                document.getElementById('defectItemsContainer').innerHTML = '';
 
             } catch (err) {
                 alert("Error: " + err.message);
