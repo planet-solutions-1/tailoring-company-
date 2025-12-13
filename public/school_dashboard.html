@@ -808,9 +808,11 @@
             async function fetchMyComplaints() {
                 const list = document.getElementById('complaintsList');
                 if (!list) return;
-                // Reset Edit Mode UI if needed
+
+                // Update UI for Edit Mode Reset
                 if (!editingComplaintId) {
-                    document.querySelector('#view-support h3.ink-brush-title').innerText = "New Request";
+                    const title = document.querySelector('#view-support h3.ink-brush-title');
+                    if (title) title.innerText = "New Request";
                     const btn = document.querySelector('#view-support button[type="submit"]');
                     if (btn) btn.innerText = "Submit Ticket";
                 }
@@ -840,7 +842,7 @@
                         let imgs = [];
                         try { imgs = JSON.parse(c.image_url || '[]'); } catch (e) { }
                         if (!Array.isArray(imgs)) imgs = [c.image_url];
-                        const safeJson = JSON.stringify(c).replace(/"/g, '&quot;'); // Escape for onclick
+                        const safeJson = JSON.stringify(c).replace(/"/g, '&quot;');
 
                         return `
                     <div class="glass-panel bg-white/50 p-4 rounded-xl border-l-4 ${c.status === 'Resolved' ? 'border-green-500' : 'border-rose-500'} group relative">
