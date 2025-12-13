@@ -469,43 +469,50 @@
         <!-- 7. COMPLAINTS OVERHAUL -->
         <div id="view-complaints" class="hidden fade-in max-w-[1600px] mx-auto space-y-8">
 
-            <!-- A. Analytics Header -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div class="glass-panel p-6 rounded-xl border-l-4 border-rose-500">
-                    <p class="text-xs text-rose-500 font-bold uppercase tracking-widest">Total Tickets</p>
-                    <p class="text-4xl font-ink text-stone-800 mt-2" id="c-stat-total">0</p>
+            <!-- A. Analytics Header & Hotspots -->
+            <div class="grid grid-cols-1 md:grid-cols-6 gap-6">
+                <!-- Basic Counts -->
+                <div class="md:col-span-2 grid grid-cols-3 gap-2">
+                    <div
+                        class="glass-panel p-4 rounded-xl border-l-4 border-stone-800 flex flex-col justify-center items-center text-center">
+                        <p class="text-[10px] text-stone-400 font-bold uppercase tracking-widest">Total</p>
+                        <p class="text-3xl font-ink text-stone-800 mt-1" id="c-stat-total">0</p>
+                    </div>
+                    <div
+                        class="glass-panel p-4 rounded-xl border-l-4 border-amber-500 flex flex-col justify-center items-center text-center">
+                        <p class="text-[10px] text-amber-600 font-bold uppercase tracking-widest">Open</p>
+                        <p class="text-3xl font-ink text-stone-800 mt-1" id="c-stat-open">0</p>
+                    </div>
+                    <div
+                        class="glass-panel p-4 rounded-xl border-l-4 border-emerald-500 flex flex-col justify-center items-center text-center">
+                        <p class="text-[10px] text-emerald-600 font-bold uppercase tracking-widest">Done</p>
+                        <p class="text-3xl font-ink text-stone-800 mt-1" id="c-stat-resolved">0</p>
+                    </div>
                 </div>
-                <div class="glass-panel p-6 rounded-xl border-l-4 border-amber-500">
-                    <p class="text-xs text-amber-600 font-bold uppercase tracking-widest">Open / Pending</p>
-                    <p class="text-4xl font-ink text-stone-800 mt-2" id="c-stat-open">0</p>
+
+                <!-- Insight Cards -->
+                <div class="glass-panel p-4 rounded-xl col-span-2 border-t-4 border-rose-500">
+                    <p class="text-[10px] text-rose-500 font-bold uppercase tracking-widest mb-2">Needs Attention (Top
+                        Pattern)</p>
+                    <h4 class="font-bold text-stone-800 truncate" id="c-top-pattern">-</h4>
+                    <p class="text-xs text-stone-500" id="c-top-pattern-count">0 complaints</p>
                 </div>
-                <div class="glass-panel p-6 rounded-xl border-l-4 border-emerald-500">
-                    <p class="text-xs text-emerald-600 font-bold uppercase tracking-widest">Resolved</p>
-                    <p class="text-4xl font-ink text-stone-800 mt-2" id="c-stat-resolved">0</p>
-                </div>
-                <div class="glass-panel p-6 rounded-xl flex items-center justify-center">
-                    <button onclick="fetchComplaints()"
-                        class="flex flex-col items-center gap-2 text-stone-400 hover:text-stone-800 transition-colors">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <path d="M23 4v6h-6" />
-                            <path d="M1 20v-6h6" />
-                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
-                        </svg>
-                        <span class="text-xs font-bold uppercase tracking-widest">Refresh Data</span>
-                    </button>
+                <div class="glass-panel p-4 rounded-xl col-span-2 border-t-4 border-indigo-500">
+                    <p class="text-[10px] text-indigo-500 font-bold uppercase tracking-widest mb-2">Common Issue</p>
+                    <h4 class="font-bold text-stone-800 truncate" id="c-top-issue">-</h4>
+                    <p class="text-xs text-stone-500" id="c-top-issue-count">0 occurrences</p>
                 </div>
             </div>
 
             <!-- B. Charts & Trends -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 h-80">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 h-96">
                 <div class="glass-panel p-6 rounded-xl flex flex-col">
-                    <h3 class="font-ink text-lg text-stone-700 mb-4">Issues by Category</h3>
-                    <div class="flex-1 relative"><canvas id="chart-issues"></canvas></div>
+                    <h3 class="font-ink text-lg text-stone-700 mb-4">Top Defective Patterns</h3>
+                    <div class="flex-1 relative"><canvas id="chart-patterns"></canvas></div>
                 </div>
                 <div class="glass-panel p-6 rounded-xl flex flex-col">
-                    <h3 class="font-ink text-lg text-stone-700 mb-4">Status Distribution</h3>
-                    <div class="flex-1 relative"><canvas id="chart-status"></canvas></div>
+                    <h3 class="font-ink text-lg text-stone-700 mb-4">Common Defect Types</h3>
+                    <div class="flex-1 relative"><canvas id="chart-issues"></canvas></div>
                 </div>
             </div>
 
@@ -805,51 +812,88 @@
         }
 
         function updateComplaintCharts(data) {
-            // Issues by Pattern (Top 5)
-            const issues = {};
+            // 1. Calculate Aggregates
+            const patternCounts = {};
+            const issueCounts = {};
+
             data.forEach(c => {
-                let cats = c.issue_type ? c.issue_type.split(',') : ['Unspecified'];
-                cats.forEach(cat => {
-                    // Clean up category string "Pattern (Issue)"
-                    let simple = cat.includes('(') ? cat.split('(')[1].replace(')', '').trim() : cat.trim();
-                    issues[simple] = (issues[simple] || 0) + 1;
-                });
+                // Patterns
+                if (c.pattern_name) {
+                    c.pattern_name.split(',').forEach(p => {
+                        const cleanP = p.trim();
+                        if (cleanP) patternCounts[cleanP] = (patternCounts[cleanP] || 0) + 1;
+                    });
+                }
+
+                // Issues (Parse "Pattern (Issue)" format)
+                if (c.issue_type) {
+                    c.issue_type.split(',').forEach(i => {
+                        let cleanI = i.trim();
+                        if (cleanI.includes('(')) {
+                            // Extract content between parenthesis e.g., "Size Mismatch" from "Shirt (Size Mismatch)"
+                            const match = cleanI.match(/\(([^)]+)\)/);
+                            if (match && match[1]) cleanI = match[1].trim();
+                        }
+                        if (cleanI) issueCounts[cleanI] = (issueCounts[cleanI] || 0) + 1;
+                    });
+                }
             });
 
-            // Chart 1: Issues
-            const ctx1 = document.getElementById('chart-issues');
-            if (chartIssues) chartIssues.destroy();
+            // 2. Identify Hotspots (Top 1)
+            const topPattern = Object.entries(patternCounts).sort((a, b) => b[1] - a[1])[0] || ['-', 0];
+            const topIssue = Object.entries(issueCounts).sort((a, b) => b[1] - a[1])[0] || ['-', 0];
+
+            document.getElementById('c-top-pattern').innerText = topPattern[0];
+            document.getElementById('c-top-pattern-count').innerText = `${topPattern[1]} complaints`;
+
+            document.getElementById('c-top-issue').innerText = topIssue[0];
+            document.getElementById('c-top-issue-count').innerText = `${topIssue[1]} occurrences`;
+
+
+            // 3. Render Chart 1: Top 10 Patterns (Horizontal Bar)
+            const ctx1 = document.getElementById('chart-patterns');
+            if (chartIssues) chartIssues.destroy(); // using same var name for convenience, represents "Patterns" now
+
+            // Sort and Slice Top 10
+            const sortedPatterns = Object.entries(patternCounts).sort((a, b) => b[1] - a[1]).slice(0, 10);
+
             chartIssues = new Chart(ctx1, {
                 type: 'bar',
                 data: {
-                    labels: Object.keys(issues),
+                    labels: sortedPatterns.map(x => x[0]),
                     datasets: [{
-                        label: 'Frequency',
-                        data: Object.values(issues),
+                        label: 'Complaints',
+                        data: sortedPatterns.map(x => x[1]),
                         backgroundColor: '#f43f5e',
-                        borderRadius: 4
+                        borderRadius: 4,
+                        barThickness: 20
                     }]
                 },
-                options: { maintainAspectRatio: false, plugins: { legend: { display: false } } }
+                options: {
+                    indexAxis: 'y', // Horizontal
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: { x: { beginAtZero: true } }
+                }
             });
 
-            // Chart 2: Status
-            const ctx2 = document.getElementById('chart-status');
-            if (chartStatus) chartStatus.destroy();
+            // 4. Render Chart 2: Defect Types (Doughnut)
+            const ctx2 = document.getElementById('chart-issues'); // using same ID in HTML, different concept
+            if (chartStatus) chartStatus.destroy(); // represents "Issues" now
+
+            const sortedIssues = Object.entries(issueCounts).sort((a, b) => b[1] - a[1]);
+
             chartStatus = new Chart(ctx2, {
                 type: 'doughnut',
                 data: {
-                    labels: ['Open', 'Resolved'],
+                    labels: sortedIssues.map(x => x[0]),
                     datasets: [{
-                        data: [
-                            data.filter(c => c.status !== 'Resolved').length,
-                            data.filter(c => c.status === 'Resolved').length
-                        ],
-                        backgroundColor: ['#f59e0b', '#10b981'],
+                        data: sortedIssues.map(x => x[1]),
+                        backgroundColor: ['#f59e0b', '#ef4444', '#3b82f6', '#10b981', '#6366f1', '#8b5cf6'],
                         borderWidth: 0
                     }]
                 },
-                options: { maintainAspectRatio: false }
+                options: { maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
             });
         }
 
