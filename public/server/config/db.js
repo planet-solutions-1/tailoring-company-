@@ -147,6 +147,18 @@ if (process.env.RAILWAY_ENVIRONMENT || process.env.NODE_ENV === 'production') {
                     action VARCHAR(255),
                     details TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                )`,
+                `CREATE TABLE IF NOT EXISTS complaints (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    school_id INT NOT NULL,
+                    rating INT,
+                    comment TEXT,
+                    image_url TEXT,
+                    reply TEXT,
+                    status VARCHAR(50) DEFAULT 'Open',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (school_id) REFERENCES schools(id) ON DELETE CASCADE
                 )`
             ];
 
