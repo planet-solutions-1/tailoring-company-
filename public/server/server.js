@@ -36,8 +36,28 @@ app.use(cors());
 app.use(morgan('dev'));
 app.use(express.json());
 
-// Serve Uploads Explicitly
-app.use('/uploads', express.static(UPLOAD_PATH));
+// Serve Uploads via Custom Handler (Better Debugging + Case Sensitivity)
+app.get('/uploads/:filename', (req, res) => {
+    const filename = req.params.filename;
+    const filepath = path.join(UPLOAD_PATH, filename);
+
+    if (fs.existsSync(filepath)) {
+        return res.sendFile(filepath);
+    }
+
+    // Try case-insensitive fallback using readdir
+    try {
+        const files = fs.readdirSync(UPLOAD_PATH);
+        const match = files.find(f => f.toLowerCase() === filename.toLowerCase());
+        if (match) {
+            return res.sendFile(path.join(UPLOAD_PATH, match));
+        }
+    } catch (e) {
+        console.error("Readdir Error:", e);
+    }
+
+    res.status(404).json({ error: "File not found", requested: filename, path: UPLOAD_PATH });
+});
 
 // Routes
 const authRoutes = require('./routes/auth_v2');
