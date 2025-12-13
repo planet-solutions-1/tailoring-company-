@@ -641,56 +641,135 @@
         }
 
         // === SUPPORT LOGIC ===
+        let editingComplaintId = null; // Track if we are editing
+
         function handleFileSelect(e) {
             const files = Array.from(e.target.files);
-            selectedFiles = files;
+            // Append to existing selectedFiles instead of replacing
+            selectedFiles = [...selectedFiles, ...files];
+            renderImagePreviews();
+        }
+
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            renderImagePreviews();
+        }
+
+        function renderImagePreviews() {
             const container = document.getElementById('imagePreviewContainer');
             container.innerHTML = '';
-            files.forEach(f => {
+
+            selectedFiles.forEach((f, i) => {
+                const div = document.createElement('div');
+                div.className = "relative inline-block shrink-0 h-16 w-16 group";
+
                 const img = document.createElement('img');
                 img.src = URL.createObjectURL(f);
-                img.className = "h-full w-auto rounded border border-stone-200";
-                container.appendChild(img);
+                img.className = "h-full w-full rounded border border-stone-200 object-cover";
+
+                const removeBtn = document.createElement('button');
+                removeBtn.innerHTML = "×";
+                removeBtn.className = "absolute -top-2 -right-2 bg-rose-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold shadow-sm opacity-0 group-hover:opacity-100 transition-opacity";
+                removeBtn.onclick = (e) => { e.preventDefault(); removeFile(i); };
+
+                div.appendChild(img);
+                div.appendChild(removeBtn);
+                container.appendChild(div);
             });
         }
 
         async function submitComplaint(e) {
             e.preventDefault();
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerText;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<div class="enso-loader w-4 h-4 border-2"></div> Processing...';
+
             const rating = document.getElementById('compRating').value;
             const comment = document.getElementById('compComment').value;
             let imageUrls = [];
 
             try {
+                // Upload new files
                 if (selectedFiles.length > 0) {
                     const fd = new FormData();
                     selectedFiles.forEach(f => fd.append('images', f));
                     const upRes = await fetch('/api/data/upload', { method: 'POST', body: fd });
+                    if (!upRes.ok) throw new Error("Upload failed");
                     imageUrls = (await upRes.json()).urls;
                 }
 
-                await fetch('/api/data/complaints', {
-                    method: 'POST',
+                // If editing, merge with existing images if needed (complex, simplifies to just replacing for now or appending?)
+                // For simplicity, we just send the new set of URLs. Ideally we should keep old ones too if not removed.
+                // NOTE: Current logic mainly handles new uploads. Preserving old images during edit requires more UI. 
+                // Let's assume for this iteration, uploads are APPENDED or REPLACED.
+
+                const payload = {
+                    school_id: schoolId,
+                    rating: parseInt(rating),
+                    comment,
+                    image_url: JSON.stringify(imageUrls)
+                };
+
+                const url = editingComplaintId ? `/api/data/complaints/${editingComplaintId}` : '/api/data/complaints';
+                const method = editingComplaintId ? 'PUT' : 'POST';
+
+                const res = await fetch(url, {
+                    method: method,
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                    body: JSON.stringify({
-                        school_id: schoolId,
-                        rating: parseInt(rating),
-                        comment,
-                        image_url: JSON.stringify(imageUrls)
-                    })
+                    body: JSON.stringify(payload)
                 });
 
-                alert("Submitted!");
+                if (!res.ok) throw new Error("Submission failed");
+
+                alert(editingComplaintId ? "Ticket Updated!" : "Ticket Submitted!");
+
+                // Reset form
                 e.target.reset();
                 selectedFiles = [];
                 document.getElementById('imagePreviewContainer').innerHTML = '';
+                editingComplaintId = null;
+                submitBtn.innerText = "Submit Ticket";
+
                 fetchMyComplaints();
 
-            } catch (e) { alert("Error: " + e.message); }
+            } catch (err) {
+                alert("Error: " + err.message);
+                submitBtn.innerText = originalText;
+            } finally {
+                submitBtn.disabled = false;
+            }
+        }
+
+        async function deleteComplaint(id) {
+            if (!confirm("Are you sure you want to delete this ticket?")) return;
+            try {
+                const res = await fetch(`/api/data/complaints/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+                if (res.ok) {
+                    fetchMyComplaints();
+                } else alert("Failed to delete");
+            } catch (e) { console.error(e); }
+        }
+
+        function editComplaint(c) {
+            editingComplaintId = c.id;
+            document.getElementById('compRating').value = c.rating || 3;
+            document.getElementById('compComment').value = c.comment;
+            document.querySelector('#view-support h3.ink-brush-title').innerText = "Edit Request";
+            document.querySelector('#view-support button[type="submit"]').innerText = "Update Ticket";
+            // Populate images? Complex without pre-loading blobs. Users might just want to change text.
+            window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
         async function fetchMyComplaints() {
             const list = document.getElementById('complaintsList');
             if (!list) return;
+            // Reset Edit Mode UI if needed
+            if (!editingComplaintId) {
+                document.querySelector('#view-support h3.ink-brush-title').innerText = "New Request";
+                const btn = document.querySelector('#view-support button[type="submit"]');
+                if (btn) btn.innerText = "Submit Ticket";
+            }
 
             try {
                 const res = await fetch('/api/data/my_complaints', { headers: { 'Authorization': `Bearer ${token}` } });
@@ -705,16 +784,22 @@
                     let imgs = [];
                     try { imgs = JSON.parse(c.image_url || '[]'); } catch (e) { }
                     if (!Array.isArray(imgs)) imgs = [c.image_url];
+                    const safeJson = JSON.stringify(c).replace(/"/g, '&quot;'); // Escape for onclick
 
                     return `
-                    <div class="glass-panel bg-white/50 p-4 rounded-xl border-l-4 ${c.status === 'Resolved' ? 'border-green-500' : 'border-rose-500'}">
+                    <div class="glass-panel bg-white/50 p-4 rounded-xl border-l-4 ${c.status === 'Resolved' ? 'border-green-500' : 'border-rose-500'} group relative">
+                        <div class="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onclick="editComplaint(${safeJson})" class="p-1 hover:text-indigo-600" title="Edit"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg></button>
+                            <button onclick="deleteComplaint(${c.id})" class="p-1 hover:text-rose-600" title="Delete"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>
+                        </div>
+
                         <div class="flex justify-between items-start mb-2">
                              <span class="text-[10px] font-bold uppercase tracking-wider text-stone-500">${new Date(c.created_at).toLocaleDateString()}</span>
                              <span class="px-2 py-0.5 rounded-full text-[10px] bg-white border border-stone-200">${c.status}</span>
                         </div>
-                        <p class="text-stone-800 text-sm mb-2">"${c.comment}"</p>
-                        ${imgs.length > 0 ? `<div class="flex gap-1 overflow-x-auto mb-2">${imgs.map(u => `<img src="${u}" class="w-8 h-8 rounded border border-white cursor-pointer" onclick="window.open('${u}')">`).join('')}</div>` : ''}
-                        ${c.reply ? `<div class="mt-2 pt-2 border-t border-stone-200 bg-stone-50 p-2 rounded"><p class="text-xs text-indigo-700 font-bold">Admin Reply:</p><p class="text-xs text-stone-600">${c.reply}</p></div>` : ''}
+                        <p class="text-stone-800 text-sm mb-2 font-medium">"${c.comment}"</p>
+                        ${imgs.length > 0 ? `<div class="flex gap-2 overflow-x-auto mb-2 py-1">${imgs.map(u => `<img src="${u}" class="w-12 h-12 rounded border border-white cursor-pointer hover:scale-105 transition-transform" onclick="window.open('${u}')">`).join('')}</div>` : ''}
+                        ${c.reply ? `<div class="mt-2 pt-2 border-t border-stone-200 bg-stone-50 p-2 rounded"><p class="text-xs text-indigo-700 font-bold mb-1">Admin Reply:</p><p class="text-xs text-stone-600 leading-relaxed">${c.reply}</p></div>` : ''}
                     </div>
                 `}).join('');
 

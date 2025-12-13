@@ -494,6 +494,42 @@ router.post('/complaints', authenticateToken, (req, res) => {
     );
 });
 
+// DELETE /api/data/complaints/:id - Delete (School)
+router.delete('/complaints/:id', authenticateToken, (req, res) => {
+    const { id } = req.params;
+    const schoolId = req.user.schoolId;
+
+    if (!schoolId && req.user.role !== 'company') return res.status(403).json({ error: "Unauthorized" });
+
+    // Allow company to delete too? Maybe just school for now as per request.
+    const query = req.user.role === 'company' ? "DELETE FROM complaints WHERE id = ?" : "DELETE FROM complaints WHERE id = ? AND school_id = ?";
+    const params = req.user.role === 'company' ? [id] : [id, schoolId];
+
+    db.run(query, params, function (err) {
+        if (err) return res.status(500).json({ error: err.message });
+        if (this.changes === 0) return res.status(404).json({ error: "Not found" });
+        res.json({ message: "Deleted successfully" });
+    });
+});
+
+// PUT /api/data/complaints/:id - Update (School - Edit own complaint)
+router.put('/complaints/:id', authenticateToken, (req, res) => {
+    const { id } = req.params;
+    const { rating, comment, image_url } = req.body;
+    const schoolId = req.user.schoolId;
+
+    if (!schoolId) return res.status(403).json({ error: "Unauthorized" });
+
+    db.run("UPDATE complaints SET rating = ?, comment = ?, image_url = ? WHERE id = ? AND school_id = ?",
+        [rating, comment, image_url, id, schoolId],
+        function (err) {
+            if (err) return res.status(500).json({ error: err.message });
+            if (this.changes === 0) return res.status(404).json({ error: "Not found or unauthorized" });
+            res.json({ message: "Updated successfully" });
+        }
+    );
+});
+
 // PUT /api/data/complaints/:id/reply - Reply (Company)
 router.put('/complaints/:id/reply', authenticateToken, requireRole('company'), (req, res) => {
     const { id } = req.params;
