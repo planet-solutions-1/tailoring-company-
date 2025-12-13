@@ -296,6 +296,18 @@ function initSqliteDb(database) {
             details TEXT,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         );
+        CREATE TABLE IF NOT EXISTS complaints (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            school_id INTEGER NOT NULL,
+            rating INTEGER,
+            comment TEXT,
+            image_url TEXT,
+            reply TEXT,
+            status TEXT DEFAULT 'Open',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (school_id) REFERENCES schools(id)
+        );
     `;
     database.exec(schema, (err) => {
         if (err) console.error(err);
