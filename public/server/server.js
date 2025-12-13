@@ -11,11 +11,14 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Multer Storage
+// Multer Storage
+const UPLOAD_PATH = path.join(process.cwd(), 'public', 'uploads');
+console.log("Uploads Directory:", UPLOAD_PATH);
+
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        const uploadDir = path.join(__dirname, '../uploads');
-        if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
-        cb(null, uploadDir);
+        if (!fs.existsSync(UPLOAD_PATH)) fs.mkdirSync(UPLOAD_PATH, { recursive: true });
+        cb(null, UPLOAD_PATH);
     },
     filename: (req, file, cb) => {
         const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
@@ -27,13 +30,14 @@ const upload = multer({ storage: storage });
 // Middleware
 app.use(helmet({
     contentSecurityPolicy: false,
+    crossOriginResourcePolicy: false,
 }));
 app.use(cors());
 app.use(morgan('dev'));
 app.use(express.json());
 
-// Serve Uploads
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+// Serve Uploads Explicitly
+app.use('/uploads', express.static(UPLOAD_PATH));
 
 // Routes
 const authRoutes = require('./routes/auth_v2');
@@ -57,8 +61,19 @@ app.post('/api/data/upload', upload.array('images', 5), (req, res) => {
     }
 });
 
+// DEBUG ENDPOINT
+app.get('/api/debug/ls', (req, res) => {
+    try {
+        if (!fs.existsSync(UPLOAD_PATH)) return res.json({ error: "Upload dir does not exist", path: UPLOAD_PATH });
+        const files = fs.readdirSync(UPLOAD_PATH);
+        res.json({ path: UPLOAD_PATH, files });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // Serve Static Files (Frontend)
-app.use(express.static(path.join(__dirname, '../')));
+app.use(express.static(path.join(process.cwd(), 'public')));
 
 // Basic Route
 app.get('/', (req, res) => {
