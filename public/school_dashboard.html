@@ -148,6 +148,14 @@
         .nav-item.active {
             @apply bg-white/5 text-white border-seal-red;
         }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(0,0,0,0.1);
+            border-radius: 10px;
+        }
     </style>
 </head>
 
@@ -384,46 +392,89 @@
     <!-- 3. SUPPORT VIEW -->
     <template id="view-support">
         <div
-            class="max-w-4xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500 h-full">
+            class="max-w-6xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500 h-full">
             <!-- Form -->
-            <div class="lg:col-span-1 glass-panel p-6 rounded-2xl h-fit">
-                <h3 class="font-ink text-lg font-bold mb-4 ink-brush-title">New Request</h3>
-                <form onsubmit="submitComplaint(event)" class="space-y-4">
+            <div class="lg:col-span-4 glass-panel p-8 rounded-3xl h-fit border border-stone-100 shadow-xl">
+                <div class="flex items-center gap-3 mb-6">
+                    <div class="w-10 h-10 rounded-full bg-rose-50 text-rose-600 flex items-center justify-center">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path
+                                d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z">
+                            </path>
+                        </svg>
+                    </div>
+                    <h3 class="font-ink text-2xl font-bold text-stone-800 ink-brush-title">New Request</h3>
+                </div>
+
+                <form onsubmit="submitComplaint(event)" class="space-y-6">
                     <div>
-                        <label class="block text-xs font-bold text-stone-400 uppercase mb-1">Priority Rating</label>
-                        <select id="compRating"
-                            class="w-full bg-white/50 border border-stone-200 rounded p-2 text-sm outline-none focus:border-rose-500">
-                            <option value="1">Low Priority</option>
-                            <option value="3" selected>Normal Issue</option>
-                            <option value="5">Critical / Urgent</option>
-                        </select>
+                        <label class="block text-xs font-bold text-stone-400 uppercase tracking-wider mb-2">Priority
+                            Level</label>
+                        <div class="relative">
+                            <select id="compRating"
+                                class="w-full bg-stone-50 border border-stone-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 transition-all appearance-none cursor-pointer">
+                                <option value="1">Low Priority</option>
+                                <option value="3" selected>Normal Issue</option>
+                                <option value="5">Critical / Urgent</option>
+                            </select>
+                            <svg class="absolute right-4 top-1/2 -translate-y-1/2 text-stone-400 pointer-events-none"
+                                width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </div>
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-stone-400 uppercase mb-1">Description</label>
-                        <textarea id="compComment" required rows="4"
-                            class="w-full bg-white/50 border border-stone-200 rounded p-2 text-sm outline-none focus:border-rose-500"
-                            placeholder="Describe the issue..."></textarea>
+                        <label
+                            class="block text-xs font-bold text-stone-400 uppercase tracking-wider mb-2">Description</label>
+                        <textarea id="compComment" required rows="5"
+                            class="w-full bg-stone-50 border border-stone-200 rounded-xl px-4 py-3 text-sm outline-none focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 transition-all resize-none placeholder-stone-400"
+                            placeholder="Please describe the issue in detail..."></textarea>
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-stone-400 uppercase mb-1">Attachments</label>
-                        <div class="border-2 border-dashed border-stone-300 rounded-lg p-3 text-center cursor-pointer hover:border-rose-400 transition-colors"
+                        <label
+                            class="block text-xs font-bold text-stone-400 uppercase tracking-wider mb-2">Attachments</label>
+                        <div class="border-2 border-dashed border-stone-200 rounded-xl p-6 text-center cursor-pointer hover:border-rose-400 hover:bg-rose-50/50 transition-all group"
                             onclick="document.getElementById('compFiles').click()">
-                            <p class="text-xs text-stone-500">Click to upload photos</p>
+                            <div
+                                class="w-12 h-12 bg-white rounded-full shadow-sm mx-auto mb-3 flex items-center justify-center text-stone-400 group-hover:text-rose-500 transition-colors">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="17 8 12 3 7 8"></polyline>
+                                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                                </svg>
+                            </div>
+                            <p class="text-sm text-stone-600 font-medium">Click to upload photos</p>
+                            <p class="text-xs text-stone-400 mt-1">Supports JPG, PNG</p>
                             <input type="file" id="compFiles" multiple accept="image/*" class="hidden"
                                 onchange="handleFileSelect(event)">
                         </div>
-                        <div id="imagePreviewContainer" class="flex gap-2 mt-2 overflow-x-auto h-12"></div>
+                        <!-- Enhanced Preview Grid -->
+                        <div id="imagePreviewContainer" class="grid grid-cols-4 gap-2 mt-4"></div>
                     </div>
                     <button type="submit"
-                        class="w-full bg-stone-900 text-white py-2.5 rounded shadow-lg hover:bg-rose-700 transition-all font-bold text-xs uppercase tracking-wider">Submit
-                        Ticket</button>
+                        class="w-full bg-stone-900 text-white py-4 rounded-xl shadow-lg hover:bg-rose-700 hover:shadow-rose-900/20 hover:-translate-y-0.5 transition-all font-bold text-sm uppercase tracking-wider flex items-center justify-center gap-2">
+                        <span>Submit Ticket</span>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                    </button>
                 </form>
             </div>
 
             <!-- History -->
-            <div class="lg:col-span-2 glass-panel p-6 rounded-2xl flex flex-col h-[600px] lg:h-auto">
-                <h3 class="font-ink text-lg font-bold mb-4">Ticket History</h3>
-                <div id="complaintsList" class="flex-1 overflow-y-auto space-y-4 pr-2">
+            <div
+                class="lg:col-span-8 glass-panel p-8 rounded-3xl flex flex-col h-[600px] lg:h-auto border border-stone-100 shadow-xl relative overflow-hidden">
+                <div
+                    class="absolute top-0 right-0 w-64 h-64 bg-stone-50 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none">
+                </div>
+
+                <h3 class="font-ink text-2xl font-bold text-stone-800 mb-6 relative z-10">Ticket History</h3>
+                <div id="complaintsList" class="flex-1 overflow-y-auto space-y-4 pr-2 relative z-10 custom-scrollbar">
                     <!-- Cards -->
                 </div>
             </div>
@@ -776,7 +827,15 @@
                 const data = await res.json();
 
                 if (!Array.isArray(data) || data.length === 0) {
-                    list.innerHTML = '<p class="text-center text-stone-400 py-4 text-xs">No tickets found.</p>';
+                    list.innerHTML = `
+                        <div class="flex flex-col items-center justify-center h-full text-center p-8 opacity-60">
+                            <div class="w-32 h-32 bg-stone-100 rounded-full flex items-center justify-center mb-6">
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" class="text-stone-300" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                            </div>
+                            <h4 class="font-ink text-xl font-bold text-stone-700 mb-2">No Tickets Yet</h4>
+                            <p class="text-sm text-stone-400 max-w-sm">Your feedback helps us improve. Create a new request if you need assistance.</p>
+                        </div>
+                    `;
                     return;
                 }
 
