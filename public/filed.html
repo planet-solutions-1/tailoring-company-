@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planet Solutions - Excel Generator</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F9F9F7;
+            /* Washi Paper White */
+            color: #2C3E50;
+            /* Ink Blue */
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
+            font-family: 'Noto Serif JP', serif;
+        }
+
+        .washi-card {
+            background-color: #FFFFFF;
+            border: 1px solid #E2E8F0;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
+        }
+
+        .btn-primary {
+            background-color: #4A5568;
+            /* Muted Indigo */
+            color: white;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background-color: #2D3748;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-secondary {
+            background-color: #FFFFFF;
+            border: 1px solid #E2E8F0;
+            color: #4A5568;
+            transition: all 0.3s ease;
+        }
+
+        .btn-secondary:hover {
+            background-color: #F7FAFC;
+            border-color: #CBD5E0;
+        }
+
+        /* Subtle pattern overlay */
+        .bg-pattern {
+            background-image: radial-gradient(#E2E8F0 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+
+        /* Japanese Art SVG Styling - Improved Positioning */
+        .japanese-art {
+            position: absolute;
+            top: -20px;
+            right: -20px;
+            pointer-events: none;
+            opacity: 0.8;
+            z-index: 0;
+            width: 250px;
+            height: 250px;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex items-center justify-center p-4 bg-pattern">
+
+    <div class="washi-card rounded-xl w-full max-w-md p-10 relative overflow-hidden">
+        <!-- Decorative top accent -->
+        <div class="absolute top-0 left-0 w-full h-1 bg-[#4A5568] z-10"></div>
+
+        <!-- Japanese Line Art SVG - Refined Design -->
+        <svg class="japanese-art" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <filter id="ink-blur" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur in="SourceGraphic" stdDeviation="0.5" />
+                </filter>
+            </defs>
+
+            <!-- Red Sun (Top Right) -->
+            <circle cx="220" cy="60" r="35" fill="#C0392B" opacity="0.8" style="mix-blend-mode: multiply;" />
+
+            <!-- Bamboo Stalks (More organic curves) -->
+            <g stroke="#2C3E50" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"
+                opacity="0.9">
+                <!-- Stalk 1 -->
+                <path d="M260 300 Q270 200 240 100" stroke-width="4" />
+                <path d="M260 300 M262 250 M265 200 M255 150 M245 100" stroke-width="0" /> <!-- Nodes hint -->
+
+                <!-- Stalk 2 -->
+                <path d="M290 300 Q280 220 295 140" stroke-width="3" />
+
+                <!-- Stalk 3 -->
+                <path d="M220 300 Q230 250 210 180" stroke-width="2.5" />
+            </g>
+
+            <!-- Bamboo Leaves (Cluster) -->
+            <g fill="#2C3E50" opacity="0.9">
+                <path d="M240 100 Q220 90 200 105 Q220 100 240 100 Z" />
+                <path d="M240 100 Q250 80 230 60 Q245 80 240 100 Z" />
+                <path d="M240 150 Q220 145 205 155 Q225 150 240 150 Z" />
+                <path d="M295 140 Q275 130 260 135 Q280 135 295 140 Z" />
+                <path d="M210 180 Q190 170 175 180 Q195 175 210 180 Z" />
+            </g>
+
+            <!-- Pagoda Silhouette (Subtle, Bottom Right) -->
+            <g stroke="#2C3E50" stroke-width="1.5" fill="none" opacity="0.7" transform="translate(20, 20)">
+                <path d="M280 280 L220 280" />
+                <path d="M270 260 L230 260" />
+                <path d="M260 240 L240 240" />
+                <!-- Roofs -->
+                <path d="M285 280 L220 280 L215 275" />
+                <path d="M275 260 L230 260 L225 255" />
+                <path d="M265 240 L240 240 L235 235" />
+            </g>
+        </svg>
+
+        <div class="mb-10 text-center relative z-10">
+            <h1 class="text-3xl font-bold text-[#2C3E50] mb-3 tracking-tight">Excel Generator <span
+                    class="text-sm font-normal text-gray-400">v2.1</span></h1>
+            <p class="text-[#7F8C8D] font-light">Planet Solutions Measurement System</p>
+            <div class="mt-2 inline-block px-3 py-1 bg-[#F0FFF4] border border-[#C6F6D5] rounded-full">
+                <span class="text-xs text-[#2F855A] font-medium tracking-wide">Updated: Manual Header Selection</span>
+            </div>
+        </div>
+
+        <div class="space-y-8 relative z-10">
+            <!-- File Import Section -->
+            <div class="bg-[#F7FAFC] border border-[#E2E8F0] rounded-lg p-4">
+                <label class="block text-sm font-medium text-[#4A5568] mb-2 tracking-wide text-xs uppercase">
+                    Import Existing Data (Optional)
+                </label>
+                <div class="flex items-center gap-2 mb-3">
+                    <button onclick="document.getElementById('importFile').click()"
+                        class="btn-secondary text-xs px-3 py-2 rounded-md flex-1 text-center truncate" id="fileBtn">
+                        Choose Excel File...
+                    </button>
+                    <input type="file" id="importFile" accept=".xlsx, .xls" class="hidden"
+                        onchange="handleImport(event)">
+                </div>
+
+                <!-- Header Detection Controls (Hidden initially) -->
+                <div id="headerControls"
+                    class="hidden flex items-center justify-between bg-white p-2 rounded border border-[#E2E8F0] mb-3">
+                    <label class="text-xs text-[#4A5568] font-medium mr-2">Settings:</label>
+                    <div class="flex items-center gap-2">
+                        <!-- Sheet Selector (Dynamic) -->
+                        <select id="sheetSelector" onchange="reprocessImport()"
+                            class="hidden text-xs border border-[#CBD5E0] rounded px-2 py-1 outline-none focus:border-[#4A5568] max-w-[100px]">
+                        </select>
+
+                        <span class="text-[10px] text-[#A0AEC0] uppercase tracking-wide">Row:</span>
+                        <input type="number" id="headerRowInput"
+                            class="w-16 px-2 py-1 text-xs border border-[#CBD5E0] rounded text-center focus:border-[#4A5568] outline-none"
+                            min="1" value="1">
+                        <button onclick="reprocessImport()"
+                            class="bg-[#4A5568] text-white text-xs px-3 py-1 rounded hover:bg-[#2D3748] transition-colors">
+                            Reload
+                        </button>
+                    </div>
+                </div>
+
+                <div id="importStatusContainer"></div>
+                <p class="text-[10px] text-[#A0AEC0] mt-1 italic">
+                    If columns look wrong, change "Header Row" and click Reload.
+                </p>
+            </div>
+
+            <div>
+                <label for="rowCount"
+                    class="block text-sm font-medium text-[#4A5568] mb-2 tracking-wide uppercase text-xs">Number of
+                    Rows</label>
+                <div class="relative">
+                    <input type="number" id="rowCount" value="200" min="1" max="10000"
+                        class="block w-full px-4 py-3 rounded-lg border border-[#E2E8F0] bg-[#F9F9F7] focus:bg-white focus:border-[#4A5568] focus:ring-1 focus:ring-[#4A5568] transition-all outline-none text-[#2C3E50]"
+                        placeholder="Enter number of rows">
+                </div>
+                <p class="text-xs text-[#A0AEC0] mt-2 font-light">Default is 200 rows (autofilled if importing).</p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div>
+                    <label
+                        class="block text-sm font-medium text-[#4A5568] mb-2 tracking-wide uppercase text-xs">Prepared
+                        By</label>
+                    <input type="text" id="preparedBy" placeholder="Your Name"
+                        class="block w-full px-4 py-3 rounded-lg border border-[#E2E8F0] bg-[#F9F9F7] focus:bg-white focus:border-[#4A5568] focus:ring-1 focus:ring-[#4A5568] transition-all outline-none text-[#2C3E50]">
+                </div>
+                <div>
+                    <label
+                        class="block text-sm font-medium text-[#4A5568] mb-2 tracking-wide uppercase text-xs">Description</label>
+                    <input type="text" id="description" placeholder="e.g. Class A Measurements"
+                        class="block w-full px-4 py-3 rounded-lg border border-[#E2E8F0] bg-[#F9F9F7] focus:bg-white focus:border-[#4A5568] focus:ring-1 focus:ring-[#4A5568] transition-all outline-none text-[#2C3E50]">
+                </div>
+            </div>
+
+            <button onclick="generateExcel()"
+                class="btn-primary w-full font-medium py-3 px-6 rounded-lg flex items-center justify-center gap-2">
+                <span>Generate & Download Excel</span>
+            </button>
+
+            <div class="mt-8 pt-8 border-t border-[#EDF2F7]">
+                <p class="text-sm text-[#7F8C8D] mb-4 text-center font-light">Need to edit existing data?</p>
+                <a href="index.html" class="btn-secondary block w-full font-medium py-3 px-4 rounded-lg text-center">
+                    Open Planet Editor Dashboard
+                </a>
+            </div>
+        </div>
+
+        <div id="status" class="mt-8 text-center text-sm hidden relative z-10">
+            <span
+                class="inline-flex items-center px-4 py-2 rounded-full bg-[#F0FFF4] text-[#2F855A] border border-[#C6F6D5]">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                File Generated Successfully
+            </span>
+        </div>
+
+        <div class="mt-10 text-center text-xs text-[#A0AEC0] font-light tracking-widest uppercase relative z-10">
+            &copy; 2025 Planet Solutions
+        </div>
+    </div>
+
+    <script>
+        let importedData = [];
+        let currentWorkbook = null;
+
+        async function handleImport(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            // Update button text
+            document.getElementById('fileBtn').textContent = file.name;
+            document.getElementById('fileBtn').classList.add('text-[#2C3E50]', 'font-medium');
+
+            const ab = await file.arrayBuffer();
+            currentWorkbook = XLSX.read(ab);
+
+            // Initial Processing (Auto-Detect)
+            processWorkbook(true);
+
+            // Show Header Controls
+            document.getElementById('headerControls').classList.remove('hidden');
+        }
+
+        function reprocessImport() {
+            if (!currentWorkbook) return;
+            processWorkbook(false);
+        }
+
+        function processWorkbook(isAutoDetect) {
+            const sheetSelector = document.getElementById('sheetSelector');
+            let sheetName = "";
+
+            // Populate Selector if AutoDetect (First Load)
+            if (isAutoDetect) {
+                const sheetNames = currentWorkbook.SheetNames;
+                sheetSelector.innerHTML = ""; // Clear
+                if (sheetNames.length > 1) {
+                    sheetSelector.classList.remove('hidden');
+                    sheetNames.forEach(name => {
+                        const opt = document.createElement('option');
+                        opt.value = name;
+                        opt.text = name;
+                        sheetSelector.appendChild(opt);
+                    });
+                } else {
+                    sheetSelector.classList.add('hidden');
+                }
+                sheetName = sheetNames[0];
+            } else {
+                // Use selected sheet
+                if (!sheetSelector.classList.contains('hidden')) {
+                    sheetName = sheetSelector.value;
+                } else {
+                    sheetName = currentWorkbook.SheetNames[0];
+                }
+            }
+
+            const ws = currentWorkbook.Sheets[sheetName];
+
+            // Expanded Keywords for Detection
+            const keyTerms = [
+                "student", "name", "class", "section", "admission", "adm",
+                "gender", "house", "u1", "s.no", "sl.no", "std", "div", "sec",
+                "roll", "id", "no", "father", "mother", "mobile", "list", "date"
+            ];
+
+            let headerRowIndex = 0; // Default to 0 (Row 1)
+
+            if (isAutoDetect) {
+                // Scan first 20 rows
+                const rawRows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
+                let maxMatches = 0;
+
+                for (let i = 0; i < Math.min(rawRows.length, 20); i++) {
+                    const row = rawRows[i];
+                    let matches = 0;
+                    row.forEach(cell => {
+                        if (typeof cell === 'string') {
+                            const cellLower = cell.trim().toLowerCase();
+                            if (keyTerms.some(term => cellLower.includes(term))) {
+                                matches++;
+                            }
+                        }
+                    });
+
+                    if (matches > maxMatches) {
+                        maxMatches = matches;
+                        headerRowIndex = i;
+                    }
+                }
+                // Set the detected value in input
+                document.getElementById('headerRowInput').value = headerRowIndex + 1;
+            } else {
+                // Use Manual Input (subtract 1 for 0-based index)
+                const val = parseInt(document.getElementById('headerRowInput').value) || 1;
+                headerRowIndex = Math.max(0, val - 1);
+            }
+
+            // Parse using determined Header Row
+            const finalData = XLSX.utils.sheet_to_json(ws, { range: headerRowIndex, defval: "" });
+
+            // Check if we actually got data keys. If row is empty, empty keys.
+            // Normalize Keys (Trim & Lowercase)
+            importedData = finalData.map(row => {
+                const newRow = {};
+                Object.keys(row).forEach(key => {
+                    const cleanKey = key.trim().toLowerCase();
+                    newRow[cleanKey] = row[key];
+                });
+                return newRow;
+            });
+
+            // Update UI
+            if (importedData.length > 0) {
+                document.getElementById('rowCount').value = importedData.length;
+                const keys = Object.keys(importedData[0]);
+
+                const statusHtml = `
+                    <div class="mt-2 p-3 bg-[#F0FFF4] border border-[#C6F6D5] rounded text-xs text-[#2F855A]">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <strong>Success!</strong> Used Header Row ${headerRowIndex + 1}.<br>
+                                Loaded ${importedData.length} records.
+                            </div>
+                        </div>
+                        <div class="mt-2 text-[#4A5568] opacity-75 border-t border-[#C6F6D5] pt-1">
+                            <strong>Columns found:</strong> ${keys.slice(0, 8).join(', ')}${keys.length > 8 ? '...' : ''}
+                        </div>
+                    </div>
+                `;
+
+                const container = document.getElementById('importStatusContainer');
+                if (!container) {
+                    const div = document.createElement('div');
+                    div.id = 'importStatusContainer';
+                    div.innerHTML = statusHtml;
+                    // Append to parent if not exists (already exists in new HTML structure)
+                } else {
+                    container.innerHTML = statusHtml;
+                }
+            } else {
+                // Warn if no data found
+                document.getElementById('importStatusContainer').innerHTML = `
+                    <div class="mt-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-600">
+                        Warning: No data found at Row ${headerRowIndex + 1}. Try changing Header Row.
+                    </div>
+                 `;
+            }
+        }
+
+        function generateExcel() {
+            let rowCount = parseInt(document.getElementById('rowCount').value) || 200;
+            const statusEl = document.getElementById('status');
+            if (importedData.length > rowCount) rowCount = importedData.length;
+
+            const infoHeaders = ["S.No", "Roll No", "Admission No", "Student Name", "Class", "Section", "House", "Gender", "Absent/Present"];
+            const measureHeaders = [
+                "U5 (FULL SLEEVE)", "U6 (HALF SLEEVE)", "U7 (KURTHA/SPECIAL FROCK LENGTH)", "U8 (EXTRA CELL)",
+                "L1 (PANT LENGTH)", "L2 (WAIST)", "L3 (SHORTS LENGTH)", "L4 (PINOFORE LENGTH)",
+                "L5 (SKIRT LENGTH)", "L6 (HIP)", "L7 (THIGH)", "L8 (EXTRA CELL)"
+            ];
+
+            const boysItems = [
+                { name: "BOYS - FORMAL SHIRT", cols: ["U1", "U2", "U3", "U4", "U6", "Quantity"], type: "Male" },
+                { name: "BOYS - TRACK T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6", "Quantity"], type: "Male" },
+                { name: "BOYS - UNIFORM T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6", "Quantity"], type: "Male" },
+                { name: "BOYS - JERKIN", cols: ["U1", "U2", "U3", "U4", "U5", "Quantity"], type: "Male" },
+                { name: "BOYS - PULLOVER", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Male" },
+                { name: "BOYS - FORMAL PANT", cols: ["L1", "L2"], type: "Male" },
+                { name: "BOYS - TRACK PANT", cols: ["L1", "L2"], type: "Male" },
+                { name: "BOYS - FORMAL SHORTS", cols: ["L3", "L2"], type: "Male" },
+                { name: "BOYS - TRACK SHORTS", cols: ["L3", "L2"], type: "Male" },
+                { name: "BOYS - PANT SPECIAL CASE", cols: ["L1", "L2", "L6", "L7"], type: "Male" },
+            ];
+
+            const girlsItems = [
+                { name: "GIRLS - FORMAL SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Female" },
+                { name: "GIRLS - TRACK T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Female" },
+                { name: "GIRLS - UNIFORM T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Female" },
+                { name: "GIRLS - JERKIN", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Female" },
+                { name: "GIRLS - FULL SLEEVE SHIRT", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Female" },
+                { name: "GIRLS - PULLOVER", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Female" },
+                { name: "GIRLS - KURTHA SHIRT", cols: ["U7", "U2", "U3", "U4", "U6"], type: "Female" },
+                { name: "GIRLS - SPECIAL FROCKS", cols: ["U7", "U2", "U3", "U4", "U6"], type: "Female" },
+                { name: "GIRLS - FORMAL PANT", cols: ["L1", "L2"], type: "Female" },
+                { name: "GIRLS - TRACK PANT", cols: ["L1", "L2"], type: "Female" },
+                { name: "GIRLS - TRACK SHORTS", cols: ["L3", "L2"], type: "Female" },
+                { name: "GIRLS - PINOFORE", cols: ["L4", "L2"], type: "Female" },
+                { name: "GIRLS - SKIRT", cols: ["L5", "L2", "Quantity"], type: "Female" },
+                { name: "GIRLS - PANT SPECIAL CASE", cols: ["L1", "L2", "L6", "L7", "Quantity"], type: "Female" },
+            ];
+
+            const allItems = [...boysItems, ...girlsItems];
+            const itemHeaders = [];
+            allItems.forEach(i => {
+                itemHeaders.push(i.name);
+                itemHeaders.push('Qty_' + i.name); // Item-specific quantity
+            });
+            const headers = [...infoHeaders, ...measureHeaders, ...itemHeaders];
+
+            // Metadata Rows
+            const preparedBy = document.getElementById('preparedBy').value || "Planet Solutions";
+            const description = document.getElementById('description').value || "";
+            const timestamp = new Date().toLocaleString();
+
+            const data = [
+                ["FILE METADATA"],
+                ["Prepared By:", preparedBy],
+                ["Description:", description],
+                ["Generated On:", timestamp],
+                [], // Empty row for spacing
+                headers // The actual header row
+            ];
+
+            const startMeasureCol = infoHeaders.length;
+            const uMap = {};
+            for (let i = 1; i <= 8; i++) uMap[`U${i}`] = startMeasureCol + i - 1;
+            const lMap = {};
+            for (let i = 1; i <= 8; i++) lMap[`L${i}`] = startMeasureCol + 8 + i - 1;
+            const startItemCol = headers.length - allItems.length;
+
+            const keyMappings = {
+                "student name": ["student name", "name", "studentname", "student_name", "student"],
+                "admission no": ["admission no", "adm no", "admin no", "eno", "admission_no", "adm. no", "adm_no", "id", "admission"],
+                "roll no": ["roll no", "roll", "roll_no", "rollno", "r.no"],
+                "class": ["class", "grade", "standard", "std", "cls"],
+                "section": ["section", "sec", "division", "div"],
+                "house": ["house", "group", "team"],
+                "gender": ["gender", "sex"],
+                "s.no": ["s.no", "sl no", "sl.no", "no", "serial no"],
+                "quantity": ["quantity", "qty", "count"]
+            };
+
+            function getMappedValue(row, targetHeader) {
+                const targetLower = targetHeader.trim().toLowerCase();
+                if (row[targetLower] !== undefined) return row[targetLower];
+                if (keyMappings[targetLower]) {
+                    for (const alias of keyMappings[targetLower]) {
+                        if (row[alias] !== undefined) return row[alias];
+                    }
+                }
+                if (targetLower.startsWith('u') || targetLower.startsWith('l')) {
+                    const shortKey = targetLower.split(' ')[0];
+                    if (row[shortKey] !== undefined) return row[shortKey];
+                    const looseMatch = Object.keys(row).find(k => k.startsWith(shortKey + ' ') || k.startsWith(shortKey + '('));
+                    if (looseMatch) return row[looseMatch];
+                }
+                return null;
+            }
+
+            for (let i = 0; i < rowCount; i++) {
+                const row = new Array(headers.length).fill("");
+                if (i < importedData.length) {
+                    const src = importedData[i];
+                    infoHeaders.forEach((h, idx) => {
+                        let val = getMappedValue(src, h);
+                        // Default "Absent/Present" to "Present" if empty
+                        if (h === "Absent/Present" && (val === null || val === "" || val === undefined)) {
+                            val = "Present";
+                        }
+                        row[idx] = val !== null ? val : "";
+                    });
+                    measureHeaders.forEach((h, idx) => {
+                        const colIdx = startMeasureCol + idx;
+                        let val = getMappedValue(src, h);
+                        if (val === null || val === "" || val === undefined) val = "00";
+                        row[colIdx] = val;
+                    });
+                } else {
+                    // Default Row Logic
+                    const absPresIdx = infoHeaders.indexOf("Absent/Present");
+                    if (absPresIdx !== -1) row[absPresIdx] = "Present";
+
+                    for (let c = startMeasureCol; c < startMeasureCol + 16; c++) {
+                        row[c] = "00";
+                    }
+                }
+                data.push(row);
+            }
+
+            const wb = XLSX.utils.book_new();
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            for (let r = 0; r < rowCount; r++) {
+                // Adjust rowNum for metadata (6 rows total: 5 metadata + 1 header, so data starts at row 7)
+                // Excel is 1-based, array is 0-based.
+                // data array: [Meta1, Meta2, Meta3, Meta4, Meta5, Headers, Row1, Row2...]
+                // Row 1 is at index 6.
+                // Excel Row for Row 1 is 7.
+                const rowNum = r + 7;
+                const genderCell = `G${rowNum}`;
+                allItems.forEach((item, idx) => {
+                    const colIndex = startItemCol + idx;
+                    const cellRef = XLSX.utils.encode_cell({ r: rowNum - 1, c: colIndex });
+                    const parts = item.cols.map(comp => {
+                        let colIdx = -1;
+                        if (uMap[comp] !== undefined) colIdx = uMap[comp];
+                        else if (lMap[comp] !== undefined) colIdx = lMap[comp];
+                        if (colIdx !== -1) {
+                            const colLetter = XLSX.utils.encode_col(colIdx);
+                            return `${colLetter}${rowNum}`;
+                        }
+                        return null;
+                    }).filter(p => p);
+                    const concatFormula = parts.join(' & "," & ');
+                    let finalFormula = "";
+                    if (item.type === "Male") {
+                        finalFormula = `IF(UPPER(${genderCell})="MALE", ${concatFormula}, "")`;
+                    } else if (item.type === "Female") {
+                        finalFormula = `IF(UPPER(${genderCell})="FEMALE", ${concatFormula}, "")`;
+                    } else {
+                        finalFormula = concatFormula;
+                    }
+                    if (!ws[cellRef]) ws[cellRef] = { t: 's', v: '' };
+                    ws[cellRef].f = finalFormula;
+                });
+            }
+            const wscols = headers.map(h => ({ wch: h.length + 5 }));
+            ws['!cols'] = wscols;
+            XLSX.utils.book_append_sheet(wb, ws, "Measurements");
+            const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'binary' });
+            function s2ab(s) {
+                const buf = new ArrayBuffer(s.length);
+                const view = new Uint8Array(buf);
+                for (let i = 0; i < s.length; i++) view[i] = s.charCodeAt(i) & 0xFF;
+                return buf;
+            }
+            const blob = new Blob([s2ab(wbout)], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "PLANETFINAL_WithData.xlsx";
+            document.body.appendChild(a);
+            a.click();
+            setTimeout(() => {
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+            }, 0);
+            statusEl.classList.remove('hidden');
+            setTimeout(() => statusEl.classList.add('hidden'), 5000);
+        }
+    </script>
+</body>
+
+
+</html>

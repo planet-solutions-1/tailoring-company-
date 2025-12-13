@@ -1,0 +1,15 @@
+{
+    "name": "planet-editor",
+    "version": "1.0.0",
+    "description": "Planet Editor Dashboard",
+    "scripts": {
+        "start": "node server/server.js",
+        "dev": "nodemon server/server.js"
+    },
+    "dependencies": {
+        "express": "^4.18.2"
+    },
+    "engines": {
+        "node": "18.x"
+    }
+}

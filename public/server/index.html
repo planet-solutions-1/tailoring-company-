@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gesture Controlled Particles with Gemini</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #050505;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: white;
+            user-select: none;
+        }
+
+        #canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+        }
+
+        /* Hide the webcam video, we only need the data */
+        #input-video {
+            display: none;
+        }
+
+        #ui-layer {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 10;
+            pointer-events: none; /* Let clicks pass through to canvas if needed, but we need pointer-events auto for children */
+        }
+
+        /* Status Box */
+        .status-box {
+            pointer-events: auto;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(5px);
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            max-width: 300px;
+            margin-bottom: 10px;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            margin: 0 0 10px 0;
+            text-shadow: 0 0 10px rgba(0, 255, 255, 0.5);
+        }
+
+        .instruction {
+            font-size: 0.9rem;
+            color: #aaa;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .instruction b {
+            color: #fff;
+            min-width: 60px;
+        }
+
+        #gesture-display {
+            font-weight: bold;
+            color: #00ffff;
+            font-size: 1.2rem;
+            margin-top: 10px;
+            text-transform: uppercase;
+        }
+
+        /* Gemini AI UI Elements */
+        .ai-controls {
+            pointer-events: auto;
+            margin-top: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 300px;
+        }
+
+        .ai-btn {
+            background: linear-gradient(135deg, #6e8efb, #a777e3);
+            border: none;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: transform 0.2s, box-shadow 0.2s;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+
+        .ai-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(167, 119, 227, 0.6);
+        }
+        
+        .ai-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .command-row {
+            display: flex;
+            gap: 5px;
+        }
+
+        #ai-input {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 6px;
+            padding: 8px;
+            color: white;
+            flex: 1;
+            outline: none;
+        }
+        
+        #ai-input:focus {
+            border-color: #a777e3;
+            background: rgba(255,255,255,0.15);
+        }
+
+        #aura-result {
+            margin-top: 10px;
+            font-style: italic;
+            color: #e0ccff;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            min-height: 1.4em;
+            background: rgba(0,0,0,0.3);
+            padding: 10px;
+            border-radius: 8px;
+            border-left: 3px solid #a777e3;
+            display: none; /* Hidden until used */
+        }
+
+        /* Loading Overlay */
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            transition: opacity 0.5s;
+        }
+
+        .loader {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #00ffff;
+            animation: spin 1s ease-in-out infinite;
+            margin-bottom: 20px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        #start-btn {
+            background: #00ffff;
+            color: #000;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: none; /* Hidden until loaded */
+            pointer-events: auto;
+        }
+
+        #start-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+        }
+
+        .webcam-preview {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 160px;
+            height: 120px;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            z-index: 5;
+            transform: scaleX(-1); /* Mirror effect */
+            background: #111;
+        }
+        
+        .webcam-preview video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+    </style>
+    
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <!-- MediaPipe Hands -->
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+</head>
+<body>
+
+    <!-- Loading / Start Screen -->
+    <div id="loading-overlay">
+        <div class="loader"></div>
+        <h2 id="loading-text">Loading AI Models...</h2>
+        <button id="start-btn">Start Experience</button>
+        <p style="margin-top:10px; color:#666; font-size: 0.8rem;">Requires Camera Access</p>
+    </div>
+
+    <!-- Main UI -->
+    <div id="ui-layer">
+        <div class="status-box">
+            <h1>Particle Shaper</h1>
+            <div id="gesture-display">Waiting for hand...</div>
+            <hr style="border: 0; border-top: 1px solid rgba(255,255,255,0.1); margin: 10px 0;">
+            <div class="instruction"><b>☝️ Index</b> <span>Heart Shape</span></div>
+            <div class="instruction"><b>✌️ Two</b> <span>Flower Shape</span></div>
+            <div class="instruction"><b>🤟 Three</b> <span>Saturn Ring</span></div>
+            <div class="instruction"><b>✋ Open</b> <span>Nebula Cloud</span></div>
+            <div class="instruction"><b>✊ Fist</b> <span>Collapse</span></div>
+            <div class="instruction"><b>👐 2 Hands</b> <span>Distance = Expansion</span></div>
+        </div>
+
+        <div class="ai-controls">
+            <!-- Aura Reader -->
+            <button class="ai-btn" id="aura-btn" onclick="readAura()">
+                <span>✨ Read Aura</span>
+            </button>
+            <div id="aura-result"></div>
+
+            <!-- Cosmic Command -->
+            <div class="command-row">
+                <input type="text" id="ai-input" placeholder="Ex: Frozen ice storm...">
+                <button class="ai-btn" id="command-btn" onclick="sendCommand()" style="padding: 8px 12px;">
+                    <span>✨</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Webcam Preview (User feedback) -->
+    <div class="webcam-preview">
+        <canvas id="output-canvas"></canvas> <!-- MediaPipe draws here -->
+    </div>
+
+    <!-- Hidden Input Video -->
+    <video id="input-video"></video>
+
+    <!-- 3D Canvas -->
+    <div id="canvas-container"></div>
+
+    <script>
+        // --- GEMINI CONFIGURATION ---
+        const apiKey = ""; // Will be injected by runtime
+        
+        // --- THREE.JS CONFIGURATION ---
+        const PARTICLE_COUNT = 15000;
+        const DEFAULT_PARTICLE_SIZE = 0.08;
+        let particleSize = DEFAULT_PARTICLE_SIZE;
+        const MORPH_SPEED = 0.08;
+        
+        // --- GLOBAL VARIABLES ---
+        let scene, camera, renderer;
+        let particles, geometry, material;
+        let targetPositions = []; 
+        let currentShape = 'sphere';
+        let expansionFactor = 1.0;
+        let rotationSpeed = 0.002;
+        
+        // Color Palettes (Current State)
+        let activePalette = {
+            c1: new THREE.Color('#00ffff'),
+            c2: new THREE.Color('#ff00ff')
+        };
+
+        // Presets
+        const PRESETS = {
+            sphere: [new THREE.Color('#00ffff'), new THREE.Color('#ff00ff')],
+            heart: [new THREE.Color('#ff0000'), new THREE.Color('#ff69b4')],
+            flower: [new THREE.Color('#ffff00'), new THREE.Color('#ff4500')],
+            saturn: [new THREE.Color('#e6c229'), new THREE.Color('#d11149')],
+            collapse: [new THREE.Color('#ffffff'), new THREE.Color('#000000')]
+        };
+
+        let isCustomMode = false; // If true, ignore gesture shape changes for color, but allow shape changes
+
+        // --- INIT THREE.JS ---
+        function initThree() {
+            const container = document.getElementById('canvas-container');
+            
+            scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x050505, 0.035);
+
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 25;
+
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            container.appendChild(renderer.domElement);
+
+            createParticles();
+
+            const ambientLight = new THREE.AmbientLight(0x404040);
+            scene.add(ambientLight);
+
+            window.addEventListener('resize', onWindowResize, false);
+            animate();
+        }
+
+        function createTexture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 32;
+            canvas.height = 32;
+            const ctx = canvas.getContext('2d');
+            
+            const grad = ctx.createRadialGradient(16, 16, 0, 16, 16, 16);
+            grad.addColorStop(0, 'rgba(255,255,255,1)');
+            grad.addColorStop(0.4, 'rgba(255,255,255,0.5)');
+            grad.addColorStop(1, 'rgba(255,255,255,0)');
+            
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, 32, 32);
+            
+            const texture = new THREE.Texture(canvas);
+            texture.needsUpdate = true;
+            return texture;
+        }
+
+        function createParticles() {
+            geometry = new THREE.BufferGeometry();
+            
+            const positions = [];
+            const colors = [];
+            const sizes = [];
+            
+            const spherePoints = getShapePoints('sphere');
+            
+            targetPositions = new Float32Array(PARTICLE_COUNT * 3);
+
+            for (let i = 0; i < PARTICLE_COUNT; i++) {
+                positions.push(spherePoints[i*3], spherePoints[i*3+1], spherePoints[i*3+2]);
+                targetPositions[i*3] = spherePoints[i*3];
+                targetPositions[i*3+1] = spherePoints[i*3+1];
+                targetPositions[i*3+2] = spherePoints[i*3+2];
+
+                const color = new THREE.Color().lerpColors(activePalette.c1, activePalette.c2, Math.random());
+                colors.push(color.r, color.g, color.b);
+                
+                sizes.push(Math.random());
+            }
+
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+            geometry.setAttribute('color', new THREE.Float32BufferAttribute(colors, 3));
+            geometry.setAttribute('size', new THREE.Float32BufferAttribute(sizes, 1));
+
+            material = new THREE.PointsMaterial({
+                size: particleSize,
+                map: createTexture(),
+                vertexColors: true,
+                blending: THREE.AdditiveBlending,
+                depthWrite: false,
+                transparent: true,
+                opacity: 0.8
+            });
+
+            particles = new THREE.Points(geometry, material);
+            scene.add(particles);
+        }
+
+        function getShapePoints(type) {
+            const arr = new Float32Array(PARTICLE_COUNT * 3);
+            for (let i = 0; i < PARTICLE_COUNT; i++) {
+                let x, y, z;
+                const idx = i * 3;
+
+                if (type === 'sphere') {
+                    const r = 10 * Math.cbrt(Math.random());
+                    const theta = Math.random() * Math.PI * 2;
+                    const phi = Math.acos(2 * Math.random() - 1);
+                    x = r * Math.sin(phi) * Math.cos(theta);
+                    y = r * Math.sin(phi) * Math.sin(theta);
+                    z = r * Math.cos(phi);
+                } 
+                else if (type === 'heart') {
+                    const t = Math.random() * Math.PI * 2;
+                    const scale = 0.5;
+                    const thickness = (Math.random() - 0.5) * 4;
+                    x = scale * (16 * Math.pow(Math.sin(t), 3));
+                    y = scale * (13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t));
+                    z = thickness;
+                    x += (Math.random()-0.5); y += (Math.random()-0.5);
+                }
+                else if (type === 'flower') {
+                    const k = 4;
+                    const theta = Math.random() * Math.PI * 2;
+                    const rBase = Math.cos(k * theta);
+                    const r = 8 * Math.abs(rBase) + 2;
+                    const phi = (Math.random() - 0.5) * 2;
+                    x = r * Math.cos(theta);
+                    y = r * Math.sin(theta);
+                    z = phi * (r/4);
+                }
+                else if (type === 'saturn') {
+                    if (Math.random() > 0.3) {
+                        const angle = Math.random() * Math.PI * 2;
+                        const radius = 12 + Math.random() * 6;
+                        x = Math.cos(angle) * radius;
+                        z = Math.sin(angle) * radius;
+                        y = (Math.random() - 0.5) * 0.5;
+                    } else {
+                        const r = 6;
+                        const theta = Math.random() * Math.PI * 2;
+                        const phi = Math.acos(2 * Math.random() - 1);
+                        x = r * Math.sin(phi) * Math.cos(theta);
+                        y = r * Math.sin(phi) * Math.sin(theta);
+                        z = r * Math.cos(phi);
+                    }
+                    const tx = x * Math.cos(0.4) - y * Math.sin(0.4);
+                    const ty = x * Math.sin(0.4) + y * Math.cos(0.4);
+                    x = tx; y = ty;
+                }
+                else if (type === 'collapse') {
+                    const r = 0.5 * Math.random();
+                    const theta = Math.random() * Math.PI * 2;
+                    const phi = Math.acos(2 * Math.random() - 1);
+                    x = r * Math.sin(phi) * Math.cos(theta);
+                    y = r * Math.sin(phi) * Math.sin(theta);
+                    z = r * Math.cos(phi);
+                }
+                arr[idx] = x; arr[idx+1] = y; arr[idx+2] = z;
+            }
+            return arr;
+        }
+
+        function switchShape(type) {
+            // Only switch if the type actually changed
+            if (currentShape === type) return;
+            currentShape = type;
+            
+            const newPoints = getShapePoints(type);
+            for(let i=0; i < newPoints.length; i++) {
+                targetPositions[i] = newPoints[i];
+            }
+            
+            document.getElementById('gesture-display').innerText = type.toUpperCase();
+
+            // If not in custom mode, reset palette to default for this shape
+            if (!isCustomMode) {
+                const preset = PRESETS[type] || PRESETS.sphere;
+                activePalette.c1 = preset[0];
+                activePalette.c2 = preset[1];
+                rotationSpeed = 0.002;
+                material.size = DEFAULT_PARTICLE_SIZE;
+                particleSize = DEFAULT_PARTICLE_SIZE;
+            }
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            if (!particles) return;
+
+            const positions = particles.geometry.attributes.position.array;
+            const colors = particles.geometry.attributes.color.array;
+            
+            const c1 = activePalette.c1;
+            const c2 = activePalette.c2;
+
+            for (let i = 0; i < PARTICLE_COUNT; i++) {
+                const px = i * 3;
+                const py = i * 3 + 1;
+                const pz = i * 3 + 2;
+
+                let tx = targetPositions[px];
+                let ty = targetPositions[py];
+                let tz = targetPositions[pz];
+
+                tx *= expansionFactor;
+                ty *= expansionFactor;
+                tz *= expansionFactor;
+
+                positions[px] += (tx - positions[px]) * MORPH_SPEED;
+                positions[py] += (ty - positions[py]) * MORPH_SPEED;
+                positions[pz] += (tz - positions[pz]) * MORPH_SPEED;
+                
+                const mix = (Math.sin(i * 0.1) + 1) / 2;
+                
+                const cr = colors[px];
+                const cg = colors[py];
+                const cb = colors[pz];
+                
+                const tr = c1.r * (1-mix) + c2.r * mix;
+                const tg = c1.g * (1-mix) + c2.g * mix;
+                const tb = c1.b * (1-mix) + c2.b * mix;
+
+                colors[px] += (tr - cr) * 0.05;
+                colors[py] += (tg - cg) * 0.05;
+                colors[pz] += (tb - cb) * 0.05;
+            }
+
+            particles.geometry.attributes.position.needsUpdate = true;
+            particles.geometry.attributes.color.needsUpdate = true;
+            
+            particles.rotation.y += rotationSpeed;
+            
+            renderer.render(scene, camera);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        // --- GEMINI API LOGIC ---
+
+        async function readAura() {
+            const btn = document.getElementById('aura-btn');
+            const resultDiv = document.getElementById('aura-result');
+            
+            btn.disabled = true;
+            btn.innerHTML = `<span>⏳ Reading...</span>`;
+            
+            const prompt = `The user is interacting with a 3D particle system. 
+            Current State:
+            - Shape: ${currentShape}
+            - Expansion Level: ${expansionFactor.toFixed(2)}x
+            - Gesture: ${document.getElementById('gesture-display').innerText}
+            
+            Act as a mystical fortune teller. Give a 2-sentence "Aura Reading" interpreting what this visual state says about the user's current energy. Be creative and mystical.`;
+
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }] }]
+                    })
+                });
+
+                const data = await response.json();
+                const text = data.candidates[0].content.parts[0].text;
+                
+                resultDiv.style.display = 'block';
+                resultDiv.innerText = text;
+            } catch (error) {
+                console.error("Gemini Error:", error);
+                resultDiv.style.display = 'block';
+                resultDiv.innerText = "The cosmic energies are cloudy... try again.";
+            }
+
+            btn.disabled = false;
+            btn.innerHTML = `<span>✨ Read Aura</span>`;
+        }
+
+        async function sendCommand() {
+            const input = document.getElementById('ai-input');
+            const btn = document.getElementById('command-btn');
+            const userText = input.value.trim();
+            
+            if (!userText) return;
+
+            btn.disabled = true;
+            btn.innerHTML = '⏳';
+            
+            const prompt = `You are a visual synthesizer for a particle system.
+            User Request: "${userText}"
+            
+            Map this request to the following JSON parameters:
+            - "shape": One of [sphere, heart, flower, saturn, collapse] (Choose the one that best fits the vibe)
+            - "color1": Hex code string (Primary color)
+            - "color2": Hex code string (Secondary color)
+            - "speed": float between 0.0 and 0.1 (Rotation speed)
+            - "size": float between 0.01 and 0.2 (Particle size, default 0.08)
+            
+            Return ONLY the JSON object. No markdown.`;
+
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }] }],
+                        generationConfig: {
+                            responseMimeType: "application/json"
+                        }
+                    })
+                });
+
+                const data = await response.json();
+                const jsonText = data.candidates[0].content.parts[0].text;
+                const params = JSON.parse(jsonText);
+                
+                // Apply Parameters
+                isCustomMode = true; // Lock color/speed from gesture overrides temporarily
+                
+                if (params.shape) switchShape(params.shape);
+                if (params.color1) activePalette.c1 = new THREE.Color(params.color1);
+                if (params.color2) activePalette.c2 = new THREE.Color(params.color2);
+                if (params.speed !== undefined) rotationSpeed = params.speed;
+                if (params.size !== undefined) {
+                    material.size = params.size;
+                    particleSize = params.size;
+                }
+                
+                input.value = "";
+                document.getElementById('gesture-display').innerText = "✨ COSMIC MODE ✨";
+
+            } catch (error) {
+                console.error("Gemini Error:", error);
+                input.value = "Error connecting to cosmos...";
+            }
+            
+            btn.disabled = false;
+            btn.innerHTML = '✨';
+        }
+
+        // Allow Enter key
+        document.getElementById('ai-input').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                sendCommand();
+            }
+        });
+
+
+        // --- MEDIAPIPE LOGIC (Unchanged mostly) ---
+        const videoElement = document.getElementById('input-video');
+        const outputCanvas = document.getElementById('output-canvas');
+        const outputCtx = outputCanvas.getContext('2d');
+        
+        function onResults(results) {
+            outputCtx.save();
+            outputCtx.clearRect(0, 0, outputCanvas.width, outputCanvas.height);
+            outputCtx.drawImage(results.image, 0, 0, outputCanvas.width, outputCanvas.height);
+            
+            if (results.multiHandLandmarks && results.multiHandLandmarks.length > 0) {
+                const handsCount = results.multiHandLandmarks.length;
+                for (const landmarks of results.multiHandLandmarks) {
+                    drawConnectors(outputCtx, landmarks, HAND_CONNECTIONS, {color: '#00ffff', lineWidth: 2});
+                    drawLandmarks(outputCtx, landmarks, {color: '#ff00ff', lineWidth: 1, radius: 2});
+                }
+                
+                if (handsCount === 2) {
+                    const hand1 = results.multiHandLandmarks[0][9];
+                    const hand2 = results.multiHandLandmarks[1][9];
+                    const dist = Math.sqrt(Math.pow(hand1.x - hand2.x, 2) + Math.pow(hand1.y - hand2.y, 2));
+                    const d = Math.max(0.1, Math.min(dist, 0.8));
+                    const targetExpansion = (d - 0.1) * 4 + 0.5; 
+                    expansionFactor += (targetExpansion - expansionFactor) * 0.1;
+                } else {
+                    expansionFactor += (1.0 - expansionFactor) * 0.1;
+                    const landmarks = results.multiHandLandmarks[0];
+                    processOneHandGesture(landmarks);
+                    
+                    const x = landmarks[9].x; 
+                    const y = landmarks[9].y; 
+                    particles.rotation.x += ((y - 0.5) * 1.5 - particles.rotation.x) * 0.05;
+                    particles.rotation.z += ((x - 0.5) * 1.5 - particles.rotation.z) * 0.05;
+                }
+            } else {
+                expansionFactor += (1.0 - expansionFactor) * 0.05;
+            }
+            outputCtx.restore();
+        }
+
+        function processOneHandGesture(landmarks) {
+            const isFingerUp = (tipIdx, pipIdx) => landmarks[tipIdx].y < landmarks[pipIdx].y;
+            const indexUp = isFingerUp(8, 6);
+            const middleUp = isFingerUp(12, 10);
+            const ringUp = isFingerUp(16, 14);
+            const pinkyUp = isFingerUp(20, 18);
+            
+            let count = 0;
+            if (indexUp) count++;
+            if (middleUp) count++;
+            if (ringUp) count++;
+            if (pinkyUp) count++;
+
+            const isFist = !indexUp && !middleUp && !ringUp && !pinkyUp;
+
+            // If user makes a gesture, we exit "Custom AI Mode" and go back to gesture defaults
+            // But we add a small delay or check so flickering doesn't reset it constantly
+            if (isCustomMode && (isFist || count > 0)) {
+                // Optional: Reset custom mode on significant gesture change
+                isCustomMode = false;
+            }
+
+            if (isFist) {
+                switchShape('collapse');
+            } else {
+                switch (count) {
+                    case 1: switchShape('heart'); break;
+                    case 2: switchShape('flower'); break;
+                    case 3: switchShape('saturn'); break;
+                    default: switchShape('sphere'); break;
+                }
+            }
+        }
+
+        // --- SETUP ---
+        const startBtn = document.getElementById('start-btn');
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const loadingText = document.getElementById('loading-text');
+
+        const hands = new Hands({locateFile: (file) => {
+            return `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`;
+        }});
+
+        hands.setOptions({
+            maxNumHands: 2,
+            modelComplexity: 1,
+            minDetectionConfidence: 0.5,
+            minTrackingConfidence: 0.5
+        });
+
+        hands.onResults(onResults);
+
+        loadingText.innerText = "Ready to Initialize";
+        startBtn.style.display = "block";
+        document.querySelector('.loader').style.display = 'none';
+
+        startBtn.addEventListener('click', () => {
+            loadingText.innerText = "Accessing Camera...";
+            document.querySelector('.loader').style.display = 'block';
+            startBtn.style.display = "none";
+            
+            const cameraUtils = new Camera(videoElement, {
+                onFrame: async () => {
+                    await hands.send({image: videoElement});
+                },
+                width: 640,
+                height: 480
+            });
+            
+            cameraUtils.start()
+            .then(() => {
+                loadingOverlay.style.opacity = 0;
+                setTimeout(() => {
+                    loadingOverlay.style.display = 'none';
+                    initThree();
+                }, 500);
+            })
+            .catch(err => {
+                console.error(err);
+                loadingText.innerText = "Camera Error: " + err.message;
+            });
+        });
+    </script>
+</body>
+</html>

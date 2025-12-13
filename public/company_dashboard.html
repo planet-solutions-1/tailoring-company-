@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planet Admin | Command Center v5.2 (Mobile)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=Inter:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --ink-black: #1c1917;
+            --rice-paper: #fafaf9;
+            --seal-red: #be123c;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--rice-paper);
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23e7e5e4' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+
+        .font-ink {
+            font-family: 'Noto Serif JP', serif;
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .nav-item.active {
+            background-color: var(--rice-paper);
+            color: var(--ink-black);
+            border-left: 4px solid var(--seal-red);
+        }
+
+        .ink-brush-title {
+            position: relative;
+            display: inline-block;
+        }
+
+        .ink-brush-title::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 40px;
+            height: 3px;
+            background-color: var(--seal-red);
+            border-radius: 2px;
+        }
+
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #d6d3d1;
+            border-radius: 3px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #a8a29e;
+        }
+    </style>
+</head>
+
+<body class="h-screen flex flex-col md:flex-row overflow-hidden text-stone-800">
+
+    <!-- Mobile Header -->
+    <div class="md:hidden bg-stone-900 text-white p-4 flex justify-between items-center z-50 shadow-md">
+        <h1 class="font-ink text-lg flex items-center gap-2"><span class="text-rose-600 text-xl">●</span> Planet Admin
+        </h1>
+        <button onclick="toggleSidebar()" class="text-stone-300 focus:outline-none"><svg width="24" height="24"
+                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg></button>
+    </div>
+
+    <!-- Backdrop -->
+    <div id="sidebar-backdrop" onclick="toggleSidebar()"
+        class="fixed inset-0 bg-black/50 z-30 hidden md:hidden glass-panel opacity-0 transition-opacity duration-300">
+    </div>
+
+    <!-- Sidebar -->
+    <aside id="sidebar"
+        class="fixed inset-y-0 left-0 z-40 w-64 bg-stone-900 text-stone-400 flex flex-col shadow-2xl transition-transform duration-300 transform -translate-x-full md:translate-x-0 md:relative">
+        <div class="p-6 border-b border-stone-800 hidden md:block">
+            <h1 class="text-2xl font-ink text-stone-100 tracking-wide flex items-center gap-2"><span
+                    class="text-rose-600 text-3xl">●</span> Planet</h1>
+            <p class="text-xs text-stone-500 mt-1 tracking-widest uppercase">Admin Command v15.1</p>
+        </div>
+        <div class="p-6 border-b border-stone-800 md:hidden flex justify-between items-center"><span
+                class="text-xl font-ink text-white">Menu</span><button onclick="toggleSidebar()"
+                class="text-stone-500"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg></button></div>
+
+        <nav class="flex-1 p-4 space-y-1 overflow-y-auto">
+            <button onclick="switchTab('overview')" id="nav-overview"
+                class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-r-lg hover:bg-stone-800 hover:text-stone-200 transition-all text-sm font-medium"><svg
+                    width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <rect x="3" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="14" width="7" height="7"></rect>
+                    <rect x="3" y="14" width="7" height="7"></rect>
+                </svg> Overview</button>
+            <button onclick="switchTab('data')" id="nav-data"
+                class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-r-lg hover:bg-stone-800 hover:text-stone-200 transition-all text-sm font-medium"><svg
+                    width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M3 3v18h18" />
+                    <path d="M18 17V9" />
+                    <path d="M13 17V5" />
+                    <path d="M8 17v-3" />
+                </svg> Global Data</button>
+            <button onclick="switchTab('users')" id="nav-users"
+                class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-r-lg hover:bg-stone-800 hover:text-stone-200 transition-all text-sm font-medium"><svg
+                    width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                    <circle cx="9" cy="7" r="4" />
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg> User Management</button>
+            <button onclick="switchTab('access')" id="nav-access"
+                class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-r-lg hover:bg-stone-800 hover:text-stone-200 transition-all text-sm font-medium"><svg
+                    width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg> Access Codes</button>
+            <button onclick="switchTab('reports')" id="nav-reports"
+                class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-r-lg hover:bg-stone-800 hover:text-stone-200 transition-all text-sm font-medium"><svg
+                    width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                    <polyline points="14 2 14 8 20 8" />
+                    <line x1="16" y1="13" x2="8" y2="13" />
+                    <line x1="16" y1="17" x2="8" y2="17" />
+                    <polyline points="10 9 9 9 8 9" />
+                </svg> Reports & Exports</button>
+            <button onclick="switchTab('schools')" id="nav-schools"
+                class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-r-lg hover:bg-stone-800 hover:text-stone-200 transition-all text-sm font-medium"><svg
+                    width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M3 21h18M5 21V7l8-4 8 4v14M8 21v-9a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v9" />
+                </svg> Schools</button>
+            <button onclick="switchTab('complaints')" id="nav-complaints"
+                class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-r-lg hover:bg-stone-800 hover:text-stone-200 transition-all text-sm font-medium"><svg
+                    width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path
+                        d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+                </svg> Complaints</button>
+
+            <!-- SHORTCUTS -->
+            <div class="h-px bg-stone-800 mx-4 my-2"></div>
+
+            <button onclick="window.open('planet_editor.html', '_blank')"
+                class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-r-lg hover:bg-stone-800 hover:text-rose-400 transition-all text-sm font-medium text-stone-400"><svg
+                    width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                </svg> Open School Editor</button>
+
+            <button onclick="window.open('packing_dashboard.html', '_blank')"
+                class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-r-lg hover:bg-stone-800 hover:text-rose-400 transition-all text-sm font-medium text-stone-400"><svg
+                    width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path
+                        d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z">
+                    </path>
+                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                    <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                </svg> Open Packing DB</button>
+        </nav>
+        <div class="p-4 border-t border-stone-800"><button onclick="logout()"
+                class="w-full bg-rose-900/30 text-rose-400 hover:bg-rose-900/50 hover:text-rose-300 py-2 px-4 rounded transition-colors text-xs uppercase tracking-wider font-bold">Sign
+                Out</button></div>
+    </aside>
+
+    <main class="flex-1 overflow-y-auto p-4 md:p-8 relative">
+        <!-- Header -->
+        <header class="flex flex-col md:flex-row justify-between md:items-center gap-4 mb-6 md:mb-8">
+            <div>
+                <h2 id="page-title" class="text-2xl md:text-3xl font-ink font-bold text-stone-800 ink-brush-title">
+                    System Overview</h2>
+                <p id="page-subtitle" class="text-stone-500 mt-2 text-sm">Real-time data from all schools & production
+                    units.</p>
+            </div>
+            <div class="flex gap-3"><button onclick="fixDatabase()"
+                    class="bg-blue-50 text-blue-600 px-4 py-2 rounded-full text-xs font-bold hover:bg-blue-100 border border-blue-200 shadow-sm transition-transform active:scale-95 whitespace-nowrap">Repair
+                    DB</button>
+                <div
+                    class="bg-white px-4 py-2 rounded-full shadow-sm border border-stone-200 text-xs font-mono text-stone-500 flex items-center gap-2 whitespace-nowrap">
+                    <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>Online
+                </div>
+            </div>
+        </header>
+
+        <!-- 1. OVERVIEW -->
+        <div id="view-overview" class="space-y-6 fade-in">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+                <div class="glass-panel p-6 rounded-xl">
+                    <p class="text-xs text-stone-500 uppercase tracking-widest font-bold">Total Students</p>
+                    <p class="text-4xl font-ink text-stone-800 mt-2" id="stat-students">0</p>
+                </div>
+                <div class="glass-panel p-6 rounded-xl">
+                    <p class="text-xs text-stone-500 uppercase tracking-widest font-bold">Schools</p>
+                    <p class="text-4xl font-ink text-stone-800 mt-2" id="stat-schools">0</p>
+                </div>
+                <div class="glass-panel p-6 rounded-xl border-l-4 border-emerald-500">
+                    <p class="text-xs text-emerald-600 uppercase tracking-widest font-bold">Packed Units</p>
+                    <p class="text-4xl font-ink text-stone-800 mt-2" id="stat-packed">0</p>
+                </div>
+                <div class="glass-panel p-6 rounded-xl border-l-4 border-amber-500">
+                    <p class="text-xs text-amber-600 uppercase tracking-widest font-bold">Pending</p>
+                    <p class="text-4xl font-ink text-stone-800 mt-2" id="stat-pending">0</p>
+                </div>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 h-auto md:h-80">
+                <div class="glass-panel p-6 rounded-xl flex flex-col h-80 md:h-full">
+                    <h3 class="font-ink text-lg mb-4">Packing Progress</h3>
+                    <div class="flex-1 relative"><canvas id="chart-packing"></canvas></div>
+                </div>
+                <div class="glass-panel p-6 rounded-xl flex flex-col h-80 md:h-full">
+                    <h3 class="font-ink text-lg mb-4">School Enrollment</h3>
+                    <div class="flex-1 relative"><canvas id="chart-schools"></canvas></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. GLOBAL DATA -->
+        <div id="view-data" class="hidden space-y-4 fade-in">
+            <div class="glass-panel p-4 rounded-xl flex flex-wrap gap-3 md:gap-4 items-end">
+                <div class="w-[47%] md:w-auto"><label
+                        class="text-[10px] font-bold text-stone-500 uppercase">Class</label><input type="text"
+                        id="filter-class" list="list-class" onchange="renderGlobalTable()"
+                        class="block w-full md:w-20 mt-1 text-xs border-gray-300 rounded shadow-sm px-2 py-1.5"
+                        placeholder="All"><datalist id="list-class"></datalist></div>
+                <div class="w-[47%] md:w-auto"><label
+                        class="text-[10px] font-bold text-stone-500 uppercase">Section</label><input type="text"
+                        id="filter-section" list="list-section" onchange="renderGlobalTable()"
+                        class="block w-full md:w-20 mt-1 text-xs border-gray-300 rounded shadow-sm px-2 py-1.5"
+                        placeholder="All"><datalist id="list-section"></datalist></div>
+                <div class="w-[47%] md:w-auto"><label
+                        class="text-[10px] font-bold text-stone-500 uppercase">House</label><input type="text"
+                        id="filter-house" list="list-house" onchange="renderGlobalTable()"
+                        class="block w-full md:w-24 mt-1 text-xs border-gray-300 rounded shadow-sm px-2 py-1.5"
+                        placeholder="All"><datalist id="list-house"></datalist></div>
+                <div class="w-[47%] md:w-auto"><label
+                        class="text-[10px] font-bold text-stone-500 uppercase">Gender</label><select id="filter-gender"
+                        onchange="renderGlobalTable()"
+                        class="block w-full md:w-24 mt-1 text-xs border-gray-300 rounded shadow-sm">
+                        <option value="">All</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                    </select></div>
+                <div class="w-[47%] md:w-auto"><label
+                        class="text-[10px] font-bold text-stone-500 uppercase">Priority</label><select
+                        id="filter-priority" onchange="renderGlobalTable()"
+                        class="block w-full md:w-24 mt-1 text-xs border-gray-300 rounded shadow-sm">
+                        <option value="all">All</option>
+                        <option value="High">High</option>
+                        <option value="Normal">Normal</option>
+                        <option value="Low">Low</option>
+                    </select></div>
+                <div class="w-[47%] md:w-auto"><label
+                        class="text-[10px] font-bold text-stone-500 uppercase">Packing</label><select id="filter-packed"
+                        onchange="renderGlobalTable()"
+                        class="block w-full md:w-24 mt-1 text-xs border-gray-300 rounded shadow-sm">
+                        <option value="all">All</option>
+                        <option value="packed">Packed</option>
+                        <option value="pending">Pending</option>
+                    </select></div>
+                <div class="w-full md:w-auto md:ml-auto"><label
+                        class="text-[10px] font-bold text-stone-500 uppercase">Search</label><input type="text"
+                        id="date-search" onkeyup="renderGlobalTable()" placeholder="Name / Roll No..."
+                        class="block w-full md:w-32 mt-1 text-xs border-gray-300 rounded shadow-sm px-2 py-1.5"></div>
+            </div>
+
+            <div
+                class="glass-panel p-3 rounded-xl flex flex-col md:flex-row items-start md:items-center gap-3 bg-stone-50/50">
+                <div class="w-full md:w-auto"><label class="text-[10px] font-bold text-stone-500 uppercase">Filter by
+                        Item</label><select id="filter-item" onchange="handleItemFilter()"
+                        class="block w-full md:w-48 mt-1 text-xs border-gray-300 rounded shadow-sm">
+                        <option value="all">Select Item Type...</option>
+                    </select></div>
+                <div class="hidden md:block h-8 w-px bg-stone-300 mx-2"></div>
+                <div class="md:hidden w-full h-px bg-stone-300 my-1"></div>
+                <div id="dynamic-filters-container" class="flex gap-2 flex-wrap items-end w-full"><span
+                        class="text-xs text-stone-400 italic mt-0 md:mt-4">Select an item above to filter by
+                        measurements.</span></div>
+            </div>
+
+            <div class="glass-panel rounded-xl overflow-hidden shadow-lg border border-stone-200">
+                <div class="overflow-x-auto h-[550px]">
+                    <table class="w-full text-left border-collapse min-w-[800px]">
+                        <thead class="bg-stone-100 sticky top-0 z-10 shadow-sm">
+                            <tr>
+                                <th class="p-4 text-xs font-bold text-stone-500 uppercase tracking-wider">School</th>
+                                <th class="p-4 text-xs font-bold text-stone-500 uppercase tracking-wider">Student
+                                    Details</th>
+                                <th class="p-4 text-xs font-bold text-stone-500 uppercase tracking-wider">Meta</th>
+                                <th class="p-4 text-xs font-bold text-stone-500 uppercase tracking-wider">Measurements
+                                </th>
+                                <th class="p-4 text-xs font-bold text-stone-500 uppercase tracking-wider text-center">
+                                    Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="global-table-body" class="divide-y divide-stone-100 bg-white"></tbody>
+                    </table>
+                </div>
+            </div>
+            <p class="text-right text-xs text-stone-400 mt-2" id="record-count">Showing 0 records</p>
+        </div>
+
+        <!-- 3. USER MANAGEMENT -->
+        <div id="view-users" class="hidden fade-in max-w-5xl mx-auto space-y-8">
+            <div class="glass-panel p-6 md:p-8 rounded-xl relative">
+                <div class="flex justify-between items-center mb-6 border-b pb-4">
+                    <h3 class="text-2xl font-ink">User Management</h3><button onclick="openSchoolModal()"
+                        class="bg-stone-800 hover:bg-stone-700 text-white px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors shadow-lg">Register
+                        New School</button>
+                </div>
+                <h4 class="text-sm font-bold text-stone-500 uppercase tracking-wider mb-4">Create New User Account</h4>
+                <form onsubmit="createUser(event)" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div><label class="block text-sm font-medium text-stone-700">Username</label><input type="text"
+                                name="username" required
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 px-3 py-2 border">
+                        </div>
+                        <div><label class="block text-sm font-medium text-stone-700">Password</label><input type="text"
+                                name="password" required
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 px-3 py-2 border">
+                        </div>
+                    </div>
+                    <div><label class="block text-sm font-medium text-stone-700">Role</label><select name="role"
+                            id="user-role" onchange="toggleSchoolSelect()"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 px-3 py-2 border">
+                            <option value="school">School Admin</option>
+                            <option value="tailor">Tailor</option>
+                            <option value="packing">Packing Unit</option>
+                            <option value="company">Company Admin</option>
+                        </select></div>
+                    <div id="school-select-wrapper"><label class="block text-sm font-medium text-stone-700">Assign To
+                            School</label><select name="school_id" id="school-select"
+                            class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-rose-500 focus:ring-rose-500 px-3 py-2 border"></select>
+                    </div>
+                    <button type="submit"
+                        class="w-full bg-stone-900 text-white py-3 rounded-lg hover:bg-stone-800 transition-colors font-medium text-lg shadow-lg">Create
+                        Account</button>
+                </form>
+            </div>
+            <div class="glass-panel p-6 md:p-8 rounded-xl">
+                <h3 class="text-lg font-ink mb-4">Existing Accounts</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm min-w-[600px]">
+                        <thead class="bg-stone-50 text-stone-500 uppercase text-xs">
+                            <tr>
+                                <th class="p-3 text-left">User</th>
+                                <th class="p-3 text-left">Role</th>
+                                <th class="p-3 text-left">School</th>
+                                <th class="p-3 text-right">Created</th>
+                            </tr>
+                        </thead>
+                        <tbody id="user-list-body" class="divide-y divide-stone-100"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. ACCESS CODES -->
+        <div id="view-access" class="hidden fade-in max-w-5xl mx-auto space-y-6">
+            <div class="glass-panel p-6 md:p-8 rounded-xl">
+                <h3 class="text-xl font-ink mb-4">Generate Secure Link</h3>
+                <div class="flex flex-col md:flex-row gap-4 items-end">
+                    <div class="w-full md:flex-1"><label
+                            class="block text-xs font-bold text-stone-500 uppercase mb-1">Target School</label><select
+                            id="access-school-select" class="w-full border rounded px-3 py-2"></select></div>
+                    <div class="w-full md:w-48"><label
+                            class="block text-xs font-bold text-stone-500 uppercase mb-1">Role Type</label><select
+                            id="access-type" class="w-full border rounded px-3 py-2">
+                            <option value="tailor">Tailor (Measurements)</option>
+                            <option value="packing">Packing (Status)</option>
+                        </select></div>
+                    <div class="w-full md:w-32"><label
+                            class="block text-xs font-bold text-stone-500 uppercase mb-1">Expires In</label><select
+                            id="access-expiry" class="w-full border rounded px-3 py-2">
+                            <option value="24">24 Hours</option>
+                            <option value="48">48 Hours</option>
+                            <option value="168">7 Days</option>
+                        </select></div><button onclick="generateCode()"
+                        class="w-full md:w-auto bg-rose-600 text-white px-6 py-2 rounded shadow hover:bg-rose-700 font-bold uppercase text-sm">Generate</button>
+                </div>
+            </div>
+            <div class="glass-panel p-6 rounded-xl">
+                <h3 class="text-lg font-ink mb-4">Active & Inactive Codes</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm min-w-[600px]">
+                        <thead>
+                            <tr class="border-b text-stone-500">
+                                <th class="text-left pb-2">School</th>
+                                <th class="text-left pb-2">Code</th>
+                                <th class="text-left pb-2">Type</th>
+                                <th class="text-left pb-2">Status</th>
+                                <th class="text-right pb-2">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="access-code-list"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. SCHOOLS -->
+        <div id="view-schools" class="hidden fade-in max-w-5xl mx-auto space-y-8">
+            <div class="glass-panel p-6 md:p-8 rounded-xl">
+                <h3 class="text-2xl font-ink mb-6 border-b pb-4">School Metadata</h3>
+                <p class="text-stone-500 text-sm mb-4">Manage priority and production status for each school.</p>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-sm min-w-[800px]">
+                        <thead class="bg-stone-50 text-stone-500 uppercase text-xs">
+                            <tr>
+                                <th class="p-3 text-left">School Name</th>
+                                <th class="p-3 text-left w-48">Priority</th>
+                                <th class="p-3 text-left w-48">Status</th>
+                                <th class="p-3 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="school-list-body" class="divide-y divide-stone-100"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 6. REPORTS -->
+        <div id="view-reports" class="hidden fade-in max-w-4xl mx-auto">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="glass-panel p-8 rounded-xl text-center hover:scale-105 transition-transform cursor-pointer"
+                    onclick="downloadPDF()">
+                    <div
+                        class="w-16 h-16 bg-red-100 text-red-600 mx-auto rounded-full flex items-center justify-center mb-4">
+                        PDF</div>
+                    <h3 class="font-ink text-xl">Download PDF Report</h3>
+                    <p class="text-sm text-stone-500 mt-2">Full system summary formatted for printing.</p>
+                </div>
+                <div class="glass-panel p-8 rounded-xl text-center hover:scale-105 transition-transform cursor-pointer"
+                    onclick="downloadExcel()">
+                    <div
+                        class="w-16 h-16 bg-green-100 text-green-600 mx-auto rounded-full flex items-center justify-center mb-4">
+                        XLS</div>
+                    <h3 class="font-ink text-xl">Export Excel Data</h3>
+                    <p class="text-sm text-stone-500 mt-2">Raw data export of all students and measurements.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 7. COMPLAINTS -->
+        <div id="view-complaints" class="hidden fade-in max-w-5xl mx-auto space-y-6">
+            <header class="flex justify-between items-center mb-6">
+                <h3 class="text-2xl font-ink text-stone-800">School Complaints & Feedback</h3>
+                <button onclick="fetchComplaints()"
+                    class="text-xs bg-stone-200 hover:bg-stone-300 text-stone-600 px-3 py-1 rounded-full font-bold transition-colors">REFRESH</button>
+            </header>
+
+            <div id="complaints-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Dynamic Content -->
+            </div>
+            <p id="no-complaints-msg" class="text-center text-stone-400 italic hidden">No active complaints found.</p>
+        </div>
+
+    </main>
+
+    <!-- SCHOOL REGISTRATION MODAL -->
+    <div id="school-modal"
+        class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md p-6 transform transition-all scale-100">
+            <h3 class="text-xl font-ink mb-4 border-b pb-2">Register New School</h3>
+            <form onsubmit="registerSchool(event)" class="space-y-4">
+                <div><label class="block text-xs font-bold text-stone-500 uppercase mb-1">School Name</label><input
+                        type="text" name="name" required placeholder="e.g. Galaxy High School"
+                        class="w-full border rounded px-3 py-2 text-sm focus:border-stone-800 outline-none"></div>
+                <div><label class="block text-xs font-bold text-stone-500 uppercase mb-1">Admin Username</label><input
+                        type="text" name="username" required placeholder="admin_galaxy"
+                        class="w-full border rounded px-3 py-2 text-sm focus:border-stone-800 outline-none"></div>
+                <div><label class="block text-xs font-bold text-stone-500 uppercase mb-1">Password</label><input
+                        type="password" name="password" required
+                        class="w-full border rounded px-3 py-2 text-sm focus:border-stone-800 outline-none"></div>
+                <div class="flex justify-end gap-2 mt-6"><button type="button"
+                        onclick="document.getElementById('school-modal').classList.add('hidden')"
+                        class="px-4 py-2 text-sm font-bold text-stone-500 hover:bg-stone-100 rounded">CANCEL</button><button
+                        type="submit"
+                        class="px-4 py-2 text-sm font-bold bg-stone-900 text-white rounded hover:bg-stone-700">REGISTER
+                        SCHOOL</button></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- LOGIC -->
+    <script>
+        const API_BASE = '/api'; const token = sessionStorage.getItem('token'); if (!token) window.location.href = 'login.html';
+        let globalStudents = [], globalSchools = [], dynamicFilters = {}, sidebarOpen = false;
+        function toggleSidebar() { sidebarOpen = !sidebarOpen; const s = document.getElementById('sidebar'), b = document.getElementById('sidebar-backdrop'); if (sidebarOpen) { s.classList.remove('-translate-x-full'); b.classList.remove('hidden'); setTimeout(() => b.classList.remove('opacity-0'), 10); } else { s.classList.add('-translate-x-full'); b.classList.add('opacity-0'); setTimeout(() => b.classList.add('hidden'), 300); } }
+        const boysItems = [{ name: "BOYS - FORMAL SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Male" }, { name: "BOYS - TRACK T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Male" }, { name: "BOYS - UNIFORM T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Male" }, { name: "BOYS - JERKIN", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Male" }, { name: "BOYS - PULLOVER", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Male" }, { name: "BOYS - FORMAL PANT", cols: ["L1", "L2"], type: "Male" }, { name: "BOYS - TRACK PANT", cols: ["L1", "L2"], type: "Male" }, { name: "BOYS - FORMAL SHORTS", cols: ["L3", "L2"], type: "Male" }, { name: "BOYS - TRACK SHORTS", cols: ["L3", "L2"], type: "Male" }, { name: "BOYS - PANT SPECIAL CASE", cols: ["L1", "L2", "L6", "L7"], type: "Male" }];
+        const girlsItems = [{ name: "GIRLS - FORMAL SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Female" }, { name: "GIRLS - TRACK T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Female" }, { name: "GIRLS - UNIFORM T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Female" }, { name: "GIRLS - JERKIN", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Female" }, { name: "GIRLS - FULL SLEEVE SHIRT", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Female" }, { name: "GIRLS - PULLOVER", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Female" }, { name: "GIRLS - KURTHA SHIRT", cols: ["U7", "U2", "U3", "U4", "U6"], type: "Female" }, { name: "GIRLS - SPECIAL FROCKS", cols: ["U7", "U2", "U3", "U4", "U6"], type: "Female" }, { name: "GIRLS - FORMAL PANT", cols: ["L1", "L2"], type: "Female" }, { name: "GIRLS - TRACK PANT", cols: ["L1", "L2"], type: "Female" }, { name: "GIRLS - TRACK SHORTS", cols: ["L3", "L2"], type: "Female" }, { name: "GIRLS - PINOFORE", cols: ["L4", "L2"], type: "Female" }, { name: "GIRLS - SKIRT", cols: ["L5", "L2"], type: "Female" }, { name: "GIRLS - PANT SPECIAL CASE", cols: ["L1", "L2", "L6", "L7"], type: "Female" }];
+        const allItems = [...boysItems, ...girlsItems];
+        async function init() { await Promise.all([fetchStats(), fetchAllStudents(), fetchSchoolsForSelect()]); renderGlobalTable(); renderCharts(); populateDynamicFilters(); }
+        function switchTab(id) { document.querySelectorAll('main > div[id^="view-"]').forEach(d => d.classList.add('hidden')); document.getElementById(`view-${id}`).classList.remove('hidden'); document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active')); document.getElementById(`nav-${id}`).classList.add('active'); if (window.innerWidth < 768 && sidebarOpen) toggleSidebar(); if (id === 'access') fetchAccessCodes(); if (id === 'users') fetchUsers(); if (id === 'complaints') fetchComplaints(); if (id === 'schools') fetchSchoolsManage(); }
+        async function fetchStats() { try { const r = await fetch(`${API_BASE}/data/stats`, { headers: { 'Authorization': `Bearer ${token}` } }); const d = await r.json(); document.getElementById('stat-students').innerText = d.students || 0; document.getElementById('stat-schools').innerText = d.schools || 0; document.getElementById('stat-packed').innerText = d.packed || 0; document.getElementById('stat-pending').innerText = d.pending || 0; } catch (e) { console.error("Stats Error", e) } }
+        async function fetchAllStudents() { try { const r = await fetch(`${API_BASE}/data/all_students`, { headers: { 'Authorization': `Bearer ${token}` } }); const d = await r.json(); globalStudents = Array.isArray(d) ? d : []; } catch (e) { console.error("Student Fetch Error", e); globalStudents = []; } }
+        async function fetchSchoolsForSelect() { try { const r = await fetch(`${API_BASE}/data/schools`, { headers: { 'Authorization': `Bearer ${token}` } }); const d = await r.json(); globalSchools = Array.isArray(d) ? d : []; if (globalSchools.length > 0) { const o = globalSchools.map(s => `<option value="${s.id}">${s.name}</option>`).join(''); document.getElementById('school-select').innerHTML = o; document.getElementById('access-school-select').innerHTML = o; } } catch (e) { console.error("Schools Error", e); globalSchools = []; } }
+
+        async function fetchUsers() { try { const r = await fetch(`${API_BASE}/data/users`, { headers: { 'Authorization': `Bearer ${token}` } }); const u = await r.json(); if (!Array.isArray(u)) return; document.getElementById('user-list-body').innerHTML = u.map(x => `<tr class="hover:bg-stone-50 group"><td class="p-3 font-medium text-stone-900">${x.username}</td><td class="p-3"><span class="px-2 py-1 rounded text-xs bg-gray-100 uppercase font-bold">${x.role}</span></td><td class="p-3 text-stone-500">${x.school_name || '-'}</td><td class="p-3 text-center"><span class="px-2 py-0.5 rounded text-xs font-medium ${x.is_active !== false ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">${x.is_active !== false ? 'ACTIVE' : 'DISABLED'}</span></td><td class="p-3 text-right text-xs"><button onclick="toggleUserStatus(${x.id},${!(x.is_active !== false)},'${x.username}')" class="opacity-0 group-hover:opacity-100 transition-opacity px-2 py-1 rounded border ${x.is_active !== false ? 'text-red-600 border-red-200 hover:bg-red-50' : 'text-green-600 border-green-200 hover:bg-green-50'}">${x.is_active !== false ? 'DISABLE' : 'ENABLE'}</button></td></tr>`).join(''); } catch (e) { console.error(e) } }
+        async function fetchAccessCodes() { try { const r = await fetch(`${API_BASE}/data/access_codes`, { headers: { 'Authorization': `Bearer ${token}` } }); const c = await r.json(); if (Array.isArray(c)) document.getElementById('access-code-list').innerHTML = c.map(x => `<tr class="border-b ${x.is_active ? '' : 'opacity-50'}"><td class="py-3 font-medium">${x.school_name}</td><td class="py-3 font-mono text-rose-600 font-bold tracking-wider">${x.code}</td><td class="py-3 capitalize">${x.type}</td><td class="py-3 text-center"><span class="${x.is_active ? 'text-green-600' : 'text-red-500 animate-pulse'} font-bold text-xs">${x.is_active ? 'ACTIVE' : 'REVOKED'}</span></td><td class="py-3 text-right space-x-2">${x.is_active ? `<button onclick="toggleCode(${x.id},false)" class="text-red-600 hover:underline text-xs font-bold border border-red-200 px-2 py-1 rounded hover:bg-red-50">REVOKE</button>` : `<button onclick="toggleCode(${x.id},true)" class="text-green-600 hover:underline text-xs font-bold border border-green-200 px-2 py-1 rounded hover:bg-green-50">ACTIVATE</button>`}</td></tr>`).join(''); } catch (e) { console.error(e) } }
+        async function fetchSchoolsManage() { try { const r = await fetch(`${API_BASE}/data/schools`, { headers: { 'Authorization': `Bearer ${token}` } }); const d = await r.json(); document.getElementById('school-list-body').innerHTML = Array.isArray(d) ? d.map(s => `<tr class="hover:bg-stone-50 group"><td class="p-4 font-bold text-stone-900">${s.name}</td><td class="p-4"><select onchange="updateSchoolMeta(${s.id},'priority',this.value)" class="border rounded px-2 py-1 text-xs font-bold uppercase ${s.priority === 'High' ? 'text-rose-600 bg-rose-50 border-rose-200' : 'text-stone-600'}"><option value="Normal" ${s.priority === 'Normal' ? 'selected' : ''}>Normal Priority</option><option value="High" ${s.priority === 'High' ? 'selected' : ''}>High Priority</option><option value="Low" ${s.priority === 'Low' ? 'selected' : ''}>Low Priority</option></select></td><td class="p-4"><select onchange="updateSchoolMeta(${s.id},'status',this.value)" class="border rounded px-2 py-1 text-xs font-bold uppercase w-full"><option value="Pending" ${!s.status || s.status === 'Pending' ? 'selected' : ''}>Pending</option><option value="Measurements" ${s.status === 'Measurements' ? 'selected' : ''}>Measurements</option><option value="Production" ${s.status === 'Production' ? 'selected' : ''}>Production</option><option value="Delivered" ${s.status === 'Delivered' ? 'selected' : ''}>Delivered</option></select></td><td class="p-4 text-right"><button onclick="viewSchoolStudents('${s.name}')" class="text-xs bg-stone-100 hover:bg-stone-200 text-stone-800 font-bold px-3 py-1.5 rounded transition-colors">VIEW STUDENTS</button></td></tr>`).join('') : ''; } catch (e) { console.error(e) } }
+
+        async function updateSchoolMeta(id, f, v) { await fetch(`${API_BASE}/data/schools/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ [f]: v }) }); }
+        async function viewSchoolStudents(n) { switchTab('data'); await fetchAllStudents(); document.getElementById('date-search').value = n; renderGlobalTable(); }
+        function populateDynamicFilters() { const c = [...new Set(globalStudents.map(s => s.class).filter(Boolean))].sort(), se = [...new Set(globalStudents.map(s => s.section).filter(Boolean))].sort(), h = [...new Set(globalStudents.map(s => s.house).filter(Boolean))].sort(); document.getElementById('list-class').innerHTML = c.map(x => `<option value="${x}">`).join(''); document.getElementById('list-section').innerHTML = se.map(x => `<option value="${x}">`).join(''); document.getElementById('list-house').innerHTML = h.map(x => `<option value="${x}">`).join(''); document.getElementById('filter-item').innerHTML = '<option value="all">Select Item Type...</option>' + allItems.map(i => `<option value="${i.name}">${i.name}</option>`).join(''); }
+        function handleItemFilter() { const n = document.getElementById('filter-item').value, c = document.getElementById('dynamic-filters-container'); c.innerHTML = ''; dynamicFilters = {}; if (n === 'all') { c.innerHTML = '<span class="text-xs text-stone-400 italic mt-4">Select an item above to filter by measurements.</span>'; renderGlobalTable(); return; } const i = allItems.find(x => x.name === n); if (i) i.cols.forEach(k => { const w = document.createElement('div'); w.className = "flex flex-col w-[47%] md:w-auto"; w.innerHTML = `<label class="text-[10px] font-bold text-stone-500 uppercase">${k}</label><input type="text" class="block w-full md:w-20 mt-1 text-xs border-gray-300 rounded shadow-sm px-2 py-1.5 focus:border-stone-500 outline-none" placeholder="e.g. 30-32" onkeyup="if(this.value)dynamicFilters['${k}']=this.value;else delete dynamicFilters['${k}'];renderGlobalTable()">`; c.appendChild(w); }); renderGlobalTable(); }
+        function advancedMatch(r, f) { if (!f || f === 'all') return true; if (r == null || r === "") return false; const rv = String(r).trim().toUpperCase(), fv = f.toUpperCase(); if (fv.includes(',')) return fv.split(',').map(p => p.trim()).includes(rv); if (fv.includes('-')) { const p = fv.split('-').map(x => x.trim()); if (p.length === 2) { const [mn, mx] = p; if (!isNaN(mn) && !isNaN(mx)) { const n = parseFloat(r); return !isNaN(n) && n >= parseFloat(mn) && n <= parseFloat(mx) } if (mn.length === 1 && mx.length === 1 && rv.length === 1) return rv >= mn && rv <= mx } } return rv === fv; }
+
+        function getMeasurementsSafe(s) {
+            if (typeof s.measurements === 'string') { try { return JSON.parse(s.measurements); } catch (e) { return {}; } }
+            return s.measurements || {};
+        }
+
+        function renderGlobalTable() {
+            const pr = document.getElementById('filter-priority').value, pa = document.getElementById('filter-packed').value, cl = document.getElementById('filter-class').value, sc = document.getElementById('filter-section').value, ho = document.getElementById('filter-house').value, ge = document.getElementById('filter-gender').value, it = document.getElementById('filter-item').value, se = document.getElementById('date-search').value.toLowerCase();
+            const f = globalStudents.filter(s => {
+                // SAFETY: Measurements
+                const m = getMeasurementsSafe(s);
+
+                if (pr !== 'all' && s.school_priority !== pr) return false;
+                if (pa === 'packed' && !s.is_packed) return false;
+                if (pa === 'pending' && s.is_packed) return false;
+                if (!advancedMatch(s.class, cl)) return false;
+                if (!advancedMatch(s.section, sc)) return false;
+                if (!advancedMatch(s.house, ho)) return false;
+                if (ge && s.gender !== ge) return false;
+                if (se && !(s.name || '').toLowerCase().includes(se) && !(s.roll_no || '').toLowerCase().includes(se) && !(s.school_name || '').toLowerCase().includes(se)) return false;
+                if (it !== 'all') {
+                    const i = allItems.find(x => x.name === it);
+                    if (i) {
+                        if ((i.type === 'Male' && s.gender === 'Female') || (i.type === 'Female' && s.gender === 'Male')) return false;
+                        for (const [k, v] of Object.entries(dynamicFilters)) if (!advancedMatch(m[k.toLowerCase()] || "00", v)) return false;
+                    }
+                }
+                return true;
+            });
+            document.getElementById('record-count').innerText = `Showing ${f.length} records`;
+            document.getElementById('global-table-body').innerHTML = f.map(s => `<tr class="hover:bg-stone-50 transition-colors group"><td class="p-4 border-b border-stone-100"><div class="font-bold text-stone-800">${s.school_name}</div><div class="text-xs text-stone-500">${s.school_priority || 'Normal'} Priority</div></td><td class="p-4 border-b border-stone-100"><div class="font-medium text-stone-900">${s.name}</div><div class="text-xs text-stone-500">Roll: ${s.roll_no || '-'}</div></td><td class="p-4 border-b border-stone-100"><div class="text-sm">Class ${s.class || '-'} ${s.section || ''}</div><div class="text-xs text-stone-400">${s.house || ''} ${s.gender ? '(' + s.gender + ')' : ''}</div></td><td class="p-4 border-b border-stone-100 text-xs font-mono text-stone-600">${renderMeasurements(s)}</td><td class="p-4 border-b border-stone-100 text-center"><span class="px-2 py-1 rounded-full text-xs font-bold ${s.is_packed ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${s.is_packed ? 'PACKED' : 'PENDING'}</span></td></tr>`).join('');
+        }
+        function renderMeasurements(s) {
+            const m = getMeasurementsSafe(s);
+            if (Object.keys(m).length === 0) return '<span class="text-rose-400">Missing</span>';
+            const n = document.getElementById('filter-item').value;
+            if (n !== 'all') {
+                const i = allItems.find(x => x.name === n);
+                if (i) return i.cols.map(c => `<span class="inline-block mr-2"><b class="text-stone-400">${c}:</b> ${m[c.toLowerCase()] || '-'}</span>`).join('');
+            }
+            return "✓ Captured";
+        }
+
+        function renderCharts() {
+            const p = globalStudents.filter(s => s.is_packed).length, pe = globalStudents.length - p;
+            // Destroy exists?
+            new Chart(document.getElementById('chart-packing'), { type: 'doughnut', data: { labels: ['Packed', 'Pending'], datasets: [{ data: [p, pe], backgroundColor: ['#10b981', '#f59e0b'], borderWidth: 0 }] }, options: { maintainAspectRatio: false } });
+            const sc = {}; globalStudents.forEach(s => { sc[s.school_name] = (sc[s.school_name] || 0) + 1 });
+            new Chart(document.getElementById('chart-schools'), { type: 'bar', data: { labels: Object.keys(sc), datasets: [{ label: 'Student Count', data: Object.values(sc), backgroundColor: '#1c1917', borderRadius: 4 }] }, options: { maintainAspectRatio: false, scales: { y: { beginAtZero: true } } } });
+        }
+
+        async function createUser(e) { e.preventDefault(); try { const r = await fetch(`${API_BASE}/data/users/create`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify(Object.fromEntries(new FormData(e.target).entries())) }); if (r.ok) { alert("User Created!"); e.target.reset(); fetchUsers(); } else alert((await r.json()).error); } catch (e) { alert(e.message); } }
+        async function generateCode() { const sid = document.getElementById('access-school-select').value, type = document.getElementById('access-type').value, hrs = document.getElementById('access-expiry').value; try { const r = await fetch(`${API_BASE}/data/access_codes`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ school_id: sid, type, expires_in_hours: parseFloat(hrs) }) }); if (r.ok) { alert(`Code Created: ${(await r.json()).code}`); fetchAccessCodes(); } else alert((await r.json()).error); } catch (e) { alert(e.message); } }
+        async function toggleCode(id, a) { if (!confirm(a ? "Activate?" : "Revoke?")) return; await fetch(`${API_BASE}/data/access_codes/${id}/toggle`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ is_active: a }) }); fetchAccessCodes(); }
+        async function toggleUserStatus(id, a, n) { if (confirm(a ? "Enable?" : "Disable?")) await fetch(`${API_BASE}/data/users/${id}/toggle`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ is_active: a }) }); fetchUsers(); }
+        async function registerSchool(e) { e.preventDefault(); try { const r = await fetch(`${API_BASE}/data/schools`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify(Object.fromEntries(new FormData(e.target).entries())) }); if (r.ok) { alert("School Registered!"); document.getElementById('school-modal').classList.add('hidden'); e.target.reset(); fetchSchoolsForSelect(); fetchUsers(); } else alert((await r.json()).error); } catch (e) { alert("Failed"); } }
+        function openSchoolModal() { document.getElementById('school-modal').classList.remove('hidden'); }
+        function toggleSchoolSelect() { const r = document.getElementById('user-role').value, s = document.getElementById('school-select-wrapper'); if (r === 'company') s.classList.add('hidden'); else s.classList.remove('hidden'); }
+        async function fixDatabase() { if (confirm("Maintain DB?")) { await fetch(`${API_BASE}/data/migrate`, { method: 'POST' }); location.reload(); } }
+        function logout() { sessionStorage.clear(); window.location.href = 'login.html'; }
+
+        // SERVER SIDE EXPORTS
+        function downloadPDF() { window.open(`${API_BASE}/reports/pdf?token=${token}`, '_blank'); }
+        function downloadExcel() { window.open(`${API_BASE}/reports/excel?token=${token}`, '_blank'); }
+
+
+        // COMPLAINTS LOGIC
+        let currentComplaintId = null;
+
+        async function fetchComplaints() {
+            try {
+                const res = await fetch(`${API_BASE}/data/complaints`, { headers: { 'Authorization': `Bearer ${token}` } });
+                const data = await res.json();
+                const container = document.getElementById('complaints-grid');
+                const emptyMsg = document.getElementById('no-complaints-msg');
+
+                container.innerHTML = '';
+                if (!Array.isArray(data) || data.length === 0) {
+                    emptyMsg.classList.remove('hidden');
+                    return;
+                }
+                emptyMsg.classList.add('hidden');
+
+                data.forEach(c => {
+                    const stars = '★'.repeat(c.rating || 0) + '☆'.repeat(5 - (c.rating || 0));
+                    const isResolved = c.status === 'Resolved';
+
+                    const card = document.createElement('div');
+                    card.className = `glass-panel p-6 rounded-xl flex flex-col gap-4 border-l-4 ${isResolved ? 'border-green-400 opacity-75' : 'border-rose-500'}`;
+
+                    card.innerHTML = `
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h4 class="font-ink text-lg font-bold text-stone-800">${c.school_name}</h4>
+                                <div class="text-amber-500 text-sm tracking-widest mt-1">${stars}</div>
+                            </div>
+                            <span class="px-2 py-1 rounded text-[10px] font-bold uppercase ${isResolved ? 'bg-green-100 text-green-700' : 'bg-rose-100 text-rose-700'}">${c.status || 'Open'}</span>
+                        </div>
+                        
+                        <p class="text-stone-600 text-sm italic">"${c.comment}"</p>
+                        
+                        ${(() => {
+                            let images = [];
+                            try {
+                                if (c.image_url && c.image_url.startsWith('[')) images = JSON.parse(c.image_url);
+                                else if (c.image_url) images = [c.image_url];
+                            } catch (e) { images = []; }
+
+                            if (images.length === 0) return '';
+
+                            return `<div class="grid grid-cols-2 gap-2 mt-2">
+                                ${images.map(url => `<img src="${url}" class="w-full h-24 object-cover rounded-lg border border-stone-200 cursor-pointer hover:opacity-90 transition-opacity" onclick="window.open('${url}', '_blank')">`).join('')}
+                            </div>`;
+                        })()}
+                        
+                        ${c.reply ? `
+                            <div class="bg-stone-100 p-3 rounded-lg mt-auto">
+                                <p class="text-[10px] font-bold text-stone-500 uppercase mb-1">Company Reply:</p>
+                                <p class="text-stone-700 text-xs">${c.reply}</p>
+                            </div>
+                        ` : `
+                            <button onclick="openReplyModal(${c.id}, '${c.school_name}')" class="mt-auto w-full py-2 rounded border border-stone-300 text-stone-600 text-xs font-bold hover:bg-stone-50 transition-colors">REPLY</button>
+                        `}
+                        
+                        <div class="text-[10px] text-stone-400 text-right mt-2">${new Date(c.created_at).toLocaleDateString()}</div>
+                    `;
+                    container.appendChild(card);
+                });
+            } catch (e) { console.error("Complaints Error", e); }
+        }
+
+        function openReplyModal(id, schoolName) {
+            currentComplaintId = id;
+            document.getElementById('reply-school-name').innerText = `Replying to: ${schoolName}`;
+            document.getElementById('reply-text').value = '';
+            document.getElementById('reply-modal').classList.remove('hidden');
+        }
+
+        function closeReplyModal() {
+            document.getElementById('reply-modal').classList.add('hidden');
+            currentComplaintId = null;
+        }
+
+        async function submitReply() {
+            if (!currentComplaintId) return;
+            const text = document.getElementById('reply-text').value;
+            if (!text.trim()) return alert("Please write a reply.");
+
+            try {
+                const res = await fetch(`${API_BASE}/data/complaints/${currentComplaintId}/reply`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ reply: text })
+                });
+
+                if (res.ok) {
+                    alert("Reply Sent!");
+                    closeReplyModal();
+                    fetchComplaints();
+                } else {
+                    alert("Failed to send reply");
+                }
+            } catch (e) { alert(e.message); }
+        }
+
+        document.getElementById('nav-overview').classList.add('active'); init().then(() => setInterval(() => { fetchStats(); if (!document.getElementById('view-global').classList.contains('hidden')) renderGlobalTable(); }, 30000));
+    </script>
+
+    <!-- REPLY MODAL -->
+    <div id="reply-modal"
+        class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-lg p-6">
+            <h3 class="text-xl font-ink mb-2">Reply to Complaint</h3>
+            <p class="text-xs text-stone-500 mb-4" id="reply-school-name">School Name</p>
+            <textarea id="reply-text" rows="4"
+                class="w-full border rounded-lg p-3 text-sm focus:border-rose-500 outline-none"
+                placeholder="Write your response here..."></textarea>
+            <div class="flex justify-end gap-2 mt-4">
+                <button onclick="closeReplyModal()"
+                    class="px-4 py-2 text-xs font-bold text-stone-500 hover:bg-stone-100 rounded">CANCEL</button>
+                <button onclick="submitReply()"
+                    class="px-4 py-2 text-xs font-bold bg-rose-600 text-white rounded hover:bg-rose-700">SEND
+                    REPLY</button>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>
