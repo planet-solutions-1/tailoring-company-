@@ -872,27 +872,30 @@
                         </div>
 
                         <div class="space-y-6">
+                            <!-- Browser Notifications -->
                             <div class="flex items-center justify-between">
                                 <div>
-                                    <p class="font-bold text-slate-700">Email Notifications</p>
-                                    <p class="text-xs text-slate-400">Receive alerts for new tickets</p>
+                                    <p class="font-bold text-slate-700">Browser Notifications</p>
+                                    <p class="text-xs text-slate-400">Get desktop alerts for support replies</p>
                                 </div>
                                 <div
                                     class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
-                                    <input type="checkbox" name="toggle" id="toggle_mail"
+                                    <input type="checkbox" onchange="toggleNotifications(this)" id="toggle_notify"
                                         class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer checked:right-0 checked:border-emerald-500 checked:bg-emerald-500" />
-                                    <label for="toggle_mail"
+                                    <label for="toggle_notify"
                                         class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 cursor-pointer"></label>
                                 </div>
                             </div>
+
+                            <!-- Compact View -->
                             <div class="flex items-center justify-between">
                                 <div>
-                                    <p class="font-bold text-slate-700">Compact View</p>
-                                    <p class="text-xs text-slate-400">Reduce padding in tables</p>
+                                    <p class="font-bold text-slate-700">Dense Table Mode</p>
+                                    <p class="text-xs text-slate-400">Show more rows on screen</p>
                                 </div>
                                 <div
                                     class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
-                                    <input type="checkbox" name="toggle" id="toggle_view"
+                                    <input type="checkbox" onchange="toggleCompactView(this)" id="toggle_view"
                                         class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer" />
                                     <label for="toggle_view"
                                         class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 cursor-pointer"></label>
@@ -1035,6 +1038,36 @@
             } catch (err) {
                 console.error(err);
                 alert("Failed to update password.");
+            }
+        }
+
+        function toggleNotifications(cb) {
+            if (cb.checked) {
+                if (!("Notification" in window)) {
+                    alert("This browser does not support desktop notifications.");
+                    cb.checked = false;
+                    return;
+                }
+                Notification.requestPermission().then(permission => {
+                    if (permission === "granted") {
+                        new Notification("Notifications Enabled", { body: "You will now receive alerts for support tickets." });
+                    } else {
+                        cb.checked = false;
+                        alert("Notification permission denied.");
+                    }
+                });
+            }
+        }
+
+        function toggleCompactView(cb) {
+            if (cb.checked) {
+                document.body.classList.add('compact-mode');
+                localStorage.setItem('compactMode', 'true');
+                // Optional: You could update table styles here dynamically logic
+                // For now, we'll just show the concept
+            } else {
+                document.body.classList.remove('compact-mode');
+                localStorage.setItem('compactMode', 'false');
             }
         }
 
