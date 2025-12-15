@@ -785,6 +785,13 @@
                 if (!res.ok) throw new Error(`Server Error: ${res.status}`);
 
                 allStudents = await res.json();
+
+                // Live Update UI
+                renderDashboardStats();
+                populateFilters();
+                // Only render table if we are on the students view or just generally safe to call (it checks if element exists)
+                renderStudents();
+
             } catch (err) {
                 console.error("Fetch Error:", err);
                 // Only alert if we really have no data to show, or show toast
@@ -1848,6 +1855,22 @@
             setTimeout(() => {
                 document.querySelector('#complaintModal h3').innerText = "Edit Ticket";
             }, 50);
+        }
+
+        async function deleteComplaint(id) {
+            if (!confirm("Are you sure you want to delete this ticket?")) return;
+            try {
+                const res = await fetch(`/api/data/complaints/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!res.ok) throw new Error("Delete failed");
+                alert("Ticket Deleted!");
+                fetchMyComplaints(); // Live Update
+            } catch (e) {
+                console.error(e);
+                alert("Error deleting ticket: " + e.message);
+            }
         }
 
         function viewComplaint(index) {
