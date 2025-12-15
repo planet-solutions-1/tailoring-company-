@@ -1424,16 +1424,29 @@
             });
             renderStudents(); // Will filter out Trash
 
-            // 3. API Updates
+            // 3. API Updates (Using Full Object Replacement for Safe PUT)
             for (const item of items) {
                 try {
-                    await fetch(`/api/data/student/${item.id || item.admission_no}`, { // Fallback if no ID
-                        method: 'PUT',
+                    // Update item with Trash status
+                    const payload = { ...item, status: 'Trash', deleted_at: timestamp };
+
+                    const res = await fetch(`/api/data/student/${item.id || item.admission_no}`, {
+                        method: 'PUT', // Assuming PUT replaces or updates
                         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                        body: JSON.stringify({ status: 'Trash', deleted_at: timestamp })
+                        body: JSON.stringify(payload)
                     });
+
+                    if (!res.ok) {
+                        // Fallback: If PUT fails, maybe try POST to overwrite? Or log error.
+                        // Attempting fallback by admission no if ID failed?
+                        console.warn(`Soft Delete failed for ${item.name}. Response: ${res.status}`);
+                        throw new Error(`Server rejected delete for ${item.name}`);
+                    }
+
                 } catch (e) {
                     console.error("Soft Delete Failed", e);
+                    // Revert local change if critical? For now, just log.
+                    // alert("Warning: Some items could not be deleted from server. Refresh to verify.");
                 }
             }
 
