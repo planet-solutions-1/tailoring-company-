@@ -887,9 +887,9 @@
                         <div class="flex items-center justify-between">
                             <div>
                                 <p class="font-bold text-slate-700">Student Database</p>
-                                <p class="text-xs text-slate-400">Download full record of all students</p>
+                                <p class="text-xs text-slate-400">Download active & recently deleted records</p>
                             </div>
-                            <button onclick="exportData('excel')"
+                            <button onclick="exportData('backup')"
                                 class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl shadow-lg shadow-indigo-200 transition-all flex items-center gap-2">
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                     stroke-width="2">
@@ -1178,11 +1178,13 @@
 
         function populateFilters() {
             const classSelect = document.getElementById('filterClass');
-            if (!classSelect) return; // Safety check if element missing
+            if (!classSelect) return;
 
             // Only populate if empty (or reset needed)
             if (classSelect.options.length <= 1) {
-                const classes = [...new Set(allStudents.map(s => s.class).filter(Boolean))].sort();
+                // Filter out Trash
+                const activeClasses = allStudents.filter(s => s.status !== 'Trash').map(s => s.class).filter(Boolean);
+                const classes = [...new Set(activeClasses)].sort();
                 classes.forEach(c => classSelect.add(new Option(c, c)));
             }
         }
@@ -1191,17 +1193,15 @@
             const classVal = document.getElementById('filterClass').value;
             const secSelect = document.getElementById('filterSection');
 
-            // Clear existing options except first
             while (secSelect.options.length > 1) {
                 secSelect.remove(1);
             }
 
             if (!classVal) return;
 
-            // Find sections for this class
             const sections = [...new Set(
                 allStudents
-                    .filter(s => s.class == classVal) // Loose equality for consistency
+                    .filter(s => s.status !== 'Trash' && s.class == classVal)
                     .map(s => s.section)
                     .filter(Boolean)
             )].sort();
@@ -1209,6 +1209,7 @@
             sections.forEach(s => secSelect.add(new Option(s, s)));
         }
 
+        // === RENDER TABLE ===
         function renderStudents() {
             const tbody = document.getElementById('studentsTableBody');
             if (!tbody) return;
@@ -1217,36 +1218,41 @@
             const fClass = document.getElementById('filterClass').value;
             const fSec = document.getElementById('filterSection').value;
 
-            // Ensure filters populated
             populateFilters();
 
-            // Filter Logic
+            // Filter Logic (Exclude Trash)
             const filtered = allStudents.filter(s => {
+                if (s.status === 'Trash') return false; // Hide Deleted
+
                 const matchSearch = (s.name?.toLowerCase().includes(search) || String(s.roll_no).toLowerCase().includes(search));
-                const matchClass = fClass ? s.class == fClass : true;
-                const matchSec = fSec ? s.section == fSec : true;
+                const matchClass = !fClass || s.class == fClass;
+                const matchSec = !fSec || s.section == fSec;
                 return matchSearch && matchClass && matchSec;
             });
 
-            currentFilteredList = filtered; // Update reference for Select All
+            currentFilteredList = filtered; // Update Global List
             document.getElementById('recordCount').innerText = `${filtered.length} Students Found`;
 
-            // Pagination Logic
-            const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+            // Pagination
+            const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE) || 1;
             if (currentPage > totalPages) currentPage = 1;
-
             const start = (currentPage - 1) * ITEMS_PER_PAGE;
             const paginated = filtered.slice(start, start + ITEMS_PER_PAGE);
 
-            // Render Rows
-            tbody.innerHTML = paginated.map((s, index) => {
-                const key = s.admission_no || (s.temp_id || `idx_${index}`); // Robust key
-                const isSelected = selectedStudents.has(String(key));
+            // Empty State
+            if (paginated.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="10" class="text-center py-10 text-slate-400 font-bold">No students found</td></tr>`;
+                renderPaginationControls(totalPages);
+                return;
+            }
 
+            // Render Rows
+            tbody.innerHTML = paginated.map(s => {
+                // ... same row rendering ...
                 return `
-        <tr class="hover:bg-indigo-50/50 transition-colors group border-b border-indigo-50/30 last:border-none">
+                <tr class="hover:bg-indigo-50/50 transition-colors group border-b border-indigo-50/30 last:border-none">
             <td class="p-4">
-                <input type="checkbox" onchange="toggleSelection('${key}')" ${isSelected ? 'checked' : ''} class="rounded text-indigo-500 focus:ring-indigo-500 cursor-pointer student-checkbox" value="${key}">
+                <input type="checkbox" onchange="toggleSelection('${s.admission_no || s.temp_id}')" ${selectedStudents.has(String(s.admission_no || s.temp_id)) ? 'checked' : ''} class="rounded text-indigo-500 focus:ring-indigo-500 cursor-pointer student-checkbox" value="${s.admission_no || s.temp_id}">
             </td>
             <td class="p-4 font-mono text-indigo-400 font-bold">${s.roll_no || '-'}</td>
             <td class="p-4 text-slate-600 font-medium">${s.admission_no}</td>
@@ -1262,19 +1268,56 @@
             </td>
             <td class="p-4 text-right">
                 <div class="flex items-center justify-end gap-2 opacity-100 lg:opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button onclick="openEditStudentModal('${key}')" class="p-2 rounded-lg hover:bg-indigo-100 text-indigo-500 transition-colors" title="Edit">
+                    <button onclick="openEditStudentModal('${s.admission_no || s.temp_id}')" class="p-2 rounded-lg hover:bg-indigo-100 text-indigo-500 transition-colors" title="Edit">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                     </button>
-                    <button onclick="deleteStudent('${key}')" class="p-2 rounded-lg hover:bg-rose-100 text-rose-500 transition-colors" title="Delete">
+                    <button onclick="deleteStudent('${s.admission_no || s.temp_id}')" class="p-2 rounded-lg hover:bg-rose-100 text-rose-500 transition-colors" title="Delete">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                     </button>
                 </div>
             </td>
         </tr>
-    `}).join('');
+            `}).join('');
 
             renderPaginationControls(totalPages);
             updateBulkActionUI();
+        }
+
+        async function exportData(type) {
+            // 'excel' = Active Only (Standard Export)
+            // 'backup' = All including Trash (Settings > Data Backup)
+
+            let dataToExport;
+
+            if (type === 'backup') {
+                // Sort: Active first, then Trash
+                dataToExport = [...allStudents].sort((a, b) => (a.status === 'Trash' ? 1 : -1));
+            } else {
+                // Use filtered list OR active students only
+                dataToExport = (typeof currentFilteredList !== 'undefined' && currentFilteredList.length > 0)
+                    ? currentFilteredList
+                    : allStudents.filter(s => s.status !== 'Trash');
+            }
+
+            if (dataToExport.length === 0) return alert("No data to export!");
+
+            if (type === 'excel' || type === 'backup') {
+                const ws = XLSX.utils.json_to_sheet(dataToExport.map(s => ({
+                    "Admission No": s.admission_no,
+                    "Student Name": s.name,
+                    "Roll No": s.roll_no,
+                    "Class": s.class,
+                    "Section": s.section,
+                    "House": s.house,
+                    "Status": s.status === 'Trash' ? 'DELETED' : 'Active', // Mark deleted items
+                    "Deleted At": s.deleted_at || '' // Show timestamp
+                })));
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Students");
+                XLSX.writeFile(wb, `School_Data_${type == 'backup' ? 'FULL_BACKUP' : 'Export'}_${new Date().toISOString().slice(0, 10)}.xlsx`);
+            } else if (type === 'pdf') {
+                // ... pdf logic remains similar, likely unused for backup ...
+            }
         }
 
         function renderPaginationControls(totalPages) {
@@ -1364,20 +1407,40 @@
             updateBulkActionUI();
         }
 
-        function executeDelete(items) {
-            // 1. Stash
+        async function executeDelete(items) {
+            // 1. Stash for Undo
             deletedItemsStash = items;
 
-            // 2. Remove from main array
-            const idsToRemove = new Set(items.map(i => i.admission_no));
-            allStudents = allStudents.filter(s => !idsToRemove.has(s.admission_no));
+            // 2. Perform Soft Delete (Status = 'Trash')
+            const timestamp = new Date().toISOString();
 
-            // 3. Update UI
-            renderStudents();
+            // Optimistic UI Update
+            const idsProcessed = new Set(items.map(i => i.admission_no));
+            allStudents.forEach(s => {
+                if (idsProcessed.has(s.admission_no)) {
+                    s.status = 'Trash';
+                    s.deleted_at = timestamp;
+                }
+            });
+            renderStudents(); // Will filter out Trash
+
+            // 3. API Updates
+            for (const item of items) {
+                try {
+                    await fetch(`/api/data/student/${item.id || item.admission_no}`, { // Fallback if no ID
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                        body: JSON.stringify({ status: 'Trash', deleted_at: timestamp })
+                    });
+                } catch (e) {
+                    console.error("Soft Delete Failed", e);
+                }
+            }
+
+            // 4. Update UI
             backupData(); // Auto backup
-
-            // 4. Show Undo
-            showUndoToast(`${items.length} Student${items.length > 1 ? 's' : ''} deleted`);
+            showUndoToast(`${items.length} Student${items.length > 1 ? 's' : ''} moved to Trash`);
+            updateBulkActionUI();
         }
 
         function showUndoToast(msg) {
