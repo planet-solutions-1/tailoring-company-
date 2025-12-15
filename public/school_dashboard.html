@@ -684,7 +684,7 @@
                                     class="bg-transparent backdrop:bg-black/40 backdrop:backdrop-blur-sm z-50">
                                     <div class="fixed inset-0 flex items-center justify-center p-4">
                                         <div
-                                            class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-white/20 relative animate-in zoom-in-95 duration-200">
+                                            class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-white/20 relative opacity-100 scale-100">
                                             <div
                                                 class="sticky top-0 bg-white/95 backdrop-blur-md z-10 px-6 py-4 border-b border-stone-100 flex justify-between items-center">
                                                 <h3 class="font-ink text-lg text-stone-800">Application Full View</h3>
@@ -1329,7 +1329,16 @@
             `;
 
             document.getElementById('detailModalContent').innerHTML = content;
-            document.getElementById('complaintDetailModal').showModal();
+
+            const modal = document.getElementById('complaintDetailModal');
+            if (modal) {
+                try {
+                    modal.showModal();
+                } catch (err) {
+                    console.warn("Modal already open or error:", err);
+                    if (!modal.open) modal.showModal(); // Retry if state ambiguous
+                }
+            }
         }
 
         async function fetchMyComplaints() {
