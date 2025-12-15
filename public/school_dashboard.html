@@ -830,83 +830,80 @@
         }
 
         // === STUDENTS LOGIC ===
+
+        // Global selection state
+        let selectedStudents = new Set();
+        // Store currently filtered list for bulk actions
+        let currentFilteredList = [];
+        let currentPage = 1;
+        const ITEMS_PER_PAGE = 50;
+
         function populateFilters() {
-            // Logic to populate Class/Section select from allStudents
-            // (Executed once on load, but we re-run if view changes? No, data is global)
+            const classSelect = document.getElementById('filterClass');
+            // Only populate if empty (or reset needed)
+            if (classSelect.options.length <= 1) {
+                const classes = [...new Set(allStudents.map(s => s.class).filter(Boolean))].sort();
+                classes.forEach(c => classSelect.add(new Option(c, c)));
+            }
+        }
 
-            // Global selection state
-            let selectedStudents = new Set();
-            // Store currently filtered list for bulk actions
-            let currentFilteredList = [];
-            let currentPage = 1;
-            const ITEMS_PER_PAGE = 50;
+        function populateSections() {
+            const classVal = document.getElementById('filterClass').value;
+            const secSelect = document.getElementById('filterSection');
 
-            function populateFilters() {
-                const classSelect = document.getElementById('filterClass');
-                // Only populate if empty (or reset needed)
-                if (classSelect.options.length <= 1) {
-                    const classes = [...new Set(allStudents.map(s => s.class).filter(Boolean))].sort();
-                    classes.forEach(c => classSelect.add(new Option(c, c)));
-                }
+            // Clear existing options except first
+            while (secSelect.options.length > 1) {
+                secSelect.remove(1);
             }
 
-            function populateSections() {
-                const classVal = document.getElementById('filterClass').value;
-                const secSelect = document.getElementById('filterSection');
+            if (!classVal) return;
 
-                // Clear existing options except first
-                while (secSelect.options.length > 1) {
-                    secSelect.remove(1);
-                }
+            // Find sections for this class
+            const sections = [...new Set(
+                allStudents
+                    .filter(s => s.class == classVal) // Loose equality for consistency
+                    .map(s => s.section)
+                    .filter(Boolean)
+            )].sort();
 
-                if (!classVal) return;
+            sections.forEach(s => secSelect.add(new Option(s, s)));
+        }
 
-                // Find sections for this class
-                const sections = [...new Set(
-                    allStudents
-                        .filter(s => s.class == classVal) // Loose equality for consistency
-                        .map(s => s.section)
-                        .filter(Boolean)
-                )].sort();
+        function renderStudents() {
+            const tbody = document.getElementById('studentsTableBody');
+            if (!tbody) return;
 
-                sections.forEach(s => secSelect.add(new Option(s, s)));
-            }
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const fClass = document.getElementById('filterClass').value;
+            const fSec = document.getElementById('filterSection').value;
 
-            function renderStudents() {
-                const tbody = document.getElementById('studentsTableBody');
-                if (!tbody) return;
+            // Ensure filters populated
+            populateFilters();
 
-                const search = document.getElementById('searchInput').value.toLowerCase();
-                const fClass = document.getElementById('filterClass').value;
-                const fSec = document.getElementById('filterSection').value;
+            // Filter Logic
+            const filtered = allStudents.filter(s => {
+                const matchSearch = (s.name?.toLowerCase().includes(search) || String(s.roll_no).toLowerCase().includes(search));
+                const matchClass = fClass ? s.class == fClass : true;
+                const matchSec = fSec ? s.section == fSec : true;
+                return matchSearch && matchClass && matchSec;
+            });
 
-                // Ensure filters populated
-                populateFilters();
+            currentFilteredList = filtered; // Update reference for Select All
+            document.getElementById('recordCount').innerText = `${filtered.length} Students Found`;
 
-                // Filter Logic
-                const filtered = allStudents.filter(s => {
-                    const matchSearch = (s.name?.toLowerCase().includes(search) || String(s.roll_no).toLowerCase().includes(search));
-                    const matchClass = fClass ? s.class == fClass : true;
-                    const matchSec = fSec ? s.section == fSec : true;
-                    return matchSearch && matchClass && matchSec;
-                });
+            // Pagination Logic
+            const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+            if (currentPage > totalPages) currentPage = 1;
 
-                currentFilteredList = filtered; // Update reference for Select All
-                document.getElementById('recordCount').innerText = `${filtered.length} Students Found`;
+            const start = (currentPage - 1) * ITEMS_PER_PAGE;
+            const paginated = filtered.slice(start, start + ITEMS_PER_PAGE);
 
-                // Pagination Logic
-                const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
-                if (currentPage > totalPages) currentPage = 1;
+            // Render Rows
+            tbody.innerHTML = paginated.map((s, index) => {
+                const key = s.admission_no || (s.temp_id || `idx_${index}`); // Robust key
+                const isSelected = selectedStudents.has(String(key));
 
-                const start = (currentPage - 1) * ITEMS_PER_PAGE;
-                const paginated = filtered.slice(start, start + ITEMS_PER_PAGE);
-
-                // Render Rows
-                tbody.innerHTML = paginated.map((s, index) => {
-                    const key = s.admission_no || (s.temp_id || `idx_${index}`); // Robust key
-                    const isSelected = selectedStudents.has(String(key));
-
-                    return `
+                return `
         <tr class="hover:bg-indigo-50/50 transition-colors group border-b border-indigo-50/30 last:border-none">
             <td class="p-4">
                 <input type="checkbox" onchange="toggleSelection('${key}')" ${isSelected ? 'checked' : ''} class="rounded text-indigo-500 focus:ring-indigo-500 cursor-pointer student-checkbox" value="${key}">
@@ -936,344 +933,363 @@
         </tr>
     `}).join('');
 
-                renderPaginationControls(totalPages);
-                updateBulkActionUI();
+            renderPaginationControls(totalPages);
+            updateBulkActionUI();
+        }
+
+        function renderPaginationControls(totalPages) {
+            const container = document.getElementById('paginationControls');
+            if (totalPages <= 1) {
+                container.innerHTML = '';
+                return;
             }
 
-            function renderPaginationControls(totalPages) {
-                const container = document.getElementById('paginationControls');
-                if (totalPages <= 1) {
-                    container.innerHTML = '';
-                    return;
-                }
-
-                let html = `
+            let html = `
         <button onclick="changePage(${currentPage - 1})" class="px-3 py-1 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-500 disabled:opacity-50" ${currentPage === 1 ? 'disabled' : ''}>Prev</button>
         <span class="px-2 py-1 text-slate-600">Page ${currentPage} of ${totalPages}</span>
         <button onclick="changePage(${currentPage + 1})" class="px-3 py-1 rounded-lg bg-slate-50 hover:bg-slate-100 text-slate-500 disabled:opacity-50" ${currentPage === totalPages ? 'disabled' : ''}>Next</button>
     `;
-                container.innerHTML = html;
-            }
-
-            function changePage(newPage) {
-                currentPage = newPage;
-                renderStudents();
-            }
-
-            function updateBulkActionUI() {
-                const btn = document.getElementById('bulkDeleteBtn');
-                if (selectedStudents.size > 0) {
-                    btn.classList.remove('hidden');
-                    btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg> Delete (${selectedStudents.size})`;
-                } else {
-                    btn.classList.add('hidden');
-                }
-
-                // Check if ALL visible items are selected (for "Select All" checkbox state)
-                // We check against currentFilteredList for correct "Select All" behavior across pages? 
-                // Usually "Select All" in header implies select ALL filtered pages or just current page.
-                // Let's assume it selects ALL filtered items for user convenience.
-                const allChecked = currentFilteredList.length > 0 && currentFilteredList.every(s => selectedStudents.has(String(s.admission_no || s.temp_id)));
-                document.getElementById('selectAllCheckbox').checked = allChecked;
-                document.getElementById('selectAllCheckbox').indeterminate = selectedStudents.size > 0 && !allChecked;
-            }
-
-            function toggleSelection(key) {
-                key = String(key);
-                if (selectedStudents.has(key)) {
-                    selectedStudents.delete(key);
-                } else {
-                    selectedStudents.add(key);
-                }
-                // Optimization: Don't re-render entire table if using pagination, just update checkboxes?
-                // But updateBulkActionUI needs to run. 
-                // Re-rendering 50 items is fast.
-                renderStudents();
-            }
-
-            function toggleSelectAll(checkbox) {
-                if (checkbox.checked) {
-                    currentFilteredList.forEach(s => selectedStudents.add(String(s.admission_no || s.temp_id)));
-                } else {
-                    currentFilteredList.forEach(s => selectedStudents.delete(String(s.admission_no || s.temp_id)));
-                }
-                renderStudents();
-            }
-
-            // --- CRUD Logic ---
-
-            let deletedItemsStash = [];
-            let undoTimer = null;
-
-            function deleteStudent(key) {
-                if (!confirm("Are you sure you want to delete this student?")) return;
-
-                // Find item
-                const idx = allStudents.findIndex(s => String(s.admission_no || s.temp_id) === String(key)); // Basic fuzzy match
-                if (idx === -1) {
-                    // Fallback for index-based key from earlier render
-                    if (allStudents[key]) {
-                        executeDelete([allStudents[key]]);
-                    }
-                    return;
-                }
-                executeDelete([allStudents[idx]]);
-            }
-
-            function bulkDelete() {
-                if (selectedStudents.size === 0) return;
-                if (!confirm(`Delete ${selectedStudents.size} students?`)) return;
-
-                const toDelete = [];
-                selectedStudents.forEach(key => {
-                    const s = allStudents.find(st => String(st.admission_no || st.temp_id) === String(key));
-                    if (s) toDelete.push(s);
-                });
-
-                executeDelete(toDelete);
-                selectedStudents.clear();
-                updateBulkActionUI();
-            }
-
-            function executeDelete(items) {
-                // 1. Stash
-                deletedItemsStash = items;
-
-                // 2. Remove from main array
-                // This is O(N*M), ok for small batches. For large, use Set.
-                const idsToRemove = new Set(items.map(i => i.admission_no));
-                allStudents = allStudents.filter(s => !idsToRemove.has(s.admission_no));
-
-                // 3. Update UI
-                renderStudents();
-                backupData(); // Auto backup
-
-                // 4. Show Undo
-                showUndoToast(`${items.length} Student${items.length > 1 ? 's' : ''} deleted`);
-            }
-
-            function showUndoToast(msg) {
-                const toast = document.getElementById('undoToast');
-                document.getElementById('undoMsg').innerText = msg;
-
-                if (undoTimer) clearTimeout(undoTimer);
-
-                toast.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
-
-                // Auto dismiss after 20s (User requested 20s)
-                undoTimer = setTimeout(() => {
-                    dismissUndo();
-                    document.getElementById('edit_sec').value = s.section;
-                    document.getElementById('edit_status').value = s.order_status || 'Pending';
-
-                    document.getElementById('editStudentModal').showModal();
-                }
-
-            function saveStudentEdit() {
-                        const originalAdm = document.getElementById('edit_original_adm').value;
-                        const idx = allStudents.findIndex(s => String(s.admission_no) === String(originalAdm));
-
-                        if (idx === -1) return;
-
-                        allStudents[idx] = {
-                            ...allStudents[idx],
-                            name: document.getElementById('edit_name').value,
-                            admission_no: document.getElementById('edit_adm').value,
-                            roll_no: document.getElementById('edit_roll').value,
-                            gender: document.getElementById('edit_gender').value,
-                            class: document.getElementById('edit_class').value,
-                            section: document.getElementById('edit_sec').value,
-                            order_status: document.getElementById('edit_status').value
-                        };
-
-                        renderStudents();
-                        backupData();
-                        document.getElementById('editStudentModal').close();
-                    }
-
-            // --- Backup System ---
-            function backupData() {
-                        const backups = JSON.parse(localStorage.getItem('student_backups') || '[]');
-                        const today = new Date().toISOString().split('T')[0];
-
-                        // Check if backup for today exists, update it if so, else push new
-                        const existingIdx = backups.findIndex(b => b.date === today);
-                        const snapshot = { date: today, data: allStudents, ts: Date.now() };
-
-                        if (existingIdx >= 0) {
-                            backups[existingIdx] = snapshot;
-                        } else {
-                            backups.unshift(snapshot);
-                            if (backups.length > 4) backups.pop(); // Keep 4 days
-                        }
-
-                        localStorage.setItem('student_backups', JSON.stringify(backups));
-                    }
-
-            // Call toggleSelectAll etc. (Existing wrappers)
+            container.innerHTML = html;
         }
 
-            async function handleBulkImport(e) {
-                const file = e.target.files[0];
-                if (!file) return;
+        function changePage(newPage) {
+            currentPage = newPage;
+            renderStudents();
+        }
 
-                if (!confirm("Start import? This will add new students.")) {
-                    e.target.value = '';
-                    return;
+        function updateBulkActionUI() {
+            const btn = document.getElementById('bulkDeleteBtn');
+            if (selectedStudents.size > 0) {
+                btn.classList.remove('hidden');
+                btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg> Delete (${selectedStudents.size})`;
+            } else {
+                btn.classList.add('hidden');
+            }
+
+            const allChecked = currentFilteredList.length > 0 && currentFilteredList.every(s => selectedStudents.has(String(s.admission_no || s.temp_id)));
+            document.getElementById('selectAllCheckbox').checked = allChecked;
+            document.getElementById('selectAllCheckbox').indeterminate = selectedStudents.size > 0 && !allChecked;
+        }
+
+        function toggleSelection(key) {
+            key = String(key);
+            if (selectedStudents.has(key)) {
+                selectedStudents.delete(key);
+            } else {
+                selectedStudents.add(key);
+            }
+            renderStudents();
+        }
+
+        function toggleSelectAll(checkbox) {
+            if (checkbox.checked) {
+                currentFilteredList.forEach(s => selectedStudents.add(String(s.admission_no || s.temp_id)));
+            } else {
+                currentFilteredList.forEach(s => selectedStudents.delete(String(s.admission_no || s.temp_id)));
+            }
+            renderStudents();
+        }
+
+        // --- CRUD Logic ---
+
+        let deletedItemsStash = [];
+        let undoTimer = null;
+
+        function deleteStudent(key) {
+            if (!confirm("Are you sure you want to delete this student?")) return;
+
+            // Find item
+            const idx = allStudents.findIndex(s => String(s.admission_no || s.temp_id) === String(key));
+            if (idx === -1) {
+                if (allStudents[key]) {
+                    executeDelete([allStudents[key]]);
                 }
+                return;
+            }
+            executeDelete([allStudents[idx]]);
+        }
 
-                reader.onload = async (evt) => {
-                    try {
-                        const data = new Uint8Array(evt.target.result);
-                        const workbook = XLSX.read(data, { type: 'array' });
-                        const sheet = workbook.Sheets[workbook.SheetNames[0]];
-                        const json = XLSX.utils.sheet_to_json(sheet);
+        function bulkDelete() {
+            if (selectedStudents.size === 0) return;
+            if (!confirm(`Delete ${selectedStudents.size} students?`)) return;
 
-                        let success = 0;
-                        for (const row of json) {
-                            // Map row keys to API expected keys
-                            const payload = {
-                                school_id: schoolId,
-                                admission_no: row['Adm No'] || row['ADMISSION NO'],
-                                roll_no: row['Roll No'] || row['ROLL NO'],
-                                name: row['Name'] || row['NAME'],
-                                class: row['Class'] || row['CLASS'],
-                                section: row['Section'] || row['SECTION'],
-                                house: row['House'] || row['HOUSE'],
-                                gender: row['Gender'] || row['GENDER']
-                            };
+            const toDelete = [];
+            selectedStudents.forEach(key => {
+                const s = allStudents.find(st => String(st.admission_no || st.temp_id) === String(key));
+                if (s) toDelete.push(s);
+            });
 
-                            if (payload.admission_no && payload.name) {
-                                await fetch('/api/data/student', {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                                    body: JSON.stringify(payload)
-                                });
-                                success++;
-                            }
+            executeDelete(toDelete);
+            selectedStudents.clear();
+            updateBulkActionUI();
+        }
+
+        function executeDelete(items) {
+            // 1. Stash
+            deletedItemsStash = items;
+
+            // 2. Remove from main array
+            const idsToRemove = new Set(items.map(i => i.admission_no));
+            allStudents = allStudents.filter(s => !idsToRemove.has(s.admission_no));
+
+            // 3. Update UI
+            renderStudents();
+            backupData(); // Auto backup
+
+            // 4. Show Undo
+            showUndoToast(`${items.length} Student${items.length > 1 ? 's' : ''} deleted`);
+        }
+
+        function showUndoToast(msg) {
+            const toast = document.getElementById('undoToast');
+            document.getElementById('undoMsg').innerText = msg;
+
+            if (undoTimer) clearTimeout(undoTimer);
+
+            toast.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
+
+            // Auto dismiss after 20s
+            undoTimer = setTimeout(() => {
+                dismissUndo();
+                deletedItemsStash = [];
+            }, 20000);
+        }
+
+        function dismissUndo() {
+            const toast = document.getElementById('undoToast');
+            toast.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
+        }
+
+        function undoDelete() {
+            if (deletedItemsStash.length === 0) return;
+
+            // Restore
+            allStudents.push(...deletedItemsStash);
+
+            deletedItemsStash = [];
+            renderStudents();
+            backupData();
+            dismissUndo();
+        }
+
+        function openEditStudentModal(key) {
+            const s = allStudents.find(st => String(st.admission_no || st.temp_id) === String(key));
+            if (!s) return;
+
+            document.getElementById('edit_original_adm').value = s.admission_no;
+            document.getElementById('edit_name').value = s.name;
+            document.getElementById('edit_adm').value = s.admission_no;
+            document.getElementById('edit_roll').value = s.roll_no;
+            document.getElementById('edit_gender').value = s.gender;
+            document.getElementById('edit_class').value = s.class;
+            document.getElementById('edit_sec').value = s.section;
+            document.getElementById('edit_status').value = s.order_status || 'Pending';
+
+            document.getElementById('editStudentModal').showModal();
+        }
+
+        function saveStudentEdit() {
+            const originalAdm = document.getElementById('edit_original_adm').value;
+            const idx = allStudents.findIndex(s => String(s.admission_no) === String(originalAdm));
+
+            if (idx === -1) return;
+
+            allStudents[idx] = {
+                ...allStudents[idx],
+                name: document.getElementById('edit_name').value,
+                admission_no: document.getElementById('edit_adm').value,
+                roll_no: document.getElementById('edit_roll').value,
+                gender: document.getElementById('edit_gender').value,
+                class: document.getElementById('edit_class').value,
+                section: document.getElementById('edit_sec').value,
+                order_status: document.getElementById('edit_status').value
+            };
+
+            renderStudents();
+            backupData();
+            document.getElementById('editStudentModal').close();
+        }
+
+        // --- Backup System ---
+        function backupData() {
+            const backups = JSON.parse(localStorage.getItem('student_backups') || '[]');
+            const today = new Date().toISOString().split('T')[0];
+
+            // Check if backup for today exists
+            const existingIdx = backups.findIndex(b => b.date === today);
+            const snapshot = { date: today, data: allStudents, ts: Date.now() };
+
+            if (existingIdx >= 0) {
+                backups[existingIdx] = snapshot;
+            } else {
+                backups.unshift(snapshot);
+                if (backups.length > 4) backups.pop(); // Keep 4 days
+            }
+
+            localStorage.setItem('student_backups', JSON.stringify(backups));
+        }
+
+        async function handleBulkImport(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            if (!confirm("Start import? This will add new students.")) {
+                e.target.value = '';
+                return;
+            }
+
+            reader.onload = async (evt) => {
+                try {
+                    const data = new Uint8Array(evt.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const json = XLSX.utils.sheet_to_json(sheet);
+
+                    let success = 0;
+                    for (const row of json) {
+                        // Map row keys to API expected keys
+                        const payload = {
+                            school_id: schoolId,
+                            admission_no: row['Adm No'] || row['ADMISSION NO'],
+                            roll_no: row['Roll No'] || row['ROLL NO'],
+                            name: row['Name'] || row['NAME'],
+                            class: row['Class'] || row['CLASS'],
+                            section: row['Section'] || row['SECTION'],
+                            house: row['House'] || row['HOUSE'],
+                            gender: row['Gender'] || row['GENDER']
+                        };
+
+                        if (payload.admission_no && payload.name) {
+                            await fetch('/api/data/student', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                                body: JSON.stringify(payload)
+                            });
+                            success++;
                         }
-
-                        alert(`Imported ${success} students successfully!`);
-                        await fetchData();
-                        if (currentView === 'dashboard') renderDashboardStats();
-                    } catch (err) {
-                        console.error(err);
-                        alert("Import failed: " + err.message);
                     }
-                };
-                reader.readAsArrayBuffer(file);
-            }
 
-            async function exportData(type) {
-                // Use currentFilteredList if available, else allStudents
-                const dataToExport = (typeof currentFilteredList !== 'undefined' && currentFilteredList.length > 0) ? currentFilteredList : allStudents;
-
-                if (dataToExport.length === 0) return alert("No data to export!");
-
-                // ... (rest of logic using dataToExport instead of allStudents)
-                // Need to change the implementation slightly to pass dataToExport
-
-                if (type === 'excel') {
-                    const ws = XLSX.utils.json_to_sheet(dataToExport.map(s => ({
-                        "Admission No": s.admission_no,
-                        "Roll No": s.roll_no,
-                        "Name": s.name,
-                        "Class": s.class,
-                        "Section": s.section,
-                        "Gender": s.gender,
-                        "House": s.house,
-                        "Status": s.order_status
-                    })));
-                    const wb = XLSX.utils.book_new();
-                    XLSX.utils.book_append_sheet(wb, ws, "Students");
-                    XLSX.writeFile(wb, `Students_Export_${new Date().toISOString().slice(0, 10)}.xlsx`);
-                } else if (type === 'pdf') {
-                    alert("PDF Export for filtered list not fully implemented (requires PDF lib). Using Excel is recommended for reports.");
+                    alert(`Imported ${success} students successfully!`);
+                    await fetchData();
+                    if (currentView === 'dashboard') renderDashboardStats();
+                } catch (err) {
+                    console.error(err);
+                    alert("Import failed: " + err.message);
                 }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        async function exportData(type) {
+            // Use currentFilteredList if available, else allStudents
+            const dataToExport = (typeof currentFilteredList !== 'undefined' && currentFilteredList.length > 0) ? currentFilteredList : allStudents;
+
+            if (dataToExport.length === 0) return alert("No data to export!");
+
+            // ... (rest of logic using dataToExport instead of allStudents)
+            // Need to change the implementation slightly to pass dataToExport
+
+            if (type === 'excel') {
+                const ws = XLSX.utils.json_to_sheet(dataToExport.map(s => ({
+                    "Admission No": s.admission_no,
+                    "Roll No": s.roll_no,
+                    "Name": s.name,
+                    "Class": s.class,
+                    "Section": s.section,
+                    "Gender": s.gender,
+                    "House": s.house,
+                    "Status": s.order_status
+                })));
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Students");
+                XLSX.writeFile(wb, `Students_Export_${new Date().toISOString().slice(0, 10)}.xlsx`);
+            } else if (type === 'pdf') {
+                alert("PDF Export for filtered list not fully implemented (requires PDF lib). Using Excel is recommended for reports.");
             }
+        }
 
-            // === SUPPORT LOGIC ===
-            let editingComplaintId = null; // Track if we are editing
+        // === SUPPORT LOGIC ===
+        let editingComplaintId = null; // Track if we are editing
 
-            function handleFileSelect(e) {
-                const files = Array.from(e.target.files);
-                // Append to existing selectedFiles instead of replacing
-                selectedFiles = [...selectedFiles, ...files];
-                renderImagePreviews();
-            }
+        function handleFileSelect(e) {
+            const files = Array.from(e.target.files);
+            // Append to existing selectedFiles instead of replacing
+            selectedFiles = [...selectedFiles, ...files];
+            renderImagePreviews();
+        }
 
-            function removeFile(index) {
-                selectedFiles.splice(index, 1);
-                renderImagePreviews();
-            }
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            renderImagePreviews();
+        }
 
-            function renderImagePreviews() {
-                const container = document.getElementById('imagePreviewContainer');
-                container.innerHTML = '';
+        function renderImagePreviews() {
+            const container = document.getElementById('imagePreviewContainer');
+            container.innerHTML = '';
 
-                selectedFiles.forEach((f, i) => {
-                    const div = document.createElement('div');
-                    div.className = "relative inline-block shrink-0 h-16 w-16 group";
-
-                    const img = document.createElement('img');
-                    img.src = URL.createObjectURL(f);
-                    img.className = "h-full w-full rounded border border-stone-200 object-cover";
-
-                    const removeBtn = document.createElement('button');
-                    removeBtn.innerHTML = "×";
-                    removeBtn.className = "absolute -top-2 -right-2 bg-rose-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold shadow-sm opacity-0 group-hover:opacity-100 transition-opacity";
-                    removeBtn.onclick = (e) => { e.preventDefault(); removeFile(i); };
-
-                    div.appendChild(img);
-                    div.appendChild(removeBtn);
-                    container.appendChild(div);
-                });
-            }
-
-            // === MODAL LOGIC ===
-            const boysPatterns = [
-                "BOYS - FORMAL SHIRT", "BOYS - TRACK T-SHIRT", "BOYS - UNIFORM T-SHIRT",
-                "BOYS - JERKIN", "BOYS - PULLOVER", "BOYS - FORMAL PANT",
-                "BOYS - TRACK PANT", "BOYS - FORMAL SHORTS", "BOYS - TRACK SHORTS",
-                "BOYS - PANT SPECIAL CASE"
-            ];
-            const girlsPatterns = [
-                "GIRLS - FORMAL SHIRT", "GIRLS - TRACK T-SHIRT", "GIRLS - UNIFORM T-SHIRT",
-                "GIRLS - JERKIN", "GIRLS - FULL SLEEVE SHIRT", "GIRLS - PULLOVER",
-                "GIRLS - KURTHA SHIRT", "GIRLS - SPECIAL FROCKS", "GIRLS - FORMAL PANT",
-                "GIRLS - TRACK PANT", "GIRLS - TRACK SHORTS", "GIRLS - PINOFORE",
-                "GIRLS - SKIRT", "GIRLS - PANT SPECIAL CASE"
-            ];
-
-            // Ensure gender change updates existing rows or warns? 
-            // For simplicity, we just re-render or let user manage.
-            // Actually, let's refresh ALL pattern dropdowns when gender changes
-            function updatePatternOptions() {
-                const gender = document.getElementById('c_gender').value;
-                const patterns = gender === 'Male' ? boysPatterns : girlsPatterns;
-
-                // Update all existing pattern selects
-                document.querySelectorAll('.pattern-select').forEach(select => {
-                    const currentVal = select.value;
-                    select.innerHTML = patterns.map(p => `<option value="${p}">${p}</option>`).join('');
-                    if (patterns.includes(currentVal)) select.value = currentVal;
-                });
-            }
-
-            function addDefectRow() {
-                const container = document.getElementById('defectItemsContainer');
-                const documentFragment = document.createDocumentFragment();
-                const rowId = 'row_' + Date.now();
-
+            selectedFiles.forEach((f, i) => {
                 const div = document.createElement('div');
-                div.className = "defect-row grid grid-cols-1 md:grid-cols-12 gap-2 items-start bg-slate-50 p-4 rounded-2xl border-none shadow-inner animate-in slide-in-from-right-2";
-                div.id = rowId;
+                div.className = "relative inline-block shrink-0 h-16 w-16 group";
 
-                const gender = document.getElementById('c_gender').value;
-                const patterns = gender === 'Male' ? boysPatterns : girlsPatterns;
-                const patternOptions = patterns.map(p => `<option value="${p}">${p}</option>`).join('');
+                const img = document.createElement('img');
+                img.src = URL.createObjectURL(f);
+                img.className = "h-full w-full rounded border border-stone-200 object-cover";
 
-                div.innerHTML = `
+                const removeBtn = document.createElement('button');
+                removeBtn.innerHTML = "×";
+                removeBtn.className = "absolute -top-2 -right-2 bg-rose-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold shadow-sm opacity-0 group-hover:opacity-100 transition-opacity";
+                removeBtn.onclick = (e) => { e.preventDefault(); removeFile(i); };
+
+                div.appendChild(img);
+                div.appendChild(removeBtn);
+                container.appendChild(div);
+            });
+        }
+
+        // === MODAL LOGIC ===
+        const boysPatterns = [
+            "BOYS - FORMAL SHIRT", "BOYS - TRACK T-SHIRT", "BOYS - UNIFORM T-SHIRT",
+            "BOYS - JERKIN", "BOYS - PULLOVER", "BOYS - FORMAL PANT",
+            "BOYS - TRACK PANT", "BOYS - FORMAL SHORTS", "BOYS - TRACK SHORTS",
+            "BOYS - PANT SPECIAL CASE"
+        ];
+        const girlsPatterns = [
+            "GIRLS - FORMAL SHIRT", "GIRLS - TRACK T-SHIRT", "GIRLS - UNIFORM T-SHIRT",
+            "GIRLS - JERKIN", "GIRLS - FULL SLEEVE SHIRT", "GIRLS - PULLOVER",
+            "GIRLS - KURTHA SHIRT", "GIRLS - SPECIAL FROCKS", "GIRLS - FORMAL PANT",
+            "GIRLS - TRACK PANT", "GIRLS - TRACK SHORTS", "GIRLS - PINOFORE",
+            "GIRLS - SKIRT", "GIRLS - PANT SPECIAL CASE"
+        ];
+
+        // Ensure gender change updates existing rows or warns? 
+        // For simplicity, we just re-render or let user manage.
+        // Actually, let's refresh ALL pattern dropdowns when gender changes
+        function updatePatternOptions() {
+            const gender = document.getElementById('c_gender').value;
+            const patterns = gender === 'Male' ? boysPatterns : girlsPatterns;
+
+            // Update all existing pattern selects
+            document.querySelectorAll('.pattern-select').forEach(select => {
+                const currentVal = select.value;
+                select.innerHTML = patterns.map(p => `<option value="${p}">${p}</option>`).join('');
+                if (patterns.includes(currentVal)) select.value = currentVal;
+            });
+        }
+
+        function addDefectRow() {
+            const container = document.getElementById('defectItemsContainer');
+            const documentFragment = document.createDocumentFragment();
+            const rowId = 'row_' + Date.now();
+
+            const div = document.createElement('div');
+            div.className = "defect-row grid grid-cols-1 md:grid-cols-12 gap-2 items-start bg-slate-50 p-4 rounded-2xl border-none shadow-inner animate-in slide-in-from-right-2";
+            div.id = rowId;
+
+            const gender = document.getElementById('c_gender').value;
+            const patterns = gender === 'Male' ? boysPatterns : girlsPatterns;
+            const patternOptions = patterns.map(p => `<option value="${p}">${p}</option>`).join('');
+
+            div.innerHTML = `
                 <div class="md:col-span-5">
                     <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Pattern</label>
                     <select class="pattern-select w-full bg-white border-none shadow-sm rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-200">
@@ -1298,286 +1314,286 @@
                 </div>
             `;
 
-                container.appendChild(div);
-                checkEmptyMsg();
-            }
+            container.appendChild(div);
+            checkEmptyMsg();
+        }
 
-            function checkEmptyMsg() {
-                const count = document.getElementById('defectItemsContainer').children.length;
-                const msg = document.getElementById('emptyItemsMsg');
-                if (count === 0) msg.classList.remove('hidden');
-                else msg.classList.add('hidden');
-            }
+        function checkEmptyMsg() {
+            const count = document.getElementById('defectItemsContainer').children.length;
+            const msg = document.getElementById('emptyItemsMsg');
+            if (count === 0) msg.classList.remove('hidden');
+            else msg.classList.add('hidden');
+        }
 
-            function handleIssueChange(select) {
-                const input = select.closest('div').querySelector('.other-issue-input');
-                if (select.value === 'Other') {
-                    input.classList.remove('hidden');
-                    input.required = true;
-                } else {
-                    input.classList.add('hidden');
-                    input.required = false;
+        function handleIssueChange(select) {
+            const input = select.closest('div').querySelector('.other-issue-input');
+            if (select.value === 'Other') {
+                input.classList.remove('hidden');
+                input.required = true;
+            } else {
+                input.classList.add('hidden');
+                input.required = false;
+            }
+        }
+
+        function openComplaintModal() {
+            const modal = document.getElementById('complaintModal');
+            if (modal) {
+                modal.showModal();
+                // If empty, add one row by default
+                if (document.getElementById('defectItemsContainer').children.length === 0) {
+                    addDefectRow();
                 }
             }
+        }
 
-            function openComplaintModal() {
-                const modal = document.getElementById('complaintModal');
-                if (modal) {
-                    modal.showModal();
-                    // If empty, add one row by default
-                    if (document.getElementById('defectItemsContainer').children.length === 0) {
-                        addDefectRow();
-                    }
-                }
+        function closeComplaintModal() {
+            const modal = document.getElementById('complaintModal');
+            if (modal) modal.close();
+            // Reset form
+            document.getElementById('complaintForm').reset();
+            selectedFiles = [];
+            renderImagePreviews();
+            editingComplaintId = null;
+            document.getElementById('defectItemsContainer').innerHTML = '';
+            checkEmptyMsg(); // Ensure empty message is shown if container is cleared
+        }
+
+        async function submitComplaint(e) {
+            e.preventDefault();
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<div class="enso-loader w-4 h-4 border-2"></div> Processing...';
+
+            // Gather Data
+            const student_name = document.getElementById('c_name').value;
+            const student_reg_no = document.getElementById('c_reg').value;
+            const gender = document.getElementById('c_gender').value;
+            const cls = document.getElementById('c_class').value;
+            const section = document.getElementById('c_sec').value;
+            const house = document.getElementById('c_house').value;
+
+            // Gather Defect Items
+            const rows = document.querySelectorAll('.defect-row');
+            if (rows.length === 0) {
+                alert("Please add at least one item defect.");
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+                return;
             }
 
-            function closeComplaintModal() {
-                const modal = document.getElementById('complaintModal');
-                if (modal) modal.close();
-                // Reset form
-                document.getElementById('complaintForm').reset();
-                selectedFiles = [];
-                renderImagePreviews();
-                editingComplaintId = null;
-                document.getElementById('defectItemsContainer').innerHTML = '';
-                checkEmptyMsg(); // Ensure empty message is shown if container is cleared
-            }
+            const items = Array.from(rows).map(row => {
+                const p = row.querySelector('.pattern-select').value;
+                const iSelect = row.querySelector('.issue-select');
+                const issueVal = iSelect.value;
+                const otherVal = row.querySelector('.other-issue-input').value;
+                const finalIssue = (issueVal === 'Other' && otherVal) ? otherVal : issueVal;
+                return { pattern: p, issue: finalIssue };
+            });
 
-            async function submitComplaint(e) {
-                e.preventDefault();
-                const submitBtn = e.target.querySelector('button[type="submit"]');
-                const originalText = submitBtn.innerHTML;
-                submitBtn.disabled = true;
-                submitBtn.innerHTML = '<div class="enso-loader w-4 h-4 border-2"></div> Processing...';
+            // Aggregate for Legacy DB Columns
+            const pattern_name = items.map(x => x.pattern).join(', ');
+            // Format Issue Type clearly: "Shirt (Size), Pant (Tear)"
+            const issue_type = items.map(x => `${x.pattern.split('-').pop().trim()} (${x.issue})`).join(', ');
 
-                // Gather Data
-                const student_name = document.getElementById('c_name').value;
-                const student_reg_no = document.getElementById('c_reg').value;
-                const gender = document.getElementById('c_gender').value;
-                const cls = document.getElementById('c_class').value;
-                const section = document.getElementById('c_sec').value;
-                const house = document.getElementById('c_house').value;
+            // Calculate Max Rating based on issues (e.g. if any logic needed, otherwise default 3)
+            const rating = 3;
 
-                // Gather Defect Items
-                const rows = document.querySelectorAll('.defect-row');
-                if (rows.length === 0) {
-                    alert("Please add at least one item defect.");
-                    submitBtn.innerHTML = originalText;
-                    submitBtn.disabled = false;
-                    return;
+            const comment = document.getElementById('c_desc').value;
+            let imageUrls = [];
+
+            try {
+                // Upload new files
+                if (selectedFiles.length > 0) {
+                    const fd = new FormData();
+                    selectedFiles.forEach(f => fd.append('images', f));
+                    const upRes = await fetch('/api/data/upload', { method: 'POST', body: fd });
+                    if (!upRes.ok) throw new Error("Upload failed");
+                    imageUrls = (await upRes.json()).urls;
                 }
 
-                const items = Array.from(rows).map(row => {
-                    const p = row.querySelector('.pattern-select').value;
-                    const iSelect = row.querySelector('.issue-select');
-                    const issueVal = iSelect.value;
-                    const otherVal = row.querySelector('.other-issue-input').value;
-                    const finalIssue = (issueVal === 'Other' && otherVal) ? otherVal : issueVal;
-                    return { pattern: p, issue: finalIssue };
+                const payload = {
+                    school_id: schoolId,
+                    student_name, student_reg_no, gender,
+                    class: cls, section, house,
+                    pattern_name, issue_type,
+                    rating,
+                    comment,
+                    image_url: JSON.stringify(imageUrls)
+                };
+
+                const url = editingComplaintId ? `/api/data/complaints/${editingComplaintId}` : '/api/data/complaints';
+                const method = editingComplaintId ? 'PUT' : 'POST';
+
+                const res = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify(payload)
                 });
 
-                // Aggregate for Legacy DB Columns
-                const pattern_name = items.map(x => x.pattern).join(', ');
-                // Format Issue Type clearly: "Shirt (Size), Pant (Tear)"
-                const issue_type = items.map(x => `${x.pattern.split('-').pop().trim()} (${x.issue})`).join(', ');
+                if (!res.ok) throw new Error("Submission failed");
 
-                // Calculate Max Rating based on issues (e.g. if any logic needed, otherwise default 3)
-                const rating = 3;
+                alert(editingComplaintId ? "Ticket Updated!" : "Ticket Submitted!");
 
-                const comment = document.getElementById('c_desc').value;
-                let imageUrls = [];
+                closeComplaintModal();
+                fetchMyComplaints();
 
-                try {
-                    // Upload new files
-                    if (selectedFiles.length > 0) {
-                        const fd = new FormData();
-                        selectedFiles.forEach(f => fd.append('images', f));
-                        const upRes = await fetch('/api/data/upload', { method: 'POST', body: fd });
-                        if (!upRes.ok) throw new Error("Upload failed");
-                        imageUrls = (await upRes.json()).urls;
-                    }
+                // Clear dynamic items
+                document.getElementById('defectItemsContainer').innerHTML = '';
 
-                    const payload = {
-                        school_id: schoolId,
-                        student_name, student_reg_no, gender,
-                        class: cls, section, house,
-                        pattern_name, issue_type,
-                        rating,
-                        comment,
-                        image_url: JSON.stringify(imageUrls)
-                    };
+            } catch (err) {
+                alert("Error: " + err.message);
+                submitBtn.innerHTML = originalText;
+            } finally {
+                submitBtn.disabled = false;
+                if (submitBtn.innerText !== originalText) submitBtn.innerHTML = originalText;
+            }
+        }
 
-                    const url = editingComplaintId ? `/api/data/complaints/${editingComplaintId}` : '/api/data/complaints';
-                    const method = editingComplaintId ? 'PUT' : 'POST';
-
-                    const res = await fetch(url, {
-                        method: method,
-                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                        body: JSON.stringify(payload)
-                    });
-
-                    if (!res.ok) throw new Error("Submission failed");
-
-                    alert(editingComplaintId ? "Ticket Updated!" : "Ticket Submitted!");
-
-                    closeComplaintModal();
+        async function deleteComplaint(id) {
+            if (!confirm("Are you sure you want to delete this ticket?")) return;
+            try {
+                const res = await fetch(`/api/data/complaints/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+                if (res.ok) {
                     fetchMyComplaints();
+                } else alert("Failed to delete");
+            } catch (e) { console.error(e); }
+        }
 
-                    // Clear dynamic items
-                    document.getElementById('defectItemsContainer').innerHTML = '';
+        // === BULK IMPORT ENGINE ===
+        let importQueue = [];
+        let importFilesList = [];
 
-                } catch (err) {
-                    alert("Error: " + err.message);
-                    submitBtn.innerHTML = originalText;
-                } finally {
-                    submitBtn.disabled = false;
-                    if (submitBtn.innerText !== originalText) submitBtn.innerHTML = originalText;
-                }
+        function openImportModal() {
+            // Reset
+            importQueue = [];
+            importFilesList = [];
+            // Reset View to List (Fix: user stuck in manual entry)
+            if (document.getElementById('manualEntryForm')) hideManualEntryForm();
+
+            document.getElementById('importFileList').innerHTML = '';
+            document.getElementById('multiFileImport').value = '';
+            renderImportPreview();
+
+            // Show
+            const modal = document.getElementById('importModal');
+            modal.classList.remove('hidden');
+        }
+
+        function handleFileSelection(e) {
+            const files = Array.from(e.target.files);
+            processFiles(files);
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            const files = Array.from(e.dataTransfer.files);
+            processFiles(files);
+        }
+
+        async function processFiles(files) {
+            for (const file of files) {
+                // Add to visual list
+                importFilesList.push(file);
+                renderfileList();
+
+                // Parse
+                await parseExcelData(file);
             }
+        }
 
-            async function deleteComplaint(id) {
-                if (!confirm("Are you sure you want to delete this ticket?")) return;
-                try {
-                    const res = await fetch(`/api/data/complaints/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
-                    if (res.ok) {
-                        fetchMyComplaints();
-                    } else alert("Failed to delete");
-                } catch (e) { console.error(e); }
-            }
-
-            // === BULK IMPORT ENGINE ===
-            let importQueue = [];
-            let importFilesList = [];
-
-            function openImportModal() {
-                // Reset
-                importQueue = [];
-                importFilesList = [];
-                // Reset View to List (Fix: user stuck in manual entry)
-                if (document.getElementById('manualEntryForm')) hideManualEntryForm();
-
-                document.getElementById('importFileList').innerHTML = '';
-                document.getElementById('multiFileImport').value = '';
-                renderImportPreview();
-
-                // Show
-                const modal = document.getElementById('importModal');
-                modal.classList.remove('hidden');
-            }
-
-            function handleFileSelection(e) {
-                const files = Array.from(e.target.files);
-                processFiles(files);
-            }
-
-            function handleDrop(e) {
-                e.preventDefault();
-                const files = Array.from(e.dataTransfer.files);
-                processFiles(files);
-            }
-
-            async function processFiles(files) {
-                for (const file of files) {
-                    // Add to visual list
-                    importFilesList.push(file);
-                    renderfileList();
-
-                    // Parse
-                    await parseExcelData(file);
-                }
-            }
-
-            function renderfileList() {
-                const container = document.getElementById('importFileList');
-                container.innerHTML = importFilesList.map((f, i) => `
+        function renderfileList() {
+            const container = document.getElementById('importFileList');
+            container.innerHTML = importFilesList.map((f, i) => `
                 <div class="px-3 py-1 bg-indigo-50 text-indigo-700 rounded-lg text-xs font-bold flex items-center gap-2 shadow-sm border border-indigo-100">
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path></svg>
                     <span class="max-w-[100px] truncate">${f.name}</span>
                     <button onclick="removeImportFile(${i})" class="hover:text-rose-500">×</button>
                 </div>
             `).join('');
-            }
+        }
 
-            function removeImportFile(index) {
-                importFilesList.splice(index, 1);
-                // In a real app we might want to un-parse the data too, but for now we just clear queue and re-parse leftover or just clear all.
-                // Simpler strategy: Clear queue and re-parse remaining files.
-                importQueue = [];
-                renderfileList();
-                processFiles(importFilesList); // Re-process
-            }
+        function removeImportFile(index) {
+            importFilesList.splice(index, 1);
+            // In a real app we might want to un-parse the data too, but for now we just clear queue and re-parse leftover or just clear all.
+            // Simpler strategy: Clear queue and re-parse remaining files.
+            importQueue = [];
+            renderfileList();
+            processFiles(importFilesList); // Re-process
+        }
 
-            function normalizeHeader(key) {
-                const k = key.toString().toUpperCase().trim().replace(/[^A-Z0-9]/g, '');
-                // Map
-                if (['ROLLNO', 'ROLL', 'ID', 'NO'].includes(k)) return 'roll_no';
-                if (['NAME', 'STUDENTNAME', 'STUDENT', 'FULLNAME'].includes(k)) return 'name';
-                if (['GENDER', 'SEX', 'M/F'].includes(k)) return 'gender';
-                if (['CLASS', 'GRADE', 'STD'].includes(k)) return 'class';
-                if (['SECTION', 'SEC', 'DIVISION', 'DIV'].includes(k)) return 'section';
-                if (['HOUSE', 'TEAM', 'GROUP'].includes(k)) return 'house';
-                if (['ADMNO', 'ADMISSIONNO', 'REGNO', 'ADMNNO', 'REGISTRATIONNO'].includes(k)) return 'admission_no';
-                if (['ABSENT/PRESENT', 'STATUS', 'ATTENDANCE'].includes(k)) return 'status_raw'; // Handle logic later
-                return null; // Unknown
-            }
+        function normalizeHeader(key) {
+            const k = key.toString().toUpperCase().trim().replace(/[^A-Z0-9]/g, '');
+            // Map
+            if (['ROLLNO', 'ROLL', 'ID', 'NO'].includes(k)) return 'roll_no';
+            if (['NAME', 'STUDENTNAME', 'STUDENT', 'FULLNAME'].includes(k)) return 'name';
+            if (['GENDER', 'SEX', 'M/F'].includes(k)) return 'gender';
+            if (['CLASS', 'GRADE', 'STD'].includes(k)) return 'class';
+            if (['SECTION', 'SEC', 'DIVISION', 'DIV'].includes(k)) return 'section';
+            if (['HOUSE', 'TEAM', 'GROUP'].includes(k)) return 'house';
+            if (['ADMNO', 'ADMISSIONNO', 'REGNO', 'ADMNNO', 'REGISTRATIONNO'].includes(k)) return 'admission_no';
+            if (['ABSENT/PRESENT', 'STATUS', 'ATTENDANCE'].includes(k)) return 'status_raw'; // Handle logic later
+            return null; // Unknown
+        }
 
-            function parseExcelData(file) {
-                return new Promise((resolve) => {
-                    const reader = new FileReader();
-                    reader.onload = (e) => {
-                        const data = new Uint8Array(e.target.result);
-                        const workbook = XLSX.read(data, { type: 'array' });
+        function parseExcelData(file) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
 
-                        workbook.SheetNames.forEach(sheetName => {
-                            const sheet = workbook.Sheets[sheetName];
-                            const rows = XLSX.utils.sheet_to_json(sheet);
+                    workbook.SheetNames.forEach(sheetName => {
+                        const sheet = workbook.Sheets[sheetName];
+                        const rows = XLSX.utils.sheet_to_json(sheet);
 
-                            rows.forEach(row => {
-                                const newRow = {};
-                                Object.keys(row).forEach(key => {
-                                    const norm = normalizeHeader(key);
-                                    if (norm) newRow[norm] = row[key];
-                                });
-
-                                // Enrich / Validate
-                                if (newRow.name) { // Minimum requirement
-                                    importQueue.push({
-                                        roll_no: newRow.roll_no || '-',
-                                        name: newRow.name,
-                                        gender: newRow.gender || '-',
-                                        class: newRow.class || '-',
-                                        section: newRow.section || '-',
-                                        house: newRow.house || '-',
-                                        admission_no: newRow.admission_no || '-',
-                                        order_status: 'Pending', // Default
-                                        status: 'Active'
-                                    });
-                                }
+                        rows.forEach(row => {
+                            const newRow = {};
+                            Object.keys(row).forEach(key => {
+                                const norm = normalizeHeader(key);
+                                if (norm) newRow[norm] = row[key];
                             });
+
+                            // Enrich / Validate
+                            if (newRow.name) { // Minimum requirement
+                                importQueue.push({
+                                    roll_no: newRow.roll_no || '-',
+                                    name: newRow.name,
+                                    gender: newRow.gender || '-',
+                                    class: newRow.class || '-',
+                                    section: newRow.section || '-',
+                                    house: newRow.house || '-',
+                                    admission_no: newRow.admission_no || '-',
+                                    order_status: 'Pending', // Default
+                                    status: 'Active'
+                                });
+                            }
                         });
-                        renderImportPreview();
-                        resolve();
-                    };
-                    reader.readAsArrayBuffer(file);
-                });
-            }
+                    });
+                    renderImportPreview();
+                    resolve();
+                };
+                reader.readAsArrayBuffer(file);
+            });
+        }
 
-            function renderImportPreview() {
-                const tbody = document.getElementById('importPreviewBody');
-                document.getElementById('previewCount').innerText = importQueue.length + " Records";
+        function renderImportPreview() {
+            const tbody = document.getElementById('importPreviewBody');
+            document.getElementById('previewCount').innerText = importQueue.length + " Records";
 
-                if (importQueue.length === 0) {
-                    tbody.innerHTML = `
+            if (importQueue.length === 0) {
+                tbody.innerHTML = `
                              <tr id="emptyPreviewState">
                                 <td colspan="9" class="p-10 text-center text-stone-300 font-medium">
                                     No data loaded. Upload files or add manually.
                                 </td>
                             </tr>
                 `;
-                    return;
-                }
+                return;
+            }
 
-                tbody.innerHTML = importQueue.map((row, i) => `
+            tbody.innerHTML = importQueue.map((row, i) => `
                 <tr class="hover:bg-stone-50 transition-colors border-b border-stone-50 last:border-none group">
                     <td class="p-3 font-bold text-stone-600">${row.roll_no}</td>
                     <td class="p-3 font-bold text-stone-800">${row.name}</td>
@@ -1593,160 +1609,160 @@
                     </td>
                 </tr>
             `).join('');
+        }
+
+        function removeImportRow(i) {
+            importQueue.splice(i, 1);
+            renderImportPreview();
+        }
+
+        function showManualEntryForm() {
+            document.getElementById('importListView').classList.add('hidden');
+            document.getElementById('importModalFooter').classList.add('hidden'); // Hide global footer
+            document.getElementById('manualEntryForm').classList.remove('hidden');
+
+            // Focus Name
+            setTimeout(() => document.getElementById('m_name').focus(), 100);
+        }
+
+        function hideManualEntryForm() {
+            document.getElementById('manualEntryForm').classList.add('hidden');
+            document.getElementById('importModalFooter').classList.remove('hidden'); // Show global footer
+            document.getElementById('importListView').classList.remove('hidden');
+
+            // Clear inputs
+            ['m_name', 'm_roll', 'm_adm', 'm_class', 'm_sec', 'm_house'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('m_gender').value = '-';
+        }
+
+        function saveManualEntry() {
+            const name = document.getElementById('m_name').value.trim();
+            if (!name) {
+                alert("Student Name is required!");
+                return;
             }
 
-            function removeImportRow(i) {
-                importQueue.splice(i, 1);
-                renderImportPreview();
+            const newStudent = {
+                roll_no: document.getElementById('m_roll').value.trim() || '-',
+                name: name,
+                gender: document.getElementById('m_gender').value,
+                class: document.getElementById('m_class').value.trim() || '-',
+                section: document.getElementById('m_sec').value.trim() || '-',
+                house: document.getElementById('m_house').value.trim() || '-',
+                admission_no: document.getElementById('m_adm').value.trim() || '-',
+                order_status: 'Pending',
+                status: 'Active'
+            };
+
+            importQueue.unshift(newStudent); // Add to top
+            renderImportPreview();
+            hideManualEntryForm();
+
+            // Show toast or highlight
+            // alert("Added " + name); 
+        }
+
+        // Replaced old addManualRow with the functions above
+
+        function clearImportdata() {
+            if (confirm("Clear all import data?")) {
+                openImportModal(); // Resets
             }
+        }
 
-            function showManualEntryForm() {
-                document.getElementById('importListView').classList.add('hidden');
-                document.getElementById('importModalFooter').classList.add('hidden'); // Hide global footer
-                document.getElementById('manualEntryForm').classList.remove('hidden');
+        async function processUpload() {
+            if (importQueue.length === 0) return alert("No data to import!");
 
-                // Focus Name
-                setTimeout(() => document.getElementById('m_name').focus(), 100);
-            }
+            const btn = document.querySelector('#importModal button[onclick="processUpload()"]');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = `<svg class="animate-spin h-5 w-5 mr-2" viewBox="0 0 24 24"><!--...--></svg> Importing...`;
+            btn.disabled = true;
 
-            function hideManualEntryForm() {
-                document.getElementById('manualEntryForm').classList.add('hidden');
-                document.getElementById('importModalFooter').classList.remove('hidden'); // Show global footer
-                document.getElementById('importListView').classList.remove('hidden');
+            let success = 0;
+            let errors = 0;
 
-                // Clear inputs
-                ['m_name', 'm_roll', 'm_adm', 'm_class', 'm_sec', 'm_house'].forEach(id => document.getElementById(id).value = '');
-                document.getElementById('m_gender').value = '-';
-            }
+            try {
+                // Batch logic? Or sequential? Sequential is safer for now to show progress, or simple Promise.all
+                // Let's do chunks of 10 to not kill server
+                const chunkSize = 10;
+                for (let i = 0; i < importQueue.length; i += chunkSize) {
+                    const chunk = importQueue.slice(i, i + chunkSize);
+                    await Promise.all(chunk.map(async (student) => {
+                        try {
+                            // Map API payload
+                            const payload = {
+                                school_id: schoolId,
+                                admission_no: student.admission_no,
+                                roll_no: student.roll_no,
+                                name: student.name,
+                                class: student.class,
+                                section: student.section,
+                                gender: student.gender,
+                                house: student.house,
+                                dob: null,
+                                father_name: null,
+                                mother_name: null,
+                                contact_number: null,
+                                address: null,
+                                order_status: student.order_status
+                            };
 
-            function saveManualEntry() {
-                const name = document.getElementById('m_name').value.trim();
-                if (!name) {
-                    alert("Student Name is required!");
-                    return;
+                            await fetch('/api/data/student', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                                body: JSON.stringify(payload)
+                            });
+                            success++;
+                        } catch (e) {
+                            console.error(e);
+                            errors++;
+                        }
+                    }));
                 }
 
-                const newStudent = {
-                    roll_no: document.getElementById('m_roll').value.trim() || '-',
-                    name: name,
-                    gender: document.getElementById('m_gender').value,
-                    class: document.getElementById('m_class').value.trim() || '-',
-                    section: document.getElementById('m_sec').value.trim() || '-',
-                    house: document.getElementById('m_house').value.trim() || '-',
-                    admission_no: document.getElementById('m_adm').value.trim() || '-',
-                    order_status: 'Pending',
-                    status: 'Active'
-                };
+                alert(`Report:\n✅ Success: ${success}\n❌ Failed: ${errors}`);
+                document.getElementById('importModal').classList.add('hidden');
+                fetchData(); // Refresh main table
 
-                importQueue.unshift(newStudent); // Add to top
-                renderImportPreview();
-                hideManualEntryForm();
-
-                // Show toast or highlight
-                // alert("Added " + name); 
+            } catch (e) {
+                alert("Critical Error: " + e.message);
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
             }
+        }
 
-            // Replaced old addManualRow with the functions above
+        function editComplaint(index) {
+            const c = window.myComplaints[index];
+            if (!c) return;
 
-            function clearImportdata() {
-                if (confirm("Clear all import data?")) {
-                    openImportModal(); // Resets
-                }
-            }
+            editingComplaintId = c.id;
 
-            async function processUpload() {
-                if (importQueue.length === 0) return alert("No data to import!");
+            // 1. Fill Text Fields
+            document.getElementById('c_name').value = c.student_name || '';
+            document.getElementById('c_reg').value = c.student_reg_no || '';
+            document.getElementById('c_gender').value = c.gender || 'Male';
+            document.getElementById('c_class').value = c.class || '';
+            document.getElementById('c_sec').value = c.section || '';
+            document.getElementById('c_house').value = c.house || 'Red';
+            document.getElementById('c_desc').value = c.comment || '';
 
-                const btn = document.querySelector('#importModal button[onclick="processUpload()"]');
-                const originalText = btn.innerHTML;
-                btn.innerHTML = `<svg class="animate-spin h-5 w-5 mr-2" viewBox="0 0 24 24"><!--...--></svg> Importing...`;
-                btn.disabled = true;
+            // 2. Clear & Fill Dynamic Items
+            const container = document.getElementById('defectItemsContainer');
+            container.innerHTML = '';
 
-                let success = 0;
-                let errors = 0;
-
-                try {
-                    // Batch logic? Or sequential? Sequential is safer for now to show progress, or simple Promise.all
-                    // Let's do chunks of 10 to not kill server
-                    const chunkSize = 10;
-                    for (let i = 0; i < importQueue.length; i += chunkSize) {
-                        const chunk = importQueue.slice(i, i + chunkSize);
-                        await Promise.all(chunk.map(async (student) => {
-                            try {
-                                // Map API payload
-                                const payload = {
-                                    school_id: schoolId,
-                                    admission_no: student.admission_no,
-                                    roll_no: student.roll_no,
-                                    name: student.name,
-                                    class: student.class,
-                                    section: student.section,
-                                    gender: student.gender,
-                                    house: student.house,
-                                    dob: null,
-                                    father_name: null,
-                                    mother_name: null,
-                                    contact_number: null,
-                                    address: null,
-                                    order_status: student.order_status
-                                };
-
-                                await fetch('/api/data/student', {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                                    body: JSON.stringify(payload)
-                                });
-                                success++;
-                            } catch (e) {
-                                console.error(e);
-                                errors++;
-                            }
-                        }));
-                    }
-
-                    alert(`Report:\n✅ Success: ${success}\n❌ Failed: ${errors}`);
-                    document.getElementById('importModal').classList.add('hidden');
-                    fetchData(); // Refresh main table
-
-                } catch (e) {
-                    alert("Critical Error: " + e.message);
-                } finally {
-                    btn.innerHTML = originalText;
-                    btn.disabled = false;
-                }
-            }
-
-            function editComplaint(index) {
-                const c = window.myComplaints[index];
-                if (!c) return;
-
-                editingComplaintId = c.id;
-
-                // 1. Fill Text Fields
-                document.getElementById('c_name').value = c.student_name || '';
-                document.getElementById('c_reg').value = c.student_reg_no || '';
-                document.getElementById('c_gender').value = c.gender || 'Male';
-                document.getElementById('c_class').value = c.class || '';
-                document.getElementById('c_sec').value = c.section || '';
-                document.getElementById('c_house').value = c.house || 'Red';
-                document.getElementById('c_desc').value = c.comment || '';
-
-                // 2. Clear & Fill Dynamic Items
-                const container = document.getElementById('defectItemsContainer');
-                container.innerHTML = '';
-
-                // Try to parse items from pattern/issue strings 
-                // Limitation: If pattern_name is string "A, B" and issue is "X, Y", mapping is tricky without structured data.
-                // For now, we will add ONE row with the string values if they exist, or just leave empty for user to re-enter.
-                // Better approach: Just reset items and ask user to re-enter details for clarity, 
-                // OR (Preferred) pre-fill the first row with available text.
-                if (c.pattern_name) {
-                    // Heuristic: Split by comma and try to split match
-                    const pats = c.pattern_name.split(',');
-                    // Just add one row with the raw text if standard parsing fails, or reset.
-                    const div = document.createElement('div');
-                    div.className = 'defect-row grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-slate-50 rounded-2xl border-none shadow-inner relative animate-in slide-in-from-left-2 fade-in';
-                    div.innerHTML = `
+            // Try to parse items from pattern/issue strings 
+            // Limitation: If pattern_name is string "A, B" and issue is "X, Y", mapping is tricky without structured data.
+            // For now, we will add ONE row with the string values if they exist, or just leave empty for user to re-enter.
+            // Better approach: Just reset items and ask user to re-enter details for clarity, 
+            // OR (Preferred) pre-fill the first row with available text.
+            if (c.pattern_name) {
+                // Heuristic: Split by comma and try to split match
+                const pats = c.pattern_name.split(',');
+                // Just add one row with the raw text if standard parsing fails, or reset.
+                const div = document.createElement('div');
+                div.className = 'defect-row grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-slate-50 rounded-2xl border-none shadow-inner relative animate-in slide-in-from-left-2 fade-in';
+                div.innerHTML = `
                     <div>
                         <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Pattern</label>
                         <select class="pattern-select w-full bg-white border-none shadow-sm rounded-xl px-2 py-2 text-xs outline-none focus:ring-2 focus:ring-indigo-200">
@@ -1762,27 +1778,27 @@
                     </div>
                     <button type="button" onclick="this.closest('.defect-row').remove()" class="absolute -top-2 -right-2 w-8 h-8 bg-rose-50 hover:bg-rose-100 text-rose-500 rounded-full flex items-center justify-center shadow-sm transition-colors text-lg font-bold">&times;</button>
                 `;
-                    container.appendChild(div);
-                }
-
-                // 3. UI Updates
-                openComplaintModal();
-                // Change Modal Title via DOM
-                // Note: openComplaintModal resets title, so we must override after opening or modify logic.
-                // Let's modify logic in openComplaintModal or just hack it here after a timeout/direct access
-                setTimeout(() => {
-                    document.querySelector('#complaintModal h3').innerText = "Edit Ticket";
-                }, 50);
+                container.appendChild(div);
             }
 
-            function viewComplaint(index) {
-                const c = window.myComplaints[index];
-                if (!c) return;
-                let imgs = [];
-                try { imgs = JSON.parse(c.image_url || '[]'); } catch (e) { }
-                if (!Array.isArray(imgs)) imgs = [c.image_url];
+            // 3. UI Updates
+            openComplaintModal();
+            // Change Modal Title via DOM
+            // Note: openComplaintModal resets title, so we must override after opening or modify logic.
+            // Let's modify logic in openComplaintModal or just hack it here after a timeout/direct access
+            setTimeout(() => {
+                document.querySelector('#complaintModal h3').innerText = "Edit Ticket";
+            }, 50);
+        }
 
-                const content = `
+        function viewComplaint(index) {
+            const c = window.myComplaints[index];
+            if (!c) return;
+            let imgs = [];
+            try { imgs = JSON.parse(c.image_url || '[]'); } catch (e) { }
+            if (!Array.isArray(imgs)) imgs = [c.image_url];
+
+            const content = `
                 <div class="space-y-8">
                     <!-- Status Header -->
                     <div class="flex justify-between items-start border-b border-indigo-50 pb-6">
@@ -1844,40 +1860,40 @@
                 </div>
             `;
 
-                document.getElementById('detailModalContent').innerHTML = content;
+            document.getElementById('detailModalContent').innerHTML = content;
 
-                const modal = document.getElementById('complaintDetailModal');
-                if (modal) {
-                    modal.classList.remove('hidden');
-                    modal.classList.add('flex'); // Ensure flex is added for centering
-                }
+            const modal = document.getElementById('complaintDetailModal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex'); // Ensure flex is added for centering
+            }
+        }
+
+        async function fetchMyComplaints() {
+            const list = document.getElementById('complaintsList');
+            if (!list) return;
+
+            // Update UI for Edit Mode Reset
+            if (!editingComplaintId) {
+                const title = document.querySelector('#view-support h3.ink-brush-title');
+                if (title) title.innerText = "New Request";
+                const btn = document.querySelector('#view-support button[type="submit"]');
+                if (btn) btn.innerText = "Submit Ticket";
             }
 
-            async function fetchMyComplaints() {
-                const list = document.getElementById('complaintsList');
-                if (!list) return;
+            try {
+                const res = await fetch('/api/data/my_complaints', { headers: { 'Authorization': `Bearer ${token}` } });
+                const data = await res.json();
 
-                // Update UI for Edit Mode Reset
-                if (!editingComplaintId) {
-                    const title = document.querySelector('#view-support h3.ink-brush-title');
-                    if (title) title.innerText = "New Request";
-                    const btn = document.querySelector('#view-support button[type="submit"]');
-                    if (btn) btn.innerText = "Submit Ticket";
+                if (!res.ok || data.error) {
+                    throw new Error(data.error || `Server Error: ${res.status}`);
                 }
 
-                try {
-                    const res = await fetch('/api/data/my_complaints', { headers: { 'Authorization': `Bearer ${token}` } });
-                    const data = await res.json();
+                // GLOBAL DATA STORE (Fixes Click Issues)
+                window.myComplaints = data;
 
-                    if (!res.ok || data.error) {
-                        throw new Error(data.error || `Server Error: ${res.status}`);
-                    }
-
-                    // GLOBAL DATA STORE (Fixes Click Issues)
-                    window.myComplaints = data;
-
-                    if (!Array.isArray(data) || data.length === 0) {
-                        list.innerHTML = `
+                if (!Array.isArray(data) || data.length === 0) {
+                    list.innerHTML = `
                         <div class="flex flex-col items-center justify-center h-full text-center p-8 opacity-60 col-span-full">
                             <div class="w-32 h-32 bg-white rounded-full flex items-center justify-center mb-6 shadow-[inset_4px_4px_8px_rgba(0,0,0,0.05),_inset_-4px_-4px_8px_rgba(255,255,255,0.8)]">
                                 <svg width="48" height="48" viewBox="0 0 24 24" fill="none" class="text-indigo-200" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
@@ -1886,21 +1902,21 @@
                             <p class="text-sm text-slate-400 max-w-sm">Your feedback queue is empty. Relax! 🌸</p>
                         </div>
                     `;
-                        return;
-                    }
+                    return;
+                }
 
-                    list.innerHTML = data.map((c, index) => {
-                        let imgs = [];
-                        try { imgs = JSON.parse(c.image_url || '[]'); } catch (e) { }
-                        if (!Array.isArray(imgs)) imgs = [c.image_url];
+                list.innerHTML = data.map((c, index) => {
+                    let imgs = [];
+                    try { imgs = JSON.parse(c.image_url || '[]'); } catch (e) { }
+                    if (!Array.isArray(imgs)) imgs = [c.image_url];
 
-                        const isResolved = c.status === 'Resolved';
-                        // Clay Colors
-                        const statusClass = isResolved
-                            ? 'bg-emerald-100 text-emerald-600'
-                            : 'bg-amber-100 text-amber-600';
+                    const isResolved = c.status === 'Resolved';
+                    // Clay Colors
+                    const statusClass = isResolved
+                        ? 'bg-emerald-100 text-emerald-600'
+                        : 'bg-amber-100 text-amber-600';
 
-                        return `
+                    return `
                     <div onclick="viewComplaint(${index})" class="bg-white rounded-[2rem] p-6 shadow-sm border border-slate-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group flex flex-col relative overflow-hidden cursor-pointer h-full">
                         
                         <!-- Actions (Top Right) -->
@@ -1955,9 +1971,9 @@
                     </div>
                 `}).join('');
 
-                } catch (e) {
-                    console.error(e);
-                    list.innerHTML = `
+            } catch (e) {
+                console.error(e);
+                list.innerHTML = `
                         <div class="text-center p-8 text-rose-500 bg-rose-50 rounded-xl border border-rose-100 opacity-90">
                         <svg class="w-10 h-10 mx-auto mb-2 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
                         <p class="font-bold mb-1 font-ink">Connection Error</p>
@@ -1965,13 +1981,13 @@
                         <button onclick="fetchMyComplaints()" class="px-4 py-2 bg-white border border-rose-200 rounded-full text-xs font-bold hover:bg-rose-100 transition-colors">Retry</button>
                     </div>
                 `;
-                }
             }
+        }
 
-            function logout() { sessionStorage.clear(); window.location.href = 'index.html'; }
+        function logout() { sessionStorage.clear(); window.location.href = 'index.html'; }
 
-            // Start
-            init();
+        // Start
+        init();
     </script>
 
     <!-- COMPLAINT DETAIL MODAL (Manual Overlay) -->
