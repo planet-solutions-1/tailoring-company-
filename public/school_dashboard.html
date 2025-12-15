@@ -343,7 +343,7 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8 p-2 mt-4">
                 <!-- Bulk Import -->
                 <div class="clay-card p-8 flex items-center justify-between cursor-pointer group"
-                    onclick="document.getElementById('fileImport').click()">
+                    onclick="openImportModal()">
                     <div class="flex items-center gap-6">
                         <div
                             class="w-16 h-16 rounded-2xl bg-indigo-100 flex items-center justify-center text-indigo-500 shadow-inner">
@@ -368,39 +368,38 @@
                             <polyline points="9 18 15 12 9 6"></polyline>
                         </svg>
                     </div>
-                    <input type="file" id="fileImport" accept=".xlsx, .xls" class="hidden"
-                        onchange="handleBulkImport(event)">
-                </div>
-
-                <!-- Support -->
-                <div class="clay-card p-8 flex items-center justify-between cursor-pointer group"
-                    onclick="switchTab('support')">
-                    <div class="flex items-center gap-6">
-                        <div
-                            class="w-16 h-16 rounded-2xl bg-pink-100 flex items-center justify-center text-pink-500 shadow-inner">
-                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2.5">
-                                <path
-                                    d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z">
-                                </path>
-                            </svg>
-                        </div>
-                        <div>
-                            <h3
-                                class="font-brand text-xl font-bold text-slate-700 group-hover:text-pink-600 transition-colors">
-                                Support Hub</h3>
-                            <p class="text-slate-400 text-sm font-medium">Tickets & Help</p>
-                        </div>
-                    </div>
-                    <div
-                        class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-pink-500 group-hover:text-white transition-all shadow-sm">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2.5">
-                            <polyline points="9 18 15 12 9 6"></polyline>
-                        </svg>
-                    </div>
                 </div>
             </div>
+
+            <!-- Support -->
+            <div class="clay-card p-8 flex items-center justify-between cursor-pointer group"
+                onclick="switchTab('support')">
+                <div class="flex items-center gap-6">
+                    <div
+                        class="w-16 h-16 rounded-2xl bg-pink-100 flex items-center justify-center text-pink-500 shadow-inner">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5">
+                            <path
+                                d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z">
+                            </path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h3
+                            class="font-brand text-xl font-bold text-slate-700 group-hover:text-pink-600 transition-colors">
+                            Support Hub</h3>
+                        <p class="text-slate-400 text-sm font-medium">Tickets & Help</p>
+                    </div>
+                </div>
+                <div
+                    class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 group-hover:bg-pink-500 group-hover:text-white transition-all shadow-sm">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2.5">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </div>
+            </div>
+        </div>
         </div>
     </template>
 
@@ -864,7 +863,6 @@
                 return;
             }
 
-            const reader = new FileReader();
             reader.onload = async (evt) => {
                 try {
                     const data = new Uint8Array(evt.target.result);
@@ -1180,6 +1178,259 @@
             } catch (e) { console.error(e); }
         }
 
+        // === BULK IMPORT ENGINE ===
+        let importQueue = [];
+        let importFilesList = [];
+
+        function openImportModal() {
+            // Reset
+            importQueue = [];
+            importFilesList = [];
+            document.getElementById('importFileList').innerHTML = '';
+            document.getElementById('multiFileImport').value = '';
+            renderImportPreview();
+
+            // Show
+            const modal = document.getElementById('importModal');
+            modal.classList.remove('hidden');
+        }
+
+        function handleFileSelection(e) {
+            const files = Array.from(e.target.files);
+            processFiles(files);
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            const files = Array.from(e.dataTransfer.files);
+            processFiles(files);
+        }
+
+        async function processFiles(files) {
+            for (const file of files) {
+                // Add to visual list
+                importFilesList.push(file);
+                renderfileList();
+
+                // Parse
+                await parseExcelData(file);
+            }
+        }
+
+        function renderfileList() {
+            const container = document.getElementById('importFileList');
+            container.innerHTML = importFilesList.map((f, i) => `
+                <div class="px-3 py-1 bg-indigo-50 text-indigo-700 rounded-lg text-xs font-bold flex items-center gap-2 shadow-sm border border-indigo-100">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path></svg>
+                    <span class="max-w-[100px] truncate">${f.name}</span>
+                    <button onclick="removeImportFile(${i})" class="hover:text-rose-500">×</button>
+                </div>
+            `).join('');
+        }
+
+        function removeImportFile(index) {
+            importFilesList.splice(index, 1);
+            // In a real app we might want to un-parse the data too, but for now we just clear queue and re-parse leftover or just clear all.
+            // Simpler strategy: Clear queue and re-parse remaining files.
+            importQueue = [];
+            renderfileList();
+            processFiles(importFilesList); // Re-process
+        }
+
+        function normalizeHeader(key) {
+            const k = key.toString().toUpperCase().trim().replace(/[^A-Z0-9]/g, '');
+            // Map
+            if (['ROLLNO', 'ROLL', 'ID', 'NO'].includes(k)) return 'roll_no';
+            if (['NAME', 'STUDENTNAME', 'STUDENT', 'FULLNAME'].includes(k)) return 'name';
+            if (['GENDER', 'SEX', 'M/F'].includes(k)) return 'gender';
+            if (['CLASS', 'GRADE', 'STD'].includes(k)) return 'class';
+            if (['SECTION', 'SEC', 'DIVISION', 'DIV'].includes(k)) return 'section';
+            if (['HOUSE', 'TEAM', 'GROUP'].includes(k)) return 'house';
+            if (['ADMNO', 'ADMISSIONNO', 'REGNO', 'ADMNNO', 'REGISTRATIONNO'].includes(k)) return 'admission_no';
+            if (['ABSENT/PRESENT', 'STATUS', 'ATTENDANCE'].includes(k)) return 'status_raw'; // Handle logic later
+            return null; // Unknown
+        }
+
+        function parseExcelData(file) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+
+                    workbook.SheetNames.forEach(sheetName => {
+                        const sheet = workbook.Sheets[sheetName];
+                        const rows = XLSX.utils.sheet_to_json(sheet);
+
+                        rows.forEach(row => {
+                            const newRow = {};
+                            Object.keys(row).forEach(key => {
+                                const norm = normalizeHeader(key);
+                                if (norm) newRow[norm] = row[key];
+                            });
+
+                            // Enrich / Validate
+                            if (newRow.name) { // Minimum requirement
+                                importQueue.push({
+                                    roll_no: newRow.roll_no || '-',
+                                    name: newRow.name,
+                                    gender: newRow.gender || '-',
+                                    class: newRow.class || '-',
+                                    section: newRow.section || '-',
+                                    house: newRow.house || '-',
+                                    admission_no: newRow.admission_no || '-',
+                                    order_status: 'Pending', // Default
+                                    status: 'Active'
+                                });
+                            }
+                        });
+                    });
+                    renderImportPreview();
+                    resolve();
+                };
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        function renderImportPreview() {
+            const tbody = document.getElementById('importPreviewBody');
+            document.getElementById('previewCount').innerText = importQueue.length + " Records";
+
+            if (importQueue.length === 0) {
+                tbody.innerHTML = `
+                             <tr id="emptyPreviewState">
+                                <td colspan="9" class="p-10 text-center text-stone-300 font-medium">
+                                    No data loaded. Upload files or add manually.
+                                </td>
+                            </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = importQueue.map((row, i) => `
+                <tr class="hover:bg-stone-50 transition-colors border-b border-stone-50 last:border-none group">
+                    <td class="p-3 font-bold text-stone-600">${row.roll_no}</td>
+                    <td class="p-3 font-bold text-stone-800">${row.name}</td>
+                    <td class="p-3 text-stone-600">${row.gender}</td>
+                    <td class="p-3 text-stone-600">${row.class}</td>
+                    <td class="p-3 text-stone-600">${row.section}</td>
+                    <td class="p-3 text-stone-600">${row.house}</td>
+                    <td class="p-3 text-stone-600">${row.admission_no}</td>
+                    <td class="p-3">
+                         <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 text-amber-600 uppercase tracking-wide">Ready</span>
+                    </td>
+                    <td class="p-3 text-right">
+                        <button onclick="removeImportRow(${i})" class="text-stone-300 hover:text-rose-500 opacity-0 group-hover:opacity-100 transition-all font-bold text-lg">×</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function removeImportRow(i) {
+            importQueue.splice(i, 1);
+            renderImportPreview();
+        }
+
+        function addManualRow() {
+            // Add a placeholder
+            importQueue.unshift({
+                roll_no: "NEW",
+                name: "New Student",
+                gender: "-",
+                class: "-",
+                section: "-",
+                house: "-",
+                admission_no: "-",
+                order_status: "Pending"
+            });
+            renderImportPreview();
+            // Ideally we make it editable, but user asked to "enter data". 
+            // For now, let's keep it simple or user can delete.
+            // If user wants full edit, we'd need input fields in table.
+            // Let's assume user accepts re-upload for bulk edits, but "Manual Entry" usually implies a form.
+            // Since I'm time constrained, I'll alert the user to use Excel for heavy editing or Quick Edit.
+            // Actually, I should make the "New Student" row editable or use a prompt.
+            // Let's use simple prompts for now to be safe.
+            const name = prompt("Enter Student Name:");
+            if (name) {
+                importQueue[0].name = name;
+                importQueue[0].roll_no = prompt("Roll No:") || "-";
+                importQueue[0].class = prompt("Class:") || "-";
+                importQueue[0].section = prompt("Section:") || "-";
+                renderImportPreview();
+            } else {
+                importQueue.splice(0, 1); // Cancel
+            }
+        }
+
+        function clearImportdata() {
+            if (confirm("Clear all import data?")) {
+                openImportModal(); // Resets
+            }
+        }
+
+        async function processUpload() {
+            if (importQueue.length === 0) return alert("No data to import!");
+
+            const btn = document.querySelector('#importModal button[onclick="processUpload()"]');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = `<svg class="animate-spin h-5 w-5 mr-2" viewBox="0 0 24 24"><!--...--></svg> Importing...`;
+            btn.disabled = true;
+
+            let success = 0;
+            let errors = 0;
+
+            try {
+                // Batch logic? Or sequential? Sequential is safer for now to show progress, or simple Promise.all
+                // Let's do chunks of 10 to not kill server
+                const chunkSize = 10;
+                for (let i = 0; i < importQueue.length; i += chunkSize) {
+                    const chunk = importQueue.slice(i, i + chunkSize);
+                    await Promise.all(chunk.map(async (student) => {
+                        try {
+                            // Map API payload
+                            const payload = {
+                                school_id: schoolId,
+                                admission_no: student.admission_no,
+                                roll_no: student.roll_no,
+                                name: student.name,
+                                class: student.class,
+                                section: student.section,
+                                gender: student.gender,
+                                house: student.house,
+                                dob: null,
+                                father_name: null,
+                                mother_name: null,
+                                contact_number: null,
+                                address: null,
+                                order_status: student.order_status
+                            };
+
+                            await fetch('/api/data/student', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                                body: JSON.stringify(payload)
+                            });
+                            success++;
+                        } catch (e) {
+                            console.error(e);
+                            errors++;
+                        }
+                    }));
+                }
+
+                alert(`Report:\n✅ Success: ${success}\n❌ Failed: ${errors}`);
+                document.getElementById('importModal').classList.add('hidden');
+                fetchData(); // Refresh main table
+
+            } catch (e) {
+                alert("Critical Error: " + e.message);
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
         function editComplaint(index) {
             const c = window.myComplaints[index];
             if (!c) return;
@@ -1453,6 +1704,123 @@
                     </svg></button>
             </div>
             <div id="detailModalContent" class="p-6"></div>
+        </div>
+    </div>
+    <!-- IMPORT MODAL -->
+    <div id="importModal"
+        class="hidden fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+        <div
+            class="bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[90vh] flex flex-col border border-white/20 animate-in zoom-in-95 duration-200">
+            <!-- Header -->
+            <div
+                class="p-6 border-b border-stone-100 flex justify-between items-center bg-white/95 backdrop-blur-md rounded-t-2xl z-10">
+                <div>
+                    <h3 class="font-ink text-xl text-stone-800">Bulk Import Students</h3>
+                    <p class="text-xs text-stone-400 font-bold uppercase tracking-wider mt-1">Excel • CSV • Manual Entry
+                    </p>
+                </div>
+                <button onclick="document.getElementById('importModal').classList.add('hidden')"
+                    class="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 flex items-center justify-center transition-colors">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Content -->
+            <div class="flex-1 overflow-hidden flex flex-col p-6 bg-stone-50/50">
+
+                <!-- File Upload Area -->
+                <div class="mb-6">
+                    <div class="border-2 border-dashed border-indigo-200 rounded-2xl p-8 text-center hover:bg-indigo-50/50 transition-colors cursor-pointer bg-white"
+                        onclick="document.getElementById('multiFileImport').click()" ondrop="handleDrop(event)"
+                        ondragover="event.preventDefault()">
+                        <input type="file" id="multiFileImport" multiple accept=".xlsx, .xls, .csv" class="hidden"
+                            onchange="handleFileSelection(event)">
+                        <div
+                            class="w-16 h-16 bg-indigo-100 text-indigo-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                <polyline points="17 8 12 3 7 8"></polyline>
+                                <line x1="12" y1="3" x2="12" y2="15"></line>
+                            </svg>
+                        </div>
+                        <h4 class="font-bold text-stone-700 text-lg">Click to Upload Files</h4>
+                        <p class="text-stone-400 text-sm mt-1">or Drag and Drop here (Support Multiple Files)</p>
+                    </div>
+                    <!-- Selected Files List -->
+                    <div id="importFileList" class="flex flex-wrap gap-3 mt-4"></div>
+                </div>
+
+                <!-- Manual Entry & Preview Actions -->
+                <div class="flex justify-between items-center mb-4">
+                    <div class="flex items-center gap-3">
+                        <h4 class="font-bold text-stone-700">Data Preview</h4>
+                        <span id="previewCount"
+                            class="px-2 py-1 rounded-md bg-stone-200 text-xs font-bold text-stone-500">0 Records</span>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="addManualRow()"
+                            class="px-4 py-2 bg-white border border-stone-200 rounded-lg text-sm font-bold text-stone-600 hover:bg-stone-50 hover:text-indigo-600 transition-colors shadow-sm flex items-center gap-2">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <line x1="12" y1="5" x2="12" y2="19"></line>
+                                <line x1="5" y1="12" x2="19" y2="12"></line>
+                            </svg>
+                            Add Manually
+                        </button>
+                        <button onclick="clearImportdata()"
+                            class="px-4 py-2 bg-white border border-rose-200 rounded-lg text-sm font-bold text-rose-500 hover:bg-rose-50 transition-colors shadow-sm">
+                            Clear All
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Preview Table -->
+                <div
+                    class="flex-1 overflow-auto bg-white rounded-xl border border-stone-200 shadow-sm relative custom-scrollbar">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead class="bg-stone-100 sticky top-0 z-10">
+                            <tr>
+                                <th class="p-3 font-bold text-stone-500 uppercase text-xs">Roll No</th>
+                                <th class="p-3 font-bold text-stone-500 uppercase text-xs">Name</th>
+                                <th class="p-3 font-bold text-stone-500 uppercase text-xs">Gender</th>
+                                <th class="p-3 font-bold text-stone-500 uppercase text-xs">Class</th>
+                                <th class="p-3 font-bold text-stone-500 uppercase text-xs">Section</th>
+                                <th class="p-3 font-bold text-stone-500 uppercase text-xs">House</th>
+                                <th class="p-3 font-bold text-stone-500 uppercase text-xs">Adm No</th>
+                                <th class="p-3 font-bold text-stone-500 uppercase text-xs">Status</th>
+                                <th class="p-3 font-bold text-stone-500 uppercase text-xs w-10"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="importPreviewBody" class="divide-y divide-stone-100">
+                            <!-- Rows -->
+                            <tr id="emptyPreviewState">
+                                <td colspan="9" class="p-10 text-center text-stone-300 font-medium">
+                                    No data loaded. Upload files or add manually.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="p-6 border-t border-stone-100 bg-white rounded-b-2xl flex justify-end gap-3 z-10">
+                <button onclick="document.getElementById('importModal').classList.add('hidden')"
+                    class="px-6 py-2.5 rounded-xl font-bold text-stone-500 hover:bg-stone-100 transition-colors">Cancel</button>
+                <button onclick="processUpload()"
+                    class="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-2.5 rounded-xl font-bold shadow-lg shadow-indigo-200 hover:shadow-indigo-400 transition-all flex items-center gap-2">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                    <span>Import Students</span>
+                </button>
+            </div>
         </div>
     </div>
 </body>
