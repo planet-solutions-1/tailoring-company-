@@ -1313,7 +1313,7 @@
                     <div>
                         <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-3">Attachments</p>
                          <div class="grid grid-cols-3 gap-3">
-                            ${imgs.map(u => `<img src="${u}" class="w-full h-32 object-cover rounded-2xl border-none shadow-sm cursor-pointer hover:scale-[1.02] transition-transform" onclick="window.open('${u}')">`).join('')}
+                            ${imgs.map(u => `<img src="${u}" onerror="this.onerror=null; this.src='https://via.placeholder.com/150?text=Image+Not+Found'" class="w-full h-32 object-cover rounded-2xl border-none shadow-sm cursor-pointer hover:scale-[1.02] transition-transform" onclick="window.open('${u}')">`).join('')}
                         </div>
                     </div>` : ''}
 
