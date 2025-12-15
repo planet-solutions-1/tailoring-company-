@@ -1085,6 +1085,7 @@
             document.getElementById('edit_gender').value = s.gender;
             document.getElementById('edit_class').value = s.class;
             document.getElementById('edit_sec').value = s.section;
+            document.getElementById('edit_house').value = s.house || ''; // Populate House
             document.getElementById('edit_status').value = s.order_status || 'Pending';
 
             document.getElementById('editStudentModal').showModal();
@@ -1104,6 +1105,7 @@
                 gender: document.getElementById('edit_gender').value,
                 class: document.getElementById('edit_class').value,
                 section: document.getElementById('edit_sec').value,
+                house: document.getElementById('edit_house').value, // Save House
                 order_status: document.getElementById('edit_status').value
             };
 
