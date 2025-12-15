@@ -2942,6 +2942,7 @@
                 if (typeof pruneDeletedHistory === 'function') pruneDeletedHistory();
 
                 fetchData();
+                switchTab('dashboard'); // Render Default View
                 setInterval(fetchMyComplaints, 60000);
                 fetchMyComplaints();
             }
