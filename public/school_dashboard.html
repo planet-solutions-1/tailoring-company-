@@ -1852,19 +1852,21 @@
                                     </td>
                                 </tr>
                             </tbody>
+                            ```
                         </table>
                     </div>
                 </div>
 
                 <!-- VIEW 2: MANUAL ENTRY FORM -->
-                <div id="manualEntryForm" class="hidden h-full flex flex-col">
-                    <div class="flex items-center justify-between mb-6">
+                <div id="manualEntryForm" class="hidden h-full flex flex-col min-h-0">
+                    <div class="flex items-center justify-between mb-6 shrink-0">
                         <h4 class="font-bold text-xl text-stone-800">Add New Student</h4>
                         <button onclick="hideManualEntryForm()"
                             class="text-stone-400 hover:text-stone-600 font-bold text-sm">Back to List</button>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start flex-1 overflow-y-auto pr-2">
+                    <div
+                        class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start flex-1 overflow-y-auto pr-2 pb-32 min-h-0 custom-scrollbar">
                         <!-- Name -->
                         <div class="col-span-2">
                             <label class="block text-xs font-bold text-stone-400 uppercase tracking-wider mb-2">Student
