@@ -768,8 +768,8 @@
             if (!res.ok) throw new Error("Fetch failed");
             allStudents = await res.json();
 
-            // Populate Filters on Load
-            populateFilters();
+            // Populate Filters on Load - REMOVED (Dom not ready)
+            // populateFilters(); 
         }
 
         // === NAVIGATION ===
@@ -840,6 +840,8 @@
 
         function populateFilters() {
             const classSelect = document.getElementById('filterClass');
+            if (!classSelect) return; // Safety check if element missing
+
             // Only populate if empty (or reset needed)
             if (classSelect.options.length <= 1) {
                 const classes = [...new Set(allStudents.map(s => s.class).filter(Boolean))].sort();
