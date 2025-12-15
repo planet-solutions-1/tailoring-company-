@@ -776,14 +776,20 @@
 
         async function fetchData() {
             console.log(`Fetching data for School #${schoolId} with token: ${token ? 'Present' : 'Missing'}`);
-            const res = await fetch(`/api/data/students/${schoolId}`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (!res.ok) throw new Error("Fetch failed");
-            allStudents = await res.json();
+            try {
+                const res = await fetch(`/api/data/students/${schoolId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.status === 404) throw new Error("API Endpoint Not Found (404)");
+                if (res.status === 401) throw new Error("Unauthorized (401) - Please Login Again");
+                if (!res.ok) throw new Error(`Server Error: ${res.status}`);
 
-            // Populate Filters on Load - REMOVED (Dom not ready)
-            // populateFilters(); 
+                allStudents = await res.json();
+            } catch (err) {
+                console.error("Fetch Error:", err);
+                // Only alert if we really have no data to show, or show toast
+                if (allStudents.length === 0) alert(`Connection Issue: ${err.message}`);
+            }
         }
 
         // === NAVIGATION ===
@@ -818,7 +824,10 @@
 
                 // Initialize specific tab logic
                 if (tabId === 'dashboard') renderDashboardStats();
-                if (tabId === 'students') renderStudents();
+                if (tabId === 'students') {
+                    populateFilters(); // Ensure filters are ready
+                    renderStudents();
+                }
                 if (tabId === 'support') fetchMyComplaints();
             }
         }
@@ -2112,11 +2121,11 @@
                     </div>
 
                     <!-- Actions -->
-                    <div class="flex justify-between items-center mb-4 shrink-0">
+                    <div class="flex flex-wrap justify-between items-center mb-4 gap-3 shrink-0">
                         <div class="flex items-center gap-3">
                             <h4 class="font-bold text-stone-700">Data Preview</h4>
                             <span id="previewCount"
-                                class="px-2 py-1 rounded-md bg-stone-200 text-xs font-bold text-stone-500">0
+                                class="px-2 py-1 rounded-md bg-stone-100 text-xs font-bold text-stone-500">0
                                 Records</span>
                         </div>
                         <div class="flex gap-2">
@@ -2138,7 +2147,7 @@
 
                     <!-- Preview Table (Expanded Height) -->
                     <div
-                        class="flex-1 overflow-auto bg-white rounded-xl border border-stone-200 shadow-sm relative custom-scrollbar min-h-[400px]">
+                        class="flex-1 overflow-auto bg-white rounded-xl border border-stone-200 shadow-sm relative custom-scrollbar min-h-[300px]">
                         <table class="w-full text-left border-collapse text-sm">
                             <thead class="bg-stone-50 sticky top-0 z-10 shadow-sm">
                                 <tr>
@@ -2200,25 +2209,24 @@
                     <div
                         class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start flex-1 overflow-y-auto pr-2 pb-32 min-h-0 custom-scrollbar">
                         <!-- Name -->
-                        <div class="col-span-2">
-                            <label class="block text-xs font-bold text-stone-400 uppercase tracking-wider mb-2">Student
-                                Name <span class="text-rose-500">*</span></label>
+                        <div class="col-span-2 space-y-2">
+                            <label class="block text-xs font-bold text-stone-400 uppercase tracking-wider">Student Name
+                                <span class="text-rose-500">*</span></label>
                             <input type="text" id="m_name"
                                 class="w-full bg-white border-2 border-stone-200 rounded-xl px-4 py-3 font-bold text-stone-700 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all placeholder:font-normal"
                                 placeholder="e.g. Aditi Sharma">
                         </div>
 
                         <!-- Basic Details -->
-                        <div>
-                            <label class="block text-xs font-bold text-stone-400 uppercase tracking-wider mb-2">Roll
+                        <div class="space-y-2">
+                            <label class="block text-xs font-bold text-stone-400 uppercase tracking-wider">Roll
                                 Number</label>
                             <input type="text" id="m_roll"
                                 class="w-full bg-white border-2 border-stone-200 rounded-xl px-4 py-3 font-bold text-stone-700 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all"
                                 placeholder="e.g. 24">
                         </div>
-                        <div>
-                            <label
-                                class="block text-xs font-bold text-stone-400 uppercase tracking-wider mb-2">Admission
+                        <div class="space-y-2">
+                            <label class="block text-xs font-bold text-stone-400 uppercase tracking-wider">Admission
                                 No.</label>
                             <input type="text" id="m_adm"
                                 class="w-full bg-white border-2 border-stone-200 rounded-xl px-4 py-3 font-bold text-stone-700 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all"
@@ -2226,25 +2234,24 @@
                         </div>
 
                         <!-- Class Details -->
-                        <div>
-                            <label
-                                class="block text-xs font-bold text-stone-400 uppercase tracking-wider mb-2">Class</label>
+                        <div class="space-y-2">
+                            <label class="block text-xs font-bold text-stone-400 uppercase tracking-wider">Class</label>
                             <input type="text" id="m_class"
                                 class="w-full bg-white border-2 border-stone-200 rounded-xl px-4 py-3 font-bold text-stone-700 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all"
                                 placeholder="e.g. X">
                         </div>
-                        <div>
+                        <div class="space-y-2">
                             <label
-                                class="block text-xs font-bold text-stone-400 uppercase tracking-wider mb-2">Section</label>
+                                class="block text-xs font-bold text-stone-400 uppercase tracking-wider">Section</label>
                             <input type="text" id="m_sec"
                                 class="w-full bg-white border-2 border-stone-200 rounded-xl px-4 py-3 font-bold text-stone-700 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all"
                                 placeholder="e.g. A">
                         </div>
 
                         <!-- Extras -->
-                        <div>
+                        <div class="space-y-2">
                             <label
-                                class="block text-xs font-bold text-stone-400 uppercase tracking-wider mb-2">Gender</label>
+                                class="block text-xs font-bold text-stone-400 uppercase tracking-wider">Gender</label>
                             <select id="m_gender"
                                 class="w-full bg-white border-2 border-stone-200 rounded-xl px-4 py-3 font-bold text-stone-700 outline-none focus:border-indigo-500 cursor-pointer">
                                 <option value="-">Select Gender</option>
@@ -2252,9 +2259,8 @@
                                 <option value="Female">Female</option>
                             </select>
                         </div>
-                        <div>
-                            <label
-                                class="block text-xs font-bold text-stone-400 uppercase tracking-wider mb-2">House</label>
+                        <div class="space-y-2">
+                            <label class="block text-xs font-bold text-stone-400 uppercase tracking-wider">House</label>
                             <input type="text" id="m_house"
                                 class="w-full bg-white border-2 border-stone-200 rounded-xl px-4 py-3 font-bold text-stone-700 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all"
                                 placeholder="e.g. Blue House">
