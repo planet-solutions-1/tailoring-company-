@@ -2517,8 +2517,8 @@
 
             function logout() { sessionStorage.clear(); window.location.href = 'index.html'; }
 
-            // Start
-            init();
+        // Start - Handled at bottom of file
+        // init(); -> Moved to prevent ReferenceError
     </script>
 
     <!-- COMPLAINT DETAIL MODAL (Manual Overlay) -->
