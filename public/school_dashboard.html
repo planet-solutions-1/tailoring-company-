@@ -190,6 +190,14 @@
             background: rgba(253, 244, 255, 0.8);
             backdrop-filter: blur(8px);
         }
+
+        /* Compact Mode Override */
+        body.compact-mode table td,
+        body.compact-mode table th {
+            padding-top: 0.5rem !important;
+            padding-bottom: 0.5rem !important;
+            font-size: 0.85rem;
+        }
     </style>
 </head>
 
@@ -912,6 +920,7 @@
     <script>
         // === GLOBAL STATE ===
         let allStudents = [];
+        let lastComplaints = []; // For notification tracking
         let currentView = 'dashboard';
         const schoolId = parseInt(sessionStorage.getItem('schoolId'));
         const token = sessionStorage.getItem('token');
@@ -934,6 +943,16 @@
                 // Set School Name (Live Update)
                 const storedName = sessionStorage.getItem('schoolName');
                 document.getElementById('userSchoolName').innerText = storedName || `School #${schoolId}`;
+
+                // Restore Preferences
+                if (localStorage.getItem('compactMode') === 'true') {
+                    document.body.classList.add('compact-mode');
+                }
+
+                // Auto-Refresh Support Tickets for Notifications (Every 60s)
+                setInterval(() => {
+                    fetchMyComplaints();
+                }, 60000);
 
             } catch (e) {
                 console.error("Init Error", e);
@@ -1013,6 +1032,19 @@
             // Populate Profile Data from Session
             document.getElementById('settingsSchoolName').innerText = sessionStorage.getItem('schoolName') || 'School Info';
             document.getElementById('settingsSchoolId').innerText = schoolId || '--';
+
+            // Restore Toggle States
+            // 1. Notifications
+            const notifyToggle = document.getElementById('toggle_notify');
+            if (notifyToggle) {
+                notifyToggle.checked = (Notification.permission === 'granted');
+            }
+
+            // 2. Compact Mode
+            const compactToggle = document.getElementById('toggle_view');
+            if (compactToggle) {
+                compactToggle.checked = (localStorage.getItem('compactMode') === 'true');
+            }
         }
 
         async function handlePasswordChange(e) {
@@ -2202,6 +2234,23 @@
                 if (!res.ok || data.error) {
                     throw new Error(data.error || `Server Error: ${res.status}`);
                 }
+
+                // CHECK FOR REPLIES (Notification System)
+                if (lastComplaints.length > 0) {
+                    data.forEach(ticket => {
+                        const oldTicket = lastComplaints.find(t => t.id === ticket.id);
+                        // If we have an old version, and it had NO reply, but now HAS reply
+                        if (oldTicket && !oldTicket.reply && ticket.reply) {
+                            if (Notification.permission === "granted") {
+                                new Notification("New Support Reply 💬", {
+                                    body: `Ticket #${ticket.id}: ${ticket.reply}`,
+                                    icon: '/favicon.ico' // Optional
+                                });
+                            }
+                        }
+                    });
+                }
+                lastComplaints = data; // Update cache
 
                 // GLOBAL DATA STORE (Fixes Click Issues)
                 window.myComplaints = data;
