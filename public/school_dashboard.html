@@ -240,6 +240,15 @@
                 </svg>
                 <span class="text-sm">Support</span>
             </div>
+            <div onclick="switchTab('settings')" id="nav-settings" class="nav-item mx-4">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path
+                        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+                    </path>
+                </svg>
+                <span class="text-sm">Settings</span>
+            </div>
         </nav>
 
         <div class="p-4 border-t border-slate-200">
@@ -742,6 +751,161 @@
         </div>
     </dialog>
 
+    <!-- 4. SETTINGS VIEW -->
+    <template id="view-settings">
+        <div class="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-5xl mx-auto">
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- LEft Column: Profile -->
+                <div class="md:col-span-1 space-y-6">
+                    <!-- Profile Card -->
+                    <div class="clay-card p-6 text-center">
+                        <div
+                            class="w-24 h-24 rounded-3xl bg-gradient-to-br from-indigo-400 to-indigo-600 mx-auto flex items-center justify-center text-white text-4xl font-bold mb-4 shadow-lg shadow-indigo-200">
+                            S
+                        </div>
+                        <h3 class="font-brand text-xl font-bold text-slate-800 mb-1" id="settingsSchoolName">School Name
+                        </h3>
+                        <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-6">Administrator</p>
+
+                        <div class="flex flex-col gap-3">
+                            <div class="bg-indigo-50 p-3 rounded-xl flex items-center gap-3">
+                                <span
+                                    class="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-indigo-500 shadow-sm font-bold">#</span>
+                                <div class="text-left">
+                                    <p class="text-[10px] text-slate-400 font-bold uppercase">School ID</p>
+                                    <p class="text-sm font-bold text-indigo-700" id="settingsSchoolId">--</p>
+                                </div>
+                            </div>
+                            <button onclick="logout()"
+                                class="w-full py-3 rounded-xl bg-rose-50 text-rose-500 font-bold hover:bg-rose-500 hover:text-white transition-all shadow-sm hover:shadow-rose-200">
+                                Log Out
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Additional Info -->
+                    <div class="clay-card p-6">
+                        <h4 class="font-brand text-sm font-bold text-slate-700 mb-4">Support Contact</h4>
+                        <p class="text-xs text-slate-500 leading-relaxed mb-4">
+                            Need help? Contact the platform super admin for critical issues.
+                        </p>
+                        <a href="mailto:support@clayadmin.com"
+                            class="flex items-center gap-2 text-indigo-500 text-sm font-bold hover:underline">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+                            </svg>
+                            support@clayadmin.com
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Right Column: Settings Forms -->
+                <div class="md:col-span-2 space-y-8">
+
+                    <!-- Security -->
+                    <div class="clay-card p-8">
+                        <div class="flex items-center gap-4 mb-6 border-b border-stone-100 pb-4">
+                            <div
+                                class="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center text-amber-600">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="font-brand text-xl font-bold text-slate-800">Security</h3>
+                                <p class="text-xs text-slate-400 font-bold uppercase tracking-wide">Password &
+                                    Authentication</p>
+                            </div>
+                        </div>
+
+                        <form onsubmit="handlePasswordChange(event)" class="space-y-4 max-w-md">
+                            <div>
+                                <label
+                                    class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Current
+                                    Password</label>
+                                <input type="password" id="old_pass" required
+                                    class="w-full bg-stone-50 border-none rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">New
+                                    Password</label>
+                                <input type="password" id="new_pass" required minlength="6"
+                                    class="w-full bg-stone-50 border-none rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+                            </div>
+                            <div>
+                                <label
+                                    class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Confirm
+                                    New Password</label>
+                                <input type="password" id="confirm_pass" required minlength="6"
+                                    class="w-full bg-stone-50 border-none rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
+                            </div>
+                            <div class="pt-2">
+                                <button type="submit"
+                                    class="bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold text-sm shadow-lg shadow-indigo-200 hover:bg-indigo-700 hover:shadow-xl transition-all active:scale-95">Update
+                                    Password</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Preferences (Mock) -->
+                    <div class="clay-card p-8 bg-gradient-to-br from-slate-50 to-white">
+                        <div class="flex items-center gap-4 mb-6 border-b border-stone-200 pb-4">
+                            <div
+                                class="w-10 h-10 rounded-xl bg-emerald-100 flex items-center justify-center text-emerald-600">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path
+                                        d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.1a2 2 0 0 1-1-1.74v-.47a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z">
+                                    </path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="font-brand text-xl font-bold text-slate-800">Preferences</h3>
+                                <p class="text-xs text-slate-400 font-bold uppercase tracking-wide">App Settings</p>
+                            </div>
+                        </div>
+
+                        <div class="space-y-6">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="font-bold text-slate-700">Email Notifications</p>
+                                    <p class="text-xs text-slate-400">Receive alerts for new tickets</p>
+                                </div>
+                                <div
+                                    class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+                                    <input type="checkbox" name="toggle" id="toggle_mail"
+                                        class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer checked:right-0 checked:border-emerald-500 checked:bg-emerald-500" />
+                                    <label for="toggle_mail"
+                                        class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 cursor-pointer"></label>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="font-bold text-slate-700">Compact View</p>
+                                    <p class="text-xs text-slate-400">Reduce padding in tables</p>
+                                </div>
+                                <div
+                                    class="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
+                                    <input type="checkbox" name="toggle" id="toggle_view"
+                                        class="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer" />
+                                    <label for="toggle_view"
+                                        class="toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 cursor-pointer"></label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </template>
+
     <script>
         // === GLOBAL STATE ===
         let allStudents = [];
@@ -824,7 +988,8 @@
                 const titles = {
                     'dashboard': 'Overview',
                     'students': 'Student Data',
-                    'support': 'Support Center'
+                    'support': 'Support Center',
+                    'settings': 'Settings'
                 };
                 const pageTitle = document.getElementById('pageTitle');
                 if (pageTitle) pageTitle.innerText = titles[tabId] || 'Dashboard';
@@ -836,6 +1001,40 @@
                     renderStudents();
                 }
                 if (tabId === 'support') fetchMyComplaints();
+                if (tabId === 'settings') renderSettings();
+            }
+        }
+
+        // === SETTINGS LOGIC ===
+        function renderSettings() {
+            // Populate Profile Data from Session
+            document.getElementById('settingsSchoolName').innerText = sessionStorage.getItem('schoolName') || 'School Info';
+            document.getElementById('settingsSchoolId').innerText = schoolId || '--';
+        }
+
+        async function handlePasswordChange(e) {
+            e.preventDefault();
+            const oldPass = document.getElementById('old_pass').value;
+            const newPass = document.getElementById('new_pass').value;
+            const confirmPass = document.getElementById('confirm_pass').value;
+
+            if (newPass !== confirmPass) {
+                alert("New passwords do not match!");
+                return;
+            }
+
+            try {
+                // Mock API call - Replace with actual endpoint if available
+                // const res = await fetch('/api/auth/change-password', { ... });
+
+                // For now, consistent with prototype status:
+                alert("Password Update Simulated.\n(Backend integration required for persistence)");
+
+                // Reset form
+                e.target.reset();
+            } catch (err) {
+                console.error(err);
+                alert("Failed to update password.");
             }
         }
 
