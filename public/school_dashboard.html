@@ -833,9 +833,14 @@
 
                         <form onsubmit="handlePasswordChange(event)" class="space-y-4 max-w-md">
                             <div>
-                                <label
-                                    class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Current
-                                    Password</label>
+                                <div class="flex justify-between items-center mb-2">
+                                    <label
+                                        class="block text-xs font-bold text-slate-400 uppercase tracking-wider">Current
+                                        Password</label>
+                                    <button type="button"
+                                        onclick="alert('Please contact your Super Admin to reset your password.')"
+                                        class="text-xs font-bold text-indigo-500 hover:text-indigo-600 hover:underline">Forgot?</button>
+                                </div>
                                 <input type="password" id="old_pass" required
                                     class="w-full bg-stone-50 border-none rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none transition-all">
                             </div>
