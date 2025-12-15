@@ -865,6 +865,43 @@
                         </form>
                     </div>
 
+                    <!-- Data Backup -->
+                    <div class="clay-card p-8 bg-gradient-to-br from-indigo-50 to-white">
+                        <div class="flex items-center gap-4 mb-6 border-b border-stone-200 pb-4">
+                            <div
+                                class="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center text-indigo-600">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="7 10 12 15 17 10"></polyline>
+                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="font-brand text-xl font-bold text-slate-800">Data Backup</h3>
+                                <p class="text-xs text-slate-400 font-bold uppercase tracking-wide">Export & Safe
+                                    Keeping</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="font-bold text-slate-700">Student Database</p>
+                                <p class="text-xs text-slate-400">Download full record of all students</p>
+                            </div>
+                            <button onclick="exportData('excel')"
+                                class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl shadow-lg shadow-indigo-200 transition-all flex items-center gap-2">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                    <polyline points="7 10 12 15 17 10"></polyline>
+                                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                                </svg>
+                                Download Excel
+                            </button>
+                        </div>
+                    </div>
+
                     <!-- Preferences (Mock) -->
                     <div class="clay-card p-8 bg-gradient-to-br from-slate-50 to-white">
                         <div class="flex items-center gap-4 mb-6 border-b border-stone-200 pb-4">
@@ -993,8 +1030,10 @@
         // === NAVIGATION ===
         async function switchTab(tabId) {
             document.querySelectorAll('.nav-item').forEach(b => {
-                const isActive = b.innerText.toLowerCase().includes(tabId === 'dashboard' ? 'dashboard' : (tabId === 'students' ? 'student' : 'support'));
+                // Robust matching by ID instead of text
+                const isActive = b.id === `nav-${tabId}`;
                 b.classList.toggle('active', isActive);
+
                 // Remove text-slate-400 if active, else add it
                 if (isActive) {
                     b.classList.remove('text-slate-500');
@@ -2010,52 +2049,75 @@
 
             const btn = document.querySelector('#importModal button[onclick="processUpload()"]');
             const originalText = btn.innerHTML;
-            btn.innerHTML = `<svg class="animate-spin h-5 w-5 mr-2" viewBox="0 0 24 24"><!--...--></svg> Importing...`;
+            btn.innerHTML = `<svg class="animate-spin h-5 w-5 mr-2" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Importing...`;
             btn.disabled = true;
 
             let success = 0;
+            let updated = 0;
+            let skipped = 0;
             let errors = 0;
 
             try {
-                // Batch logic? Or sequential? Sequential is safer for now to show progress, or simple Promise.all
-                // Let's do chunks of 10 to not kill server
-                const chunkSize = 10;
-                for (let i = 0; i < importQueue.length; i += chunkSize) {
-                    const chunk = importQueue.slice(i, i + chunkSize);
-                    await Promise.all(chunk.map(async (student) => {
-                        try {
-                            // Map API payload
-                            const payload = {
-                                school_id: schoolId,
-                                admission_no: student.admission_no,
-                                roll_no: student.roll_no,
-                                name: student.name,
-                                class: student.class,
-                                section: student.section,
-                                gender: student.gender,
-                                house: student.house,
-                                dob: null,
-                                father_name: null,
-                                mother_name: null,
-                                contact_number: null,
-                                address: null,
-                                order_status: student.order_status
-                            };
+                // Sequential Processing to allow User Confirmation
+                for (const student of importQueue) {
+                    const payload = {
+                        school_id: schoolId,
+                        admission_no: student.admission_no,
+                        roll_no: student.roll_no,
+                        student_name: student.name,
+                        gender: student.gender,
+                        class: student.class,
+                        section: student.section,
+                        house: student.house,
+                        status: student.status
+                    };
 
-                            await fetch('/api/data/student', {
+                    // Check for Duplicates (Name + Admission No)
+                    const existing = allStudents.find(s =>
+                        String(s.admission_no) === String(student.admission_no) &&
+                        s.name.trim().toLowerCase() === student.name.trim().toLowerCase()
+                    );
+
+                    try {
+                        if (existing) {
+                            // DUPLICATE FOUND
+                            if (confirm(`Duplicate found: ${student.name} (Adm: ${student.admission_no}).\nUpdate existing record?`)) {
+                                // UPDATE
+                                const res = await fetch(`/api/data/student/${existing.id}`, {
+                                    method: 'PUT',
+                                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                                    body: JSON.stringify(payload)
+                                });
+                                if (!res.ok) throw new Error("Update failed");
+                                updated++;
+                            } else {
+                                // REJECT / SKIP
+                                skipped++;
+                            }
+                        } else {
+                            // NEW RECORD
+                            const res = await fetch('/api/data/student', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                                 body: JSON.stringify(payload)
                             });
+                            if (!res.ok) throw new Error("Create failed");
                             success++;
-                        } catch (e) {
-                            console.error(e);
-                            errors++;
                         }
-                    }));
+                    } catch (e) {
+                        console.error(e);
+                        errors++;
+                    }
                 }
 
-                alert(`Report:\n✅ Success: ${success}\n❌ Failed: ${errors}`);
+                alert(`Report:\n✅ Created: ${success}\n🔄 Updated: ${updated}\n⏭️ Skipped: ${skipped}\n❌ Errors: ${errors}`);
+
+                // Clear Queue on success
+                importQueue = [];
+                importFilesList = [];
+                renderfileList();
+                renderImportPreview();
+
                 document.getElementById('importModal').classList.add('hidden');
                 fetchData(); // Refresh main table
 
