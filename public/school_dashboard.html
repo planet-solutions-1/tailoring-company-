@@ -2864,6 +2864,91 @@
         </div>
     </div>
     <script>
+            async function exportData(type) {
+                // 'excel' = Active Only (Standard Export)
+                // 'backup' = Active + Locally Archived Deleted Items (Settings > Backup)
+
+                let dataToExport = [];
+
+                if (type === 'backup') {
+                    // 1. Get Live Data
+                    dataToExport = [...allStudents];
+
+                    // 2. Append Archived Deleted Data from LocalStorage
+                    try {
+                        const history = JSON.parse(localStorage.getItem('deleted_history') || '[]');
+                        // Add a visual marker for deleted items
+                        const archived = history.map(h => ({ ...h, status: 'Trash (Archived)' }));
+                        dataToExport = [...dataToExport, ...archived];
+                    } catch (e) {
+                        console.error("Backup merge failed", e);
+                    }
+
+                    // Sort
+                    dataToExport.sort((a, b) => (String(a.status).includes('Trash') ? 1 : -1));
+
+                } else {
+                    // Standard Excel Export: Use current view
+                    dataToExport = (typeof currentFilteredList !== 'undefined' && currentFilteredList.length > 0)
+                        ? currentFilteredList
+                        : allStudents;
+                }
+
+                if (dataToExport.length === 0) return alert("No data to export!");
+
+                if (type === 'excel' || type === 'backup') {
+                    const ws = XLSX.utils.json_to_sheet(dataToExport.map(s => ({
+                        "Admission No": s.admission_no,
+                        "Student Name": s.name,
+                        "Roll No": s.roll_no,
+                        "Class": s.class,
+                        "Section": s.section,
+                        "House": s.house,
+                        "Status": s.status || 'Active',
+                        "Deleted At": s.deleted_at || ''
+                    })));
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, "Students");
+                    XLSX.writeFile(wb, `School_Data_${type == 'backup' ? 'FULL_BACKUP' : 'Export'}_${new Date().toISOString().slice(0, 10)}.xlsx`);
+                } else if (type === 'pdf') {
+                    const doc = new jspdf.jsPDF();
+                    doc.autoTable({
+                        head: [['Adm No', 'Name', 'Class', 'Roll No']],
+                        body: dataToExport.map(s => [s.admission_no, s.name, `${s.class} ${s.section || ''}`, s.roll_no]),
+                    });
+                    doc.save('students.pdf');
+                }
+            }
+
+            function renderPaginationControls(totalPages) {
+                const container = document.getElementById('paginationControls');
+                if (totalPages <= 1) {
+                    container.innerHTML = '';
+                    return;
+                }
+                let html = `
+        <button onclick="changePage(${currentPage - 1})" disabled="${currentPage === 1}" class="px-3 py-1 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-50 transition-colors">Prev</button>
+        <span class="text-sm font-bold text-slate-600">Page ${currentPage} of ${totalPages}</span>
+        <button onclick="changePage(${currentPage + 1})" disabled="${currentPage === totalPages}" class="px-3 py-1 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-50 transition-colors">Next</button>
+    `;
+                container.innerHTML = html;
+            }
+
+            // Init App
+            function init() {
+                if (localStorage.getItem('compactMode') === 'true') {
+                    document.body.classList.add('compact-mode');
+                }
+                if (typeof pruneDeletedHistory === 'function') pruneDeletedHistory();
+
+                fetchData();
+                setInterval(fetchMyComplaints, 60000);
+                fetchMyComplaints();
+            }
+
+            // Start
+            init();
+
             // === MOBILE SIDEBAR LOGIC ===
             function toggleSidebar() {
                 const sidebar = document.getElementById('mainSidebar');
