@@ -2207,9 +2207,9 @@
                     </div>
 
                     <div
-                        class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start flex-1 overflow-y-auto pr-2 pb-32 min-h-0 custom-scrollbar">
+                        class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start flex-1 overflow-y-auto pr-2 pb-32 min-h-0 custom-scrollbar">
                         <!-- Name -->
-                        <div class="col-span-2 space-y-2">
+                        <div class="col-span-1 lg:col-span-2 space-y-2">
                             <label class="block text-xs font-bold text-stone-400 uppercase tracking-wider">Student Name
                                 <span class="text-rose-500">*</span></label>
                             <input type="text" id="m_name"
@@ -2233,19 +2233,22 @@
                                 placeholder="e.g. R-2024-001">
                         </div>
 
-                        <!-- Class Details -->
-                        <div class="space-y-2">
-                            <label class="block text-xs font-bold text-stone-400 uppercase tracking-wider">Class</label>
-                            <input type="text" id="m_class"
-                                class="w-full bg-white border-2 border-stone-200 rounded-xl px-4 py-3 font-bold text-stone-700 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all"
-                                placeholder="e.g. X">
-                        </div>
-                        <div class="space-y-2">
-                            <label
-                                class="block text-xs font-bold text-stone-400 uppercase tracking-wider">Section</label>
-                            <input type="text" id="m_sec"
-                                class="w-full bg-white border-2 border-stone-200 rounded-xl px-4 py-3 font-bold text-stone-700 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all"
-                                placeholder="e.g. A">
+                        <!-- Class & Section (Side-by-side) -->
+                        <div class="col-span-1 lg:col-span-2 grid grid-cols-2 gap-4">
+                            <div class="space-y-2">
+                                <label
+                                    class="block text-xs font-bold text-stone-400 uppercase tracking-wider">Class</label>
+                                <input type="text" id="m_class"
+                                    class="w-full bg-white border-2 border-stone-200 rounded-xl px-4 py-3 font-bold text-stone-700 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all"
+                                    placeholder="e.g. X">
+                            </div>
+                            <div class="space-y-2">
+                                <label
+                                    class="block text-xs font-bold text-stone-400 uppercase tracking-wider">Section</label>
+                                <input type="text" id="m_sec"
+                                    class="w-full bg-white border-2 border-stone-200 rounded-xl px-4 py-3 font-bold text-stone-700 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all"
+                                    placeholder="e.g. A">
+                            </div>
                         </div>
 
                         <!-- Extras -->
