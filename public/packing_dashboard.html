@@ -10,92 +10,105 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
     <script>
         // Shim for jspdf
         window.jsPDF = window.jspdf.jsPDF;
     </script>
     <style>
-        /* Classic Planet Editor Design System */
         :root {
-            --color-gunmetal: #2C3E50;
-            --color-bg: #F5F7FA;
-            --color-border: #E2E8F0;
-            --color-text: #4A5568;
-            --color-success: #10B981;
+            --ink-black: #1c1917;
+            --rice-paper: #fafaf9;
+            --bamboo-green: #059669;
+            /* Emerald 600 */
+            --seal-red: #be123c;
         }
 
         body {
             font-family: 'Inter', sans-serif;
-            background-color: var(--color-bg);
-            color: var(--color-text);
+            background-color: var(--rice-paper);
+            color: var(--ink-black);
         }
 
-        /* Header - Matches Planet Editor */
-        header {
-            background: white;
-            border-bottom: 1px solid var(--color-border);
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        /* Textures */
+        .bg-washi {
+            background-color: #fafaf9;
+            background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23noise)' opacity='0.08'/%3E%3C/svg%3E");
         }
 
-        /* Card - Clean & Sharp */
+        .font-ink {
+            font-family: 'Noto Serif JP', serif;
+        }
+
+        /* Premium Card */
         .card {
-            background: white;
-            border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            border: 1px solid var(--color-border);
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(231, 229, 228, 0.8);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            /* Soft Shadow */
+            border-radius: 12px;
         }
 
-        /* Table Aesthetics - Professional & Dense */
+        /* Header */
+        header {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        /* Table Aesthetics */
         th {
-            background-color: #F8FAFC;
-            color: #64748B;
-            font-weight: 600;
+            background-color: transparent;
+            color: #78716c;
+            /* Stone 500 */
+            font-family: 'Inter', sans-serif;
+            font-weight: 700;
             text-transform: uppercase;
-            font-size: 0.75rem;
-            letter-spacing: 0.05em;
-            padding: 0.75rem 1rem;
-            border-bottom: 1px solid var(--color-border);
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+            padding: 1rem 1.5rem;
+            border-bottom: 2px solid #e7e5e4;
+            /* Stone 200 */
         }
 
         td {
-            padding: 0.75rem 1rem;
-            border-bottom: 1px solid #F1F5F9;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #f5f5f4;
+            /* Stone 100 */
+            color: #44403c;
+            /* Stone 700 */
         }
 
-        tr {
+        tr:hover td {
+            background-color: rgba(255, 255, 255, 0.6);
+        }
+
+        /* Checkbox - Premium */
+        .pack-checkbox {
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #d6d3d1;
+            border-radius: 6px;
+            cursor: pointer;
+            position: relative;
+            background: white;
             transition: all 0.2s ease;
         }
 
-        tr:hover {
-            background-color: #F8FAFC;
-        }
-
-        /* Minute Art: Checkbox */
-        .pack-checkbox {
-            appearance: none;
-            width: 18px;
-            height: 18px;
-            border: 2px solid #CBD5E0;
-            border-radius: 4px;
-            /* Slightly rounded squares */
-            cursor: pointer;
-            position: relative;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
         .pack-checkbox:checked {
-            background-color: var(--color-success);
-            border-color: var(--color-success);
-            transform: scale(1.1);
-            /* Micro-interaction */
+            background-color: var(--bamboo-green);
+            border-color: var(--bamboo-green);
         }
 
         .pack-checkbox:checked::after {
             content: '';
             position: absolute;
-            left: 5px;
-            top: 1px;
+            left: 6px;
+            top: 2px;
             width: 5px;
             height: 10px;
             border: solid white;
@@ -103,73 +116,62 @@
             transform: rotate(45deg);
         }
 
-        /* Minute Art: Packed Row State */
-        tr.packed-row {
-            background-color: #F0FFF4;
-            /* Very subtle mint */
-            opacity: 0.8;
-        }
-
+        /* Packed Row State - Zen Mode */
         tr.packed-row td {
-            color: #94A3B8;
-            /* Muted text */
+            color: #a8a29e;
+            /* Stone 400 */
             text-decoration: line-through;
-            /* Strikethrough */
-            text-decoration-color: #CBD5E0;
+            text-decoration-color: #d6d3d1;
+            background-color: #ecfdf5;
+            /* Emerald 50 */
         }
 
         tr.packed-row td:first-child {
-            /* Keep checkbox clear */
             text-decoration: none;
-            opacity: 1;
+            background-color: transparent;
         }
 
-        /* Minute Art: Stats Pills */
+        /* Stats Pills */
         .stat-pill {
-            transition: transform 0.2s;
+            font-family: 'Noto Serif JP', serif;
+            letter-spacing: 0.05em;
         }
 
-        .stat-pill:hover {
-            transform: translateY(-1px);
-            /* Little lift */
-        }
-
-        /* Custom Scrollbar for Dashboard feel */
+        /* Scrollbar */
         ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
+            width: 6px;
+            height: 6px;
         }
 
         ::-webkit-scrollbar-track {
-            background: #F1F5F9;
+            background: transparent;
         }
 
         ::-webkit-scrollbar-thumb {
-            background: #CBD5E0;
-            border-radius: 4px;
+            background: #d6d3d1;
+            border-radius: 3px;
         }
 
         ::-webkit-scrollbar-thumb:hover {
-            background: #94A3B8;
+            background: #a8a29e;
         }
 
-        /* Header Icon Box */
+        /* Icon Box - Dark Ink */
         .icon-box {
-            background: #4A5568;
+            background: var(--ink-black);
             color: white;
             padding: 0.5rem;
-            border-radius: 0.375rem;
-            /* rounded-md */
-            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
     </style>
 </head>
 
-<body class="flex flex-col min-h-screen md:h-screen overflow-y-auto md:overflow-hidden">
+<body class="flex flex-col min-h-screen md:h-screen overflow-y-auto md:overflow-hidden bg-washi">
 
     <!-- Header -->
     <header
-        class="px-4 py-3 md:px-6 md:py-4 flex flex-col md:flex-row justify-between items-center gap-4 md:gap-0 z-30 relative bg-white shadow-sm border-b border-gray-100">
+        class="px-4 py-3 md:px-6 md:py-4 flex flex-col md:flex-row justify-between items-center gap-4 md:gap-0 z-30 relative sticky top-0">
         <div class="flex items-center gap-3 w-full md:w-auto">
             <div class="icon-box shrink-0">
                 <!-- Box Icon -->
@@ -182,12 +184,11 @@
                 </svg>
             </div>
             <div>
-                <h1 class="font-bold text-[#2C3E50] text-lg md:text-xl leading-tight tracking-tight">Packing Dashboard
-                </h1>
-                <p class="text-[10px] md:text-xs text-[#7F8C8D] font-light tracking-wide uppercase">Rapid Data Logistics
-                </p>
+                <h1 class="font-ink font-bold text-stone-800 text-xl md:text-2xl leading-tight tracking-tight">Packing
+                    Dashboard</h1>
+                <p class="text-[10px] md:text-xs text-stone-500 font-light tracking-wide uppercase">Rapid Data Logistics
+                    • v3.0</p>
             </div>
-            <!-- Mobile: Menu / Actions could go here -->
         </div>
 
         <div class="flex flex-wrap md:flex-nowrap gap-3 items-center w-full md:w-auto justify-end">
@@ -198,20 +199,20 @@
                     <canvas id="packChart"></canvas>
                 </div>
 
-                <div class="stat-pill px-3 py-1 bg-gray-50 text-gray-600 rounded-md border border-gray-200">
-                    TOTAL <span id="statTotal" class="ml-1 text-gray-800">0</span>
+                <div class="stat-pill px-3 py-1 bg-white/50 text-stone-600 rounded-lg border border-stone-200">
+                    TOTAL <span id="statTotal" class="ml-1 text-stone-800">0</span>
                 </div>
-                <div class="stat-pill px-3 py-1 bg-green-50 text-green-700 rounded-md border border-green-200">
+                <div class="stat-pill px-3 py-1 bg-emerald-50 text-emerald-700 rounded-lg border border-emerald-200">
                     PACKED <span id="statPacked" class="ml-1 font-bold">0</span>
                 </div>
-                <div class="stat-pill px-3 py-1 bg-orange-50 text-orange-700 rounded-md border border-orange-200">
+                <div class="stat-pill px-3 py-1 bg-amber-50 text-amber-700 rounded-lg border border-amber-200">
                     PENDING <span id="statPending" class="ml-1 font-bold">0</span>
                 </div>
             </div>
 
             <!-- PDF Report Button (Initially Hidden) -->
             <button id="btnReport" onclick="generatePDF()"
-                class="hidden btn-secondary bg-white text-gray-600 border border-gray-300 hover:bg-gray-50 px-4 py-2 rounded-md shadow-sm transition-all flex items-center gap-2 text-sm font-medium">
+                class="hidden bg-white text-stone-600 border border-stone-200 hover:bg-stone-50 px-4 py-2 rounded-lg shadow-sm transition-all flex items-center gap-2 text-sm font-medium">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                     <polyline points="14 2 14 8 20 8"></polyline>
@@ -224,7 +225,7 @@
 
             <!-- Export Excel Button -->
             <button id="btnExport" onclick="exportToExcel()"
-                class="hidden btn-secondary bg-white text-gray-600 border border-gray-300 hover:bg-gray-50 px-4 py-2 rounded-md shadow-sm transition-all flex items-center gap-2 text-sm font-medium">
+                class="hidden bg-white text-stone-600 border border-stone-200 hover:bg-stone-50 px-4 py-2 rounded-lg shadow-sm transition-all flex items-center gap-2 text-sm font-medium">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                     <polyline points="14 2 14 8 20 8"></polyline>
@@ -236,7 +237,7 @@
             </button>
 
             <label
-                class="bg-[#2C3E50] hover:bg-[#1A252F] text-white px-4 py-2 rounded-md shadow-sm cursor-pointer transition-all flex items-center gap-2 text-sm font-medium">
+                class="bg-stone-800 hover:bg-black text-white px-4 py-2 rounded-lg shadow-lg cursor-pointer transition-all flex items-center gap-2 text-sm font-medium">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
                     <polyline points="17 8 12 3 7 8"></polyline>
@@ -248,7 +249,7 @@
             </label>
 
             <a href="planet_editor.html"
-                class="text-gray-400 hover:text-[#2C3E50] transition-colors p-2 rounded-full hover:bg-gray-100"
+                class="text-stone-400 hover:text-stone-800 transition-colors p-2 rounded-full hover:bg-stone-100"
                 title="Back to Editor">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M11 17l-5-5 5-5M18 17l-5-5 5-5" />
@@ -261,43 +262,43 @@
     <main class="flex-1 p-4 md:p-6 flex flex-col gap-4 max-w-[1600px] w-full mx-auto md:overflow-hidden">
 
         <!-- Metadata Card -->
-        <div id="metadataContainer"
-            class="hidden card p-4 bg-white shadow-sm border border-gray-100 transition-all duration-300"></div>
+        <div id="metadataContainer" class="hidden card p-4 transition-all duration-300"></div>
 
         <!-- Auth Modal -->
         <div id="authModal"
-            class="fixed inset-0 bg-gray-900 bg-opacity-70 backdrop-blur-sm z-50 flex items-center justify-center hidden">
-            <div class="bg-white rounded-xl shadow-2xl p-8 max-w-sm w-full relative overflow-hidden">
-                <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-orange-400 to-red-500"></div>
+            class="fixed inset-0 bg-stone-900/80 backdrop-blur-sm z-50 flex items-center justify-center hidden">
+            <div
+                class="bg-white rounded-xl shadow-2xl p-8 max-w-sm w-full relative overflow-hidden border border-stone-200">
+                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-amber-500 to-rose-600"></div>
                 <div class="text-center mb-6">
-                    <h2 class="text-2xl font-bold text-gray-800">Packing Unit</h2>
-                    <p class="text-sm text-gray-500 mt-1">Enter access code to view packing list.</p>
+                    <h2 class="text-2xl font-ink font-bold text-stone-800">Packing Unit</h2>
+                    <p class="text-sm text-stone-500 mt-1 font-serif italic">Enter access code to proceed.</p>
                 </div>
 
                 <div class="space-y-4">
                     <div>
-                        <label class="block text-xs font-bold text-gray-500 uppercase tracking-wide mb-1">Access
+                        <label class="block text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-1">Access
                             Code</label>
                         <input type="text" id="accessCodeInput"
-                            class="w-full px-4 py-3 rounded-lg border border-gray-200 bg-gray-50 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all font-mono text-center text-lg tracking-widest text-gray-700"
-                            placeholder="XXXX-XXXX">
+                            class="w-full px-4 py-3 rounded-lg border border-stone-200 bg-stone-50 focus:bg-white focus:border-stone-400 outline-none transition-all font-mono text-center text-lg tracking-[0.2em] text-stone-700 placeholder-stone-300"
+                            placeholder="••••-••••">
                     </div>
                     <button onclick="handleAuth()"
-                        class="w-full bg-[#2C3E50] hover:bg-[#1A252F] text-white font-bold py-3 rounded-lg shadow-lg hover:shadow-xl transition-all transform active:scale-95">
+                        class="w-full bg-stone-800 hover:bg-black text-white font-bold py-3 rounded-lg shadow-lg hover:shadow-xl transition-all transform active:scale-95 text-sm uppercase tracking-wider">
                         Start Packing
                     </button>
-                    <div id="loadingSpinner" class="hidden text-center text-blue-500 text-sm mt-2">Loading data...</div>
+                    <div id="loadingSpinner" class="hidden text-center text-stone-500 text-xs mt-2 italic">Verifying
+                        credentials...</div>
                 </div>
-                <p id="authError" class="mt-4 text-center text-sm text-red-500 font-medium hidden"></p>
+                <p id="authError" class="mt-4 text-center text-sm text-rose-500 font-medium hidden"></p>
             </div>
         </div>
 
         <!-- Filters (Hidden until data loaded) -->
-        <div id="filterBar"
-            class="hidden card p-3 flex flex-col md:flex-row flex-wrap gap-3 md:items-center bg-white shadow-sm">
+        <div id="filterBar" class="hidden card p-3 flex flex-col md:flex-row flex-wrap gap-3 md:items-center">
             <!-- Toggle Info Button (Moved here for better context) -->
             <button onclick="toggleMetadata()"
-                class="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+                class="p-2 text-stone-400 hover:text-stone-800 hover:bg-stone-50 rounded-lg transition-colors"
                 title="Toggle Info">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
@@ -305,30 +306,30 @@
                     <line x1="9" y1="21" x2="9" y2="9"></line>
                 </svg>
             </button>
-            <div class="w-px h-6 bg-gray-200 mx-1"></div>
+            <div class="w-px h-6 bg-stone-200 mx-1"></div>
 
             <select id="filterClass"
-                class="bg-gray-50 border border-gray-200 text-sm rounded px-3 py-1.5 focus:border-blue-500 focus:bg-white outline-none cursor-pointer text-gray-700"
+                class="bg-transparent border border-stone-200 text-sm rounded-lg px-3 py-1.5 focus:border-stone-400 outline-none cursor-pointer text-stone-600 font-medium"
                 onchange="applyFilters()">
                 <option value="">All Classes</option>
             </select>
 
             <select id="filterSection"
-                class="bg-gray-50 border border-gray-200 text-sm rounded px-3 py-1.5 focus:border-blue-500 focus:bg-white outline-none cursor-pointer text-gray-700"
+                class="bg-transparent border border-stone-200 text-sm rounded-lg px-3 py-1.5 focus:border-stone-400 outline-none cursor-pointer text-stone-600 font-medium"
                 onchange="applyFilters()">
                 <option value="">All Sections</option>
             </select>
 
             <select id="filterHouse"
-                class="bg-gray-50 border border-gray-200 text-sm rounded px-3 py-1.5 focus:border-blue-500 focus:bg-white outline-none cursor-pointer text-gray-700"
+                class="bg-transparent border border-stone-200 text-sm rounded-lg px-3 py-1.5 focus:border-stone-400 outline-none cursor-pointer text-stone-600 font-medium"
                 onchange="applyFilters()">
                 <option value="">All Houses</option>
             </select>
 
-            <div class="w-px h-6 bg-gray-200 mx-1"></div>
+            <div class="w-px h-6 bg-stone-200 mx-1"></div>
 
             <select id="filterStatus"
-                class="bg-gray-50 border border-gray-200 text-sm rounded px-3 py-1.5 focus:border-blue-500 focus:bg-white outline-none cursor-pointer text-gray-700"
+                class="bg-transparent border border-stone-200 text-sm rounded-lg px-3 py-1.5 focus:border-stone-400 outline-none cursor-pointer text-stone-600 font-medium"
                 onchange="applyFilters()">
                 <option value="">All Status</option>
                 <option value="packed">Packed</option>
@@ -337,26 +338,26 @@
 
             <!-- Bulk Pack Button -->
             <button onclick="packVisible()"
-                class="ml-2 text-xs bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1.5 rounded border border-blue-200 font-semibold transition-colors">
+                class="ml-2 text-xs bg-stone-50 text-stone-600 hover:bg-stone-100 px-3 py-1.5 rounded-lg border border-stone-200 font-bold uppercase tracking-wider transition-colors">
                 Pack Visible
             </button>
 
             <div class="ml-auto w-64">
                 <input type="text" id="searchBox" placeholder="Search..."
-                    class="w-full px-3 py-1.5 bg-gray-50 border border-gray-200 rounded text-sm focus:border-blue-500 focus:bg-white outline-none"
+                    class="w-full px-3 py-1.5 bg-transparent border border-stone-200 rounded-lg text-sm focus:border-stone-400 outline-none text-stone-600 placeholder-stone-400"
                     oninput="applyFilters()">
             </div>
         </div>
 
         <!-- Table Container -->
         <div id="tableContainer"
-            class="hidden flex-1 card overflow-hidden flex flex-col bg-white border-0 md:border mb-20 md:mb-0">
-            <div id="tableScroll" class="overflow-auto flex-1 custom-scrollbar bg-gray-50 md:bg-white pb-safe"
+            class="hidden flex-1 card overflow-hidden flex flex-col border-0 md:border mb-20 md:mb-0">
+            <div id="tableScroll" class="overflow-auto flex-1 custom-scrollbar pb-safe"
                 onscroll="handleTableScroll(this)">
 
                 <!-- Desktop Table -->
                 <table class="hidden md:table w-full text-left border-collapse">
-                    <thead class="sticky top-0 z-10 bg-gray-50 shadow-sm">
+                    <thead class="sticky top-0 z-10 bg-white/95 backdrop-blur-sm shadow-sm">
                         <tr>
                             <th class="w-16 text-center">Status</th>
                             <th>Roll No</th>
@@ -369,7 +370,7 @@
                             <th>Packing Info</th>
                         </tr>
                     </thead>
-                    <tbody id="tableBody" class="text-sm text-gray-600 divide-y divide-gray-100">
+                    <tbody id="tableBody" class="text-sm">
                         <!-- Rows generated by JS -->
                     </tbody>
                 </table>
@@ -381,22 +382,26 @@
             </div>
 
             <!-- Empty State -->
-            <div id="emptyState" class="hidden flex flex-col items-center justify-center h-full text-gray-400 gap-2">
-                <div class="p-3 bg-gray-50 rounded-full">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <div id="emptyState"
+                class="hidden flex flex-col items-center justify-center h-full text-stone-400 gap-2 opacity-60">
+                <div class="p-4 bg-stone-50 rounded-full border border-stone-100">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="1.5">
                         <circle cx="11" cy="11" r="8"></circle>
                         <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                     </svg>
                 </div>
-                <p class="text-sm">No records found matching filters</p>
+                <p class="font-ink text-lg">No records found</p>
             </div>
         </div>
 
         <!-- Initial Placeholder -->
         <div id="welcomePlaceholder"
-            class="flex-1 flex flex-col items-center justify-center text-center text-gray-400 gap-4">
-            <div class="p-6 bg-white rounded-full shadow-sm border border-gray-100">
-                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#CBD5E0" stroke-width="1.5">
+            class="flex-1 flex flex-col items-center justify-center text-center text-stone-400 gap-6">
+            <div
+                class="p-8 bg-white/50 backdrop-blur-sm rounded-full shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-white/50">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" class="text-stone-300" stroke="currentColor"
+                    stroke-width="1">
                     <path
                         d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z">
                     </path>
@@ -405,9 +410,9 @@
                 </svg>
             </div>
             <div>
-                <h2 class="text-xl font-semibold text-gray-700 mb-1">Upload Packing List</h2>
-                <p class="text-sm max-w-xs mx-auto">Import your Excel file to start tracking packed items. Data is
-                    auto-saved.</p>
+                <h2 class="text-2xl font-ink font-bold text-stone-700 mb-2">Packing Dashboard</h2>
+                <p class="text-sm font-serif italic text-stone-500 max-w-xs mx-auto">Upload your manifest or log in to
+                    begin tracking shipments.</p>
             </div>
         </div>
 
@@ -756,11 +761,11 @@
             const card = document.getElementById(`card-${admissionNo}`);
             if (card) {
                 if (checked) {
-                    card.classList.add('border-green-200', 'bg-green-50/50');
-                    card.classList.remove('border-gray-200');
+                    card.classList.add('border-emerald-200', 'bg-emerald-50/50');
+                    card.classList.remove('border-stone-200');
                 } else {
-                    card.classList.remove('border-green-200', 'bg-green-50/50');
-                    card.classList.add('border-gray-200');
+                    card.classList.remove('border-emerald-200', 'bg-emerald-50/50');
+                    card.classList.add('border-stone-200');
                 }
                 const cb = card.querySelector('input[type="checkbox"]');
                 if (cb && cb.checked !== checked) cb.checked = checked;
@@ -839,9 +844,9 @@
             const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
 
             // Report Header
-            doc.setFont('helvetica', 'bold');
+            doc.setFont('times', 'bold');
             doc.setFontSize(16);
-            doc.setTextColor(44, 62, 80);
+            doc.setTextColor(28, 25, 23); // charcoal
             doc.text('Packing Report', 14, 15);
 
             doc.setFontSize(10);
@@ -936,8 +941,8 @@
                 body: tableRows,
                 startY: currentY,
                 theme: 'grid',
-                headStyles: { fillColor: [44, 62, 80], textColor: 255 },
-                styles: { fontSize: 8, cellPadding: 2 },
+                headStyles: { fillColor: [28, 25, 23], textColor: 255, font: 'times' },
+                styles: { fontSize: 8, cellPadding: 2, font: 'helvetica' },
                 columnStyles: {
                     0: { fontStyle: 'bold', textColor: [50, 50, 50] } // Status column
                 },
@@ -945,7 +950,7 @@
                     // Color code status
                     if (data.section === 'body' && data.column.index === 1) { // Adjusted index due to Sl No
                         if (data.cell.styles && data.cell.raw === 'PACKED') {
-                            data.cell.styles.textColor = [16, 185, 129]; // Green
+                            data.cell.styles.textColor = [5, 150, 105]; // Emerald 600
                         } else if (data.cell.styles) {
                             data.cell.styles.textColor = [234, 88, 12]; // Orange
                         }
@@ -983,8 +988,8 @@
                         if (key.length < 50 && key.length > 0) {
                             html += `
                                 <div>
-                                    <div class="text-[10px] uppercase tracking-wider text-gray-400 font-bold mb-0.5">${key}</div>
-                                    <div class="font-medium text-gray-700 break-words">${val}</div>
+                                    <div class="text-[10px] uppercase tracking-wider text-stone-400 font-bold mb-0.5">${key}</div>
+                                    <div class="font-medium text-stone-700 break-words font-serif">${val}</div>
                                 </div>
                              `;
                         }
@@ -1026,14 +1031,14 @@
                 // --- Desktop Row ---
                 const tr = document.createElement('tr');
                 tr.id = `row-${adm}`;
-                tr.className = `border-b border-gray-100 transition-colors ${isPacked ? 'packed-row' : ''}`;
+                tr.className = `border-b border-stone-100 transition-colors ${isPacked ? 'packed-row' : ''}`;
 
                 // Smart Item Detection
                 let mainItemHTML = '';
                 let patternHTML = '';
 
                 if (item['Pattern Code']) {
-                    patternHTML = `<div class="text-xs text-gray-500 mb-1">Pattern: <span class="font-bold text-gray-700">${item['Pattern Code']}</span></div>`;
+                    patternHTML = `<div class="text-xs text-stone-500 mb-1">Pattern: <span class="font-bold text-stone-700">${item['Pattern Code']}</span></div>`;
                 }
 
                 // Find "The Item Column" (e.g., "BOYS - SHIRT")
@@ -1044,10 +1049,10 @@
                         if (val) {
                             mainItemHTML += `
                                 <div class="mb-1.5">
-                                    <div class="text-[11px] font-bold text-blue-600 uppercase tracking-wide bg-blue-50 w-fit px-1.5 py-0.5 rounded border border-blue-100">
+                                    <div class="text-[11px] font-bold text-stone-500 uppercase tracking-wide bg-stone-50 w-fit px-1.5 py-0.5 rounded border border-stone-100">
                                         ${key}
                                     </div>
-                                    <div class="text-xs font-mono text-gray-800 mt-0.5 ml-0.5">${val}</div>
+                                    <div class="text-xs font-mono text-stone-800 mt-0.5 ml-0.5">${val}</div>
                                 </div>
                             `;
                         }
@@ -1067,22 +1072,22 @@
                             ${isPacked ? 'checked' : ''} 
                             onchange="togglePack('${adm}', this.checked)">
                     </td>
-                    <td class="p-3 font-medium text-gray-700">
+                    <td class="p-3 font-medium text-stone-600 font-mono text-xs">
                         ${item['Roll No'] || '-'}
                     </td>
-                    <td class="p-3 font-medium text-gray-900">
+                    <td class="p-3 font-medium text-stone-800 font-mono text-xs">
                         ${item['_isMissingAdm'] ?
-                        `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-red-50 text-red-600 border border-red-100 text-[10px] font-bold tracking-wide uppercase">
+                        `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-rose-50 text-rose-600 border border-rose-100 text-[10px] font-bold tracking-wide uppercase">
                                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
                                 MISSING ID
                              </span>`
                         : adm}
                     </td>
-                    <td class="p-3 font-medium text-gray-900">${item['Student Name'] || '-'}</td>
-                    <td class="p-3"><span class="bg-gray-100 text-gray-700 px-2 py-0.5 rounded text-xs font-bold border border-gray-200">${item['Class'] || '-'}</span></td>
-                    <td class="p-3 text-gray-600">${item['Section'] || '-'}</td>
-                    <td class="p-3 text-gray-500 text-xs font-semibold uppercase">${item['House'] || '-'}</td>
-                    <td class="p-3 text-gray-500 text-xs">${item['Gender'] || '-'}</td>
+                    <td class="p-3 font-bold text-stone-900 font-ink">${item['Student Name'] || '-'}</td>
+                    <td class="p-3"><span class="bg-white text-stone-700 px-2 py-0.5 rounded text-xs font-bold border border-stone-200 shadow-sm">${item['Class'] || '-'}</span></td>
+                    <td class="p-3 text-stone-600">${item['Section'] || '-'}</td>
+                    <td class="p-3 text-stone-500 text-xs font-semibold uppercase">${item['House'] || '-'}</td>
+                    <td class="p-3 text-stone-500 text-xs">${item['Gender'] || '-'}</td>
                     <td class="p-3 align-top">
                         ${mainItemHTML}
                         ${patternHTML}
@@ -1094,7 +1099,7 @@
                 const card = document.createElement('div');
                 card.id = `card-${adm}`;
                 // If packed, add opacity styling
-                card.className = `bg-white p-4 rounded-lg shadow-sm border ${isPacked ? 'border-green-200 bg-green-50/50' : 'border-gray-200'} transition-all`;
+                card.className = `bg-white p-4 rounded-lg shadow-sm border ${isPacked ? 'border-emerald-200 bg-emerald-50/50' : 'border-stone-200'} transition-all`;
 
                 card.innerHTML = `
                     <div class="flex justify-between items-start mb-3">
@@ -1105,17 +1110,17 @@
                                     onchange="togglePack('${adm}', this.checked)">
                              </div>
                              <div>
-                                <div class="font-bold text-gray-800 text-base leading-snug">${item['Student Name'] || 'Unknown'}</div>
-                                <div class="text-xs text-gray-500 font-mono mt-0.5">${item['Roll No'] ? `Roll: ${item['Roll No']} | ` : ''}Adm: ${adm}</div>
+                                <div class="font-ink font-bold text-stone-800 text-base leading-snug">${item['Student Name'] || 'Unknown'}</div>
+                                <div class="text-xs text-stone-500 font-mono mt-0.5">${item['Roll No'] ? `Roll: ${item['Roll No']} | ` : ''}Adm: ${adm}</div>
                              </div>
                         </div>
                         <div class="flex flex-col items-end gap-1">
-                             <span class="bg-gray-100 text-gray-600 px-2 py-0.5 rounded text-xs font-bold border border-gray-200">${item['Class'] || '-'} ${item['Section'] || ''}</span>
-                             <span class="text-[10px] font-bold uppercase text-gray-400 tracking-wider">${item['House'] || ''}</span>
+                             <span class="bg-stone-100 text-stone-600 px-2 py-0.5 rounded text-xs font-bold border border-stone-200">${item['Class'] || '-'} ${item['Section'] || ''}</span>
+                             <span class="text-[10px] font-bold uppercase text-stone-400 tracking-wider">${item['House'] || ''}</span>
                         </div>
                     </div>
                     
-                    <div class="pt-3 border-t border-gray-100 border-dashed">
+                    <div class="pt-3 border-t border-stone-100 border-dashed">
                         ${mainItemHTML}
                         ${patternHTML}
                     </div>
@@ -1145,7 +1150,7 @@
                         labels: ['Packed', 'Pending'],
                         datasets: [{
                             data: [packed, pending],
-                            backgroundColor: ['#10B981', '#F97316'],
+                            backgroundColor: ['#059669', '#f59e0b'], // Emerald / Amber
                             borderWidth: 0
                         }]
                     },
