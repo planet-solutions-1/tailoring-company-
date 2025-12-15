@@ -30,102 +30,108 @@
     </script>
     <style>
         :root {
-            /* Executive Dark Palette */
-            --bg-body: #020617;
-            /* Slate 950 */
-            --bg-card: rgba(15, 23, 42, 0.6);
-            /* Slate 900 Glass */
-            --border-glass: rgba(255, 255, 255, 0.1);
-            --border-highlight: rgba(255, 255, 255, 0.05);
-
-            --text-primary: #f8fafc;
+            /* Clean Enterprise Palette */
+            --bg-body: #F8FAFC;
             /* Slate 50 */
-            --text-secondary: #94a3b8;
-            /* Slate 400 */
+            --bg-card: #FFFFFF;
+            /* White */
+            --border-subtle: #E2E8F0;
+            /* Slate 200 */
+            --text-heading: #0F172A;
+            /* Slate 900 */
+            --text-body: #64748B;
+            /* Slate 500 */
 
-            --accent-primary: #6366f1;
-            /* Indigo 500 */
-            --accent-glow: rgba(99, 102, 241, 0.2);
+            --primary: #4338ca;
+            /* Indigo 700 */
+            --primary-light: #e0e7ff;
+            /* Indigo 100 */
         }
 
         body {
             font-family: 'Inter', sans-serif;
             background-color: var(--bg-body);
-            color: var(--text-primary);
+            color: var(--text-heading);
             overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
         }
 
-        /* Subtle Grid Background */
-        .bg-grid-pattern {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
+        /* Layout Structure */
+        .app-layout {
+            display: flex;
             height: 100vh;
-            z-index: -1;
-            background-image:
-                linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-            background-size: 40px 40px;
-            mask-image: radial-gradient(circle at center, black 40%, transparent 100%);
-            -webkit-mask-image: radial-gradient(circle at center, black 40%, transparent 100%);
+            overflow: hidden;
         }
 
-        /* Executive Card */
-        .glass-card {
+        /* Clean Card - No Glass */
+        .clean-card {
             background: var(--bg-card);
-            backdrop-filter: blur(24px);
-            -webkit-backdrop-filter: blur(24px);
-            border: 1px solid var(--border-glass);
-            border-top: 1px solid rgba(255, 255, 255, 0.15);
-            /* Top Highlight */
-            box-shadow: 0 4px 24px -1px rgba(0, 0, 0, 0.2);
-            border-radius: 16px;
-            /* Professional Radius */
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s ease-in-out;
         }
 
-        .glass-card:hover {
-            border-color: rgba(255, 255, 255, 0.2);
-            box-shadow:
-                0 0 0 1px rgba(255, 255, 255, 0.1),
-                0 20px 40px -4px rgba(0, 0, 0, 0.4);
+        .clean-card:hover {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
             transform: translateY(-2px);
-            background: rgba(30, 41, 59, 0.7);
+            border-color: #cbd5e1;
         }
 
-        /* Typography */
-        .font-brand {
-            font-family: 'Outfit', sans-serif;
-            letter-spacing: -0.01em;
+        /* Sidebar */
+        .sidebar-clean {
+            background: #FFFFFF;
+            border-right: 1px solid var(--border-subtle);
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            z-index: 50;
         }
 
         /* Navigation */
         .nav-item {
-            @apply flex items-center gap-3 px-4 py-3 text-slate-400 rounded-lg transition-all cursor-pointer font-medium border border-transparent;
+            @apply flex items-center gap-3 px-4 py-2.5 mx-2 text-slate-600 rounded-lg transition-all cursor-pointer font-medium text-sm;
         }
 
         .nav-item:hover {
-            @apply bg-white/5 text-white border-white/5;
+            @apply bg-slate-50 text-slate-900;
         }
 
         .nav-item.active {
-            @apply bg-indigo-500/10 text-indigo-400 border-indigo-500/20 shadow-[0_0_15px_rgba(99, 102, 241, 0.15)];
+            @apply bg-indigo-50 text-indigo-700 font-semibold;
         }
 
-        /* Table Styles - Dark */
-        th {
-            @apply text-xs font-semibold text-slate-400 uppercase tracking-wider py-4 px-6 border-b border-white/5;
+        /* Header */
+        .header-clean {
+            background: #FFFFFF;
+            border-bottom: 1px solid var(--border-subtle);
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 32px;
+            position: sticky;
+            top: 0;
+            z-index: 40;
         }
 
-        td {
-            @apply py-4 px-6 border-b border-white/5 text-slate-300;
+        /* Typography */
+        .font-brand {
+            font-family: 'Inter', sans-serif;
+            letter-spacing: -0.02em;
         }
 
-        tr:hover td {
-            @apply bg-white/5;
+        /* Stats Card Styles */
+        .stat-icon-wrapper {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
+        /* Custom Scrollbar */
         .custom-scrollbar::-webkit-scrollbar {
             width: 6px;
         }
@@ -135,12 +141,12 @@
         }
 
         .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.1);
+            background: #cbd5e1;
             border-radius: 10px;
         }
 
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-            background: rgba(255, 255, 255, 0.2);
+            background: #94a3b8;
         }
 
         /* Dialog Override */
@@ -153,27 +159,23 @@
         }
 
         dialog::backdrop {
-            background: rgba(0, 0, 0, 0.7);
-            backdrop-filter: blur(8px);
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(2px);
         }
     </style>
 </head>
 
-<body class="h-screen flex overflow-hidden bg-[#020617] text-slate-200">
-    <div class="bg-grid-pattern"></div>
+<body class="h-screen flex overflow-hidden bg-slate-50 text-slate-900">
+    <!-- Removed Mesh/Grid -->
 
-    <!-- Sidebar (Executive Dark) -->
-    <aside
-        class="w-20 lg:w-72 border-r border-white/5 flex flex-col z-50 transition-all duration-300 bg-slate-900/50 backdrop-blur-xl">
-        <div class="p-8 flex items-center gap-4">
+    <!-- Sidebar (Clean Enterprise) -->
+    <aside class="w-64 sidebar-clean hidden lg:flex">
+        <div class="px-6 py-5 flex items-center border-b border-slate-100">
             <div
-                class="w-10 h-10 rounded-lg bg-indigo-600 flex items-center justify-center shrink-0 shadow-lg shadow-indigo-500/20 text-white font-bold text-xl font-brand border border-white/10">
+                class="w-8 h-8 rounded bg-indigo-600 flex items-center justify-center shrink-0 text-white font-bold text-lg font-brand mr-3">
                 S</div>
-            <div class="hidden lg:block">
-                <h1 class="font-brand text-slate-200 text-lg font-bold tracking-tight">School<span
-                        class="text-indigo-400">Admin</span></h1>
-                <p class="text-[10px] text-slate-500 font-medium uppercase tracking-widest mt-0.5">Enterprise</p>
-            </div>
+            <h1 class="font-brand text-slate-800 text-lg font-bold tracking-tight">School<span
+                    class="text-indigo-600">Admin</span></h1>
         </div>
 
         <nav class="flex-1 py-6 space-y-2">
@@ -227,21 +229,15 @@
         </div>
 
         <!-- Header -->
-        <header
-            class="h-20 flex items-center justify-between px-8 z-10 shrink-0 border-b border-white/5 bg-slate-900/20 backdrop-blur-sm">
+        <header class="header-clean">
             <div>
-                <h2 class="font-brand text-2xl font-bold text-slate-200" id="pageTitle">Overview</h2>
-                <p class="text-slate-500 text-xs mt-1">System Status: <span class="text-emerald-400">● Online</span></p>
+                <h2 class="font-brand text-xl font-bold text-slate-900" id="pageTitle">Overview</h2>
             </div>
-            <div class="flex items-center gap-4">
-                <!-- Editor Button Removed -->
-            </div>
-        </header>
 
-        <!-- Content Area -->
-        <div class="flex-1 overflow-y-auto p-6 md:p-8" id="mainContainer">
-            <!-- Content Injected via JS -->
-        </div>
+            <!-- Content Area -->
+            <div class="flex-1 overflow-y-auto p-6 md:p-8" id="mainContainer">
+                <!-- Content Injected via JS -->
+            </div>
     </main>
 
     <!-- VIEWS TEMPLATES -->
@@ -252,11 +248,10 @@
             <!-- Stats Grid -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <!-- Total Students -->
-                <div class="glass-card p-6 relative overflow-hidden group">
+                <div class="clean-card p-6">
                     <div class="flex justify-between items-start mb-4">
-                        <div
-                            class="w-10 h-10 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        <div class="stat-icon-wrapper bg-indigo-50 text-indigo-600">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                 stroke-width="2">
                                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
                                 <circle cx="9" cy="7" r="4"></circle>
@@ -265,45 +260,48 @@
                             </svg>
                         </div>
                         <span
-                            class="text-xs font-mono text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded border border-emerald-500/20">+12%</span>
+                            class="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">+12%</span>
                     </div>
-                    <p class="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">Total Students</p>
-                    <h3 class="font-brand text-3xl font-bold text-white tracking-tight" id="dashTotal">--</h3>
+                    <div>
+                        <p class="text-slate-500 text-sm font-medium mb-1">Total Students</p>
+                        <h3 class="font-brand text-3xl font-bold text-slate-900" id="dashTotal">--</h3>
+                    </div>
                 </div>
+
                 <!-- Orders Pending -->
-                <div class="glass-card p-6 relative overflow-hidden group">
+                <div class="clean-card p-6">
                     <div class="flex justify-between items-start mb-4">
-                        <div
-                            class="w-10 h-10 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        <div class="stat-icon-wrapper bg-amber-50 text-amber-600">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                 stroke-width="2">
                                 <circle cx="12" cy="12" r="10"></circle>
                                 <polyline points="12 6 12 12 16 14"></polyline>
                             </svg>
                         </div>
                         <span
-                            class="text-xs font-mono text-amber-400 bg-amber-500/10 px-2 py-1 rounded border border-amber-500/20">Action
-                            Req</span>
+                            class="text-xs font-semibold text-amber-600 bg-amber-50 px-2 py-1 rounded-full">Pending</span>
                     </div>
-                    <p class="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">Pending Orders</p>
-                    <h3 class="font-brand text-3xl font-bold text-white tracking-tight" id="dashPending">--</h3>
+                    <div>
+                        <p class="text-slate-500 text-sm font-medium mb-1">Orders Pending</p>
+                        <h3 class="font-brand text-3xl font-bold text-slate-900" id="dashPending">--</h3>
+                    </div>
                 </div>
+
                 <!-- Completed -->
-                <div class="glass-card p-6 relative overflow-hidden group">
+                <div class="clean-card p-6">
                     <div class="flex justify-between items-start mb-4">
-                        <div
-                            class="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        <div class="stat-icon-wrapper bg-emerald-50 text-emerald-600">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                 stroke-width="2">
                                 <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
                                 <polyline points="22 4 12 14.01 9 11.01"></polyline>
                             </svg>
                         </div>
-                        <span
-                            class="text-xs font-mono text-slate-500 bg-slate-800 px-2 py-1 rounded border border-white/5">Auto</span>
                     </div>
-                    <p class="text-slate-500 text-xs font-semibold uppercase tracking-wider mb-1">Completed</p>
-                    <h3 class="font-brand text-3xl font-bold text-white tracking-tight" id="dashCompleted">--</h3>
+                    <div>
+                        <p class="text-slate-500 text-sm font-medium mb-1">Completed</p>
+                        <h3 class="font-brand text-3xl font-bold text-slate-900" id="dashCompleted">--</h3>
+                    </div>
                 </div>
             </div>
 
@@ -376,33 +374,33 @@
     <template id="view-students">
         <div class="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500 h-full flex flex-col">
             <!-- Toolbar -->
-            <div class="glass-card p-4 rounded-2xl flex flex-wrap gap-4 items-center justify-between shrink-0">
+            <div class="clean-card p-4 flex flex-wrap gap-4 items-center justify-between shrink-0 bg-white">
                 <div
-                    class="flex items-center gap-3 flex-1 min-w-[200px] bg-slate-50/50 px-4 py-3 rounded-xl border border-white/50 focus-within:bg-white transition-colors">
+                    class="flex items-center gap-3 flex-1 min-w-[200px] bg-slate-50 px-4 py-3 rounded-lg border border-slate-200 focus-within:bg-white focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all">
                     <svg class="text-slate-400" width="18" height="18" viewBox="0 0 24 24" fill="none"
                         stroke="currentColor" stroke-width="2">
                         <circle cx="11" cy="11" r="8"></circle>
                         <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                     </svg>
                     <input type="text" id="searchInput" placeholder="Search by Name, Roll No..."
-                        class="bg-transparent border-none outline-none text-sm w-full placeholder-slate-400 font-modern"
+                        class="bg-transparent border-none outline-none text-sm w-full placeholder-slate-400 font-brand"
                         oninput="renderStudents()">
                 </div>
                 <div class="flex items-center gap-2">
                     <select id="filterClass"
-                        class="bg-white/50 border border-stone-200 rounded text-xs px-3 py-2 outline-none"
+                        class="bg-white border border-slate-200 rounded-lg text-sm px-3 py-2.5 outline-none focus:border-indigo-500"
                         onchange="renderStudents()">
                         <option value="">All Classes</option>
                     </select>
                     <select id="filterSection"
-                        class="bg-white/50 border border-stone-200 rounded text-xs px-3 py-2 outline-none"
+                        class="bg-white border border-slate-200 rounded-lg text-sm px-3 py-2.5 outline-none focus:border-indigo-500"
                         onchange="renderStudents()">
                         <option value="">All Sections</option>
                     </select>
                 </div>
-                <div class="flex items-center gap-2 border-l border-stone-200 pl-4">
+                <div class="flex items-center gap-2 border-l border-slate-200 pl-4">
                     <button onclick="exportData('pdf')"
-                        class="p-2 rounded hover:bg-rose-50 text-rose-600 transition-colors" title="Export PDF"><svg
+                        class="p-2 rounded hover:bg-slate-100 text-slate-600 transition-colors" title="Export PDF"><svg
                             width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2">
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -412,7 +410,7 @@
                             <polyline points="10 9 9 9 8 9"></polyline>
                         </svg></button>
                     <button onclick="exportData('excel')"
-                        class="p-2 rounded hover:bg-emerald-50 text-emerald-600 transition-colors"
+                        class="p-2 rounded hover:bg-slate-100 text-slate-600 transition-colors"
                         title="Export Excel"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2">
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -424,10 +422,10 @@
             </div>
 
             <!-- Data Grid -->
-            <div class="glass-card flex-1 rounded-3xl overflow-hidden flex flex-col border border-white/60">
+            <div class="clean-card flex-1 overflow-hidden flex flex-col">
                 <div class="overflow-x-auto flex-1">
                     <table class="w-full text-left border-collapse">
-                        <thead class="bg-slate-50/50 sticky top-0 z-10 backdrop-blur-md border-b border-slate-100">
+                        <thead class="bg-slate-50 sticky top-0 z-10 border-b border-slate-200">
                             <tr>
                                 <th
                                     class="p-5 text-[11px] font-bold text-slate-400 uppercase tracking-widest font-modern">
@@ -474,11 +472,11 @@
             <!-- Header Action -->
             <div class="flex justify-between items-center mb-8">
                 <div>
-                    <h3 class="font-ink text-3xl font-bold text-stone-800">Support Center</h3>
-                    <p class="text-stone-500 text-sm mt-1">Track issues and submit new request tickets.</p>
+                    <h3 class="font-brand text-2xl font-bold text-slate-800">Support Center</h3>
+                    <p class="text-slate-500 text-sm mt-1">Track issues and submit new request tickets.</p>
                 </div>
                 <button onclick="openComplaintModal()"
-                    class="bg-rose-600 hover:bg-rose-700 text-white px-6 py-3 rounded-xl shadow-lg shadow-rose-900/20 font-bold uppercase tracking-wider text-xs flex items-center gap-2 transition-all hover:-translate-y-0.5">
+                    class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2.5 rounded-lg shadow-sm font-semibold text-sm flex items-center gap-2 transition-all">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M12 5v14M5 12h14" />
                     </svg>
@@ -487,26 +485,22 @@
             </div>
 
             <!-- History List -->
-            <div
-                class="glass-panel p-8 rounded-3xl flex-1 border border-stone-100 shadow-xl relative overflow-hidden flex flex-col">
-                <div
-                    class="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-rose-50/50 to-indigo-50/50 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none">
-                </div>
-
+            <div class="clean-card p-0 flex-1 flex flex-col overflow-hidden bg-slate-50">
                 <div id="complaintsList"
-                    class="flex-1 overflow-y-auto pr-4 relative z-10 custom-scrollbar grid grid-cols-1 xl:grid-cols-2 gap-6 content-start pb-10 bg-dark-washi p-6 rounded-b-3xl border-t border-stone-800 shadow-inner">
+                    class="flex-1 overflow-y-auto p-6 md:p-8 grid grid-cols-1 xl:grid-cols-2 gap-6 content-start custom-scrollbar">
                     <!-- Cards injected here -->
-                    <div class="h-full flex flex-col items-center justify-center text-stone-400">
-                        <div class="w-20 h-20 bg-stone-50 rounded-full flex items-center justify-center mb-4">
-                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" class="text-stone-300"
-                                stroke="currentColor" stroke-width="1.5">
+                    <div class="h-full flex flex-col items-center justify-center text-slate-400">
+                        <div
+                            class="w-16 h-16 bg-white rounded-full border border-slate-200 flex items-center justify-center mb-4 shadow-sm">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" class="text-slate-300"
+                                stroke="currentColor" stroke-width="2">
                                 <circle cx="12" cy="12" r="10" />
                                 <path d="M12 8v4" />
                                 <path d="M12 16h.01" />
                             </svg>
                         </div>
-                        <p class="font-ink text-lg text-stone-600">No tickets found</p>
-                        <p class="text-xs">Your support requests will appear here.</p>
+                        <p class="font-brand text-lg text-slate-600 font-medium">No tickets found</p>
+                        <p class="text-xs text-slate-500">Your support requests will appear here.</p>
                     </div>
                 </div>
             </div>
@@ -517,14 +511,13 @@
     <dialog id="complaintModal" class="bg-transparent">
         <div class="fixed inset-0 flex items-center justify-center p-4">
             <div
-                class="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto border border-white/20 relative animate-in zoom-in-95 duration-200">
+                class="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto border border-slate-200 relative animate-in zoom-in-95 duration-200">
 
                 <!-- Modal Header -->
-                <div
-                    class="sticky top-0 bg-white/90 backdrop-blur-md z-10 p-6 border-b border-stone-100 flex justify-between items-center">
+                <div class="sticky top-0 bg-white z-10 p-6 border-b border-slate-100 flex justify-between items-center">
                     <div>
-                        <h3 class="font-ink text-2xl font-bold text-stone-800">Submit New Ticket</h3>
-                        <p class="text-stone-400 text-xs uppercase tracking-wider font-bold">Please fill all details</p>
+                        <h3 class="font-brand text-xl font-bold text-slate-800">Submit New Ticket</h3>
+                        <p class="text-slate-500 text-xs font-medium">Please fill all details</p>
                     </div>
                     <button onclick="closeComplaintModal()"
                         class="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 flex items-center justify-center transition-colors">
