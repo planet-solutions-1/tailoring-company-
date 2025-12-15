@@ -1208,7 +1208,39 @@
                 XLSX.utils.book_append_sheet(wb, ws, "Students");
                 XLSX.writeFile(wb, `Students_Export_${new Date().toISOString().slice(0, 10)}.xlsx`);
             } else if (type === 'pdf') {
-                alert("PDF Export for filtered list not fully implemented (requires PDF lib). Using Excel is recommended for reports.");
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+
+                doc.text("Student List Report", 14, 15);
+                doc.setFontSize(10);
+                doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 22);
+
+                const tableColumn = ["Roll No", "Adm No", "Name", "Class", "Section", "Gender", "House", "Status"];
+                const tableRows = [];
+
+                dataToExport.forEach(s => {
+                    const studentData = [
+                        s.roll_no || '-',
+                        s.admission_no || '-',
+                        s.name || '-',
+                        s.class || '-',
+                        s.section || '-',
+                        s.gender || '-',
+                        s.house || '-',
+                        s.order_status || 'Pending'
+                    ];
+                    tableRows.push(studentData);
+                });
+
+                doc.autoTable({
+                    head: [tableColumn],
+                    body: tableRows,
+                    startY: 25,
+                    styles: { fontSize: 8 },
+                    headStyles: { fillColor: [79, 70, 229] } // Indigo-600
+                });
+
+                doc.save(`Students_Report_${new Date().toISOString().slice(0, 10)}.pdf`);
             }
         }
 
