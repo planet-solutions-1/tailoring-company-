@@ -1186,6 +1186,9 @@
             // Reset
             importQueue = [];
             importFilesList = [];
+            // Reset View to List (Fix: user stuck in manual entry)
+            if (document.getElementById('manualEntryForm')) hideManualEntryForm();
+
             document.getElementById('importFileList').innerHTML = '';
             document.getElementById('multiFileImport').value = '';
             renderImportPreview();
@@ -1333,6 +1336,7 @@
 
         function showManualEntryForm() {
             document.getElementById('importListView').classList.add('hidden');
+            document.getElementById('importModalFooter').classList.add('hidden'); // Hide global footer
             document.getElementById('manualEntryForm').classList.remove('hidden');
 
             // Focus Name
@@ -1341,6 +1345,7 @@
 
         function hideManualEntryForm() {
             document.getElementById('manualEntryForm').classList.add('hidden');
+            document.getElementById('importModalFooter').classList.remove('hidden'); // Show global footer
             document.getElementById('importListView').classList.remove('hidden');
 
             // Clear inputs
@@ -1838,7 +1843,7 @@
                                                     </path>
                                                     <polyline points="14 2 14 8 20 8"></polyline>
                                                     <line x1="12" y1="18" x2="12" y2="12"></line>
-                                                    <line x1="9" y1="15" x2="15" y2="15"></line>
+                                                    <line x1="9" y1="15" x2="15" y1="15"></line>
                                                 </svg>
                                             </div>
                                             <p class="font-bold text-stone-400 text-lg">Empty List</p>
@@ -1939,7 +1944,8 @@
             </div>
 
             <!-- Footer -->
-            <div class="p-6 border-t border-stone-100 bg-white rounded-b-2xl flex justify-end gap-3 z-10">
+            <div id="importModalFooter"
+                class="p-6 border-t border-stone-100 bg-white rounded-b-2xl flex justify-end gap-3 z-10">
                 <button onclick="document.getElementById('importModal').classList.add('hidden')"
                     class="px-6 py-2.5 rounded-xl font-bold text-stone-500 hover:bg-stone-100 transition-colors">Cancel</button>
                 <button onclick="processUpload()"
