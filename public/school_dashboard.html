@@ -775,8 +775,16 @@
         // === NAVIGATION ===
         async function switchTab(tabId) {
             document.querySelectorAll('.nav-item').forEach(b => {
-                b.classList.toggle('active', b.innerText.toLowerCase().includes(tabId === 'dashboard' ? 'dashboard' : (tabId === 'students' ? 'student' : 'support')));
-                b.classList.toggle('text-stone-400', !b.innerText.toLowerCase().includes(tabId));
+                const isActive = b.innerText.toLowerCase().includes(tabId === 'dashboard' ? 'dashboard' : (tabId === 'students' ? 'student' : 'support'));
+                b.classList.toggle('active', isActive);
+                // Remove text-slate-400 if active, else add it
+                if (isActive) {
+                    b.classList.remove('text-slate-500');
+                    b.classList.add('text-white');
+                } else {
+                    b.classList.add('text-slate-500');
+                    b.classList.remove('text-white');
+                }
             });
 
             const content = document.getElementById('mainContainer');
@@ -842,16 +850,16 @@
             document.getElementById('recordCount').innerText = `${filtered.length} Students Found`;
 
             tbody.innerHTML = filtered.map(s => `
-                <tr class="hover:bg-stone-50 transition-colors group">
-                    <td class="p-4 font-mono text-stone-500">${s.roll_no || '-'}</td>
-                    <td class="p-4">${s.admission_no}</td>
-                    <td class="p-4 font-bold text-stone-700">${s.name}</td>
-                    <td class="p-4 text-stone-500">${s.gender || '-'}</td>
-                    <td class="p-4 text-stone-600">${s.class || '-'}</td>
-                    <td class="p-4 text-stone-600">${s.section || '-'}</td>
-                    <td class="p-4 text-stone-600">${s.house || '-'}</td>
+                <tr class="hover:bg-indigo-50/50 transition-colors group border-b border-indigo-50/30 last:border-none">
+                    <td class="p-4 font-mono text-indigo-400 font-bold">${s.roll_no || '-'}</td>
+                    <td class="p-4 text-slate-600 font-medium">${s.admission_no}</td>
+                    <td class="p-4 font-bold text-slate-700">${s.name}</td>
+                    <td class="p-4 text-slate-500">${s.gender || '-'}</td>
+                    <td class="p-4 text-slate-600 font-bold">${s.class || '-'}</td>
+                    <td class="p-4 text-slate-600 font-bold">${s.section || '-'}</td>
+                    <td class="p-4 text-slate-600">${s.house || '-'}</td>
                     <td class="p-4">
-                        <span class="status-badge ${s.order_status === 'Completed' ? 'status-completed' : (s.order_status === 'Stitching' ? 'status-stitching' : 'status-pending')}">
+                        <span class="px-3 py-1 rounded-full text-xs font-bold uppercase shadow-sm ${s.order_status === 'Completed' ? 'bg-emerald-100 text-emerald-600' : (s.order_status === 'Stitching' ? 'bg-amber-100 text-amber-600' : 'bg-slate-100 text-slate-500')}">
                             ${s.order_status || 'Pending'}
                         </span>
                     </td>
@@ -1005,7 +1013,7 @@
             const rowId = 'row_' + Date.now();
 
             const div = document.createElement('div');
-            div.className = "defect-row grid grid-cols-1 md:grid-cols-12 gap-2 items-start bg-white p-3 rounded-lg border border-stone-100 shadow-sm animate-in slide-in-from-right-2";
+            div.className = "defect-row grid grid-cols-1 md:grid-cols-12 gap-2 items-start bg-slate-50 p-4 rounded-2xl border-none shadow-inner animate-in slide-in-from-right-2";
             div.id = rowId;
 
             const gender = document.getElementById('c_gender').value;
@@ -1014,25 +1022,25 @@
 
             div.innerHTML = `
                 <div class="md:col-span-5">
-                    <label class="block text-[10px] font-bold text-stone-400 uppercase mb-1">Pattern</label>
-                    <select class="pattern-select w-full bg-stone-50 border border-stone-200 rounded px-3 py-2 text-sm outline-none focus:border-rose-500">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Pattern</label>
+                    <select class="pattern-select w-full bg-white border-none shadow-sm rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-200">
                         ${patternOptions}
                     </select>
                 </div>
                 <div class="md:col-span-6">
-                    <label class="block text-[10px] font-bold text-stone-400 uppercase mb-1">Issue</label>
-                    <select onchange="handleIssueChange(this)" class="issue-select w-full bg-stone-50 border border-stone-200 rounded px-3 py-2 text-sm outline-none focus:border-rose-500">
+                    <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Issue</label>
+                    <select onchange="handleIssueChange(this)" class="issue-select w-full bg-white border-none shadow-sm rounded-xl px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-200">
                         <option value="Size Mismatch">Size Mismatch</option>
                         <option value="Stiching Defect">Stiching Defect</option>
                         <option value="Fabric Issue">Fabric Issue</option>
                         <option value="Missing Item">Missing Item</option>
                         <option value="Other">Other (Specify)</option>
                     </select>
-                    <input type="text" placeholder="Specify issue..." class="other-issue-input hidden w-full mt-2 bg-stone-50 border border-stone-200 rounded px-3 py-2 text-sm focus:border-rose-500 outline-none">
+                    <input type="text" placeholder="Specify issue..." class="other-issue-input hidden w-full mt-2 bg-white border-none shadow-sm rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-200 outline-none">
                 </div>
                 <div class="md:col-span-1 flex items-center justify-center pt-6">
-                     <button type="button" onclick="document.getElementById('${rowId}').remove(); checkEmptyMsg();" class="text-stone-400 hover:text-rose-500 p-1">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+                     <button type="button" onclick="document.getElementById('${rowId}').remove(); checkEmptyMsg();" class="text-slate-400 hover:text-rose-500 p-2 rounded-full hover:bg-rose-50 transition-all">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                     </button>
                 </div>
             `;
@@ -1213,22 +1221,22 @@
                 // Better approach: Just reset items and ask user to re-enter details for clarity, 
                 // OR (Preferred) pre-fill the first row with available text.
                 const div = document.createElement('div');
-                div.className = 'defect-row grid grid-cols-1 md:grid-cols-2 gap-4 p-3 bg-white rounded-lg border border-stone-200 relative animate-in slide-in-from-left-2 fade-in';
+                div.className = 'defect-row grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-slate-50 rounded-2xl border-none shadow-inner relative animate-in slide-in-from-left-2 fade-in';
                 div.innerHTML = `
                     <div>
-                        <label class="block text-[10px] font-bold text-stone-400 uppercase mb-1">Pattern</label>
-                        <select class="pattern-select w-full bg-stone-50 border border-stone-200 rounded px-2 py-2 text-xs outline-none focus:border-rose-500">
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Pattern</label>
+                        <select class="pattern-select w-full bg-white border-none shadow-sm rounded-xl px-2 py-2 text-xs outline-none focus:ring-2 focus:ring-indigo-200">
                              <option value="${c.pattern_name}">${c.pattern_name} (Current)</option>
                         </select>
                     </div>
                      <div>
-                        <label class="block text-[10px] font-bold text-stone-400 uppercase mb-1">Issue</label>
-                         <select class="issue-select w-full bg-stone-50 border border-stone-200 rounded px-2 py-2 text-xs outline-none focus:border-rose-500">
+                        <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Issue</label>
+                         <select class="issue-select w-full bg-white border-none shadow-sm rounded-xl px-2 py-2 text-xs outline-none focus:ring-2 focus:ring-indigo-200">
                             <option value="Other">Other</option>
                         </select>
-                        <input type="text" class="other-issue-input w-full mt-2 bg-stone-50 border border-stone-200 rounded px-2 py-2 text-xs outline-none focus:border-rose-500" value="${c.issue_type || ''}" placeholder="Issue details">
+                        <input type="text" class="other-issue-input w-full mt-2 bg-white border-none shadow-sm rounded-xl px-2 py-2 text-xs outline-none focus:ring-2 focus:ring-indigo-200" value="${c.issue_type || ''}" placeholder="Issue details">
                     </div>
-                    <button type="button" onclick="this.closest('.defect-row').remove()" class="absolute -top-2 -right-2 w-6 h-6 bg-rose-100 hover:bg-rose-200 text-rose-600 rounded-full flex items-center justify-center shadow-sm transition-colors"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>
+                    <button type="button" onclick="this.closest('.defect-row').remove()" class="absolute -top-2 -right-2 w-8 h-8 bg-rose-50 hover:bg-rose-100 text-rose-500 rounded-full flex items-center justify-center shadow-sm transition-colors text-lg font-bold">&times;</button>
                 `;
                 container.appendChild(div);
             }
@@ -1251,56 +1259,62 @@
             if (!Array.isArray(imgs)) imgs = [c.image_url];
 
             const content = `
-                <div class="space-y-6">
+                <div class="space-y-8">
                     <!-- Status Header -->
-                    <div class="flex justify-between items-start border-b border-stone-100 pb-4">
-                        <div>
-                            <h3 class="font-ink text-2xl text-stone-800 font-bold">${c.student_name || 'Unknown Student'}</h3>
-                            <p class="text-stone-500 text-sm font-mono mt-1">
-                                ${c.student_reg_no || '-'} • ${c.class || ''} ${c.section || ''} • ${c.gender || ''}
-                            </p>
+                    <div class="flex justify-between items-start border-b border-indigo-50 pb-6">
+                        <div class="flex gap-4">
+                            <div class="w-14 h-14 rounded-2xl bg-indigo-100 flex items-center justify-center text-indigo-500 font-brand font-bold text-xl shadow-inner shrink-0">
+                                ${c.student_name ? c.student_name.charAt(0) : '?'}
+                            </div>
+                            <div>
+                                <h3 class="font-brand text-2xl text-slate-700 font-bold">${c.student_name || 'Unknown Student'}</h3>
+                                <p class="text-slate-400 text-sm font-medium mt-1">
+                                    ${c.student_reg_no || '-'} • ${c.class || ''} ${c.section || ''} • ${c.gender || ''}
+                                </p>
+                            </div>
                         </div>
                         <div class="text-right">
-                             <span class="px-3 py-1 rounded-full text-xs font-bold uppercase ${c.status === 'Resolved' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${c.status}</span>
-                             <p class="text-[10px] text-stone-400 mt-2 uppercase tracking-wider">${new Date(c.created_at).toLocaleString()}</p>
+                             <span class="px-4 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-wide ${c.status === 'Resolved' ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'}">${c.status}</span>
+                             <p class="text-[10px] text-slate-300 mt-2 uppercase tracking-wider font-bold">${new Date(c.created_at).toLocaleString()}</p>
                         </div>
                     </div>
 
                     <!-- Defect Details -->
-                    <div class="bg-stone-50 rounded-xl p-4 border border-stone-100">
-                        <p class="text-[10px] text-stone-400 font-bold uppercase tracking-widest mb-2">Reported Defects</p>
-                        <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-slate-50 rounded-2xl p-6 border-none shadow-inner">
+                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-4">Reported Defects</p>
+                        <div class="grid grid-cols-2 gap-6">
                             <div>
-                                <p class="text-xs text-stone-500 font-bold uppercase">Patterns</p>
-                                <p class="text-stone-800 font-medium">${c.pattern_name || '-'}</p>
+                                <p class="text-xs text-slate-400 font-bold uppercase mb-1">Patterns</p>
+                                <p class="text-slate-700 font-bold text-lg">${c.pattern_name || '-'}</p>
                             </div>
                             <div>
-                                <p class="text-xs text-stone-500 font-bold uppercase">Issues</p>
-                                <p class="text-stone-800 font-medium">${c.issue_type || '-'}</p>
+                                <p class="text-xs text-slate-400 font-bold uppercase mb-1">Issues</p>
+                                <p class="text-rose-500 font-bold text-lg">${c.issue_type || '-'}</p>
                             </div>
                         </div>
                     </div>
 
                     <!-- Description -->
                     <div>
-                        <p class="text-[10px] text-stone-400 font-bold uppercase tracking-widest mb-2">Description</p>
-                        <p class="text-stone-700 text-sm leading-relaxed whitespace-pre-wrap">"${c.comment}"</p>
+                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-2">Description</p>
+                        <p class="text-slate-600 text-base leading-relaxed whitespace-pre-wrap font-medium">"${c.comment}"</p>
                     </div>
 
                     <!-- Images -->
                     ${imgs.length ? `
                     <div>
-                        <p class="text-[10px] text-stone-400 font-bold uppercase tracking-widest mb-2">Attachments</p>
-                         <div class="grid grid-cols-3 gap-2">
-                            ${imgs.map(u => `<img src="${u}" class="w-full h-24 object-cover rounded-lg border border-stone-200 cursor-pointer hover:opacity-90" onclick="window.open('${u}')">`).join('')}
+                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-3">Attachments</p>
+                         <div class="grid grid-cols-3 gap-3">
+                            ${imgs.map(u => `<img src="${u}" class="w-full h-32 object-cover rounded-2xl border-none shadow-sm cursor-pointer hover:scale-[1.02] transition-transform" onclick="window.open('${u}')">`).join('')}
                         </div>
                     </div>` : ''}
 
                     <!-- Reply -->
                     ${c.reply ? `
-                    <div class="bg-indigo-50 rounded-xl p-4 border border-indigo-100">
-                        <p class="text-[10px] text-indigo-400 font-bold uppercase tracking-widest mb-1">Response from Company</p>
-                        <p class="text-indigo-900 text-sm">${c.reply}</p>
+                    <div class="bg-indigo-50/50 rounded-2xl p-6 border border-indigo-50 relative overflow-hidden">
+                        <div class="absolute top-0 right-0 w-20 h-20 bg-indigo-100 rounded-bl-full opacity-50 pointer-events-none"></div>
+                        <p class="text-[10px] text-indigo-400 font-bold uppercase tracking-widest mb-2">Response from Company</p>
+                        <p class="text-indigo-800 text-sm font-medium leading-relaxed">${c.reply}</p>
                     </div>` : ''}
 
                 </div>
@@ -1335,12 +1349,12 @@
 
                 if (!Array.isArray(data) || data.length === 0) {
                     list.innerHTML = `
-                        <div class="flex flex-col items-center justify-center h-full text-center p-8 opacity-60">
-                            <div class="w-32 h-32 bg-stone-800 rounded-full flex items-center justify-center mb-6 border border-stone-700">
-                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" class="text-stone-600" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                        <div class="flex flex-col items-center justify-center h-full text-center p-8 opacity-60 col-span-full">
+                            <div class="w-32 h-32 bg-white rounded-full flex items-center justify-center mb-6 shadow-[inset_4px_4px_8px_rgba(0,0,0,0.05),_inset_-4px_-4px_8px_rgba(255,255,255,0.8)]">
+                                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" class="text-indigo-200" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
                             </div>
-                            <h4 class="font-ink text-xl font-bold text-stone-300 mb-2">No Tickets Yet</h4>
-                            <p class="text-sm text-stone-500 max-w-sm">Your feedback queue is empty.</p>
+                            <h4 class="font-brand text-2xl font-bold text-slate-400 mb-2">No Tickets Yet</h4>
+                            <p class="text-sm text-slate-400 max-w-sm">Your feedback queue is empty. Relax! 🌸</p>
                         </div>
                     `;
                     return;
@@ -1352,76 +1366,64 @@
                     if (!Array.isArray(imgs)) imgs = [c.image_url];
 
                     const isResolved = c.status === 'Resolved';
+                    // Clay Colors
                     const statusClass = isResolved
-                        ? 'bg-emerald-50 text-emerald-800 border-emerald-900/10'
-                        : 'bg-amber-50 text-amber-800 border-amber-900/10';
-                    const accentColor = isResolved ? 'text-emerald-700' : 'text-rose-700';
+                        ? 'bg-emerald-100 text-emerald-600'
+                        : 'bg-amber-100 text-amber-600';
 
                     return `
-                    <div class="shoji-card relative rounded-sm p-6 transition-all duration-300 group animate-in slide-in-from-bottom-4 fill-mode-backwards flex flex-col" style="animation-delay: ${index * 100}ms">
+                    <div class="bg-white rounded-[2rem] p-6 shadow-[8px_8px_16px_rgba(170,170,204,0.15),_-8px_-8px_16px_#FFFFFF] hover:transform hover:-translate-y-1 hover:shadow-[12px_12px_24px_rgba(170,170,204,0.2),_-12px_-12px_24px_#FFFFFF] transition-all duration-300 group flex flex-col relative overflow-hidden" style="animation-delay: ${index * 100}ms">
                         
-                        <!-- Washi Texture Overlay on Card -->
-                        <div class="absolute inset-0 bg-washi opacity-40 pointer-events-none rounded-sm"></div>
-
-                        <!-- Actions (Absolute Top Right) -->
-                        <div class="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-200 translate-x-2 group-hover:translate-x-0 z-20">
-                            <button onclick="editComplaint(${index}); event.stopPropagation();" class="w-8 h-8 rounded-full bg-white shadow-sm border border-stone-200 flex items-center justify-center text-stone-600 hover:text-indigo-600 hover:border-indigo-200 transition-colors" title="Edit">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                        <!-- Actions (Top Right) -->
+                        <div class="absolute top-6 right-6 flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0 z-20">
+                            <button onclick="editComplaint(${index}); event.stopPropagation();" class="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-500 hover:bg-indigo-500 hover:text-white transition-all shadow-sm" title="Edit">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                             </button>
-                            <button onclick="deleteComplaint(${c.id}); event.stopPropagation();" class="w-8 h-8 rounded-full bg-white shadow-sm border border-stone-200 flex items-center justify-center text-stone-600 hover:text-rose-600 hover:border-rose-200 transition-colors" title="Delete">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                            <button onclick="deleteComplaint(${c.id}); event.stopPropagation();" class="w-10 h-10 rounded-full bg-rose-50 flex items-center justify-center text-rose-500 hover:bg-rose-500 hover:text-white transition-all shadow-sm" title="Delete">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                             </button>
                         </div>
 
-                        <!-- Header: Vertical Layout for Japanese feel -->
-                        <div class="relative z-10 flex justify-between items-start mb-6">
-                            <div class="flex items-start gap-4">
-                                <div class="w-12 h-12 border-2 border-stone-800 text-stone-800 flex items-center justify-center font-ink font-bold text-xl bg-white shadow-[2px_2px_0px_rgba(0,0,0,1)]">
-                                    ${c.student_name ? c.student_name.charAt(0) : '?'}
-                                </div>
-                                <div>
-                                    <h4 class="font-ink text-xl font-bold text-stone-900 leading-none group-hover:text-rose-700 transition-colors cursor-pointer" onclick="viewComplaint(${index})">${c.student_name || 'Unknown'}</h4>
-                                    <div class="flex items-center gap-2 mt-2">
-                                        <span class="text-[10px] font-bold uppercase tracking-widest text-stone-400 font-mono">ID #${c.id}</span>
-                                        <span class="h-px w-4 bg-stone-300"></span>
-                                        <span class="text-xs font-serif italic text-stone-500">${c.class || '-'} ${c.section || ''} (${c.gender || '?'})</span>
-                                    </div>
+                        <!-- Header -->
+                        <div class="flex items-start gap-5 mb-6">
+                            <div class="w-16 h-16 rounded-2xl bg-indigo-100 flex items-center justify-center text-indigo-500 font-brand font-bold text-2xl shadow-inner shrink-0">
+                                ${c.student_name ? c.student_name.charAt(0) : '?'}
+                            </div>
+                            <div>
+                                <h4 class="font-brand text-xl font-bold text-slate-700 group-hover:text-indigo-600 transition-colors cursor-pointer" onclick="viewComplaint(${index})">${c.student_name || 'Unknown'}</h4>
+                                <div class="flex items-center gap-2 mt-1">
+                                    <span class="text-xs font-bold bg-slate-100 text-slate-500 px-2 py-1 rounded-lg">ID #${c.id}</span>
+                                    <span class="text-xs font-medium text-slate-400">${c.class || '-'} ${c.section || ''} • ${c.gender || '?'}</span>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Details Grid -->
-                        <div class="relative z-10 space-y-4 mb-6 border-t border-stone-100 pt-4">
+                        <!-- Defect Info -->
+                        <div class="space-y-4 mb-6 relative z-10">
                              ${c.pattern_name ? `
-                                <div class="flex flex-col">
-                                    <span class="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-1">Defective Item</span>
-                                    <span class="text-sm font-ink text-stone-800 border-b border-stone-200 border-dotted pb-1 inline-block self-start">${c.pattern_name}</span>
+                                <div>
+                                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Items</p>
+                                    <p class="text-sm font-bold text-slate-600 bg-slate-50 inline-block px-3 py-1.5 rounded-xl border border-slate-100">${c.pattern_name}</p>
                                 </div>
-                             ` : ''}
-                             ${c.issue_type ? `
-                                <div class="flex flex-col">
-                                     <span class="text-[10px] font-bold text-stone-400 uppercase tracking-widest mb-1">Issue Reported</span>
-                                     <span class="text-sm font-bold ${accentColor}">${c.issue_type}</span>
-                                </div>
-                             ` : ''}
+                            ` : ''}
+                            
+                            <div>
+                                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">Reported Issue</p>
+                                <p class="text-sm font-semibold text-rose-500">${c.issue_type || 'Unspecified Issue'}</p>
+                            </div>
                         </div>
 
-                        <!-- Footer / Status -->
-                        <div class="relative z-10 mt-auto flex items-center justify-between pt-2">
-                             <div class="px-3 py-1 text-[10px] font-bold uppercase border border-stone-200 tracking-wider bg-white shadow-sm flex items-center gap-1">
-                                <div class="w-1.5 h-1.5 rounded-full ${isResolved ? 'bg-emerald-500' : 'bg-amber-500'}"></div>
-                                ${c.status}
-                             </div>
-                             <span class="text-[10px] font-bold uppercase tracking-widest text-stone-400 font-mono">${new Date(c.created_at).toLocaleDateString()}</span>
-                        </div>
-
-                        <!-- Admin Reply Teaser (Inked Stamp Style) -->
-                        ${c.reply ? `
-                            <div class="absolute -bottom-2 -right-2 rotate-[-5deg] opacity-90 z-20 pointer-events-none">
-                                <div class="border-2 border-indigo-800 text-indigo-900 px-3 py-1 font-ink font-bold text-xs uppercase tracking-widest bg-white/90 shadow-md">
+                        <!-- Footer -->
+                        <div class="mt-auto pt-4 border-t border-slate-100 flex justify-between items-end">
+                            <span class="px-4 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-wide ${statusClass}">
+                                ${isResolved ? 'Resolved' : 'Open Ticket'}
+                            </span>
+                            
+                            <!-- Stamp if Responded -->
+                            ${c.reply ? `
+                                <div class="transform rotate-[-5deg] border-2 border-indigo-200 text-indigo-400 px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-widest opacity-80">
                                     Responded
                                 </div>
-                            </div>
                             <div class="mt-4 relative z-10 group/reply cursor-pointer" onclick="viewComplaint(${index})">
                                 <div class="pl-3 border-l-2 border-indigo-200">
                                      <p class="text-xs text-stone-500 italic line-clamp-2 hover:text-indigo-700 transition-colors">" ${c.reply} "</p>
