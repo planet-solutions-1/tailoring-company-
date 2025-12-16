@@ -115,6 +115,19 @@
 
         // === DATA LOGIC ===
         async function loadData() {
+            // Check for Individual Student Context first
+            const params = new URLSearchParams(window.location.search);
+            const studentStr = params.get('student');
+
+            if (studentStr) {
+                try {
+                    const studentObj = JSON.parse(decodeURIComponent(studentStr));
+                    renderStudentCard(studentObj);
+                    return; // Stop table loading
+                } catch (e) { console.error("Student parse error", e); }
+            }
+
+            // Normal List Context
             // Update UI Context
             document.getElementById('filterContext').innerText = `Class: ${filters.c || 'All'} • Section: ${filters.sec || 'All'}`;
 
@@ -147,6 +160,39 @@
                     </td>
                 </tr>
             `).join('');
+        }
+
+        function renderStudentCard(s) {
+            const container = document.getElementById('studentTableBody').parentElement;
+            // Clear table and show card
+            container.innerHTML = `
+                <div class="p-8 flex flex-col items-center text-center">
+                    <div class="w-24 h-24 bg-indigo-100 rounded-full flex items-center justify-center mb-4 text-3xl">🎓</div>
+                    <h2 class="text-2xl font-black text-slate-800 mb-1">${s.n || 'Unknown'}</h2>
+                    <p class="text-lg font-bold text-slate-500 mb-4">${s.c || '-'} ${s.s ? '(' + s.s + ')' : ''}</p>
+                    
+                    <div class="grid grid-cols-2 gap-4 w-full max-w-xs mb-6">
+                        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                            <p class="text-xs uppercase font-bold text-slate-400">ADM NO</p>
+                            <p class="font-mono font-bold text-slate-700">${s.id || '--'}</p>
+                        </div>
+                        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                            <p class="text-xs uppercase font-bold text-slate-400">STATUS</p>
+                            <p class="font-bold text-indigo-600">${s.st || 'Unknown'}</p>
+                        </div>
+                    </div>
+
+                    <div class="w-full max-w-xs space-y-3">
+                         <div class="p-3 bg-amber-50 text-amber-700 text-xs rounded-lg">
+                            Measurements not stored in QR. <br>Login to view full details.
+                         </div>
+                         <button onclick="window.location.href='index.html'" class="w-full py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800">
+                            Admin Login (Update)
+                         </button>
+                    </div>
+                </div>
+            `;
+            document.getElementById('filterContext').innerText = "Individual Student View";
         }
 
         function downloadPdf() {

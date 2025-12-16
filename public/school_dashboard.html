@@ -3656,31 +3656,50 @@
                 doc.text(splitProps, 100, 67);
             }
 
-            // QR Image
+            // QR Image Extraction
             const container = document.getElementById('batchQrContainer');
             let imgData = null;
             if (container) {
-                const canvas = container.querySelector('canvas');
-                const img = container.querySelector('img');
-                if (canvas) imgData = canvas.toDataURL("image/png");
-                else if (img) imgData = img.src;
+                // Try canvas first (QRCode.js default)
+                const canvas = container.querySelectorAll('canvas')[0];
+                const img = container.querySelectorAll('img')[0];
+
+                if (canvas) {
+                    try {
+                        imgData = canvas.toDataURL("image/png");
+                    } catch (e) { console.warn("Canvas Taint", e); }
+                }
+                else if (img && img.src.startsWith('data:')) {
+                    imgData = img.src;
+                }
+                else if (img && img.src) {
+                    // If it's an external URL (unlikely with qrcode.js but possible fallback)
+                    // We can't draw raw URL to PDF easily without proxy. 
+                    // But we are using client-side lib now.
+                    imgData = img.src;
+                }
             }
 
             if (imgData) {
-                doc.addImage(imgData, 'PNG', 75, 100, 60, 60);
-                doc.setFontSize(10);
-                doc.setTextColor(150);
-                doc.text("Scan to open filtered list.", 105, 170, { align: "center" });
+                try {
+                    doc.addImage(imgData, 'PNG', 75, 100, 60, 60);
+                    doc.setFontSize(10);
+                    doc.setTextColor(150);
+                    doc.text("Scan to open filtered list.", 105, 170, { align: "center" });
+
+                    // Footer 
+                    doc.setFontSize(8);
+                    doc.text("Generated via School Dashboard", 105, 280, { align: "center" });
+
+                    // Save
+                    doc.save(`Filter_QR_${cls}_${sec}_${Date.now()}.pdf`);
+                } catch (pdfErr) {
+                    console.error("PDF generation error", pdfErr);
+                    alert("Error adding QR to PDF. Please ensure QR is visible.");
+                }
             } else {
-                doc.text("[QR Not Found]", 105, 120, { align: "center" });
+                alert("QR Code image not found! Please wait for it to generate and try again.");
             }
-
-            // Footer 
-            doc.setFontSize(8);
-            doc.text("Generated via School Dashboard", 105, 280, { align: "center" });
-
-            // Save
-            doc.save(`Filter_QR_Report_${cls}_${sec}_${Date.now()}.pdf`);
         };
     </script>
 
