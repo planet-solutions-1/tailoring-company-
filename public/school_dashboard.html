@@ -888,6 +888,7 @@
                             <div>
                                 <p class="font-bold text-slate-700">Student Database</p>
                                 <p class="text-xs text-slate-400">Download active & recently deleted records</p>
+                                <p id="backupTimer" class="text-xs mt-1 font-medium"></p>
                             </div>
                             <button onclick="exportData('backup')"
                                 class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold rounded-xl shadow-lg shadow-indigo-200 transition-all flex items-center gap-2">
@@ -1076,6 +1077,7 @@
 
         // === SETTINGS LOGIC ===
         function renderSettings() {
+            updateBackupTimer();
             // Populate Profile Data from Session
             document.getElementById('settingsSchoolName').innerText = sessionStorage.getItem('schoolName') || 'School Info';
             document.getElementById('settingsSchoolId').innerText = schoolId || '--';
@@ -1428,6 +1430,38 @@
         }
 
         // === DELETION & BACKUP LOGIC ===
+
+        function updateBackupTimer() {
+            const el = document.getElementById('backupTimer');
+            if (!el) return;
+
+            const deletedHistory = JSON.parse(localStorage.getItem('deleted_history') || '[]');
+
+            if (deletedHistory.length === 0) {
+                el.innerHTML = `<span class="text-emerald-500 flex items-center gap-1">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+                    Bin Empty (Auto-Delete Active)
+                </span>`;
+                return;
+            }
+
+            // Find oldest item (closest to expiry)
+            const oldest = deletedHistory.reduce((a, b) => new Date(a.deleted_at) < new Date(b.deleted_at) ? a : b);
+            const deletedAt = new Date(oldest.deleted_at).getTime();
+            const retentionPeriod = 5 * 24 * 60 * 60 * 1000; // 5 Days
+            const expiresAt = deletedAt + retentionPeriod;
+            const now = Date.now();
+            const diff = expiresAt - now;
+
+            if (diff <= 0) {
+                el.innerText = "Cleanup pending...";
+            } else {
+                const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                el.innerHTML = `<span class="text-amber-600 font-bold">Next Cleanup: ${days}d ${hours}h</span>`;
+            }
+        }
+
         function pruneDeletedHistory() {
             try {
                 const history = JSON.parse(localStorage.getItem('deleted_history') || '[]');
