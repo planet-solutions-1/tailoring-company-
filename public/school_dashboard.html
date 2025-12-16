@@ -1654,7 +1654,7 @@
                 <html>
                   <head>
                     <title>Student ID Card</title>
-                    <script src="https://cdn.tailwindcss.com"></script>
+                    <script src="https://cdn.tailwindcss.com"><\/script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&display=swap');
 
@@ -1673,347 +1673,347 @@
 
 </html>
 `);
-WinPrint.document.close();
-WinPrint.focus();
-setTimeout(() => {
-WinPrint.print();
-WinPrint.close();
-}, 1000);
-}
+            WinPrint.document.close();
+            WinPrint.focus();
+            setTimeout(() => {
+                WinPrint.print();
+                WinPrint.close();
+            }, 1000);
+        }
 
-async function executeDelete(items) {
-// 1. Local Backup (Browser Storage) for 5-Day Retention
-const history = JSON.parse(localStorage.getItem('deleted_history') || '[]');
-const timestamp = new Date().toISOString();
+        async function executeDelete(items) {
+            // 1. Local Backup (Browser Storage) for 5-Day Retention
+            const history = JSON.parse(localStorage.getItem('deleted_history') || '[]');
+            const timestamp = new Date().toISOString();
 
-items.forEach(item => {
-history.push({ ...item, status: 'Trash', deleted_at: timestamp });
-});
-localStorage.setItem('deleted_history', JSON.stringify(history));
+            items.forEach(item => {
+                history.push({ ...item, status: 'Trash', deleted_at: timestamp });
+            });
+            localStorage.setItem('deleted_history', JSON.stringify(history));
 
-// 2. Optimistic UI Removal
-const idsToRemove = new Set(items.map(i => i.admission_no));
-allStudents = allStudents.filter(s => !idsToRemove.has(s.admission_no));
-renderStudents();
+            // 2. Optimistic UI Removal
+            const idsToRemove = new Set(items.map(i => i.admission_no));
+            allStudents = allStudents.filter(s => !idsToRemove.has(s.admission_no));
+            renderStudents();
 
-// 3. Perform HARD DELETE on Server
-for (const item of items) {
-try {
-// Try to delete using ID, fallback to Admission No
-const id = item.id || item.admission_no;
-console.log('--- DEBUG DELETE ---');
-console.log('Item Object:', item);
-console.log(`Target ID: ${id}`);
-console.log(`URL: /api/data/students/${id}`);
-const res = await fetch(`/api/data/students/${id}`, {
-method: 'DELETE',
-headers: { 'Authorization': `Bearer ${token}` }
-});
+            // 3. Perform HARD DELETE on Server
+            for (const item of items) {
+                try {
+                    // Try to delete using ID, fallback to Admission No
+                    const id = item.id || item.admission_no;
+                    console.log('--- DEBUG DELETE ---');
+                    console.log('Item Object:', item);
+                    console.log(`Target ID: ${id}`);
+                    console.log(`URL: /api/data/students/${id}`);
+                    const res = await fetch(`/api/data/students/${id}`, {
+                        method: 'DELETE',
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
 
-if (!res.ok) {
-console.warn(`DELETE failed for ${id}. Status: ${res.status}`);
-// If 404, it's already gone, which is fine for us.
-if (res.status !== 404) throw new Error("Server Delete Error");
-}
-} catch (e) {
-console.error("Delete Failed", e);
-// alert("Warning: Could not delete from server. It may reappear on refresh.");
-// Suppressed alert to avoid spamming usage flow
-}
-}
+                    if (!res.ok) {
+                        console.warn(`DELETE failed for ${id}. Status: ${res.status}`);
+                        // If 404, it's already gone, which is fine for us.
+                        if (res.status !== 404) throw new Error("Server Delete Error");
+                    }
+                } catch (e) {
+                    console.error("Delete Failed", e);
+                    // alert("Warning: Could not delete from server. It may reappear on refresh.");
+                    // Suppressed alert to avoid spamming usage flow
+                }
+            }
 
-// 4. Update UI
-showUndoToast(`${items.length} Student${items.length > 1 ? 's' : ''} deleted (Saved in Backup)`);
-updateBulkActionUI();
-}
+            // 4. Update UI
+            showUndoToast(`${items.length} Student${items.length > 1 ? 's' : ''} deleted (Saved in Backup)`);
+            updateBulkActionUI();
+        }
 
-function showUndoToast(msg) {
-const toast = document.getElementById('undoToast');
-document.getElementById('undoMsg').innerText = msg;
+        function showUndoToast(msg) {
+            const toast = document.getElementById('undoToast');
+            document.getElementById('undoMsg').innerText = msg;
 
-if (undoTimer) clearTimeout(undoTimer);
+            if (undoTimer) clearTimeout(undoTimer);
 
-toast.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
+            toast.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
 
-// Auto dismiss after 20s
-undoTimer = setTimeout(() => {
-dismissUndo();
-deletedItemsStash = [];
-}, 20000);
-}
+            // Auto dismiss after 20s
+            undoTimer = setTimeout(() => {
+                dismissUndo();
+                deletedItemsStash = [];
+            }, 20000);
+        }
 
-function dismissUndo() {
-const toast = document.getElementById('undoToast');
-toast.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
-}
+        function dismissUndo() {
+            const toast = document.getElementById('undoToast');
+            toast.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
+        }
 
-function undoDelete() {
-if (deletedItemsStash.length === 0) return;
+        function undoDelete() {
+            if (deletedItemsStash.length === 0) return;
 
-// Restore
-allStudents.push(...deletedItemsStash);
+            // Restore
+            allStudents.push(...deletedItemsStash);
 
-deletedItemsStash = [];
-renderStudents();
-backupData();
-dismissUndo();
-}
+            deletedItemsStash = [];
+            renderStudents();
+            backupData();
+            dismissUndo();
+        }
 
-function openEditStudentModal(key) {
-const s = allStudents.find(st => String(st.admission_no || st.temp_id) === String(key));
-if (!s) return;
+        function openEditStudentModal(key) {
+            const s = allStudents.find(st => String(st.admission_no || st.temp_id) === String(key));
+            if (!s) return;
 
-document.getElementById('edit_original_adm').value = s.admission_no;
-document.getElementById('edit_name').value = s.name;
-document.getElementById('edit_adm').value = s.admission_no;
-document.getElementById('edit_roll').value = s.roll_no;
-document.getElementById('edit_gender').value = s.gender;
-document.getElementById('edit_class').value = s.class;
-document.getElementById('edit_sec').value = s.section;
-document.getElementById('edit_house').value = s.house || ''; // Populate House
-// document.getElementById('edit_status').value = s.order_status || 'Pending'; // Removed
+            document.getElementById('edit_original_adm').value = s.admission_no;
+            document.getElementById('edit_name').value = s.name;
+            document.getElementById('edit_adm').value = s.admission_no;
+            document.getElementById('edit_roll').value = s.roll_no;
+            document.getElementById('edit_gender').value = s.gender;
+            document.getElementById('edit_class').value = s.class;
+            document.getElementById('edit_sec').value = s.section;
+            document.getElementById('edit_house').value = s.house || ''; // Populate House
+            // document.getElementById('edit_status').value = s.order_status || 'Pending'; // Removed
 
-document.getElementById('editStudentModal').showModal();
-}
+            document.getElementById('editStudentModal').showModal();
+        }
 
-function saveStudentEdit() {
-const originalAdm = document.getElementById('edit_original_adm').value;
-const idx = allStudents.findIndex(s => String(s.admission_no) === String(originalAdm));
+        function saveStudentEdit() {
+            const originalAdm = document.getElementById('edit_original_adm').value;
+            const idx = allStudents.findIndex(s => String(s.admission_no) === String(originalAdm));
 
-if (idx === -1) return;
+            if (idx === -1) return;
 
-allStudents[idx] = {
-...allStudents[idx],
-name: document.getElementById('edit_name').value,
-admission_no: document.getElementById('edit_adm').value,
-roll_no: document.getElementById('edit_roll').value,
-gender: document.getElementById('edit_gender').value,
-class: document.getElementById('edit_class').value,
-section: document.getElementById('edit_sec').value,
-house: document.getElementById('edit_house').value // Save House
-// order_status: Preserved automatically as valid property from spread
-};
+            allStudents[idx] = {
+                ...allStudents[idx],
+                name: document.getElementById('edit_name').value,
+                admission_no: document.getElementById('edit_adm').value,
+                roll_no: document.getElementById('edit_roll').value,
+                gender: document.getElementById('edit_gender').value,
+                class: document.getElementById('edit_class').value,
+                section: document.getElementById('edit_sec').value,
+                house: document.getElementById('edit_house').value // Save House
+                // order_status: Preserved automatically as valid property from spread
+            };
 
-renderStudents();
-backupData();
-document.getElementById('editStudentModal').close();
-}
+            renderStudents();
+            backupData();
+            document.getElementById('editStudentModal').close();
+        }
 
-// --- Backup System ---
-function backupData() {
-const backups = JSON.parse(localStorage.getItem('student_backups') || '[]');
-const today = new Date().toISOString().split('T')[0];
+        // --- Backup System ---
+        function backupData() {
+            const backups = JSON.parse(localStorage.getItem('student_backups') || '[]');
+            const today = new Date().toISOString().split('T')[0];
 
-// Check if backup for today exists
-const existingIdx = backups.findIndex(b => b.date === today);
-const snapshot = { date: today, data: allStudents, ts: Date.now() };
+            // Check if backup for today exists
+            const existingIdx = backups.findIndex(b => b.date === today);
+            const snapshot = { date: today, data: allStudents, ts: Date.now() };
 
-if (existingIdx >= 0) {
-backups[existingIdx] = snapshot;
-} else {
-backups.unshift(snapshot);
-if (backups.length > 4) backups.pop(); // Keep 4 days
-}
+            if (existingIdx >= 0) {
+                backups[existingIdx] = snapshot;
+            } else {
+                backups.unshift(snapshot);
+                if (backups.length > 4) backups.pop(); // Keep 4 days
+            }
 
-localStorage.setItem('student_backups', JSON.stringify(backups));
-}
+            localStorage.setItem('student_backups', JSON.stringify(backups));
+        }
 
-async function handleBulkImport(e) {
-const file = e.target.files[0];
-if (!file) return;
+        async function handleBulkImport(e) {
+            const file = e.target.files[0];
+            if (!file) return;
 
-if (!confirm("Start import? This will add new students.")) {
-e.target.value = '';
-return;
-}
+            if (!confirm("Start import? This will add new students.")) {
+                e.target.value = '';
+                return;
+            }
 
-reader.onload = async (evt) => {
-try {
-const data = new Uint8Array(evt.target.result);
-const workbook = XLSX.read(data, { type: 'array' });
-const sheet = workbook.Sheets[workbook.SheetNames[0]];
-const json = XLSX.utils.sheet_to_json(sheet);
+            reader.onload = async (evt) => {
+                try {
+                    const data = new Uint8Array(evt.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const json = XLSX.utils.sheet_to_json(sheet);
 
-let success = 0;
-for (const row of json) {
-// Map row keys to API expected keys
-const payload = {
-school_id: schoolId,
-admission_no: row['Adm No'] || row['ADMISSION NO'],
-roll_no: row['Roll No'] || row['ROLL NO'],
-name: row['Name'] || row['NAME'],
-class: row['Class'] || row['CLASS'],
-section: row['Section'] || row['SECTION'],
-house: row['House'] || row['HOUSE'],
-gender: row['Gender'] || row['GENDER']
-};
+                    let success = 0;
+                    for (const row of json) {
+                        // Map row keys to API expected keys
+                        const payload = {
+                            school_id: schoolId,
+                            admission_no: row['Adm No'] || row['ADMISSION NO'],
+                            roll_no: row['Roll No'] || row['ROLL NO'],
+                            name: row['Name'] || row['NAME'],
+                            class: row['Class'] || row['CLASS'],
+                            section: row['Section'] || row['SECTION'],
+                            house: row['House'] || row['HOUSE'],
+                            gender: row['Gender'] || row['GENDER']
+                        };
 
-if (payload.admission_no && payload.name) {
-await fetch('/api/data/student', {
-method: 'POST',
-headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-body: JSON.stringify(payload)
-});
-success++;
-}
-}
+                        if (payload.admission_no && payload.name) {
+                            await fetch('/api/data/student', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                                body: JSON.stringify(payload)
+                            });
+                            success++;
+                        }
+                    }
 
-alert(`Imported ${success} students successfully!`);
-await fetchData();
-if (currentView === 'dashboard') renderDashboardStats();
-} catch (err) {
-console.error(err);
-alert("Import failed: " + err.message);
-}
-};
-reader.readAsArrayBuffer(file);
-}
+                    alert(`Imported ${success} students successfully!`);
+                    await fetchData();
+                    if (currentView === 'dashboard') renderDashboardStats();
+                } catch (err) {
+                    console.error(err);
+                    alert("Import failed: " + err.message);
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
 
-async function exportData(type) {
-// Use currentFilteredList if available, else allStudents
-const dataToExport = (typeof currentFilteredList !== 'undefined' && currentFilteredList.length > 0) ?
-currentFilteredList : allStudents;
+        async function exportData(type) {
+            // Use currentFilteredList if available, else allStudents
+            const dataToExport = (typeof currentFilteredList !== 'undefined' && currentFilteredList.length > 0) ?
+                currentFilteredList : allStudents;
 
-if (dataToExport.length === 0) return alert("No data to export!");
+            if (dataToExport.length === 0) return alert("No data to export!");
 
-// ... (rest of logic using dataToExport instead of allStudents)
-// Need to change the implementation slightly to pass dataToExport
+            // ... (rest of logic using dataToExport instead of allStudents)
+            // Need to change the implementation slightly to pass dataToExport
 
-if (type === 'excel') {
-const ws = XLSX.utils.json_to_sheet(dataToExport.map(s => ({
-"Admission No": s.admission_no,
-"Roll No": s.roll_no,
-"Name": s.name,
-"Class": s.class,
-"Section": s.section,
-"Gender": s.gender,
-"House": s.house,
-"Status": s.order_status
-})));
-const wb = XLSX.utils.book_new();
-XLSX.utils.book_append_sheet(wb, ws, "Students");
-XLSX.writeFile(wb, `Students_Export_${new Date().toISOString().slice(0, 10)}.xlsx`);
-} else if (type === 'pdf') {
-const { jsPDF } = window.jspdf;
-const doc = new jsPDF();
+            if (type === 'excel') {
+                const ws = XLSX.utils.json_to_sheet(dataToExport.map(s => ({
+                    "Admission No": s.admission_no,
+                    "Roll No": s.roll_no,
+                    "Name": s.name,
+                    "Class": s.class,
+                    "Section": s.section,
+                    "Gender": s.gender,
+                    "House": s.house,
+                    "Status": s.order_status
+                })));
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Students");
+                XLSX.writeFile(wb, `Students_Export_${new Date().toISOString().slice(0, 10)}.xlsx`);
+            } else if (type === 'pdf') {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
 
-doc.text("Student List Report", 14, 15);
-doc.setFontSize(10);
-doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 22);
+                doc.text("Student List Report", 14, 15);
+                doc.setFontSize(10);
+                doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 22);
 
-const tableColumn = ["Roll No", "Adm No", "Name", "Class", "Section", "Gender", "House", "Status"];
-const tableRows = [];
+                const tableColumn = ["Roll No", "Adm No", "Name", "Class", "Section", "Gender", "House", "Status"];
+                const tableRows = [];
 
-dataToExport.forEach(s => {
-const studentData = [
-s.roll_no || '-',
-s.admission_no || '-',
-s.name || '-',
-s.class || '-',
-s.section || '-',
-s.gender || '-',
-s.house || '-',
-s.order_status || 'Pending'
-];
-tableRows.push(studentData);
-});
+                dataToExport.forEach(s => {
+                    const studentData = [
+                        s.roll_no || '-',
+                        s.admission_no || '-',
+                        s.name || '-',
+                        s.class || '-',
+                        s.section || '-',
+                        s.gender || '-',
+                        s.house || '-',
+                        s.order_status || 'Pending'
+                    ];
+                    tableRows.push(studentData);
+                });
 
-doc.autoTable({
-head: [tableColumn],
-body: tableRows,
-startY: 25,
-styles: { fontSize: 8 },
-headStyles: { fillColor: [79, 70, 229] } // Indigo-600
-});
+                doc.autoTable({
+                    head: [tableColumn],
+                    body: tableRows,
+                    startY: 25,
+                    styles: { fontSize: 8 },
+                    headStyles: { fillColor: [79, 70, 229] } // Indigo-600
+                });
 
-doc.save(`Students_Report_${new Date().toISOString().slice(0, 10)}.pdf`);
-}
-}
+                doc.save(`Students_Report_${new Date().toISOString().slice(0, 10)}.pdf`);
+            }
+        }
 
-// === SUPPORT LOGIC ===
-let editingComplaintId = null; // Track if we are editing
+        // === SUPPORT LOGIC ===
+        let editingComplaintId = null; // Track if we are editing
 
-function handleFileSelect(e) {
-const files = Array.from(e.target.files);
-// Append to existing selectedFiles instead of replacing
-selectedFiles = [...selectedFiles, ...files];
-renderImagePreviews();
-}
+        function handleFileSelect(e) {
+            const files = Array.from(e.target.files);
+            // Append to existing selectedFiles instead of replacing
+            selectedFiles = [...selectedFiles, ...files];
+            renderImagePreviews();
+        }
 
-function removeFile(index) {
-selectedFiles.splice(index, 1);
-renderImagePreviews();
-}
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            renderImagePreviews();
+        }
 
-function renderImagePreviews() {
-const container = document.getElementById('imagePreviewContainer');
-container.innerHTML = '';
+        function renderImagePreviews() {
+            const container = document.getElementById('imagePreviewContainer');
+            container.innerHTML = '';
 
-selectedFiles.forEach((f, i) => {
-const div = document.createElement('div');
-div.className = "relative inline-block shrink-0 h-16 w-16 group";
+            selectedFiles.forEach((f, i) => {
+                const div = document.createElement('div');
+                div.className = "relative inline-block shrink-0 h-16 w-16 group";
 
-const img = document.createElement('img');
-img.src = URL.createObjectURL(f);
-img.className = "h-full w-full rounded border border-stone-200 object-cover";
+                const img = document.createElement('img');
+                img.src = URL.createObjectURL(f);
+                img.className = "h-full w-full rounded border border-stone-200 object-cover";
 
-const removeBtn = document.createElement('button');
-removeBtn.innerHTML = "×";
-removeBtn.className = "absolute -top-2 -right-2 bg-rose-500 text-white rounded-full w-5 h-5 flex items-center
-justify-center text-xs font-bold shadow-sm opacity-0 group-hover:opacity-100 transition-opacity";
-removeBtn.onclick = (e) => { e.preventDefault(); removeFile(i); };
+                const removeBtn = document.createElement('button');
+                removeBtn.innerHTML = "×";
+                removeBtn.className = "absolute -top-2 -right-2 bg-rose-500 text-white rounded-full w-5 h-5 flex items-center
+                justify - center text - xs font - bold shadow - sm opacity - 0 group - hover: opacity - 100 transition - opacity";
+                removeBtn.onclick = (e) => { e.preventDefault(); removeFile(i); };
 
-div.appendChild(img);
-div.appendChild(removeBtn);
-container.appendChild(div);
-});
-}
+                div.appendChild(img);
+                div.appendChild(removeBtn);
+                container.appendChild(div);
+            });
+        }
 
-// === MODAL LOGIC ===
-const boysPatterns = [
-"BOYS - FORMAL SHIRT", "BOYS - TRACK T-SHIRT", "BOYS - UNIFORM T-SHIRT",
-"BOYS - JERKIN", "BOYS - PULLOVER", "BOYS - FORMAL PANT",
-"BOYS - TRACK PANT", "BOYS - FORMAL SHORTS", "BOYS - TRACK SHORTS",
-"BOYS - PANT SPECIAL CASE"
-];
-const girlsPatterns = [
-"GIRLS - FORMAL SHIRT", "GIRLS - TRACK T-SHIRT", "GIRLS - UNIFORM T-SHIRT",
-"GIRLS - JERKIN", "GIRLS - FULL SLEEVE SHIRT", "GIRLS - PULLOVER",
-"GIRLS - KURTHA SHIRT", "GIRLS - SPECIAL FROCKS", "GIRLS - FORMAL PANT",
-"GIRLS - TRACK PANT", "GIRLS - TRACK SHORTS", "GIRLS - PINOFORE",
-"GIRLS - SKIRT", "GIRLS - PANT SPECIAL CASE"
-];
+        // === MODAL LOGIC ===
+        const boysPatterns = [
+            "BOYS - FORMAL SHIRT", "BOYS - TRACK T-SHIRT", "BOYS - UNIFORM T-SHIRT",
+            "BOYS - JERKIN", "BOYS - PULLOVER", "BOYS - FORMAL PANT",
+            "BOYS - TRACK PANT", "BOYS - FORMAL SHORTS", "BOYS - TRACK SHORTS",
+            "BOYS - PANT SPECIAL CASE"
+        ];
+        const girlsPatterns = [
+            "GIRLS - FORMAL SHIRT", "GIRLS - TRACK T-SHIRT", "GIRLS - UNIFORM T-SHIRT",
+            "GIRLS - JERKIN", "GIRLS - FULL SLEEVE SHIRT", "GIRLS - PULLOVER",
+            "GIRLS - KURTHA SHIRT", "GIRLS - SPECIAL FROCKS", "GIRLS - FORMAL PANT",
+            "GIRLS - TRACK PANT", "GIRLS - TRACK SHORTS", "GIRLS - PINOFORE",
+            "GIRLS - SKIRT", "GIRLS - PANT SPECIAL CASE"
+        ];
 
-// Ensure gender change updates existing rows or warns?
-// For simplicity, we just re-render or let user manage.
-// Actually, let's refresh ALL pattern dropdowns when gender changes
-function updatePatternOptions() {
-const gender = document.getElementById('c_gender').value;
-const patterns = gender === 'Male' ? boysPatterns : girlsPatterns;
+        // Ensure gender change updates existing rows or warns?
+        // For simplicity, we just re-render or let user manage.
+        // Actually, let's refresh ALL pattern dropdowns when gender changes
+        function updatePatternOptions() {
+            const gender = document.getElementById('c_gender').value;
+            const patterns = gender === 'Male' ? boysPatterns : girlsPatterns;
 
-// Update all existing pattern selects
-document.querySelectorAll('.pattern-select').forEach(select => {
-const currentVal = select.value;
-select.innerHTML = patterns.map(p => `<option value="${p}">${p}</option>`).join('');
-if (patterns.includes(currentVal)) select.value = currentVal;
-});
-}
+            // Update all existing pattern selects
+            document.querySelectorAll('.pattern-select').forEach(select => {
+                const currentVal = select.value;
+                select.innerHTML = patterns.map(p => `<option value="${p}">${p}</option>`).join('');
+                if (patterns.includes(currentVal)) select.value = currentVal;
+            });
+        }
 
-function addDefectRow() {
-const container = document.getElementById('defectItemsContainer');
-const documentFragment = document.createDocumentFragment();
-const rowId = 'row_' + Date.now();
+        function addDefectRow() {
+            const container = document.getElementById('defectItemsContainer');
+            const documentFragment = document.createDocumentFragment();
+            const rowId = 'row_' + Date.now();
 
-const div = document.createElement('div');
-div.className = "defect-row grid grid-cols-1 md:grid-cols-12 gap-2 items-start bg-slate-50 p-4 rounded-2xl border-none
-shadow-inner animate-in slide-in-from-right-2";
-div.id = rowId;
+            const div = document.createElement('div');
+            div.className = "defect-row grid grid-cols-1 md:grid-cols-12 gap-2 items-start bg-slate-50 p-4 rounded-2xl border-none
+            shadow - inner animate -in slide -in -from - right - 2";
+            div.id = rowId;
 
-const gender = document.getElementById('c_gender').value;
-const patterns = gender === 'Male' ? boysPatterns : girlsPatterns;
-const patternOptions = patterns.map(p => `<option value="${p}">${p}</option>`).join('');
+            const gender = document.getElementById('c_gender').value;
+            const patterns = gender === 'Male' ? boysPatterns : girlsPatterns;
+            const patternOptions = patterns.map(p => `<option value="${p}">${p}</option>`).join('');
 
-div.innerHTML = `
+            div.innerHTML = `
 <div class="md:col-span-5">
     <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Pattern</label>
     <select
@@ -2045,199 +2045,202 @@ div.innerHTML = `
 </div>
 `;
 
-container.appendChild(div);
-checkEmptyMsg();
-}
+            container.appendChild(div);
+            checkEmptyMsg();
+        }
 
-function checkEmptyMsg() {
-const count = document.getElementById('defectItemsContainer').children.length;
-const msg = document.getElementById('emptyItemsMsg');
-if (count === 0) msg.classList.remove('hidden');
-else msg.classList.add('hidden');
-}
+        function checkEmptyMsg() {
+            const count = document.getElementById('defectItemsContainer').children.length;
+            const msg = document.getElementById('emptyItemsMsg');
+            if (count === 0) msg.classList.remove('hidden');
+            else msg.classList.add('hidden');
+        }
 
-function handleIssueChange(select) {
-const input = select.closest('div').querySelector('.other-issue-input');
-if (select.value === 'Other') {
-input.classList.remove('hidden');
-input.required = true;
-} else {
-input.classList.add('hidden');
-input.required = false;
-}
-}
+        function handleIssueChange(select) {
+            const input = select.closest('div').querySelector('.other-issue-input');
+            if (select.value === 'Other') {
+                input.classList.remove('hidden');
+                input.required = true;
+            } else {
+                input.classList.add('hidden');
+                input.required = false;
+            }
+        }
 
-function openComplaintModal() {
-const modal = document.getElementById('complaintModal');
-if (modal) {
-modal.showModal();
-// If empty, add one row by default
-if (document.getElementById('defectItemsContainer').children.length === 0) {
-addDefectRow();
-}
-}
-}
+        function openComplaintModal() {
+            const modal = document.getElementById('complaintModal');
+            if (modal) {
+                modal.showModal();
+                // If empty, add one row by default
+                if (document.getElementById('defectItemsContainer').children.length === 0) {
+                    addDefectRow();
+                }
+            }
+        }
 
-function closeComplaintModal() {
-const modal = document.getElementById('complaintModal');
-if (modal) modal.close();
-// Reset form
-document.getElementById('complaintForm').reset();
-selectedFiles = [];
-renderImagePreviews();
-editingComplaintId = null;
-document.getElementById('defectItemsContainer').innerHTML = '';
-checkEmptyMsg(); // Ensure empty message is shown if container is cleared
-}
+        function closeComplaintModal() {
+            const modal = document.getElementById('complaintModal');
+            if (modal) modal.close();
+            // Reset form
+            document.getElementById('complaintForm').reset();
+            selectedFiles = [];
+            renderImagePreviews();
+            editingComplaintId = null;
+            document.getElementById('defectItemsContainer').innerHTML = '';
+            checkEmptyMsg(); // Ensure empty message is shown if container is cleared
+        }
 
-async function submitComplaint(e) {
-e.preventDefault();
-const submitBtn = e.target.querySelector('button[type="submit"]');
-const originalText = submitBtn.innerHTML;
-submitBtn.disabled = true;
-submitBtn.innerHTML = '<div class="enso-loader w-4 h-4 border-2"></div> Processing...';
+        async function submitComplaint(e) {
+            e.preventDefault();
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<div class="enso-loader w-4 h-4 border-2"></div> Processing...';
 
-// Gather Data
-const student_name = document.getElementById('c_name').value;
-const student_reg_no = document.getElementById('c_reg').value;
-const gender = document.getElementById('c_gender').value;
-const cls = document.getElementById('c_class').value;
-const section = document.getElementById('c_sec').value;
-const house = document.getElementById('c_house').value;
+            // Gather Data
+            const student_name = document.getElementById('c_name').value;
+            const student_reg_no = document.getElementById('c_reg').value;
+            const gender = document.getElementById('c_gender').value;
+            const cls = document.getElementById('c_class').value;
+            const section = document.getElementById('c_sec').value;
+            const house = document.getElementById('c_house').value;
 
-// Gather Defect Items
-const rows = document.querySelectorAll('.defect-row');
-if (rows.length === 0) {
-alert("Please add at least one item defect.");
-submitBtn.innerHTML = originalText;
-submitBtn.disabled = false;
-return;
-}
+            // Gather Defect Items
+            const rows = document.querySelectorAll('.defect-row');
+            if (rows.length === 0) {
+                alert("Please add at least one item defect.");
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+                return;
+            }
 
-const items = Array.from(rows).map(row => {
-const p = row.querySelector('.pattern-select').value;
-const iSelect = row.querySelector('.issue-select');
-const issueVal = iSelect.value;
-const otherVal = row.querySelector('.other-issue-input').value;
-const finalIssue = (issueVal === 'Other' && otherVal) ? otherVal : issueVal;
-return { pattern: p, issue: finalIssue };
-});
+            const items = Array.from(rows).map(row => {
+                const p = row.querySelector('.pattern-select').value;
+                const iSelect = row.querySelector('.issue-select');
+                const issueVal = iSelect.value;
+                const otherVal = row.querySelector('.other-issue-input').value;
+                const finalIssue = (issueVal === 'Other' && otherVal) ? otherVal : issueVal;
+                return { pattern: p, issue: finalIssue };
+            });
 
-// Aggregate for Legacy DB Columns
-const pattern_name = items.map(x => x.pattern).join(', ');
-// Format Issue Type clearly: "Shirt (Size), Pant (Tear)"
-const issue_type = items.map(x => `${x.pattern.split('-').pop().trim()} (${x.issue})`).join(', ');
+            // Aggregate for Legacy DB Columns
+            const pattern_name = items.map(x => x.pattern).join(', ');
+            // Format Issue Type clearly: "Shirt (Size), Pant (Tear)"
+            const issue_type = items.map(x => `${x.pattern.split('-').pop().trim()} (${x.issue})`).join(', ');
 
-// Calculate Max Rating based on issues (e.g. if any logic needed, otherwise default 3)
-const rating = 3;
+            // Calculate Max Rating based on issues (e.g. if any logic needed, otherwise default 3)
+            const rating = 3;
 
-const comment = document.getElementById('c_desc').value;
-let imageUrls = [];
+            const comment = document.getElementById('c_desc').value;
+            let imageUrls = [];
 
-try {
-// Upload new files
-if (selectedFiles.length > 0) {
-const fd = new FormData();
-selectedFiles.forEach(f => fd.append('images', f));
-const upRes = await fetch('/api/data/upload', { method: 'POST', body: fd });
-if (!upRes.ok) throw new Error("Upload failed");
-imageUrls = (await upRes.json()).urls;
-}
+            try {
+                // Upload new files
+                if (selectedFiles.length > 0) {
+                    const fd = new FormData();
+                    selectedFiles.forEach(f => fd.append('images', f));
+                    const upRes = await fetch('/api/data/upload', { method: 'POST', body: fd });
+                    if (!upRes.ok) throw new Error("Upload failed");
+                    imageUrls = (await upRes.json()).urls;
+                }
 
-const payload = {
-school_id: schoolId,
-student_name, student_reg_no, gender,
-class: cls, section, house,
-pattern_name, issue_type,
-rating,
-comment,
-image_url: JSON.stringify(imageUrls)
-};
+                const payload = {
+                    school_id: schoolId,
+                    student_name, student_reg_no, gender,
+                    class: cls, section, house,
+                    pattern_name, issue_type,
+                    rating,
+                    comment,
+                    image_url: JSON.stringify(imageUrls)
+                };
 
-const url = editingComplaintId ? `/api/data/complaints/${editingComplaintId}` : '/api/data/complaints';
-const method = editingComplaintId ? 'PUT' : 'POST';
+                const url = editingComplaintId ? `/api/data/complaints/${editingComplaintId}` : '/api/data/complaints';
+                const method = editingComplaintId ? 'PUT' : 'POST';
 
-const res = await fetch(url, {
-method: method,
-headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-body: JSON.stringify(payload)
-});
+                const res = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify(payload)
+                });
 
-if (!res.ok) throw new Error("Submission failed");
+                if (!res.ok) throw new Error("Submission failed");
 
-alert(editingComplaintId ? "Ticket Updated!" : "Ticket Submitted!");
+                alert(editingComplaintId ? "Ticket Updated!" : "Ticket Submitted!");
 
-closeComplaintModal();
-fetchMyComplaints();
+                closeComplaintModal();
+                fetchMyComplaints();
 
-// Clear dynamic items
-document.getElementById('defectItemsContainer').innerHTML = '';
+                // Clear dynamic items
+                document.getElementById('defectItemsContainer').innerHTML = '';
 
-} catch (err) {
-alert("Error: " + err.message);
-submitBtn.innerHTML = originalText;
-} finally {
-submitBtn.disabled = false;
-if (submitBtn.innerText !== originalText) submitBtn.innerHTML = originalText;
-}
-}
+            } catch (err) {
+                alert("Error: " + err.message);
+                submitBtn.innerHTML = originalText;
+            } finally {
+                submitBtn.disabled = false;
+                if (submitBtn.innerText !== originalText) submitBtn.innerHTML = originalText;
+            }
+        }
 
-async function deleteComplaint(id) {
-if (!confirm("Are you sure you want to delete this ticket?")) return;
-try {
-const res = await fetch(`/api/data/complaints/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}`
-} });
-if (res.ok) {
-fetchMyComplaints();
-} else alert("Failed to delete");
-} catch (e) { console.error(e); }
-}
+        async function deleteComplaint(id) {
+            if (!confirm("Are you sure you want to delete this ticket?")) return;
+            try {
+                const res = await fetch(`/api/data/complaints/${id}`, {
+                    method: 'DELETE', headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                if (res.ok) {
+                    fetchMyComplaints();
+                } else alert("Failed to delete");
+            } catch (e) { console.error(e); }
+        }
 
-// === BULK IMPORT ENGINE ===
-let importQueue = [];
-let importFilesList = [];
+        // === BULK IMPORT ENGINE ===
+        let importQueue = [];
+        let importFilesList = [];
 
-function openImportModal() {
-// Reset
-importQueue = [];
-importFilesList = [];
-// Reset View to List (Fix: user stuck in manual entry)
-if (document.getElementById('manualEntryForm')) hideManualEntryForm();
+        function openImportModal() {
+            // Reset
+            importQueue = [];
+            importFilesList = [];
+            // Reset View to List (Fix: user stuck in manual entry)
+            if (document.getElementById('manualEntryForm')) hideManualEntryForm();
 
-document.getElementById('importFileList').innerHTML = '';
-document.getElementById('multiFileImport').value = '';
-renderImportPreview();
+            document.getElementById('importFileList').innerHTML = '';
+            document.getElementById('multiFileImport').value = '';
+            renderImportPreview();
 
-// Show
-const modal = document.getElementById('importModal');
-modal.classList.remove('hidden');
-}
+            // Show
+            const modal = document.getElementById('importModal');
+            modal.classList.remove('hidden');
+        }
 
-function handleFileSelection(e) {
-const files = Array.from(e.target.files);
-processFiles(files);
-}
+        function handleFileSelection(e) {
+            const files = Array.from(e.target.files);
+            processFiles(files);
+        }
 
-function handleDrop(e) {
-e.preventDefault();
-const files = Array.from(e.dataTransfer.files);
-processFiles(files);
-}
+        function handleDrop(e) {
+            e.preventDefault();
+            const files = Array.from(e.dataTransfer.files);
+            processFiles(files);
+        }
 
-async function processFiles(files) {
-for (const file of files) {
-// Add to visual list
-importFilesList.push(file);
-renderfileList();
+        async function processFiles(files) {
+            for (const file of files) {
+                // Add to visual list
+                importFilesList.push(file);
+                renderfileList();
 
-// Parse
-await parseExcelData(file);
-}
-}
+                // Parse
+                await parseExcelData(file);
+            }
+        }
 
-function renderfileList() {
-const container = document.getElementById('importFileList');
-container.innerHTML = importFilesList.map((f, i) => `
+        function renderfileList() {
+            const container = document.getElementById('importFileList');
+            container.innerHTML = importFilesList.map((f, i) => `
 <div
     class="px-3 py-1 bg-indigo-50 text-indigo-700 rounded-lg text-xs font-bold flex items-center gap-2 shadow-sm border border-indigo-100">
     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -2247,108 +2250,108 @@ container.innerHTML = importFilesList.map((f, i) => `
     <button onclick="removeImportFile(${i})" class="hover:text-rose-500">×</button>
 </div>
 `).join('');
-}
+        }
 
-function removeImportFile(index) {
-importFilesList.splice(index, 1);
+        function removeImportFile(index) {
+            importFilesList.splice(index, 1);
 // In a real app we might want to un-parse the data too, but for now we just clear queue and re-parse leftover or just
 clear all.
-// Simpler strategy: Clear queue and re-parse remaining files.
-importQueue = [];
-renderfileList();
-processFiles(importFilesList); // Re-process
-}
+                // Simpler strategy: Clear queue and re-parse remaining files.
+                importQueue = [];
+            renderfileList();
+            processFiles(importFilesList); // Re-process
+        }
 
-function normalizeHeader(key) {
-const k = key.toString().toUpperCase().trim().replace(/[^A-Z0-9]/g, '');
-// Map Standard Fields
-if (['ROLLNO', 'ROLL', 'ID', 'NO'].includes(k)) return 'roll_no';
-if (['NAME', 'STUDENTNAME', 'STUDENT', 'FULLNAME'].includes(k)) return 'name';
-if (['GENDER', 'SEX', 'M/F'].includes(k)) return 'gender';
-if (['CLASS', 'GRADE', 'STD'].includes(k)) return 'class';
-if (['SECTION', 'SEC', 'DIVISION', 'DIV'].includes(k)) return 'section';
-if (['HOUSE', 'TEAM', 'GROUP'].includes(k)) return 'house';
-if (['ADMNO', 'ADMISSIONNO', 'REGNO', 'ADMNNO', 'REGISTRATIONNO'].includes(k)) return 'admission_no';
-if (['STATUS', 'ORDERSTATUS', 'STATE'].includes(k)) return 'order_status';
+        function normalizeHeader(key) {
+            const k = key.toString().toUpperCase().trim().replace(/[^A-Z0-9]/g, '');
+            // Map Standard Fields
+            if (['ROLLNO', 'ROLL', 'ID', 'NO'].includes(k)) return 'roll_no';
+            if (['NAME', 'STUDENTNAME', 'STUDENT', 'FULLNAME'].includes(k)) return 'name';
+            if (['GENDER', 'SEX', 'M/F'].includes(k)) return 'gender';
+            if (['CLASS', 'GRADE', 'STD'].includes(k)) return 'class';
+            if (['SECTION', 'SEC', 'DIVISION', 'DIV'].includes(k)) return 'section';
+            if (['HOUSE', 'TEAM', 'GROUP'].includes(k)) return 'house';
+            if (['ADMNO', 'ADMISSIONNO', 'REGNO', 'ADMNNO', 'REGISTRATIONNO'].includes(k)) return 'admission_no';
+            if (['STATUS', 'ORDERSTATUS', 'STATE'].includes(k)) return 'order_status';
 
-// Return original cleaned key for potential measurement mapping
-return key.trim();
-}
+            // Return original cleaned key for potential measurement mapping
+            return key.trim();
+        }
 
-function parseExcelData(file) {
-return new Promise((resolve) => {
-const reader = new FileReader();
-reader.onload = (e) => {
-const data = new Uint8Array(e.target.result);
-const workbook = XLSX.read(data, { type: 'array' });
+        function parseExcelData(file) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
 
-workbook.SheetNames.forEach(sheetName => {
-const sheet = workbook.Sheets[sheetName];
-const rows = XLSX.utils.sheet_to_json(sheet);
+                    workbook.SheetNames.forEach(sheetName => {
+                        const sheet = workbook.Sheets[sheetName];
+                        const rows = XLSX.utils.sheet_to_json(sheet);
 
-rows.forEach(row => {
-const newRow = {};
-const measurements = [];
-const standardKeys = ['roll_no', 'name', 'gender', 'class', 'section', 'house', 'admission_no', 'order_status',
-'status'];
+                        rows.forEach(row => {
+                            const newRow = {};
+                            const measurements = [];
+                            const standardKeys = ['roll_no', 'name', 'gender', 'class', 'section', 'house', 'admission_no', 'order_status',
+                                'status'];
 
-Object.keys(row).forEach(key => {
-const norm = normalizeHeader(key);
-if (standardKeys.includes(norm)) {
-newRow[norm] = row[key];
-} else {
-// MEASUREMENT MAPPING
-const val = row[key];
-if (val && String(val).trim() !== '') {
-measurements.push({
-name: norm || key, // Use norm or original key
-size: val,
-qty: 1
-});
-}
-}
-});
+                            Object.keys(row).forEach(key => {
+                                const norm = normalizeHeader(key);
+                                if (standardKeys.includes(norm)) {
+                                    newRow[norm] = row[key];
+                                } else {
+                                    // MEASUREMENT MAPPING
+                                    const val = row[key];
+                                    if (val && String(val).trim() !== '') {
+                                        measurements.push({
+                                            name: norm || key, // Use norm or original key
+                                            size: val,
+                                            qty: 1
+                                        });
+                                    }
+                                }
+                            });
 
-// Enrich / Validate
-if (newRow.name) {
-importQueue.push({
-roll_no: newRow.roll_no || '-',
-name: newRow.name,
-gender: newRow.gender || '-',
-class: newRow.class || '-',
-section: newRow.section || '-',
-house: newRow.house || '-',
-admission_no: newRow.admission_no || '-',
-order_status: newRow.order_status || 'Pending',
-status: 'Active',
-measurements: measurements
-});
-}
-});
-});
-renderImportPreview();
-resolve();
-};
-reader.readAsArrayBuffer(file);
-});
-}
+                            // Enrich / Validate
+                            if (newRow.name) {
+                                importQueue.push({
+                                    roll_no: newRow.roll_no || '-',
+                                    name: newRow.name,
+                                    gender: newRow.gender || '-',
+                                    class: newRow.class || '-',
+                                    section: newRow.section || '-',
+                                    house: newRow.house || '-',
+                                    admission_no: newRow.admission_no || '-',
+                                    order_status: newRow.order_status || 'Pending',
+                                    status: 'Active',
+                                    measurements: measurements
+                                });
+                            }
+                        });
+                    });
+                    renderImportPreview();
+                    resolve();
+                };
+                reader.readAsArrayBuffer(file);
+            });
+        }
 
-function renderImportPreview() {
-const tbody = document.getElementById('importPreviewBody');
-document.getElementById('previewCount').innerText = importQueue.length + " Records";
+        function renderImportPreview() {
+            const tbody = document.getElementById('importPreviewBody');
+            document.getElementById('previewCount').innerText = importQueue.length + " Records";
 
-if (importQueue.length === 0) {
-tbody.innerHTML = `
+            if (importQueue.length === 0) {
+                tbody.innerHTML = `
 <tr id="emptyPreviewState">
     <td colspan="9" class="p-10 text-center text-stone-300 font-medium">
         No data loaded. Upload files or add manually.
     </td>
 </tr>
 `;
-return;
-}
+                return;
+            }
 
-tbody.innerHTML = importQueue.map((row, i) => `
+            tbody.innerHTML = importQueue.map((row, i) => `
 <tr class="hover:bg-stone-50 transition-colors border-b border-stone-50 last:border-none group">
     <td class="p-3 font-bold text-stone-600">${row.roll_no}</td>
     <td class="p-3 font-bold text-stone-800">${row.name}</td>
@@ -2366,210 +2369,210 @@ tbody.innerHTML = importQueue.map((row, i) => `
     </td>
 </tr>
 `).join('');
-}
+        }
 
-function removeImportRow(i) {
-importQueue.splice(i, 1);
-renderImportPreview();
-}
+        function removeImportRow(i) {
+            importQueue.splice(i, 1);
+            renderImportPreview();
+        }
 
-function showManualEntryForm() {
-document.getElementById('importListView').classList.add('hidden');
-document.getElementById('importModalFooter').classList.add('hidden'); // Hide global footer
-document.getElementById('manualEntryForm').classList.remove('hidden');
+        function showManualEntryForm() {
+            document.getElementById('importListView').classList.add('hidden');
+            document.getElementById('importModalFooter').classList.add('hidden'); // Hide global footer
+            document.getElementById('manualEntryForm').classList.remove('hidden');
 
-// Focus Name
-setTimeout(() => document.getElementById('m_name').focus(), 100);
-}
+            // Focus Name
+            setTimeout(() => document.getElementById('m_name').focus(), 100);
+        }
 
-function hideManualEntryForm() {
-document.getElementById('manualEntryForm').classList.add('hidden');
-document.getElementById('importModalFooter').classList.remove('hidden'); // Show global footer
-document.getElementById('importListView').classList.remove('hidden');
+        function hideManualEntryForm() {
+            document.getElementById('manualEntryForm').classList.add('hidden');
+            document.getElementById('importModalFooter').classList.remove('hidden'); // Show global footer
+            document.getElementById('importListView').classList.remove('hidden');
 
-// Clear inputs
-['m_name', 'm_roll', 'm_adm', 'm_class', 'm_sec', 'm_house'].forEach(id => document.getElementById(id).value = '');
-document.getElementById('m_gender').value = '-';
-}
+            // Clear inputs
+            ['m_name', 'm_roll', 'm_adm', 'm_class', 'm_sec', 'm_house'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('m_gender').value = '-';
+        }
 
-function saveManualEntry() {
-const name = document.getElementById('m_name').value.trim();
-if (!name) {
-alert("Student Name is required!");
-return;
-}
+        function saveManualEntry() {
+            const name = document.getElementById('m_name').value.trim();
+            if (!name) {
+                alert("Student Name is required!");
+                return;
+            }
 
-const newStudent = {
-roll_no: document.getElementById('m_roll').value.trim() || '-',
-name: name,
-gender: document.getElementById('m_gender').value,
-class: document.getElementById('m_class').value.trim() || '-',
-section: document.getElementById('m_sec').value.trim() || '-',
-house: document.getElementById('m_house').value.trim() || '-',
-admission_no: document.getElementById('m_adm').value.trim() || '-',
-order_status: 'Pending',
-status: 'Active'
-};
+            const newStudent = {
+                roll_no: document.getElementById('m_roll').value.trim() || '-',
+                name: name,
+                gender: document.getElementById('m_gender').value,
+                class: document.getElementById('m_class').value.trim() || '-',
+                section: document.getElementById('m_sec').value.trim() || '-',
+                house: document.getElementById('m_house').value.trim() || '-',
+                admission_no: document.getElementById('m_adm').value.trim() || '-',
+                order_status: 'Pending',
+                status: 'Active'
+            };
 
-importQueue.unshift(newStudent); // Add to top
-renderImportPreview();
-hideManualEntryForm();
+            importQueue.unshift(newStudent); // Add to top
+            renderImportPreview();
+            hideManualEntryForm();
 
-// Show toast or highlight
-// alert("Added " + name);
-}
+            // Show toast or highlight
+            // alert("Added " + name);
+        }
 
-// Replaced old addManualRow with the functions above
+        // Replaced old addManualRow with the functions above
 
-function clearImportdata() {
-if (confirm("Clear all import data?")) {
-openImportModal(); // Resets
-}
-}
+        function clearImportdata() {
+            if (confirm("Clear all import data?")) {
+                openImportModal(); // Resets
+            }
+        }
 
-async function processUpload() {
-if (importQueue.length === 0) return alert("No data to import!");
+        async function processUpload() {
+            if (importQueue.length === 0) return alert("No data to import!");
 
-const btn = document.querySelector('#importModal button[onclick="processUpload()"]');
-const originalText = btn.innerHTML;
-btn.innerHTML = `<svg class="animate-spin h-5 w-5 mr-2" viewBox="0 0 24 24">
+            const btn = document.querySelector('#importModal button[onclick="processUpload()"]');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = `<svg class="animate-spin h-5 w-5 mr-2" viewBox="0 0 24 24">
     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
     <path class="opacity-75" fill="currentColor"
         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z">
     </path>
 </svg> Importing...`;
-btn.disabled = true;
+            btn.disabled = true;
 
-let success = 0;
-let updated = 0;
-let skipped = 0;
-let errors = 0;
+            let success = 0;
+            let updated = 0;
+            let skipped = 0;
+            let errors = 0;
 
-try {
-// Sequential Processing
-for (const student of importQueue) {
-const payload = {
-school_id: schoolId,
-admission_no: student.admission_no,
-roll_no: student.roll_no,
-name: student.name,
-gender: student.gender,
-class: student.class,
-section: student.section,
-house: student.house,
-status: student.status,
-order_status: student.order_status
-};
+            try {
+                // Sequential Processing
+                for (const student of importQueue) {
+                    const payload = {
+                        school_id: schoolId,
+                        admission_no: student.admission_no,
+                        roll_no: student.roll_no,
+                        name: student.name,
+                        gender: student.gender,
+                        class: student.class,
+                        section: student.section,
+                        house: student.house,
+                        status: student.status,
+                        order_status: student.order_status
+                    };
 
-// Check for Duplicates (Name + Admission No)
-const existing = allStudents.find(s =>
-String(s.admission_no) === String(student.admission_no) &&
-s.name.trim().toLowerCase() === student.name.trim().toLowerCase()
-);
+                    // Check for Duplicates (Name + Admission No)
+                    const existing = allStudents.find(s =>
+                        String(s.admission_no) === String(student.admission_no) &&
+                        s.name.trim().toLowerCase() === student.name.trim().toLowerCase()
+                    );
 
-try {
-let targetId = null;
+                    try {
+                        let targetId = null;
 
-if (existing) {
-// DUPLICATE FOUND
-if (confirm(`Duplicate found: ${student.name} (Adm: ${student.admission_no}).\nUpdate existing record?`)) {
-// UPDATE via POST with ID (Backend Logic)
-const updatePayload = { ...payload, id: existing.id };
-const res = await fetch('/api/data/student', {
-method: 'POST',
-headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-body: JSON.stringify(updatePayload)
-});
-if (!res.ok) throw new Error("Update failed");
-targetId = existing.id;
-updated++;
-} else {
-skipped++;
-continue;
-}
-} else {
-// NEW RECORD
-const res = await fetch('/api/data/student', {
-method: 'POST',
-headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-body: JSON.stringify(payload)
-});
-if (!res.ok) throw new Error("Create failed");
-const data = await res.json();
-targetId = data.id; // Capture New ID
-success++;
-}
+                        if (existing) {
+                            // DUPLICATE FOUND
+                            if (confirm(`Duplicate found: ${student.name} (Adm: ${student.admission_no}).\nUpdate existing record?`)) {
+                                // UPDATE via POST with ID (Backend Logic)
+                                const updatePayload = { ...payload, id: existing.id };
+                                const res = await fetch('/api/data/student', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                                    body: JSON.stringify(updatePayload)
+                                });
+                                if (!res.ok) throw new Error("Update failed");
+                                targetId = existing.id;
+                                updated++;
+                            } else {
+                                skipped++;
+                                continue;
+                            }
+                        } else {
+                            // NEW RECORD
+                            const res = await fetch('/api/data/student', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                                body: JSON.stringify(payload)
+                            });
+                            if (!res.ok) throw new Error("Create failed");
+                            const data = await res.json();
+                            targetId = data.id; // Capture New ID
+                            success++;
+                        }
 
-// UPLOAD MEASUREMENTS
-if (targetId && student.measurements && student.measurements.length > 0) {
-await fetch('/api/data/measurements', {
-method: 'POST',
-headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-body: JSON.stringify({
-student_id: targetId,
-data: student.measurements,
-remarks: "Imported via Excel"
-})
-});
-}
+                        // UPLOAD MEASUREMENTS
+                        if (targetId && student.measurements && student.measurements.length > 0) {
+                            await fetch('/api/data/measurements', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                                body: JSON.stringify({
+                                    student_id: targetId,
+                                    data: student.measurements,
+                                    remarks: "Imported via Excel"
+                                })
+                            });
+                        }
 
-} catch (e) {
-console.error(e);
-errors++;
-}
-}
+                    } catch (e) {
+                        console.error(e);
+                        errors++;
+                    }
+                }
 
-alert(`Report:\n✅ Created: ${success}\n🔄 Updated: ${updated}\n⏭️ Skipped: ${skipped}\n❌ Errors: ${errors}`);
+                alert(`Report:\n✅ Created: ${success}\n🔄 Updated: ${updated}\n⏭️ Skipped: ${skipped}\n❌ Errors: ${errors}`);
 
-// Clear Queue on success
-importQueue = [];
-importFilesList = [];
-renderfileList();
-renderImportPreview();
+                // Clear Queue on success
+                importQueue = [];
+                importFilesList = [];
+                renderfileList();
+                renderImportPreview();
 
-document.getElementById('importModal').classList.add('hidden');
-fetchData(); // Refresh main table
+                document.getElementById('importModal').classList.add('hidden');
+                fetchData(); // Refresh main table
 
-} catch (e) {
-alert("Critical Error: " + e.message);
-} finally {
-btn.innerHTML = originalText;
-btn.disabled = false;
-}
-}
+            } catch (e) {
+                alert("Critical Error: " + e.message);
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
 
-function editComplaint(index) {
-const c = window.myComplaints[index];
-if (!c) return;
+        function editComplaint(index) {
+            const c = window.myComplaints[index];
+            if (!c) return;
 
-editingComplaintId = c.id;
+            editingComplaintId = c.id;
 
-// 1. Fill Text Fields
-document.getElementById('c_name').value = c.student_name || '';
-document.getElementById('c_reg').value = c.student_reg_no || '';
-document.getElementById('c_gender').value = c.gender || 'Male';
-document.getElementById('c_class').value = c.class || '';
-document.getElementById('c_sec').value = c.section || '';
-document.getElementById('c_house').value = c.house || 'Red';
-document.getElementById('c_desc').value = c.comment || '';
+            // 1. Fill Text Fields
+            document.getElementById('c_name').value = c.student_name || '';
+            document.getElementById('c_reg').value = c.student_reg_no || '';
+            document.getElementById('c_gender').value = c.gender || 'Male';
+            document.getElementById('c_class').value = c.class || '';
+            document.getElementById('c_sec').value = c.section || '';
+            document.getElementById('c_house').value = c.house || 'Red';
+            document.getElementById('c_desc').value = c.comment || '';
 
-// 2. Clear & Fill Dynamic Items
-const container = document.getElementById('defectItemsContainer');
-container.innerHTML = '';
+            // 2. Clear & Fill Dynamic Items
+            const container = document.getElementById('defectItemsContainer');
+            container.innerHTML = '';
 
-// Try to parse items from pattern/issue strings
-// Limitation: If pattern_name is string "A, B" and issue is "X, Y", mapping is tricky without structured data.
-// For now, we will add ONE row with the string values if they exist, or just leave empty for user to re-enter.
-// Better approach: Just reset items and ask user to re-enter details for clarity,
-// OR (Preferred) pre-fill the first row with available text.
-if (c.pattern_name) {
-// Heuristic: Split by comma and try to split match
-const pats = c.pattern_name.split(',');
-// Just add one row with the raw text if standard parsing fails, or reset.
-const div = document.createElement('div');
-div.className = 'defect-row grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-slate-50 rounded-2xl border-none shadow-inner
-relative animate-in slide-in-from-left-2 fade-in';
-div.innerHTML = `
+            // Try to parse items from pattern/issue strings
+            // Limitation: If pattern_name is string "A, B" and issue is "X, Y", mapping is tricky without structured data.
+            // For now, we will add ONE row with the string values if they exist, or just leave empty for user to re-enter.
+            // Better approach: Just reset items and ask user to re-enter details for clarity,
+            // OR (Preferred) pre-fill the first row with available text.
+            if (c.pattern_name) {
+                // Heuristic: Split by comma and try to split match
+                const pats = c.pattern_name.split(',');
+                // Just add one row with the raw text if standard parsing fails, or reset.
+                const div = document.createElement('div');
+                div.className = 'defect-row grid grid-cols-1 md:grid-cols-2 gap-4 p-4 bg-slate-50 rounded-2xl border-none shadow-inner
+relative animate -in slide -in -from - left - 2 fade -in ';
+                div.innerHTML = `
 <div>
     <label class="block text-[10px] font-bold text-slate-400 uppercase mb-1">Pattern</label>
     <select
@@ -2590,43 +2593,43 @@ div.innerHTML = `
 <button type="button" onclick="this.closest('.defect-row').remove()"
     class="absolute -top-2 -right-2 w-8 h-8 bg-rose-50 hover:bg-rose-100 text-rose-500 rounded-full flex items-center justify-center shadow-sm transition-colors text-lg font-bold">&times;</button>
 `;
-container.appendChild(div);
-}
+                container.appendChild(div);
+            }
 
-// 3. UI Updates
-openComplaintModal();
-// Change Modal Title via DOM
-// Note: openComplaintModal resets title, so we must override after opening or modify logic.
-// Let's modify logic in openComplaintModal or just hack it here after a timeout/direct access
-setTimeout(() => {
-document.querySelector('#complaintModal h3').innerText = "Edit Ticket";
-}, 50);
-}
+            // 3. UI Updates
+            openComplaintModal();
+            // Change Modal Title via DOM
+            // Note: openComplaintModal resets title, so we must override after opening or modify logic.
+            // Let's modify logic in openComplaintModal or just hack it here after a timeout/direct access
+            setTimeout(() => {
+                document.querySelector('#complaintModal h3').innerText = "Edit Ticket";
+            }, 50);
+        }
 
-async function deleteComplaint(id) {
-if (!confirm("Are you sure you want to delete this ticket?")) return;
-try {
-const res = await fetch(`/api/data/complaints/${id}`, {
-method: 'DELETE',
-headers: { 'Authorization': `Bearer ${token}` }
-});
-if (!res.ok) throw new Error("Delete failed");
-alert("Ticket Deleted!");
-fetchMyComplaints(); // Live Update
-} catch (e) {
-console.error(e);
-alert("Error deleting ticket: " + e.message);
-}
-}
+        async function deleteComplaint(id) {
+            if (!confirm("Are you sure you want to delete this ticket?")) return;
+            try {
+                const res = await fetch(`/api/data/complaints/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!res.ok) throw new Error("Delete failed");
+                alert("Ticket Deleted!");
+                fetchMyComplaints(); // Live Update
+            } catch (e) {
+                console.error(e);
+                alert("Error deleting ticket: " + e.message);
+            }
+        }
 
-function viewComplaint(index) {
-const c = window.myComplaints[index];
-if (!c) return;
-let imgs = [];
-try { imgs = JSON.parse(c.image_url || '[]'); } catch (e) { }
-if (!Array.isArray(imgs)) imgs = [c.image_url];
+        function viewComplaint(index) {
+            const c = window.myComplaints[index];
+            if (!c) return;
+            let imgs = [];
+            try { imgs = JSON.parse(c.image_url || '[]'); } catch (e) { }
+            if (!Array.isArray(imgs)) imgs = [c.image_url];
 
-const content = `
+            const content = `
 <div class="space-y-8">
     <!-- Status Header -->
     <div class="flex justify-between items-start border-b border-indigo-50 pb-6">
@@ -2646,7 +2649,7 @@ const content = `
             <span
                 class="px-4 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-wide ${c.status === 'Resolved' ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'}">${c.status}</span>
             <p class="text-[10px] text-slate-300 mt-2 uppercase tracking-wider font-bold">${new
-                Date(c.created_at).toLocaleString()}</p>
+                    Date(c.created_at).toLocaleString()}</p>
         </div>
     </div>
 
@@ -2695,57 +2698,57 @@ const content = `
 </div>
 `;
 
-document.getElementById('detailModalContent').innerHTML = content;
+            document.getElementById('detailModalContent').innerHTML = content;
 
-const modal = document.getElementById('complaintDetailModal');
-if (modal) {
-modal.classList.remove('hidden');
-modal.classList.add('flex'); // Ensure flex is added for centering
-}
-}
+            const modal = document.getElementById('complaintDetailModal');
+            if (modal) {
+                modal.classList.remove('hidden');
+                modal.classList.add('flex'); // Ensure flex is added for centering
+            }
+        }
 
-async function fetchMyComplaints() {
-const list = document.getElementById('complaintsList');
-if (!list) return;
+        async function fetchMyComplaints() {
+            const list = document.getElementById('complaintsList');
+            if (!list) return;
 
-// Update UI for Edit Mode Reset
-if (!editingComplaintId) {
-const title = document.querySelector('#view-support h3.ink-brush-title');
-if (title) title.innerText = "New Request";
-const btn = document.querySelector('#view-support button[type="submit"]');
-if (btn) btn.innerText = "Submit Ticket";
-}
+            // Update UI for Edit Mode Reset
+            if (!editingComplaintId) {
+                const title = document.querySelector('#view-support h3.ink-brush-title');
+                if (title) title.innerText = "New Request";
+                const btn = document.querySelector('#view-support button[type="submit"]');
+                if (btn) btn.innerText = "Submit Ticket";
+            }
 
-try {
-const res = await fetch('/api/data/my_complaints', { headers: { 'Authorization': `Bearer ${token}` } });
-const data = await res.json();
+            try {
+                const res = await fetch('/api/data/my_complaints', { headers: { 'Authorization': `Bearer ${token}` } });
+                const data = await res.json();
 
-if (!res.ok || data.error) {
-throw new Error(data.error || `Server Error: ${res.status}`);
-}
+                if (!res.ok || data.error) {
+                    throw new Error(data.error || `Server Error: ${res.status}`);
+                }
 
-// CHECK FOR REPLIES (Notification System)
-if (lastComplaints.length > 0) {
-data.forEach(ticket => {
-const oldTicket = lastComplaints.find(t => t.id === ticket.id);
-// If we have an old version, and it had NO reply, but now HAS reply
-if (oldTicket && !oldTicket.reply && ticket.reply) {
-if (Notification.permission === "granted") {
-new Notification("New Support Reply 💬", {
-body: `Ticket #${ticket.id}: ${ticket.reply}`,
-icon: '/favicon.ico' // Optional
-});
-}
-}
-});
-}
-lastComplaints = data; // Update cache
+                // CHECK FOR REPLIES (Notification System)
+                if (lastComplaints.length > 0) {
+                    data.forEach(ticket => {
+                        const oldTicket = lastComplaints.find(t => t.id === ticket.id);
+                        // If we have an old version, and it had NO reply, but now HAS reply
+                        if (oldTicket && !oldTicket.reply && ticket.reply) {
+                            if (Notification.permission === "granted") {
+                                new Notification("New Support Reply 💬", {
+                                    body: `Ticket #${ticket.id}: ${ticket.reply}`,
+                                    icon: '/favicon.ico' // Optional
+                                });
+                            }
+                        }
+                    });
+                }
+                lastComplaints = data; // Update cache
 
-// GLOBAL DATA STORE (Fixes Click Issues)
-window.myComplaints = data;
+                // GLOBAL DATA STORE (Fixes Click Issues)
+                window.myComplaints = data;
 
-if (!Array.isArray(data) || data.length === 0) {
-list.innerHTML = `
+                if (!Array.isArray(data) || data.length === 0) {
+                    list.innerHTML = `
 <div class="flex flex-col items-center justify-center h-full text-center p-8 opacity-60 col-span-full">
     <div
         class="w-32 h-32 bg-white rounded-full flex items-center justify-center mb-6 shadow-[inset_4px_4px_8px_rgba(0,0,0,0.05),_inset_-4px_-4px_8px_rgba(255,255,255,0.8)]">
@@ -2762,21 +2765,21 @@ list.innerHTML = `
     <p class="text-sm text-slate-400 max-w-sm">Your feedback queue is empty. Relax! 🌸</p>
 </div>
 `;
-return;
-}
+                    return;
+                }
 
-list.innerHTML = data.map((c, index) => {
-let imgs = [];
-try { imgs = JSON.parse(c.image_url || '[]'); } catch (e) { }
-if (!Array.isArray(imgs)) imgs = [c.image_url];
+                list.innerHTML = data.map((c, index) => {
+                    let imgs = [];
+                    try { imgs = JSON.parse(c.image_url || '[]'); } catch (e) { }
+                    if (!Array.isArray(imgs)) imgs = [c.image_url];
 
-const isResolved = c.status === 'Resolved';
-// Clay Colors
-const statusClass = isResolved
-? 'bg-emerald-100 text-emerald-600'
-: 'bg-amber-100 text-amber-600';
+                    const isResolved = c.status === 'Resolved';
+                    // Clay Colors
+                    const statusClass = isResolved
+                        ? 'bg-emerald-100 text-emerald-600'
+                        : 'bg-amber-100 text-amber-600';
 
-return `
+                    return `
 <div onclick="viewComplaint(${index})"
     class="clay-card p-6 hover:-translate-y-1 transition-all duration-300 group flex flex-col relative overflow-hidden cursor-pointer h-full">
 
@@ -2848,9 +2851,9 @@ return `
 </div>
 `}).join('');
 
-} catch (e) {
-console.error(e);
-list.innerHTML = `
+            } catch (e) {
+                console.error(e);
+                list.innerHTML = `
 <div class="text-center p-8 text-rose-500 bg-rose-50 rounded-xl border border-rose-100 opacity-90">
     <svg class="w-10 h-10 mx-auto mb-2 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -2862,447 +2865,456 @@ list.innerHTML = `
         class="px-4 py-2 bg-white border border-rose-200 rounded-full text-xs font-bold hover:bg-rose-100 transition-colors">Retry</button>
 </div>
 `;
-}
-}
+            }
+        }
 
-function logout() { sessionStorage.clear(); window.location.href = 'index.html'; }
+        function logout() { sessionStorage.clear(); window.location.href = 'index.html'; }
 
-// Start - Handled at bottom of file
-init();
-</script>
+        // Start - Handled at bottom of file
+        init();
+    </script>
 
-<!-- COMPLAINT DETAIL MODAL (Manual Overlay) -->
-<div id="complaintDetailModal"
-    class="hidden fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-    <div
-        class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-white/20 relative opacity-100 scale-100">
+    <!-- COMPLAINT DETAIL MODAL (Manual Overlay) -->
+    <div id="complaintDetailModal"
+        class="hidden fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
         <div
-            class="sticky top-0 bg-white/95 backdrop-blur-md z-10 px-6 py-4 border-b border-stone-100 flex justify-between items-center">
-            <h3 class="font-ink text-lg text-stone-800">Application Full View</h3>
-            <button onclick="document.getElementById('complaintDetailModal').classList.add('hidden')"
-                class="p-2 hover:bg-stone-100 rounded-full transition-colors"><svg width="20" height="20"
-                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M18 6L6 18M6 6l12 12"></path>
-                </svg></button>
+            class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto border border-white/20 relative opacity-100 scale-100">
+            <div
+                class="sticky top-0 bg-white/95 backdrop-blur-md z-10 px-6 py-4 border-b border-stone-100 flex justify-between items-center">
+                <h3 class="font-ink text-lg text-stone-800">Application Full View</h3>
+                <button onclick="document.getElementById('complaintDetailModal').classList.add('hidden')"
+                    class="p-2 hover:bg-stone-100 rounded-full transition-colors"><svg width="20" height="20"
+                        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 6L6 18M6 6l12 12"></path>
+                    </svg></button>
+            </div>
+            <div id="detailModalContent" class="p-6"></div>
         </div>
-        <div id="detailModalContent" class="p-6"></div>
     </div>
-</div>
-<!-- IMPORT MODAL -->
-<div id="importModal"
-    class="hidden fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-    <div
-        class="bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[90vh] flex flex-col border border-white/20 animate-in zoom-in-95 duration-200">
-        <!-- Header -->
+    <!-- IMPORT MODAL -->
+    <div id="importModal"
+        class="hidden fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
         <div
-            class="p-6 border-b border-stone-100 flex justify-between items-center bg-white/95 backdrop-blur-md rounded-t-2xl z-10">
-            <div>
-                <h3 class="font-ink text-xl text-stone-800">Bulk Import Students</h3>
-                <p class="text-xs text-stone-400 font-bold uppercase tracking-wider mt-1">Excel • CSV • Manual Entry
-                </p>
+            class="bg-white rounded-2xl shadow-2xl w-full max-w-6xl max-h-[90vh] flex flex-col border border-white/20 animate-in zoom-in-95 duration-200">
+            <!-- Header -->
+            <div
+                class="p-6 border-b border-stone-100 flex justify-between items-center bg-white/95 backdrop-blur-md rounded-t-2xl z-10">
+                <div>
+                    <h3 class="font-ink text-xl text-stone-800">Bulk Import Students</h3>
+                    <p class="text-xs text-stone-400 font-bold uppercase tracking-wider mt-1">Excel • CSV • Manual Entry
+                    </p>
+                </div>
+                <button onclick="document.getElementById('importModal').classList.add('hidden')"
+                    class="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 flex items-center justify-center transition-colors">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
             </div>
-            <button onclick="document.getElementById('importModal').classList.add('hidden')"
-                class="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 flex items-center justify-center transition-colors">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                </svg>
-            </button>
-        </div>
 
-        <!-- Content -->
-        <div class="flex-1 overflow-hidden flex flex-col p-6 bg-stone-50/50 relative">
+            <!-- Content -->
+            <div class="flex-1 overflow-hidden flex flex-col p-6 bg-stone-50/50 relative">
 
-            <!-- VIEW 1: LIST & UPLOAD -->
-            <div id="importListView" class="flex flex-col h-full">
-                <!-- File Upload Area -->
-                <div class="mb-6 shrink-0">
-                    <div class="border-2 border-dashed border-indigo-200 rounded-2xl p-6 text-center hover:bg-indigo-50/50 transition-colors cursor-pointer bg-white"
-                        onclick="document.getElementById('multiFileImport').click()" ondrop="handleDrop(event)"
-                        ondragover="event.preventDefault()">
-                        <input type="file" id="multiFileImport" multiple accept=".xlsx, .xls, .csv" class="hidden"
-                            onchange="handleFileSelection(event)">
-                        <div class="flex items-center justify-center gap-4">
-                            <div
-                                class="w-10 h-10 bg-indigo-100 text-indigo-500 rounded-xl flex items-center justify-center">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                <!-- VIEW 1: LIST & UPLOAD -->
+                <div id="importListView" class="flex flex-col h-full">
+                    <!-- File Upload Area -->
+                    <div class="mb-6 shrink-0">
+                        <div class="border-2 border-dashed border-indigo-200 rounded-2xl p-6 text-center hover:bg-indigo-50/50 transition-colors cursor-pointer bg-white"
+                            onclick="document.getElementById('multiFileImport').click()" ondrop="handleDrop(event)"
+                            ondragover="event.preventDefault()">
+                            <input type="file" id="multiFileImport" multiple accept=".xlsx, .xls, .csv" class="hidden"
+                                onchange="handleFileSelection(event)">
+                            <div class="flex items-center justify-center gap-4">
+                                <div
+                                    class="w-10 h-10 bg-indigo-100 text-indigo-500 rounded-xl flex items-center justify-center">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                        <polyline points="17 8 12 3 7 8"></polyline>
+                                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                                    </svg>
+                                </div>
+                                <div class="text-left">
+                                    <h4 class="font-bold text-stone-700 text-sm">Upload Excel Files</h4>
+                                    <p class="text-stone-400 text-xs">Drag & Drop or Click to Browse</p>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Selected Files List -->
+                        <div id="importFileList" class="flex flex-wrap gap-2 mt-3"></div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="flex flex-wrap justify-between items-center mb-4 gap-3 shrink-0">
+                        <div class="flex items-center gap-3">
+                            <h4 class="font-bold text-stone-700">Data Preview</h4>
+                            <span id="previewCount"
+                                class="px-2 py-1 rounded-md bg-stone-100 text-xs font-bold text-stone-500">0
+                                Records</span>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="showManualEntryForm()"
+                                class="px-4 py-2 bg-white border border-stone-200 rounded-lg text-sm font-bold text-stone-600 hover:bg-stone-50 hover:text-indigo-600 transition-colors shadow-sm flex items-center gap-2">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                     stroke-width="2">
-                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                                    <polyline points="17 8 12 3 7 8"></polyline>
-                                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
                                 </svg>
-                            </div>
-                            <div class="text-left">
-                                <h4 class="font-bold text-stone-700 text-sm">Upload Excel Files</h4>
-                                <p class="text-stone-400 text-xs">Drag & Drop or Click to Browse</p>
-                            </div>
+                                Add Manually
+                            </button>
+                            <button onclick="clearImportdata()"
+                                class="px-4 py-2 bg-white border border-rose-200 rounded-lg text-sm font-bold text-rose-500 hover:bg-rose-50 transition-colors shadow-sm">
+                                Clear All
+                            </button>
                         </div>
                     </div>
-                    <!-- Selected Files List -->
-                    <div id="importFileList" class="flex flex-wrap gap-2 mt-3"></div>
-                </div>
 
-                <!-- Actions -->
-                <div class="flex flex-wrap justify-between items-center mb-4 gap-3 shrink-0">
-                    <div class="flex items-center gap-3">
-                        <h4 class="font-bold text-stone-700">Data Preview</h4>
-                        <span id="previewCount"
-                            class="px-2 py-1 rounded-md bg-stone-100 text-xs font-bold text-stone-500">0
-                            Records</span>
-                    </div>
-                    <div class="flex gap-2">
-                        <button onclick="showManualEntryForm()"
-                            class="px-4 py-2 bg-white border border-stone-200 rounded-lg text-sm font-bold text-stone-600 hover:bg-stone-50 hover:text-indigo-600 transition-colors shadow-sm flex items-center gap-2">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2">
-                                <line x1="12" y1="5" x2="12" y2="19"></line>
-                                <line x1="5" y1="12" x2="19" y2="12"></line>
-                            </svg>
-                            Add Manually
-                        </button>
-                        <button onclick="clearImportdata()"
-                            class="px-4 py-2 bg-white border border-rose-200 rounded-lg text-sm font-bold text-rose-500 hover:bg-rose-50 transition-colors shadow-sm">
-                            Clear All
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Preview Table (Expanded Height) -->
-                <div
-                    class="flex-1 overflow-auto bg-white rounded-xl border border-stone-200 shadow-sm relative custom-scrollbar min-h-[300px]">
-                    <table class="w-full text-left border-collapse text-sm">
-                        <thead class="bg-stone-50 sticky top-0 z-10 shadow-sm">
-                            <tr>
-                                <th class="p-3 font-bold text-stone-500 uppercase text-xs whitespace-nowrap">Roll No
-                                </th>
-                                <th class="p-3 font-bold text-stone-500 uppercase text-xs whitespace-nowrap">Name
-                                </th>
-                                <th class="p-3 font-bold text-stone-500 uppercase text-xs whitespace-nowrap">Gender
-                                </th>
-                                <th class="p-3 font-bold text-stone-500 uppercase text-xs whitespace-nowrap">Class
-                                </th>
-                                <th class="p-3 font-bold text-stone-500 uppercase text-xs whitespace-nowrap">Section
-                                </th>
-                                <th class="p-3 font-bold text-stone-500 uppercase text-xs whitespace-nowrap">House
-                                </th>
-                                <th class="p-3 font-bold text-stone-500 uppercase text-xs whitespace-nowrap">Adm No
-                                </th>
-                                <th class="p-3 font-bold text-stone-500 uppercase text-xs whitespace-nowrap w-24">
-                                    Status</th>
-                                <th class="p-3 font-bold text-stone-500 uppercase text-xs w-10"></th>
-                            </tr>
-                        </thead>
-                        <tbody id="importPreviewBody" class="divide-y divide-stone-100">
-                            <!-- Rows -->
-                            <tr id="emptyPreviewState">
-                                <td colspan="9" class="p-20 text-center">
-                                    <div class="flex flex-col items-center opacity-50">
-                                        <div
-                                            class="w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center mb-4 text-stone-400">
-                                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none"
-                                                stroke="currentColor" stroke-width="1.5">
-                                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z">
-                                                </path>
-                                                <polyline points="14 2 14 8 20 8"></polyline>
-                                                <line x1="12" y1="18" x2="12" y2="12"></line>
-                                                <line x1="9" y1="15" x2="15" y1="15"></line>
-                                            </svg>
+                    <!-- Preview Table (Expanded Height) -->
+                    <div
+                        class="flex-1 overflow-auto bg-white rounded-xl border border-stone-200 shadow-sm relative custom-scrollbar min-h-[300px]">
+                        <table class="w-full text-left border-collapse text-sm">
+                            <thead class="bg-stone-50 sticky top-0 z-10 shadow-sm">
+                                <tr>
+                                    <th class="p-3 font-bold text-stone-500 uppercase text-xs whitespace-nowrap">Roll No
+                                    </th>
+                                    <th class="p-3 font-bold text-stone-500 uppercase text-xs whitespace-nowrap">Name
+                                    </th>
+                                    <th class="p-3 font-bold text-stone-500 uppercase text-xs whitespace-nowrap">Gender
+                                    </th>
+                                    <th class="p-3 font-bold text-stone-500 uppercase text-xs whitespace-nowrap">Class
+                                    </th>
+                                    <th class="p-3 font-bold text-stone-500 uppercase text-xs whitespace-nowrap">Section
+                                    </th>
+                                    <th class="p-3 font-bold text-stone-500 uppercase text-xs whitespace-nowrap">House
+                                    </th>
+                                    <th class="p-3 font-bold text-stone-500 uppercase text-xs whitespace-nowrap">Adm No
+                                    </th>
+                                    <th class="p-3 font-bold text-stone-500 uppercase text-xs whitespace-nowrap w-24">
+                                        Status</th>
+                                    <th class="p-3 font-bold text-stone-500 uppercase text-xs w-10"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="importPreviewBody" class="divide-y divide-stone-100">
+                                <!-- Rows -->
+                                <tr id="emptyPreviewState">
+                                    <td colspan="9" class="p-20 text-center">
+                                        <div class="flex flex-col items-center opacity-50">
+                                            <div
+                                                class="w-16 h-16 bg-stone-100 rounded-full flex items-center justify-center mb-4 text-stone-400">
+                                                <svg width="32" height="32" viewBox="0 0 24 24" fill="none"
+                                                    stroke="currentColor" stroke-width="1.5">
+                                                    <path
+                                                        d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z">
+                                                    </path>
+                                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                                    <line x1="12" y1="18" x2="12" y2="12"></line>
+                                                    <line x1="9" y1="15" x2="15" y1="15"></line>
+                                                </svg>
+                                            </div>
+                                            <p class="font-bold text-stone-400 text-lg">Empty List</p>
+                                            <p class="text-stone-400 text-sm">Upload a file or add students manually</p>
                                         </div>
-                                        <p class="font-bold text-stone-400 text-lg">Empty List</p>
-                                        <p class="text-stone-400 text-sm">Upload a file or add students manually</p>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                        ```
-                    </table>
-                </div>
-            </div>
-
-            <!-- VIEW 2: MANUAL ENTRY FORM -->
-            <div id="manualEntryForm" class="hidden h-full flex flex-col min-h-0">
-                <div class="flex items-center justify-between mb-6 shrink-0">
-                    <h4 class="font-bold text-xl text-stone-800">Add New Student</h4>
-                    <button onclick="hideManualEntryForm()"
-                        class="text-stone-400 hover:text-stone-600 font-bold text-sm">Back to List</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                            ```
+                        </table>
+                    </div>
                 </div>
 
-                <div
-                    class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start flex-1 overflow-y-auto pr-2 pb-32 min-h-0 custom-scrollbar">
-                    <!-- Name -->
-                    <div class="col-span-1 lg:col-span-2 space-y-2">
-                        <label class="block text-xs font-bold text-stone-400 uppercase tracking-wider">Student Name
-                            <span class="text-rose-500">*</span></label>
-                        <input type="text" id="m_name"
-                            class="w-full bg-white border-2 border-stone-200 rounded-xl px-4 py-3 font-bold text-stone-700 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all placeholder:font-normal"
-                            placeholder="e.g. Aditi Sharma">
+                <!-- VIEW 2: MANUAL ENTRY FORM -->
+                <div id="manualEntryForm" class="hidden h-full flex flex-col min-h-0">
+                    <div class="flex items-center justify-between mb-6 shrink-0">
+                        <h4 class="font-bold text-xl text-stone-800">Add New Student</h4>
+                        <button onclick="hideManualEntryForm()"
+                            class="text-stone-400 hover:text-stone-600 font-bold text-sm">Back to List</button>
                     </div>
 
-                    <!-- Basic Details -->
-                    <div class="space-y-2">
-                        <label class="block text-xs font-bold text-stone-400 uppercase tracking-wider">Roll
-                            Number</label>
-                        <input type="text" id="m_roll"
-                            class="w-full bg-white border-2 border-stone-200 rounded-xl px-4 py-3 font-bold text-stone-700 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all"
-                            placeholder="e.g. 24">
-                    </div>
-                    <div class="space-y-2">
-                        <label class="block text-xs font-bold text-stone-400 uppercase tracking-wider">Admission
-                            No.</label>
-                        <input type="text" id="m_adm"
-                            class="w-full bg-white border-2 border-stone-200 rounded-xl px-4 py-3 font-bold text-stone-700 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all"
-                            placeholder="e.g. R-2024-001">
-                    </div>
-
-                    <!-- Class & Section (Side-by-side) -->
-                    <div class="col-span-1 lg:col-span-2 grid grid-cols-2 gap-4">
-                        <div class="space-y-2">
-                            <label class="block text-xs font-bold text-stone-400 uppercase tracking-wider">Class</label>
-                            <input type="text" id="m_class"
-                                class="w-full bg-white border-2 border-stone-200 rounded-xl px-4 py-3 font-bold text-stone-700 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all"
-                                placeholder="e.g. X">
+                    <div
+                        class="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start flex-1 overflow-y-auto pr-2 pb-32 min-h-0 custom-scrollbar">
+                        <!-- Name -->
+                        <div class="col-span-1 lg:col-span-2 space-y-2">
+                            <label class="block text-xs font-bold text-stone-400 uppercase tracking-wider">Student Name
+                                <span class="text-rose-500">*</span></label>
+                            <input type="text" id="m_name"
+                                class="w-full bg-white border-2 border-stone-200 rounded-xl px-4 py-3 font-bold text-stone-700 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all placeholder:font-normal"
+                                placeholder="e.g. Aditi Sharma">
                         </div>
+
+                        <!-- Basic Details -->
+                        <div class="space-y-2">
+                            <label class="block text-xs font-bold text-stone-400 uppercase tracking-wider">Roll
+                                Number</label>
+                            <input type="text" id="m_roll"
+                                class="w-full bg-white border-2 border-stone-200 rounded-xl px-4 py-3 font-bold text-stone-700 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all"
+                                placeholder="e.g. 24">
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-xs font-bold text-stone-400 uppercase tracking-wider">Admission
+                                No.</label>
+                            <input type="text" id="m_adm"
+                                class="w-full bg-white border-2 border-stone-200 rounded-xl px-4 py-3 font-bold text-stone-700 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all"
+                                placeholder="e.g. R-2024-001">
+                        </div>
+
+                        <!-- Class & Section (Side-by-side) -->
+                        <div class="col-span-1 lg:col-span-2 grid grid-cols-2 gap-4">
+                            <div class="space-y-2">
+                                <label
+                                    class="block text-xs font-bold text-stone-400 uppercase tracking-wider">Class</label>
+                                <input type="text" id="m_class"
+                                    class="w-full bg-white border-2 border-stone-200 rounded-xl px-4 py-3 font-bold text-stone-700 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all"
+                                    placeholder="e.g. X">
+                            </div>
+                            <div class="space-y-2">
+                                <label
+                                    class="block text-xs font-bold text-stone-400 uppercase tracking-wider">Section</label>
+                                <input type="text" id="m_sec"
+                                    class="w-full bg-white border-2 border-stone-200 rounded-xl px-4 py-3 font-bold text-stone-700 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all"
+                                    placeholder="e.g. A">
+                            </div>
+                        </div>
+
+                        <!-- Extras -->
                         <div class="space-y-2">
                             <label
-                                class="block text-xs font-bold text-stone-400 uppercase tracking-wider">Section</label>
-                            <input type="text" id="m_sec"
+                                class="block text-xs font-bold text-stone-400 uppercase tracking-wider">Gender</label>
+                            <select id="m_gender"
+                                class="w-full bg-white border-2 border-stone-200 rounded-xl px-4 py-3 font-bold text-stone-700 outline-none focus:border-indigo-500 cursor-pointer">
+                                <option value="-">Select Gender</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                            </select>
+                        </div>
+                        <div class="space-y-2">
+                            <label class="block text-xs font-bold text-stone-400 uppercase tracking-wider">House</label>
+                            <input type="text" id="m_house"
                                 class="w-full bg-white border-2 border-stone-200 rounded-xl px-4 py-3 font-bold text-stone-700 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all"
-                                placeholder="e.g. A">
+                                placeholder="e.g. Blue House">
                         </div>
                     </div>
 
-                    <!-- Extras -->
-                    <div class="space-y-2">
-                        <label class="block text-xs font-bold text-stone-400 uppercase tracking-wider">Gender</label>
-                        <select id="m_gender"
-                            class="w-full bg-white border-2 border-stone-200 rounded-xl px-4 py-3 font-bold text-stone-700 outline-none focus:border-indigo-500 cursor-pointer">
-                            <option value="-">Select Gender</option>
-                            <option value="Male">Male</option>
-                            <option value="Female">Female</option>
-                        </select>
-                    </div>
-                    <div class="space-y-2">
-                        <label class="block text-xs font-bold text-stone-400 uppercase tracking-wider">House</label>
-                        <input type="text" id="m_house"
-                            class="w-full bg-white border-2 border-stone-200 rounded-xl px-4 py-3 font-bold text-stone-700 outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all"
-                            placeholder="e.g. Blue House">
+                    <div class="mt-8 pt-6 border-t border-stone-200 flex justify-end gap-3">
+                        <button onclick="hideManualEntryForm()"
+                            class="px-6 py-3 rounded-xl font-bold text-stone-500 hover:bg-stone-100 transition-colors">Cancel</button>
+                        <button onclick="saveManualEntry()"
+                            class="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-indigo-200 hover:shadow-indigo-400 transition-all flex items-center gap-2">
+                            <span>Add Student</span>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <path d="M5 12h14M12 5v14" />
+                            </svg>
+                        </button>
                     </div>
                 </div>
 
-                <div class="mt-8 pt-6 border-t border-stone-200 flex justify-end gap-3">
-                    <button onclick="hideManualEntryForm()"
-                        class="px-6 py-3 rounded-xl font-bold text-stone-500 hover:bg-stone-100 transition-colors">Cancel</button>
-                    <button onclick="saveManualEntry()"
-                        class="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-indigo-200 hover:shadow-indigo-400 transition-all flex items-center gap-2">
-                        <span>Add Student</span>
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+            </div>
+
+            <!-- Footer -->
+            <div id="importModalFooter"
+                class="p-6 border-t border-stone-100 bg-white rounded-b-2xl flex justify-end gap-3 z-10">
+                <button onclick="document.getElementById('importModal').classList.add('hidden')"
+                    class="px-6 py-2.5 rounded-xl font-bold text-stone-500 hover:bg-stone-100 transition-colors">Cancel</button>
+                <button onclick="processUpload()"
+                    class="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-2.5 rounded-xl font-bold shadow-lg shadow-indigo-200 hover:shadow-indigo-400 transition-all flex items-center gap-2">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                    <span>Import Students</span>
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- EDIT STUDENT MODAL -->
+    <dialog id="editStudentModal" class="bg-transparent">
+        <div class="fixed inset-0 flex items-center justify-center p-4 bg-slate-900/20 backdrop-blur-sm z-50">
+            <div
+                class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+                <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-indigo-50/30">
+                    <h3 class="font-brand text-lg font-bold text-slate-800">Edit Student</h3>
+                    <button onclick="document.getElementById('editStudentModal').close()"
+                        class="w-8 h-8 rounded-full bg-white hover:bg-slate-100 text-slate-400 hover:text-rose-500 flex items-center justify-center transition-colors shadow-sm">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2">
-                            <path d="M5 12h14M12 5v14" />
+                            <path d="M18 6L6 18M6 6l12 12" />
                         </svg>
                     </button>
                 </div>
-            </div>
-
-        </div>
-
-        <!-- Footer -->
-        <div id="importModalFooter"
-            class="p-6 border-t border-stone-100 bg-white rounded-b-2xl flex justify-end gap-3 z-10">
-            <button onclick="document.getElementById('importModal').classList.add('hidden')"
-                class="px-6 py-2.5 rounded-xl font-bold text-stone-500 hover:bg-stone-100 transition-colors">Cancel</button>
-            <button onclick="processUpload()"
-                class="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-2.5 rounded-xl font-bold shadow-lg shadow-indigo-200 hover:shadow-indigo-400 transition-all flex items-center gap-2">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="17 8 12 3 7 8"></polyline>
-                    <line x1="12" y1="3" x2="12" y2="15"></line>
-                </svg>
-                <span>Import Students</span>
-            </button>
-        </div>
-    </div>
-</div>
-<!-- EDIT STUDENT MODAL -->
-<dialog id="editStudentModal" class="bg-transparent">
-    <div class="fixed inset-0 flex items-center justify-center p-4 bg-slate-900/20 backdrop-blur-sm z-50">
-        <div
-            class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-            <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-indigo-50/30">
-                <h3 class="font-brand text-lg font-bold text-slate-800">Edit Student</h3>
-                <button onclick="document.getElementById('editStudentModal').close()"
-                    class="w-8 h-8 rounded-full bg-white hover:bg-slate-100 text-slate-400 hover:text-rose-500 flex items-center justify-center transition-colors shadow-sm">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M18 6L6 18M6 6l12 12" />
-                    </svg>
-                </button>
-            </div>
-            <div class="p-8 space-y-6">
-                <input type="hidden" id="edit_original_adm">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label
-                            class="block text-xs font-extrabold text-slate-400 uppercase tracking-wider mb-2">Name</label>
-                        <input type="text" id="edit_name"
-                            class="w-full bg-slate-50 border-none rounded-xl px-4 py-3 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none">
-                    </div>
-                    <div>
-                        <label
-                            class="block text-xs font-extrabold text-slate-400 uppercase tracking-wider mb-2">Admission
-                            No</label>
-                        <input type="text" id="edit_adm"
-                            class="w-full bg-slate-50 border-none rounded-xl px-4 py-3 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-extrabold text-slate-400 uppercase tracking-wider mb-2">Roll
-                            No</label>
-                        <input type="text" id="edit_roll"
-                            class="w-full bg-slate-50 border-none rounded-xl px-4 py-3 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none">
-                    </div>
-                    <div>
-                        <label
-                            class="block text-xs font-extrabold text-slate-400 uppercase tracking-wider mb-2">Gender</label>
-                        <select id="edit_gender"
-                            class="w-full bg-slate-50 border-none rounded-xl px-4 py-3 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none">
-                            <option value="Male">Male</option>
-                            <option value="Female">Female</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label
-                            class="block text-xs font-extrabold text-slate-400 uppercase tracking-wider mb-2">Class</label>
-                        <input type="text" id="edit_class"
-                            class="w-full bg-slate-50 border-none rounded-xl px-4 py-3 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none">
-                    </div>
-                    <div>
-                        <label
-                            class="block text-xs font-extrabold text-slate-400 uppercase tracking-wider mb-2">Section</label>
-                        <input type="text" id="edit_sec"
-                            class="w-full bg-slate-50 border-none rounded-xl px-4 py-3 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none">
-                    </div>
-                    <div>
-                        <label
-                            class="block text-xs font-extrabold text-slate-400 uppercase tracking-wider mb-2">House</label>
-                        <input type="text" id="edit_house"
-                            class="w-full bg-slate-50 border-none rounded-xl px-4 py-3 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none">
+                <div class="p-8 space-y-6">
+                    <input type="hidden" id="edit_original_adm">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label
+                                class="block text-xs font-extrabold text-slate-400 uppercase tracking-wider mb-2">Name</label>
+                            <input type="text" id="edit_name"
+                                class="w-full bg-slate-50 border-none rounded-xl px-4 py-3 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none">
+                        </div>
+                        <div>
+                            <label
+                                class="block text-xs font-extrabold text-slate-400 uppercase tracking-wider mb-2">Admission
+                                No</label>
+                            <input type="text" id="edit_adm"
+                                class="w-full bg-slate-50 border-none rounded-xl px-4 py-3 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none">
+                        </div>
+                        <div>
+                            <label
+                                class="block text-xs font-extrabold text-slate-400 uppercase tracking-wider mb-2">Roll
+                                No</label>
+                            <input type="text" id="edit_roll"
+                                class="w-full bg-slate-50 border-none rounded-xl px-4 py-3 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none">
+                        </div>
+                        <div>
+                            <label
+                                class="block text-xs font-extrabold text-slate-400 uppercase tracking-wider mb-2">Gender</label>
+                            <select id="edit_gender"
+                                class="w-full bg-slate-50 border-none rounded-xl px-4 py-3 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none">
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label
+                                class="block text-xs font-extrabold text-slate-400 uppercase tracking-wider mb-2">Class</label>
+                            <input type="text" id="edit_class"
+                                class="w-full bg-slate-50 border-none rounded-xl px-4 py-3 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none">
+                        </div>
+                        <div>
+                            <label
+                                class="block text-xs font-extrabold text-slate-400 uppercase tracking-wider mb-2">Section</label>
+                            <input type="text" id="edit_sec"
+                                class="w-full bg-slate-50 border-none rounded-xl px-4 py-3 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none">
+                        </div>
+                        <div>
+                            <label
+                                class="block text-xs font-extrabold text-slate-400 uppercase tracking-wider mb-2">House</label>
+                            <input type="text" id="edit_house"
+                                class="w-full bg-slate-50 border-none rounded-xl px-4 py-3 text-sm font-bold text-slate-700 focus:ring-2 focus:ring-indigo-500 outline-none">
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="p-6 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
-                <button onclick="document.getElementById('editStudentModal').close()"
-                    class="px-6 py-2.5 rounded-xl font-bold text-slate-500 hover:bg-white transition-all">Cancel</button>
-                <button onclick="saveStudentEdit()"
-                    class="px-6 py-2.5 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white font-bold shadow-lg shadow-indigo-200 transition-all transform active:scale-95">Save
-                    Changes</button>
+                <div class="p-6 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
+                    <button onclick="document.getElementById('editStudentModal').close()"
+                        class="px-6 py-2.5 rounded-xl font-bold text-slate-500 hover:bg-white transition-all">Cancel</button>
+                    <button onclick="saveStudentEdit()"
+                        class="px-6 py-2.5 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white font-bold shadow-lg shadow-indigo-200 transition-all transform active:scale-95">Save
+                        Changes</button>
+                </div>
             </div>
         </div>
-    </div>
-</dialog>
+    </dialog>
 
-<!-- ID CARD MODAL -->
-<dialog id="idCardModal" class="bg-transparent">
-    <div class="fixed inset-0 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm z-50">
-        <div
-            class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200 border-4 border-white">
-            <!-- ID Card Content -->
-            <div id="printableIdCard" class="bg-slate-50 relative overflow-hidden">
-                <!-- Background blobs -->
-                <div
-                    class="absolute top-[-50px] right-[-50px] w-32 h-32 bg-indigo-200 rounded-full mix-blend-multiply filter blur-xl opacity-70">
-                </div>
-                <div
-                    class="absolute bottom-[-50px] left-[-50px] w-32 h-32 bg-pink-200 rounded-full mix-blend-multiply filter blur-xl opacity-70">
-                </div>
-
-                <div class="p-6 flex flex-col items-center relative z-10">
-                    <!-- School Header -->
-                    <div class="text-center mb-6">
-                        <h2 class="text-xl font-brand font-black text-slate-800 uppercase tracking-tight"
-                            id="idSchoolName">School Name</h2>
-                        <p class="text-[10px] font-bold text-indigo-500 uppercase tracking-widest">Student Identity
-                            Card</p>
-                    </div>
-
-                    <!-- Photo Placeholder -->
+    <!-- ID CARD MODAL -->
+    <dialog id="idCardModal" class="bg-transparent">
+        <div class="fixed inset-0 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm z-50">
+            <div
+                class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200 border-4 border-white">
+                <!-- ID Card Content -->
+                <div id="printableIdCard" class="bg-slate-50 relative overflow-hidden">
+                    <!-- Background blobs -->
                     <div
-                        class="w-24 h-24 rounded-full bg-gradient-to-br from-indigo-100 to-white shadow-inner flex items-center justify-center mb-4 ring-4 ring-white">
-                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#6366f1" stroke-width="2">
-                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                            <circle cx="12" cy="7" r="4"></circle>
-                        </svg>
+                        class="absolute top-[-50px] right-[-50px] w-32 h-32 bg-indigo-200 rounded-full mix-blend-multiply filter blur-xl opacity-70">
+                    </div>
+                    <div
+                        class="absolute bottom-[-50px] left-[-50px] w-32 h-32 bg-pink-200 rounded-full mix-blend-multiply filter blur-xl opacity-70">
                     </div>
 
-                    <!-- Student Details -->
-                    <div class="text-center space-y-1 mb-6">
-                        <h3 class="text-2xl font-black text-slate-800" id="idName">Student Name</h3>
-                        <p class="text-sm font-bold text-slate-500" id="idClass">Class X - A</p>
-                        <p class="text-xs font-mono text-slate-400" id="idRoll">Roll: 123</p>
-                    </div>
+                    <div class="p-6 flex flex-col items-center relative z-10">
+                        <!-- School Header -->
+                        <div class="text-center mb-6">
+                            <h2 class="text-xl font-brand font-black text-slate-800 uppercase tracking-tight"
+                                id="idSchoolName">School Name</h2>
+                            <p class="text-[10px] font-bold text-indigo-500 uppercase tracking-widest">Student Identity
+                                Card</p>
+                        </div>
 
-                    <!-- Info Grid -->
-                    <div class="w-full grid grid-cols-2 gap-2 mb-2">
-                        <div class="bg-white p-3 rounded-xl shadow-sm text-center">
-                            <p class="text-[10px] text-slate-400 font-bold uppercase">Admission No</p>
-                            <p class="font-mono font-bold text-slate-700 text-sm" id="idAdm">0000</p>
+                        <!-- Photo Placeholder -->
+                        <div
+                            class="w-24 h-24 rounded-full bg-gradient-to-br from-indigo-100 to-white shadow-inner flex items-center justify-center mb-4 ring-4 ring-white">
+                            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#6366f1"
+                                stroke-width="2">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                                <circle cx="12" cy="7" r="4"></circle>
+                            </svg>
                         </div>
-                        <div class="bg-white p-3 rounded-xl shadow-sm text-center">
-                            <p class="text-[10px] text-slate-400 font-bold uppercase">House</p>
-                            <p class="font-bold text-slate-700 text-sm" id="idHouse">-</p>
-                        </div>
-                    </div>
 
-                    <!-- Extra Details: Status & Measurements -->
-                    <div class="w-full bg-white p-3 rounded-xl shadow-sm mb-6 border border-slate-50">
-                        <div class="flex justify-between items-center mb-3 border-b border-indigo-50 pb-2">
-                            <span class="text-[10px] text-indigo-300 font-bold uppercase tracking-wider">Status</span>
-                            <span id="idStatus"
-                                class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-500 uppercase tracking-wide">Pending</span>
+                        <!-- Student Details -->
+                        <div class="text-center space-y-1 mb-6">
+                            <h3 class="text-2xl font-black text-slate-800" id="idName">Student Name</h3>
+                            <p class="text-sm font-bold text-slate-500" id="idClass">Class X - A</p>
+                            <p class="text-xs font-mono text-slate-400" id="idRoll">Roll: 123</p>
                         </div>
-                        <div class="text-center">
-                            <p class="text-[10px] text-indigo-300 font-bold uppercase tracking-wider mb-2">Measurements
-                            </p>
-                            <div class="space-y-1 text-center font-mono text-xs font-bold text-slate-600 min-h-[40px]"
-                                id="idMeasurements">
-                                <!-- Dynamic Dress Details -->
+
+                        <!-- Info Grid -->
+                        <div class="w-full grid grid-cols-2 gap-2 mb-2">
+                            <div class="bg-white p-3 rounded-xl shadow-sm text-center">
+                                <p class="text-[10px] text-slate-400 font-bold uppercase">Admission No</p>
+                                <p class="font-mono font-bold text-slate-700 text-sm" id="idAdm">0000</p>
+                            </div>
+                            <div class="bg-white p-3 rounded-xl shadow-sm text-center">
+                                <p class="text-[10px] text-slate-400 font-bold uppercase">House</p>
+                                <p class="font-bold text-slate-700 text-sm" id="idHouse">-</p>
                             </div>
                         </div>
-                    </div>
 
-                    <!-- QR Code -->
-                    <div class="bg-white p-2 rounded-xl shadow-sm">
-                        <img id="idQrCode" src="" alt="QR" class="w-24 h-24 object-contain opacity-90">
+                        <!-- Extra Details: Status & Measurements -->
+                        <div class="w-full bg-white p-3 rounded-xl shadow-sm mb-6 border border-slate-50">
+                            <div class="flex justify-between items-center mb-3 border-b border-indigo-50 pb-2">
+                                <span
+                                    class="text-[10px] text-indigo-300 font-bold uppercase tracking-wider">Status</span>
+                                <span id="idStatus"
+                                    class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-500 uppercase tracking-wide">Pending</span>
+                            </div>
+                            <div class="text-center">
+                                <p class="text-[10px] text-indigo-300 font-bold uppercase tracking-wider mb-2">
+                                    Measurements
+                                </p>
+                                <div class="space-y-1 text-center font-mono text-xs font-bold text-slate-600 min-h-[40px]"
+                                    id="idMeasurements">
+                                    <!-- Dynamic Dress Details -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- QR Code -->
+                        <div class="bg-white p-2 rounded-xl shadow-sm">
+                            <img id="idQrCode" src="" alt="QR" class="w-24 h-24 object-contain opacity-90">
+                        </div>
+                        <p class="text-[9px] text-slate-300 mt-2 font-mono">Scan to view full details</p>
                     </div>
-                    <p class="text-[9px] text-slate-300 mt-2 font-mono">Scan to view full details</p>
+                </div>
+
+                <!-- Footer Actions -->
+                <div class="p-4 border-t border-slate-100 flex justify-between bg-white">
+                    <button onclick="document.getElementById('idCardModal').close()"
+                        class="text-slate-400 hover:text-slate-600 font-bold text-sm px-4">Close</button>
+                    <button onclick="printIdCard()"
+                        class="bg-indigo-600 text-white px-6 py-2 rounded-xl font-bold text-sm shadow-lg shadow-indigo-200 hover:shadow-indigo-400 transition-all flex items-center gap-2">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <polyline points="6 9 6 2 18 2 18 9"></polyline>
+                            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                            <rect x="6" y="14" width="12" height="8"></rect>
+                        </svg>
+                        Print Card
+                    </button>
                 </div>
             </div>
+        </div>
+    </dialog>
 
-            <!-- Footer Actions -->
-            <div class="p-4 border-t border-slate-100 flex justify-between bg-white">
-                <button onclick="document.getElementById('idCardModal').close()"
-                    class="text-slate-400 hover:text-slate-600 font-bold text-sm px-4">Close</button>
-                <button onclick="printIdCard()"
-                    class="bg-indigo-600 text-white px-6 py-2 rounded-xl font-bold text-sm shadow-lg shadow-indigo-200 hover:shadow-indigo-400 transition-all flex items-center gap-2">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="6 9 6 2 18 2 18 9"></polyline>
-                        <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
-                        <rect x="6" y="14" width="12" height="8"></rect>
-                    </svg>
-                    Print Card
-                </button>
-            </div>
+    <!-- Undo Toast -->
+    <div id="undoToast"
+        class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
+        <div class="bg-slate-800 text-white px-6 py-4 rounded-xl shadow-2xl flex items-center gap-4">
+            <span id="undoMsg" class="font-medium">Items deleted</span>
+            <button onclick="undoDelete()"
+                class="px-3 py-1 bg-white/10 hover:bg-white/20 rounded-lg text-sm font-bold text-indigo-300 hover:text-indigo-200 transition-colors pointer-events-auto">UNDO</button>
+            <button onclick="dismissUndo()" class="text-slate-400 hover:text-white pointer-events-auto">&times;</button>
         </div>
     </div>
-</dialog>
-
-<!-- Undo Toast -->
-<div id="undoToast"
-    class="fixed bottom-6 right-6 z-50 transform translate-y-20 opacity-0 transition-all duration-300 pointer-events-none">
-    <div class="bg-slate-800 text-white px-6 py-4 rounded-xl shadow-2xl flex items-center gap-4">
-        <span id="undoMsg" class="font-medium">Items deleted</span>
-        <button onclick="undoDelete()"
-            class="px-3 py-1 bg-white/10 hover:bg-white/20 rounded-lg text-sm font-bold text-indigo-300 hover:text-indigo-200 transition-colors pointer-events-auto">UNDO</button>
-        <button onclick="dismissUndo()" class="text-slate-400 hover:text-white pointer-events-auto">&times;</button>
-    </div>
-</div>
 
 </body>
 
