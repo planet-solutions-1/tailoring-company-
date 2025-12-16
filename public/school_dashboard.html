@@ -3336,8 +3336,12 @@
 
                 <div id="batchQrInfo" class="text-xs font-mono text-slate-400 mb-6 space-y-1"></div>
 
-                <button onclick="document.getElementById('batchQrModal').close()"
-                    class="w-full py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold transition-all">Close</button>
+                <div class="flex gap-3">
+                    <button onclick="document.getElementById('batchQrModal').close()"
+                        class="flex-1 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold transition-all">Close</button>
+                    <button onclick="downloadBatchQr()"
+                        class="flex-1 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow-lg shadow-indigo-200 transition-all">Download</button>
+                </div>
             </div>
         </div>
     </dialog>
@@ -3377,6 +3381,34 @@
             `;
 
             document.getElementById('batchQrModal').showModal();
+        }
+
+        async function downloadBatchQr() {
+            const imgParams = document.getElementById('batchQrImg').src;
+            if (!imgParams) return;
+
+            try {
+                // Fetch image as blob to allow download with custom filename
+                const response = await fetch(imgParams);
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+
+                const link = document.createElement('a');
+                link.href = url;
+
+                // Construct Filename
+                const cls = document.getElementById('filter_class').value || 'All';
+                const sec = document.getElementById('filter_section').value || 'All';
+                link.download = `QR_Class-${cls}_Sec-${sec}_${Date.now()}.png`;
+
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                window.URL.revokeObjectURL(url);
+            } catch (err) {
+                console.error("Download failed", err);
+                alert("Could not download image. Try right-click > Save Image As.");
+            }
         }
     </script>
 </body>
