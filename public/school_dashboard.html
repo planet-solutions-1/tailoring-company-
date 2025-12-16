@@ -2252,10 +2252,9 @@
 
         function removeImportFile(index) {
             importFilesList.splice(index, 1);
-// In a real app we might want to un-parse the data too, but for now we just clear queue and re-parse leftover or just
-clear all.
-                // Simpler strategy: Clear queue and re-parse remaining files.
-                importQueue = [];
+            // In a real app we might want to un-parse the data too, but for now we just clear queue and re-parse leftover or just clear all.
+            // Simpler strategy: Clear queue and re-parse remaining files.
+            importQueue = [];
             renderfileList();
             processFiles(importFilesList); // Re-process
         }
