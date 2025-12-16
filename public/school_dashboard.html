@@ -534,15 +534,10 @@
                             <rect x="7" y="7" width="10" height="10" rx="2" stroke-dasharray="2 2"></rect>
                             <circle cx="12" cy="12" r="1" fill="currentColor"></circle>
                         </svg></button>
-                    <button onclick="document.getElementById('settingsModal').showModal()"
-                        class="p-3 rounded-xl bg-slate-50 hover:bg-white text-slate-500 hover:text-slate-700 hover:shadow-lg hover:translate-y-[-2px] transition-all shadow-sm"
-                        title="Settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"
-                            stroke="currentColor" stroke-width="2.5">
-                            <circle cx="12" cy="12" r="3"></circle>
-                            <path
-                                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
-                            </path>
-                        </svg></button>
+                    <path
+                        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+                    </path>
+                    </svg></button>
                 </div>
             </div>
 
@@ -862,6 +857,46 @@
 
                 <!-- Right Column: Settings Forms -->
                 <div class="md:col-span-2 space-y-8">
+
+                    <!-- QR Security (New) -->
+                    <div class="clay-card p-8 bg-gradient-to-br from-indigo-50 to-white">
+                        <div class="flex items-center gap-4 mb-6 border-b border-indigo-100 pb-4">
+                            <div
+                                class="w-10 h-10 rounded-xl bg-indigo-100 flex items-center justify-center text-indigo-600">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
+                                    <rect x="3" y="3" width="7" height="7"></rect>
+                                    <rect x="14" y="3" width="7" height="7"></rect>
+                                    <rect x="14" y="14" width="7" height="7"></rect>
+                                    <path d="M3 14h7v7H3z"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 class="font-brand text-xl font-bold text-slate-800">Filter QR Security</h3>
+                                <p class="text-xs text-slate-400 font-bold uppercase tracking-wide">Default Access
+                                    Control</p>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-6">
+                            <div class="flex-1">
+                                <label
+                                    class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Default
+                                    Access PIN</label>
+                                <input type="text" id="page_qr_pin" maxlength="6"
+                                    class="w-full bg-white border border-indigo-100 rounded-xl px-4 py-3 text-sm font-mono font-bold text-indigo-600 focus:ring-2 focus:ring-indigo-200 outline-none transition-all shadow-inner"
+                                    placeholder="e.g. 1234">
+                                <p class="text-[10px] text-slate-400 mt-2">This PIN is auto-embedded when you generate a
+                                    Filter QR.</p>
+                            </div>
+                            <div class="pt-6">
+                                <button onclick="saveQrPinSettings()"
+                                    class="bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold text-sm shadow-lg shadow-indigo-200 hover:bg-indigo-700 hover:shadow-xl transition-all active:scale-95">
+                                    Save PIN
+                                </button>
+                            </div>
+                        </div>
+                    </div>
 
                     <!-- Security -->
                     <div class="clay-card p-8">
@@ -1207,6 +1242,23 @@
             const compactToggle = document.getElementById('toggle_view');
             if (compactToggle) {
                 compactToggle.checked = (localStorage.getItem('compactMode') === 'true');
+            }
+
+            // 3. QR PIN
+            const pinInput = document.getElementById('page_qr_pin');
+            if (pinInput) {
+                pinInput.value = localStorage.getItem('default_qr_pin') || '';
+            }
+        }
+
+        function saveQrPinSettings() {
+            const pin = document.getElementById('page_qr_pin').value.trim();
+            if (pin) {
+                localStorage.setItem('default_qr_pin', pin);
+                alert("Settings Saved! Default PIN: " + pin);
+            } else {
+                localStorage.removeItem('default_qr_pin');
+                alert("Settings Saved! No Default PIN set (will fallback to 1234).");
             }
         }
 
@@ -2838,23 +2890,7 @@
                 }
                 lastComplaints = data; // Update cache
 
-                // PIN from Settings
-                const pin = localStorage.getItem('default_qr_pin') || "1234";
-
-                // Setup Payload for QR
-                const payload = {
-                    s: school,
-                    f: {
-                        c: cls,
-                        sec: sec,
-                        h: house
-                    },
-                    p: pin // Embedded from Settings
-                };
-
-                // Display active PIN in modal (read-only info)
-                const pinDisplay = document.getElementById('activePinDisplay');
-                if (pinDisplay) pinDisplay.innerText = `Active Access PIN: ${pin}`;    // GLOBAL DATA STORE (Fixes Click Issues)
+                // GLOBAL DATA STORE (Fixes Click Issues)
                 window.myComplaints = data;
 
                 if (!Array.isArray(data) || data.length === 0) {
@@ -3526,72 +3562,7 @@
         // Global QR Object
         window.qrCodeObj = null;
 
-        // 1. INJECT SETTINGS MODAL (Dynamic Injection)
-        (function injectSettingsUI() {
-            if (!document.getElementById('settingsModal')) {
-                const modalHtml = `
-                <dialog id="settingsModal" class="bg-transparent">
-                    <div class="fixed inset-0 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm z-50">
-                        <div class="clay-card bg-white p-8 rounded-3xl w-full max-w-sm animate-in zoom-in-95 shadow-2xl">
-                            <h3 class="text-2xl font-black text-slate-700 mb-6 flex items-center gap-2">
-                                <span>⚙️</span> Settings
-                            </h3>
-                            
-                            <div class="space-y-4">
-                                <div>
-                                    <label class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">Default QR Access Code</label>
-                                    <input type="text" id="settingQrPin" placeholder="1234" maxlength="6"
-                                        class="w-full p-3 bg-slate-50 rounded-xl border border-slate-200 text-center font-mono font-bold text-slate-600 focus:ring-2 focus:ring-indigo-200 outline-none transition-all placeholder:text-slate-300">
-                                    <p class="text-[10px] text-slate-400 mt-2">This PIN will be embedded in all generated Filter QRs.</p>
-                                </div>
-                            </div>
-
-                            <div class="flex gap-3 mt-8">
-                                <button onclick="document.getElementById('settingsModal').close()" 
-                                    class="flex-1 py-3 rounded-xl bg-slate-100 text-slate-500 font-bold hover:bg-slate-200 transition">Cancel</button>
-                                <button onclick="saveSettings()" 
-                                    class="flex-1 py-3 rounded-xl bg-indigo-500 text-white font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-600 transition">Save</button>
-                            </div>
-                        </div>
-                    </div>
-                </dialog>`;
-                document.body.insertAdjacentHTML('beforeend', modalHtml);
-            }
-
-            // Cleanup Old Input if exists
-            const oldInput = document.getElementById('batchQrPin');
-            if (oldInput) {
-                const parent = oldInput.parentElement;
-                if (parent) {
-                    parent.innerHTML = '<p class="text-xs text-slate-400 mb-4 italic" id="activePinDisplay">Using Global PIN</p>';
-                }
-            }
-        })();
-
-        // 2. SETTINGS ACTIONS
-        window.openSettings = function () {
-            const currentPin = localStorage.getItem('default_qr_pin') || "";
-            document.getElementById('settingQrPin').value = currentPin;
-            document.getElementById('settingsModal').showModal();
-        }
-
-        window.saveSettings = function () {
-            const newPin = document.getElementById('settingQrPin').value.trim();
-            if (newPin) {
-                localStorage.setItem('default_qr_pin', newPin);
-            } else {
-                localStorage.removeItem('default_qr_pin'); // Reset
-            }
-            document.getElementById('settingsModal').close();
-
-            // Show Feedback
-            const btn = document.querySelector('button[title="Settings"]');
-            if (btn) {
-                const original = btn.innerHTML;
-                btn.innerHTML = '✅';
-                setTimeout(() => btn.innerHTML = original, 1000);
-            }
-        }
+        // 1. INJECT SETTINGS MODAL - REMOVED (Replaced by Page Settings)
 
         // 3. QR GENERATION
         window.generateBatchQr = function () {
