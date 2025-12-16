@@ -982,6 +982,9 @@
                 // Show Default Tab
                 switchTab('dashboard');
 
+                // Prune Deleted History (Local Backup Maintenance)
+                if (typeof pruneDeletedHistory === 'function') pruneDeletedHistory();
+
                 // Set School Name (Live Update)
                 const storedName = sessionStorage.getItem('schoolName');
                 document.getElementById('userSchoolName').innerText = storedName || `School #${schoolId}`;
@@ -2938,21 +2941,7 @@
             container.innerHTML = html;
         }
 
-        // Init App
-        function init() {
-            if (localStorage.getItem('compactMode') === 'true') {
-                document.body.classList.add('compact-mode');
-            }
-            if (typeof pruneDeletedHistory === 'function') pruneDeletedHistory();
 
-            fetchData();
-            switchTab('dashboard'); // Render Default View
-            setInterval(fetchMyComplaints, 60000);
-            fetchMyComplaints();
-        }
-
-        // Start
-        init();
 
         // === MOBILE SIDEBAR LOGIC ===
         function toggleSidebar() {
@@ -2974,6 +2963,9 @@
                 setTimeout(() => backdrop.classList.add('hidden'), 300); // Wait for transition
             }
         }
+
+        // Start App
+        init();
     </script>
 </body>
 
