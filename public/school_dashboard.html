@@ -3411,7 +3411,7 @@ init();
     }
 </script>
 <script>
-    // == OVERRIDE FUNCTIONS FOR CLIENT-SIDE QR & PDF ==
+    // == OVERRIDE FUNCTIONS FOR CLIENT-SIDE QR & PDF (Unique Item List) ==
     // This script block redefines the functions to ensure latest logic is used.
 
     // Global QR Object
@@ -3428,7 +3428,6 @@ init();
         const house = houseSelect ? houseSelect.value : '';
         const school = sessionStorage.getItem('schoolName') || 'Unknown School';
 
-        // Setup Payload for QR
         const payload = {
             s: school,
             f: { c: cls, sec: sec, h: house },
@@ -3440,7 +3439,6 @@ init();
         // Robust Container Finding
         let container = document.getElementById('batchQrContainer');
         if (!container) {
-            // If the div replacement failed, find the img and use its parent
             const img = document.getElementById('batchQrImg');
             if (img) {
                 container = img.parentNode;
@@ -3450,7 +3448,7 @@ init();
         }
 
         if (!container) {
-            console.error("QR Container not found");
+            console.error("QR Container missing");
             return;
         }
 
@@ -3499,11 +3497,32 @@ init();
         const doc = new jsPDF();
 
         const school = sessionStorage.getItem('schoolName') || 'Unknown School';
-        const cls = document.getElementById('filter_class').value || 'All';
-        const sec = document.getElementById('filter_section').value || 'All';
-        const house = document.getElementById('filter_house').value || 'All';
+        const cls = document.getElementById('filter_class').value || '';
+        const sec = document.getElementById('filter_section').value || '';
+        const house = document.getElementById('filter_house').value || '';
         const date = new Date().toLocaleDateString();
 
+        // --- CALCULATE SUMMARY DATA ---
+        // Filter students to get accurate count and items
+        const filteredStudents = allStudents.filter(s => {
+            const matchClass = cls === '' || (s.class && s.class.toString() === cls);
+            const matchSec = sec === '' || (s.section && s.section.toString() === sec);
+            const matchHouse = house === '' || s.house === house;
+            return matchClass && matchSec && matchHouse;
+        });
+
+        // Extract unique measurement items (Dress Names)
+        const uniqueItems = new Set();
+        filteredStudents.forEach(s => {
+            if (s.measurements && Array.isArray(s.measurements)) {
+                s.measurements.forEach(m => {
+                    if (m.name) uniqueItems.add(m.name);
+                });
+            }
+        });
+        const itemsList = Array.from(uniqueItems).join(', ');
+
+        // --- GENERATE PDF ---
         // Header
         doc.setFontSize(18);
         doc.setFont("helvetica", "bold");
@@ -3517,24 +3536,38 @@ init();
         // Filter Box
         doc.setDrawColor(200);
         doc.setFillColor(245, 247, 250);
-        doc.rect(35, 35, 140, 40, 'FD');
+        doc.rect(20, 35, 170, 50, 'FD'); // Expanded box
 
         doc.setTextColor(60);
         doc.setFontSize(11);
-        doc.text("Current View Context:", 45, 45);
+        doc.text("View Context:", 30, 45);
 
         doc.setFont("helvetica", "bold");
-        doc.text(`Date: ${date}`, 130, 45);
+        doc.text(`Date: ${date}`, 140, 45);
 
         doc.setFont("helvetica", "normal");
-        doc.text(`• Class: ${cls}`, 50, 55);
-        doc.text(`• Section: ${sec}`, 50, 62);
-        doc.text(`• House: ${house}`, 50, 69);
+        doc.setFontSize(10);
+        doc.text(`• Class: ${cls || 'All'}`, 30, 55);
+        doc.text(`• Section: ${sec || 'All'}`, 30, 62);
+        doc.text(`• House: ${house || 'All'}`, 30, 69);
+
+        doc.setFont("helvetica", "bold");
+        doc.text(`Total Students: ${filteredStudents.length}`, 100, 55);
+
+        // Uniform Items Section
+        if (itemsList) {
+            doc.setFont("helvetica", "bold");
+            doc.text("Uniform Items:", 100, 62);
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(9);
+            // Split long text
+            const splitProps = doc.splitTextToSize(itemsList, 80);
+            doc.text(splitProps, 100, 67);
+        }
 
         // QR Image
         const container = document.getElementById('batchQrContainer');
         let imgData = null;
-
         if (container) {
             const canvas = container.querySelector('canvas');
             const img = container.querySelector('img');
@@ -3543,19 +3576,20 @@ init();
         }
 
         if (imgData) {
-            doc.addImage(imgData, 'PNG', 75, 85, 60, 60);
+            doc.addImage(imgData, 'PNG', 75, 100, 60, 60);
             doc.setFontSize(10);
             doc.setTextColor(150);
-            doc.text("Scan to open filtered list.", 105, 155, { align: "center" });
+            doc.text("Scan to open filtered list.", 105, 170, { align: "center" });
         } else {
-            doc.text("[QR Code Rendering Error]", 105, 100, { align: "center" });
+            doc.text("[QR Not Found]", 105, 120, { align: "center" });
         }
 
         // Footer 
         doc.setFontSize(8);
         doc.text("Generated via School Dashboard", 105, 280, { align: "center" });
 
-        doc.save(`Filter_QR_Report_${cls}_${sec}.pdf`);
+        // Save
+        doc.save(`Filter_QR_Report_${cls}_${sec}_${Date.now()}.pdf`);
     };
 </script>
 </body>
