@@ -976,11 +976,11 @@
             }
 
             try {
-                // Fetch Data
-                await fetchData();
-
-                // Show Default Tab
+                // Show Default Tab (Render UI First)
                 switchTab('dashboard');
+
+                // Fetch Data (Populate UI)
+                await fetchData();
 
                 // Prune Deleted History (Local Backup Maintenance)
                 if (typeof pruneDeletedHistory === 'function') pruneDeletedHistory();
@@ -1465,6 +1465,7 @@
                 try {
                     // Try to delete using ID, fallback to Admission No
                     const id = item.id || item.admission_no;
+                    console.log(`Attempting DELETE for ID: ${id} at /api/data/students/${id}`);
                     const res = await fetch(`/api/data/students/${id}`, {
                         method: 'DELETE',
                         headers: { 'Authorization': `Bearer ${token}` }
