@@ -511,6 +511,16 @@
                             <line x1="8" y1="13" x2="16" y2="17"></line>
                             <line x1="16" y1="13" x2="8" y2="17"></line>
                         </svg></button>
+                    <button onclick="generateBatchQr()"
+                        class="p-3 rounded-xl bg-slate-50 hover:bg-white text-slate-500 hover:text-indigo-500 hover:shadow-lg hover:translate-y-[-2px] transition-all shadow-sm"
+                        title="Generate Filter QR"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2.5">
+                            <path d="M3 7V5a2 2 0 0 1 2-2h2"></path>
+                            <path d="M17 3h2a2 2 0 0 1 2 2v2"></path>
+                            <path d="M21 17v2a2 2 0 0 1-2 2h-2"></path>
+                            <path d="M7 21H5a2 2 0 0 1-2-2v-2"></path>
+                            <rect x="7" y="7" width="10" height="10" rx="2"></rect>
+                        </svg></button>
                 </div>
             </div>
 
@@ -3206,7 +3216,7 @@
     <dialog id="idCardModal" class="bg-transparent">
         <div class="fixed inset-0 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm z-50">
             <div
-                class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200 border-4 border-white">
+                class="bg-white rounded-3xl shadow-2xl w-full max-w-sm max-h-[90vh] overflow-y-auto overflow-x-hidden animate-in zoom-in-95 duration-200 border-4 border-white">
                 <!-- ID Card Content -->
                 <div id="printableIdCard" class="bg-slate-50 relative overflow-hidden">
                     <!-- Background blobs -->
@@ -3312,6 +3322,63 @@
         </div>
     </div>
 
+    <!-- Batch QR Modal -->
+    <dialog id="batchQrModal" class="bg-transparent">
+        <div class="fixed inset-0 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm z-50">
+            <div
+                class="bg-white rounded-3xl shadow-2xl w-full max-w-sm max-h-[85vh] overflow-y-auto animate-in zoom-in-95 duration-200 border-4 border-white p-6 text-center">
+                <h3 class="text-xl font-black text-slate-800 uppercase tracking-tight mb-2">Filtered View QR</h3>
+                <p class="text-xs text-slate-500 mb-6">Scan to open this filtered list on mobile</p>
+
+                <div class="bg-white p-3 rounded-xl shadow-inner border border-slate-100 inline-block mb-4">
+                    <img id="batchQrImg" src="" alt="Batch QR" class="w-48 h-48 object-contain">
+                </div>
+
+                <div id="batchQrInfo" class="text-xs font-mono text-slate-400 mb-6 space-y-1"></div>
+
+                <button onclick="document.getElementById('batchQrModal').close()"
+                    class="w-full py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold transition-all">Close</button>
+            </div>
+        </div>
+    </dialog>
+
+    <script>
+        function generateBatchQr() {
+            // Get current filter values safely
+            const clsSelect = document.getElementById('filter_class');
+            const secSelect = document.getElementById('filter_section');
+            const houseSelect = document.getElementById('filter_house');
+
+            const cls = clsSelect ? clsSelect.value : '';
+            const sec = secSelect ? secSelect.value : '';
+            const house = houseSelect ? houseSelect.value : '';
+            const school = sessionStorage.getItem('schoolName') || 'Unknown School';
+
+            // Setup Payload for QR
+            const payload = {
+                s: school,
+                f: { c: cls, sec: sec, h: house },
+                t: Date.now()
+            };
+
+            // Encode JSON
+            const json = JSON.stringify(payload);
+            // using api.qrserver.com
+            const url = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(json)}`;
+
+            document.getElementById('batchQrImg').src = url;
+            document.getElementById('batchQrInfo').innerHTML = `
+                <p class="font-bold text-slate-600">School: ${school}</p>
+                <div class="border-t border-slate-100 my-2 pt-2">
+                    <p>Class: <span class="text-slate-600 font-bold">${cls || 'All'}</span></p>
+                    <p>Section: <span class="text-slate-600 font-bold">${sec || 'All'}</span></p>
+                    <p>House: <span class="text-slate-600 font-bold">${house || 'All'}</span></p>
+                </div>
+            `;
+
+            document.getElementById('batchQrModal').showModal();
+        }
+    </script>
 </body>
 
 </html>
