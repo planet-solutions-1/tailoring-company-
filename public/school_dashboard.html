@@ -999,6 +999,31 @@
         let selectedFiles = [];
 
         // === INIT ===
+        async function fetchSchoolDetails() {
+            try {
+                // Attempt to fetch school details using the ID
+                const res = await fetch(`/api/schools/${schoolId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (res.ok) {
+                    const schoolData = await res.json();
+                    if (schoolData && schoolData.name) {
+                        sessionStorage.setItem('schoolName', schoolData.name);
+                        // Update UI immediately if elements exist
+                        const el = document.getElementById('userSchoolName');
+                        if (el) el.innerText = schoolData.name;
+                        const setsEl = document.getElementById('settingsSchoolName');
+                        if (setsEl) setsEl.innerText = schoolData.name;
+                        return;
+                    }
+                }
+            } catch (e) {
+                console.warn("Could not fetch school details automatically", e);
+            }
+        }
+
+        // === INIT ===
         async function init() {
             if (!token || !schoolId) {
                 window.location.href = 'index.html';
@@ -1006,6 +1031,9 @@
             }
 
             try {
+                // 1. Fetch Basic Identity First (School Name)
+                await fetchSchoolDetails();
+
                 // Show Default Tab (Render UI First)
                 switchTab('dashboard');
 
@@ -1015,9 +1043,12 @@
                 // Prune Deleted History (Local Backup Maintenance)
                 if (typeof pruneDeletedHistory === 'function') pruneDeletedHistory();
 
-                // Set School Name (Live Update)
+                // Set School Name (Live Update from Storage or Fallback)
                 const storedName = sessionStorage.getItem('schoolName');
-                document.getElementById('userSchoolName').innerText = storedName || `School #${schoolId}`;
+                const dispName = storedName || `School #${schoolId}`;
+
+                const el = document.getElementById('userSchoolName');
+                if (el) el.innerText = dispName;
 
                 // Restore Preferences
                 if (localStorage.getItem('compactMode') === 'true') {
