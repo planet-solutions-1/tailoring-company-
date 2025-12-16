@@ -1462,7 +1462,7 @@
                 try {
                     // Try to delete using ID, fallback to Admission No
                     const id = item.id || item.admission_no;
-                    const res = await fetch(`/api/data/student/${id}`, {
+                    const res = await fetch(`/api/data/students/${id}`, {
                         method: 'DELETE',
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
