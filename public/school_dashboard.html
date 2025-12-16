@@ -1799,36 +1799,36 @@
             const printContent = document.getElementById('printableIdCard');
             const WinPrint = window.open('', '', 'left=0,top=0,width=800,height=900,toolbar=0,scrollbars=0,status=0');
             WinPrint.document.write(`
-                <html>
-                  <head>
-                    <title>Student ID Card</title>
-                    <script src="https://cdn.tailwindcss.com"><\/script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"><\/script>
-    <style>
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&display=swap');
-
-        body {
-            font-family: 'Outfit', sans-serif;
-            -webkit-print-color-adjust: exact;
-        }
-    </style>
-    </head>
-
+        <html>
+          <head>
+            <title>Student ID Card</title>
+            <script src="https://cdn.tailwindcss.com"><\/script>
+            <style>
+            @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&display=swap');
+            body {
+                font-family: 'Outfit', sans-serif;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+                background: white;
+            }
+            /* Force visibility for print */
+            * { color: black !important; text-shadow: none !important; }
+            </style>
+          </head>
     <body class="flex items-center justify-center min-h-screen bg-white">
         <div class="border border-slate-200 rounded-3xl overflow-hidden shadow-none w-[350px]">
             ${printContent.innerHTML}
         </div>
     </body>
-
 </html>
 `);
             WinPrint.document.close();
             WinPrint.focus();
+            // Allow Tailwind CDN to compute styles
             setTimeout(() => {
                 WinPrint.print();
                 WinPrint.close();
-            }, 1000);
+            }, 1500);
         }
 
         async function executeDelete(items) {
@@ -3657,9 +3657,10 @@
 
             // --- CALCULATE SUMMARY DATA ---
             // Filter students to get accurate count and items
+            // Filter students to get accurate count and items (Loose Matching)
             const filteredStudents = allStudents.filter(s => {
-                const matchClass = cls === '' || (s.class && s.class.toString() === cls);
-                const matchSec = sec === '' || (s.section && s.section.toString() === sec);
+                const matchClass = cls === '' || (String(s.class || '').trim() == cls);
+                const matchSec = sec === '' || (String(s.section || '').trim() == sec);
                 const matchHouse = house === '' || s.house === house;
                 return matchClass && matchSec && matchHouse;
             });
