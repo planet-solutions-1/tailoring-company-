@@ -534,6 +534,15 @@
                             <rect x="7" y="7" width="10" height="10" rx="2" stroke-dasharray="2 2"></rect>
                             <circle cx="12" cy="12" r="1" fill="currentColor"></circle>
                         </svg></button>
+                    <button onclick="document.getElementById('settingsModal').showModal()"
+                        class="p-3 rounded-xl bg-slate-50 hover:bg-white text-slate-500 hover:text-slate-700 hover:shadow-lg hover:translate-y-[-2px] transition-all shadow-sm"
+                        title="Settings"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2.5">
+                            <circle cx="12" cy="12" r="3"></circle>
+                            <path
+                                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+                            </path>
+                        </svg></button>
                 </div>
             </div>
 
@@ -2829,7 +2838,23 @@
                 }
                 lastComplaints = data; // Update cache
 
-                // GLOBAL DATA STORE (Fixes Click Issues)
+                // PIN from Settings
+                const pin = localStorage.getItem('default_qr_pin') || "1234";
+
+                // Setup Payload for QR
+                const payload = {
+                    s: school,
+                    f: {
+                        c: cls,
+                        sec: sec,
+                        h: house
+                    },
+                    p: pin // Embedded from Settings
+                };
+
+                // Display active PIN in modal (read-only info)
+                const pinDisplay = document.getElementById('activePinDisplay');
+                if (pinDisplay) pinDisplay.innerText = `Active Access PIN: ${pin}`;    // GLOBAL DATA STORE (Fixes Click Issues)
                 window.myComplaints = data;
 
                 if (!Array.isArray(data) || data.length === 0) {
@@ -3409,12 +3434,8 @@
                 <h3 class="text-xl font-black text-slate-800 uppercase tracking-tight mb-2">Filtered View QR</h3>
                 <p class="text-xs text-slate-500 mb-6">Scan to open this filtered list on mobile</p>
 
-                <!-- PIN Input -->
-                <div class="mb-4 text-left">
-                    <label class="text-xs font-bold text-slate-400 uppercase">Set Access PIN (Optional)</label>
-                    <input type="text" id="batchQrPin" placeholder="Default: 1234" maxlength="6"
-                        class="w-full mt-1 p-2 border border-slate-200 rounded-lg text-center font-mono font-bold text-slate-700 focus:ring-2 focus:ring-indigo-100 outline-none">
-                </div>
+                <!-- PIN Input Moved to Settings -->
+                <p class="text-xs text-slate-400 mb-4 italic" id="activePinDisplay">Using Default PIN</p>
 
                 <div
                     class="bg-white p-3 rounded-xl shadow-inner border border-slate-100 inline-block mb-4 flex justify-center">
@@ -3505,27 +3526,99 @@
         // Global QR Object
         window.qrCodeObj = null;
 
+        // 1. INJECT SETTINGS MODAL (Dynamic Injection)
+        (function injectSettingsUI() {
+            if (!document.getElementById('settingsModal')) {
+                const modalHtml = `
+                <dialog id="settingsModal" class="bg-transparent">
+                    <div class="fixed inset-0 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm z-50">
+                        <div class="clay-card bg-white p-8 rounded-3xl w-full max-w-sm animate-in zoom-in-95 shadow-2xl">
+                            <h3 class="text-2xl font-black text-slate-700 mb-6 flex items-center gap-2">
+                                <span>⚙️</span> Settings
+                            </h3>
+                            
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-2">Default QR Access Code</label>
+                                    <input type="text" id="settingQrPin" placeholder="1234" maxlength="6"
+                                        class="w-full p-3 bg-slate-50 rounded-xl border border-slate-200 text-center font-mono font-bold text-slate-600 focus:ring-2 focus:ring-indigo-200 outline-none transition-all placeholder:text-slate-300">
+                                    <p class="text-[10px] text-slate-400 mt-2">This PIN will be embedded in all generated Filter QRs.</p>
+                                </div>
+                            </div>
+
+                            <div class="flex gap-3 mt-8">
+                                <button onclick="document.getElementById('settingsModal').close()" 
+                                    class="flex-1 py-3 rounded-xl bg-slate-100 text-slate-500 font-bold hover:bg-slate-200 transition">Cancel</button>
+                                <button onclick="saveSettings()" 
+                                    class="flex-1 py-3 rounded-xl bg-indigo-500 text-white font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-600 transition">Save</button>
+                            </div>
+                        </div>
+                    </div>
+                </dialog>`;
+                document.body.insertAdjacentHTML('beforeend', modalHtml);
+            }
+
+            // Cleanup Old Input if exists
+            const oldInput = document.getElementById('batchQrPin');
+            if (oldInput) {
+                const parent = oldInput.parentElement;
+                if (parent) {
+                    parent.innerHTML = '<p class="text-xs text-slate-400 mb-4 italic" id="activePinDisplay">Using Global PIN</p>';
+                }
+            }
+        })();
+
+        // 2. SETTINGS ACTIONS
+        window.openSettings = function () {
+            const currentPin = localStorage.getItem('default_qr_pin') || "";
+            document.getElementById('settingQrPin').value = currentPin;
+            document.getElementById('settingsModal').showModal();
+        }
+
+        window.saveSettings = function () {
+            const newPin = document.getElementById('settingQrPin').value.trim();
+            if (newPin) {
+                localStorage.setItem('default_qr_pin', newPin);
+            } else {
+                localStorage.removeItem('default_qr_pin'); // Reset
+            }
+            document.getElementById('settingsModal').close();
+
+            // Show Feedback
+            const btn = document.querySelector('button[title="Settings"]');
+            if (btn) {
+                const original = btn.innerHTML;
+                btn.innerHTML = '✅';
+                setTimeout(() => btn.innerHTML = original, 1000);
+            }
+        }
+
+        // 3. QR GENERATION
         window.generateBatchQr = function () {
-            // Get current filter values safely
             const clsSelect = document.getElementById('filter_class');
             const secSelect = document.getElementById('filter_section');
             const houseSelect = document.getElementById('filter_house');
-            const pinInput = document.getElementById('batchQrPin');
 
             const cls = clsSelect ? clsSelect.value : '';
             const sec = secSelect ? secSelect.value : '';
             const house = houseSelect ? houseSelect.value : '';
             const school = sessionStorage.getItem('schoolName') || 'Unknown School';
-            const userPin = (pinInput && pinInput.value.trim()) ? pinInput.value.trim() : '1234';
+
+            // Use Stored PIN
+            const userPin = localStorage.getItem('default_qr_pin') || '1234';
 
             const payload = {
                 s: school,
                 f: { c: cls, sec: sec, h: house },
-                p: userPin, // Embedded unique PIN
+                p: userPin,
                 t: Date.now()
             };
 
             const json = JSON.stringify(payload);
+
+            // Update UI to show active PIN
+            const pinDisplay = document.getElementById('activePinDisplay');
+            if (pinDisplay) pinDisplay.innerText = `Active Access PIN: ${userPin}`;
 
             // Robust Container Finding
             let container = document.getElementById('batchQrContainer');
@@ -3533,8 +3626,8 @@
                 const img = document.getElementById('batchQrImg');
                 if (img) {
                     container = img.parentNode;
-                    container.id = 'batchQrContainer'; // Set ID for next time
-                    container.innerHTML = ''; // Remove the img
+                    container.id = 'batchQrContainer';
+                    container.innerHTML = '';
                 }
             }
 
@@ -3545,7 +3638,6 @@
 
             container.innerHTML = ''; // Clear
 
-            // Client-Side QR
             try {
                 window.qrCodeObj = new QRCode(container, {
                     text: json,
@@ -3556,7 +3648,6 @@
                     correctLevel: QRCode.CorrectLevel.H
                 });
 
-                // Center the QR canvas
                 container.style.display = 'flex';
                 container.style.justifyContent = 'center';
 
@@ -3695,10 +3786,10 @@
                     doc.save(`Filter_QR_${cls}_${sec}_${Date.now()}.pdf`);
                 } catch (pdfErr) {
                     console.error("PDF generation error", pdfErr);
-                    alert("Error adding QR to PDF. Please ensure QR is visible.");
+                    alert("Error adding QR to PDF.");
                 }
             } else {
-                alert("QR Code image not found! Please wait for it to generate and try again.");
+                alert("QR Code image not found!");
             }
         };
     </script>
