@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Access | School Data</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 text-slate-800">
+
+    <!-- SECURITY GATE MODAL -->
+    <dialog id="securityModal" class="bg-transparent backdrop:bg-slate-900/90" open>
+        <div class="fixed inset-0 flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-8 text-center animate-in zoom-in-95">
+                <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
+                        </path>
+                    </svg>
+                </div>
+                <h2 class="text-xl font-bold mb-2">Secure Access Required</h2>
+                <p class="text-slate-500 text-sm mb-6">Enter the School Access Code to view this list.</p>
+
+                <input type="password" id="accessPinInput" placeholder="Enter PIN"
+                    class="w-full text-center text-2xl tracking-[0.5em] font-bold p-3 border rounded-xl mb-4 focus:ring-2 focus:ring-slate-400 outline-none">
+
+                <button onclick="verifyPin()"
+                    class="w-full bg-slate-900 text-white py-3 rounded-xl font-bold hover:bg-slate-800 transition">Unlock
+                    View</button>
+                <p id="pinError" class="text-rose-500 text-xs font-bold mt-3 hidden">Incorrect Access Code</p>
+            </div>
+        </div>
+    </dialog>
+
+    <!-- CONTENT (Hidden by default) -->
+    <div id="mainContent" class="hidden min-h-screen flex flex-col">
+        <!-- Header -->
+        <div class="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center sticky top-0 z-10">
+            <div>
+                <h1 class="text-lg font-bold text-slate-800">Student List View</h1>
+                <p class="text-xs text-slate-500" id="filterContext">Loading context...</p>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="downloadPdf()"
+                    class="px-4 py-2 bg-rose-50 text-rose-600 rounded-lg text-sm font-bold hover:bg-rose-100 transition">PDF</button>
+                <button onclick="window.close()"
+                    class="px-4 py-2 bg-slate-100 text-slate-600 rounded-lg text-sm font-bold hover:bg-slate-200 transition">Close</button>
+            </div>
+        </div>
+
+        <!-- Data Display -->
+        <div class="flex-1 p-4 overflow-auto">
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <table class="w-full text-sm text-left">
+                    <thead class="bg-slate-50 text-slate-500 font-bold uppercase text-xs">
+                        <tr>
+                            <th class="px-4 py-3">Name</th>
+                            <th class="px-4 py-3">Class</th>
+                            <th class="px-4 py-3">Section</th>
+                            <th class="px-4 py-3 text-right">View</th>
+                        </tr>
+                    </thead>
+                    <tbody id="studentTableBody" class="divide-y divide-slate-100">
+                        <!-- Rows injected here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // === SECURITY LOGIC ===
+        let CORRECT_PIN = "1234"; // Default fallback
+        let filters = {};
+
+        // 1. DATA PRE-LOAD & PIN EXTRACTION
+        try {
+            const params = new URLSearchParams(window.location.search);
+            const filterStr = params.get('filters');
+            if (filterStr) {
+                filters = JSON.parse(decodeURIComponent(filterStr));
+
+                // Serverless Dynamic PIN from QR Payload
+                if (filters.p && filters.p.toString().trim() !== "") {
+                    CORRECT_PIN = filters.p.toString().trim();
+                    console.log("Using custom QR PIN");
+                }
+            }
+        } catch (e) { console.error("URL Params Parse Error", e); }
+
+        function verifyPin() {
+            const input = document.getElementById('accessPinInput').value;
+            if (input.trim() === CORRECT_PIN) {
+                document.getElementById('securityModal').close();
+                document.getElementById('securityModal').style.display = 'none';
+                document.getElementById('mainContent').classList.remove('hidden');
+                loadData();
+            } else {
+                document.getElementById('pinError').classList.remove('hidden');
+                document.getElementById('accessPinInput').value = '';
+                document.getElementById('accessPinInput').focus();
+            }
+        }
+
+        // === DATA LOGIC ===
+        async function loadData() {
+            // Update UI Context
+            document.getElementById('filterContext').innerText = `Class: ${filters.c || 'All'} • Section: ${filters.sec || 'All'}`;
+
+            // FETCH DATA
+            // NOTE: In a real public scenario, this endpoint must be public.
+            // For now, we simulate data or try to fetch.
+
+            // Mock Data for Prototype (Since we have no auth token)
+            // Ideally call: fetch(`/api/public/students?class=${filters.c}...`)
+            const mockStudents = [
+                { name: "Demo Student 1", class: filters.c || "10", section: filters.sec || "A" },
+                { name: "Demo Student 2", class: filters.c || "10", section: filters.sec || "A" },
+                { name: "Demo Student 3", class: filters.c || "10", section: filters.sec || "A" },
+                { name: "Demo Student 4", class: filters.c || "10", section: filters.sec || "A" },
+                { name: "Demo Student 5", class: filters.c || "10", section: filters.sec || "A" },
+            ];
+
+            renderTable(mockStudents);
+        }
+
+        function renderTable(data) {
+            const tbody = document.getElementById('studentTableBody');
+            tbody.innerHTML = data.map(s => `
+                <tr class="hover:bg-slate-50 transition">
+                    <td class="px-4 py-3 font-medium text-slate-800">${s.name}</td>
+                    <td class="px-4 py-3 text-slate-500">${s.class}</td>
+                    <td class="px-4 py-3 text-slate-500">${s.section}</td>
+                    <td class="px-4 py-3 text-right">
+                        <button class="text-indigo-600 font-bold hover:underline">Details</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function downloadPdf() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.text("Student List Filtered View", 10, 10);
+            doc.save("Student_List.pdf");
+        }
+
+        // Auto-Focus Pin
+        document.getElementById('accessPinInput').focus();
+    </script>
+</body>
+
+</html>
