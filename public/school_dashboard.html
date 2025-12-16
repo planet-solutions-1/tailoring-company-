@@ -1798,37 +1798,39 @@
         function printIdCard() {
             const printContent = document.getElementById('printableIdCard');
             const WinPrint = window.open('', '', 'left=0,top=0,width=800,height=900,toolbar=0,scrollbars=0,status=0');
+
+            // ROBUST PRINT: Clone the entire Head (Tailwind, Fonts, Styles)
             WinPrint.document.write(`
-        <html>
-          <head>
-            <title>Student ID Card</title>
-            <script src="https://cdn.tailwindcss.com"><\/script>
-            <style>
-            @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;700;900&display=swap');
-            body {
-                font-family: 'Outfit', sans-serif;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
-                background: white;
-            }
-            /* Force visibility for print */
-            * { color: black !important; text-shadow: none !important; }
-            </style>
-          </head>
-    <body class="flex items-center justify-center min-h-screen bg-white">
-        <div class="border border-slate-200 rounded-3xl overflow-hidden shadow-none w-[350px]">
-            ${printContent.innerHTML}
-        </div>
-    </body>
-</html>
-`);
+                <html>
+                  <head>
+                    ${document.head.innerHTML}
+                    <style>
+                        /* Print Overrides */
+                        body { 
+                            background: white !important; 
+                            -webkit-print-color-adjust: exact; 
+                            print-color-adjust: exact;
+                        }
+                        /* Ensure text visibility */
+                        * { color: black !important; text-shadow: none !important; }
+                    </style>
+                  </head>
+            <body class="flex items-center justify-center min-h-screen bg-white">
+                <div class="border border-slate-200 rounded-3xl overflow-hidden shadow-none w-[350px]">
+                    ${printContent.innerHTML}
+                </div>
+            </body>
+            </html>
+            `);
+
             WinPrint.document.close();
             WinPrint.focus();
-            // Allow Tailwind CDN to compute styles
+
+            // Wait for resources (fonts/images)
             setTimeout(() => {
                 WinPrint.print();
                 WinPrint.close();
-            }, 1500);
+            }, 1000);
         }
 
         async function executeDelete(items) {
@@ -3664,6 +3666,12 @@
                 const matchHouse = house === '' || s.house === house;
                 return matchClass && matchSec && matchHouse;
             });
+
+            // DEBUGGING: Warn if Logic Fails
+            if (filteredStudents.length === 0) {
+                alert(`DEBUG: No Students Found!\nFilter Class: "${cls}"\nFilter Section: "${sec}"\nTotal in DB: ${allStudents.length}\nSample Student Class: "${allStudents[0]?.class || 'N/A'}"`);
+                // Don't return, let it generate empty PDF so user sees the "0"
+            }
 
             // Extract unique measurement items (Dress Names)
             const uniqueItems = new Set();
