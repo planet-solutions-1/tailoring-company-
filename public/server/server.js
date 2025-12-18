@@ -117,14 +117,18 @@ app.get('/api/public/students', (req, res) => {
 });
 
 // 3.5 DELETE Student (Fix 500 Error)
+// 3.5 DELETE Student (Fix 500 Error & 404 for Imported Data)
 app.delete('/api/data/students/:id', (req, res) => {
     const idToDelete = req.params.id;
     let students = readJson(DB_FILE);
     const initialLen = students.length;
 
-    // Filter out the student (Match by database ID or admission number? ID usually)
-    // Assuming 'id' field exists.
-    students = students.filter(s => String(s.id) !== idToDelete);
+    // Filter out the student (Match by database ID OR admission number)
+    // Trim whitespace to ensure clean matching
+    students = students.filter(s =>
+        String(s.id || '').trim() !== String(idToDelete).trim() &&
+        String(s.admission_no || '').trim() !== String(idToDelete).trim()
+    );
 
     if (students.length < initialLen) {
         writeJson(DB_FILE, students);
