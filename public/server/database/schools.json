@@ -1,0 +1,14 @@
+[
+  {
+    "id": 5,
+    "name": "test1 school",
+    "address": "123 Test St, Tech City",
+    "logo": "school_logo.png"
+  },
+  {
+    "id": 1,
+    "name": "Demo School",
+    "address": "456 Demo Lane",
+    "logo": ""
+  }
+]

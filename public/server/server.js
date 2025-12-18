@@ -63,6 +63,7 @@ app.get('/uploads/:filename', (req, res) => {
 // === DATABASE LOGIC (Injected Fix) ===
 const DB_FILE = path.join(__dirname, 'database', 'students.json');
 const COMPLAINTS_FILE = path.join(__dirname, 'database', 'complaints.json');
+const SCHOOLS_FILE = path.join(__dirname, 'database', 'schools.json');
 
 // Ensure DB Dir
 if (!fs.existsSync(path.dirname(DB_FILE))) {
@@ -82,10 +83,16 @@ function writeJson(file, data) {
     fs.writeFileSync(file, JSON.stringify(data, null, 2));
 }
 
-// === NEW API ENDPOINTS (Fixing 404s) ===
-// 1. School Details
+// === NEW API ENDPOINTS (Fixing 404s & 500s) ===
+// 1. School Details (Dynamic)
 app.get('/api/schools/:id', (req, res) => {
-    res.json({ id: req.params.id, name: "Planets School (Synced)", address: "123 Education Lane", logo: "" });
+    const schools = readJson(SCHOOLS_FILE);
+    const school = schools.find(s => String(s.id) === String(req.params.id));
+    if (school) {
+        res.json(school);
+    } else {
+        res.json({ id: req.params.id, name: "Unknown School", address: "N/A", logo: "" });
+    }
 });
 
 // 2. Sync Logic (Laptop -> Server)
@@ -103,11 +110,30 @@ app.post('/api/sync', (req, res) => {
 app.get('/api/public/students', (req, res) => {
     const { class: cls, section, admission_no } = req.query;
     let students = readJson(DB_FILE);
-    if (cls) students = students.filter(s => String(s.class || '').trim() == cls);
-    if (section) students = students.filter(s => String(s.section || '').trim() == section);
-    if (admission_no) students = students.filter(s => String(s.admission_no || '') == admission_no);
+    if (cls) students = students.filter(s => String(s.class || '').trim() === cls);
+    if (section) students = students.filter(s => String(s.section || '').trim() === section);
+    if (admission_no) students = students.filter(s => String(s.admission_no || '') === admission_no);
     res.json(students);
 });
+
+// 3.5 DELETE Student (Fix 500 Error)
+app.delete('/api/data/students/:id', (req, res) => {
+    const idToDelete = req.params.id;
+    let students = readJson(DB_FILE);
+    const initialLen = students.length;
+
+    // Filter out the student (Match by database ID or admission number? ID usually)
+    // Assuming 'id' field exists.
+    students = students.filter(s => String(s.id) !== idToDelete);
+
+    if (students.length < initialLen) {
+        writeJson(DB_FILE, students);
+        res.json({ success: true, message: "Deleted" });
+    } else {
+        res.status(404).json({ error: "Student not found" });
+    }
+});
+
 
 // 4. Complaints Logic
 app.get(['/api/data/complaints/:id', '/api/data/my_complaints'], (req, res) => {
