@@ -1271,17 +1271,17 @@
             // 3. QR PIN
             const pinInput = document.getElementById('page_qr_pin');
             if (pinInput) {
-                pinInput.value = localStorage.getItem('default_qr_pin') || '';
+                pinInput.value = localStorage.getItem(`default_qr_pin_${schoolId}`) || '';
             }
         }
 
         function saveQrPinSettings() {
             const pin = document.getElementById('page_qr_pin').value.trim();
             if (pin) {
-                localStorage.setItem('default_qr_pin', pin);
+                localStorage.setItem(`default_qr_pin_${schoolId}`, pin);
                 alert("Settings Saved! Default PIN: " + pin);
             } else {
-                localStorage.removeItem('default_qr_pin');
+                localStorage.removeItem(`default_qr_pin_${schoolId}`);
                 alert("Settings Saved! No Default PIN set (will fallback to 1234).");
             }
         }
@@ -3686,7 +3686,7 @@
             const school = sessionStorage.getItem('schoolName') || 'Unknown School';
 
             // Use Stored PIN
-            const userPin = localStorage.getItem('default_qr_pin') || '1234';
+            const userPin = localStorage.getItem(`default_qr_pin_${schoolId}`) || '1234';
 
             const payload = {
                 s: school,
