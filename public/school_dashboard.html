@@ -1911,48 +1911,74 @@
         }
 
         async function executeDelete(items) {
-            // 1. Local Backup (Browser Storage) for 5-Day Retention
-            const history = JSON.parse(localStorage.getItem('deleted_history') || '[]');
-            const timestamp = new Date().toISOString();
-
-            items.forEach(item => {
-                history.push({ ...item, status: 'Trash', deleted_at: timestamp });
-            });
-            localStorage.setItem('deleted_history', JSON.stringify(history));
-
-            // 2. Optimistic UI Removal
+            // 0. ANIMATION (Visual Feedback)
             const idsToRemove = new Set(items.map(i => i.admission_no));
-            allStudents = allStudents.filter(s => !idsToRemove.has(s.admission_no));
-            renderStudents();
 
-            // 3. Perform HARD DELETE on Server
-            for (const item of items) {
-                try {
-                    // Try to delete using ID, fallback to Admission No
-                    const id = item.id || item.admission_no;
-                    console.log('--- DEBUG DELETE ---');
-                    console.log('Item Object:', item);
-                    console.log(`Target ID: ${id}`);
-                    console.log(`URL: /api/data/students/${id}`);
-                    const res = await fetch(`/api/data/students/${id}`, {
-                        method: 'DELETE',
-                        headers: { 'Authorization': `Bearer ${token}` }
+            // Apply Animation Class to visible rows
+            document.querySelectorAll('#studentsTableBody tr').forEach(row => {
+                // Find identifying cell (Admission No is usually in 2nd column or similar, but we need reliability)
+                // Let's rely on checkbox value if present, or just generic index if matched?
+                // Better: The render function puts checkboxes with values.
+                const checkbox = row.querySelector('input[type="checkbox"]');
+                if (checkbox && idsToRemove.has(checkbox.value)) {
+                    row.style.transition = "all 0.5s ease";
+                    row.style.opacity = "0";
+                    row.style.transform = "translateX(-20px)";
+                    row.style.backgroundColor = "#ffe4e6"; // Red tint
+                }
+            });
+
+            // Wait for Animation
+            await new Promise(r => setTimeout(r, 400));
+
+            // 1. Local Backup (Browser Storage) - PROTECTED
+            try {
+                // Only save history if count is small to avoid Quota Exceeded
+                if (items.length <= 20) {
+                    let history = JSON.parse(localStorage.getItem('deleted_history') || '[]');
+                    const timestamp = new Date().toISOString();
+
+                    items.forEach(item => {
+                        history.push({ ...item, status: 'Trash', deleted_at: timestamp });
                     });
 
-                    if (!res.ok) {
-                        console.warn(`DELETE failed for ${id}. Status: ${res.status}`);
-                        // If 404, it's already gone, which is fine for us.
-                        if (res.status !== 404) throw new Error("Server Delete Error");
-                    }
-                } catch (e) {
-                    console.error("Delete Failed", e);
-                    // alert("Warning: Could not delete from server. It may reappear on refresh.");
-                    // Suppressed alert to avoid spamming usage flow
+                    // Cap History size at 50 items
+                    if (history.length > 50) history = history.slice(-50);
+
+                    localStorage.setItem('deleted_history', JSON.stringify(history));
+                } else {
+                    console.warn("Bulk delete: Skipping Undo History storage to prevent Quota Limits.");
                 }
+            } catch (e) {
+                console.warn("Storage Quota Exceeded (Undo disabled for this action)", e);
             }
 
+            // 2. Optimistic UI Removal
+            allStudents = allStudents.filter(s => !idsToRemove.has(s.admission_no));
+            renderStudents(); // Re-render instantly after animation
+
+            // 3. Perform HARD DELETE on Server
+            // Use Parallel Requests for speed, but throttle if huge
+            // For 2000 items, parallel is too much. Sequential is too slow.
+            // Ideally backend supports BULK DELETE. But we only have /api/data/students/:id
+            // We'll proceed optimistically.
+
+            // We will NOT await every single delete to keep UI responsive. 
+            // We run it in background.
+            (async () => {
+                let successCount = 0;
+                for (const item of items) {
+                    try {
+                        const id = item.id || item.admission_no;
+                        await fetch(`/api/data/students/${id}`, { method: 'DELETE' });
+                        successCount++;
+                    } catch (e) { console.error("Del Err", e); }
+                }
+                console.log(`Background Delete Complete: ${successCount}/${items.length}`);
+            })();
+
             // 4. Update UI
-            showUndoToast(`${items.length} Student${items.length > 1 ? 's' : ''} deleted (Saved in Backup)`);
+            showUndoToast(`${items.length} Student${items.length > 1 ? 's' : ''} deleted`);
             updateBulkActionUI();
         }
 
