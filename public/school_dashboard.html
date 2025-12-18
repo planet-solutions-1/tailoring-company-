@@ -261,13 +261,7 @@
                 </svg>
                 <span class="text-sm">Settings</span>
             </div>
-            <a href="#" onclick="openDiagnostics(event)" id="nav-status"
-                class="nav-item mx-4 text-red-500 hover:text-red-600">
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
-                </svg>
-                <span class="text-sm font-bold">System Status</span>
-            </a>
+
         </nav>
 
         <div class="p-4 border-t border-slate-200">
@@ -3876,17 +3870,7 @@
             }
         };
 
-        function openDiagnostics(e) {
-            e.preventDefault();
-            const t = sessionStorage.getItem('token');
-            const s = sessionStorage.getItem('schoolId');
-            if (t) {
-                window.open(`debug_tool.html?token=${encodeURIComponent(t)}&sid=${encodeURIComponent(s)}`, '_blank');
-            } else {
-                alert("You are not logged in!");
-                window.location.href = 'index.html';
-            }
-        }
+
     </script>
 
 </body>
