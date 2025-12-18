@@ -3501,10 +3501,17 @@
                                 <span id="idStatus"
                                     class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-500 uppercase tracking-wide">Pending</span>
                             </div>
-                            <div class="text-center">
-                                <p class="text-[10px] text-indigo-300 font-bold uppercase tracking-wider mb-2">
-                                    Measurements
-                                </p>
+                            <div class="flex items-center gap-4">
+                                <a href="debug_tool.html" target="_blank"
+                                    class="text-xs bg-red-100 text-red-600 px-2 py-1 rounded hover:bg-red-200"
+                                    title="Run System Tests">
+                                    🩺 diagnose
+                                </a>
+                                <button id="syncBtn"
+                                    class="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shadow-sm">
+                                    <i class="fas fa-sync-alt"></i>
+                                    <span>Sync</span>
+                                </button>
                                 <div class="space-y-1 text-center font-mono text-xs font-bold text-slate-600 min-h-[40px]"
                                     id="idMeasurements">
                                     <!-- Dynamic Dress Details -->
