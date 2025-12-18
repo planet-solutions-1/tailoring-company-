@@ -163,13 +163,14 @@
                 } else if (res.ok) {
                     delStatus.innerHTML = "<span class='pass'>SUCCESS: 200 OK. Deleted successfully.</span>";
                 } else {
-                } else {
                     const errText = await res.text();
                     delStatus.innerHTML = `<span class='fail'>FAIL: Error ${res.status}</span><br><pre>${errText}</pre>`;
                 }
-            } catch (e) {
-                delStatus.innerHTML = "<span class='fail'>FAIL: Network Error.</span>";
+                delStatus.innerHTML = `<span class='fail'>FAIL: Error ${res.status}</span><br><pre>${errText}</pre>`;
             }
+            } catch (e) {
+            delStatus.innerHTML = "<span class='fail'>FAIL: Network Error.</span>";
+        }
         }
     </script>
 </body>
