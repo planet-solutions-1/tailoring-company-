@@ -288,8 +288,10 @@ router.post('/student', authenticateToken, (req, res) => {
 router.delete('/students/:id', authenticateToken, (req, res) => {
     const { id } = req.params;
 
-    // Security Check: Get student's school_id first to verify permission
-    db.get("SELECT school_id, name FROM students WHERE id = ?", [id], (err, row) => {
+    // Security Check: Find student by ID OR Admission No
+    const queryFind = "SELECT id, school_id, name FROM students WHERE id = ? OR admission_no = ?";
+
+    db.get(queryFind, [id, id], (err, row) => {
         if (err) return res.status(500).json({ error: err.message });
         if (!row) return res.status(404).json({ error: "Student not found" });
 
@@ -298,7 +300,8 @@ router.delete('/students/:id', authenticateToken, (req, res) => {
             return res.status(403).json({ error: "Unauthorized" });
         }
 
-        db.run("DELETE FROM students WHERE id = ?", [id], function (err) {
+        // Perform Delete using the FOUND internal ID (Safe)
+        db.run("DELETE FROM students WHERE id = ?", [row.id], function (err) {
             if (err) return res.status(500).json({ error: err.message });
             if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'DELETE_STUDENT', `Deleted student: ${row.name}`);
             res.json({ message: "Student deleted" });
