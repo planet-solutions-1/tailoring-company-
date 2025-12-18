@@ -1047,8 +1047,21 @@
     </template>
 
     <script>
-        // === GLOBAL STATE ===
+        // === DATA STORE ===
         let allStudents = [];
+        // Sync Helper
+        async function syncToServer() {
+            try {
+                console.log("Syncing to server...");
+                const res = await fetch('/api/sync', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ students: allStudents })
+                });
+                if (res.ok) console.log("Sync Complete");
+                else console.error("Sync Failed");
+            } catch (e) { console.error("Sync Net Error", e); }
+        }
         let lastComplaints = []; // For notification tracking
         let currentView = 'dashboard';
         const schoolId = parseInt(sessionStorage.getItem('schoolId'));
@@ -2674,66 +2687,43 @@
                         section: student.section,
                         house: student.house,
                         status: student.status,
-                        order_status: student.order_status
+                        order_status: student.order_status,
+                        measurements: student.measurements // Include measurements directly
                     };
 
-                    // Check for Duplicates (Name + Admission No)
+                    // Check for Duplicates (Admission No)
                     const existing = allStudents.find(s =>
-                        String(s.admission_no) === String(student.admission_no) &&
-                        s.name.trim().toLowerCase() === student.name.trim().toLowerCase()
+                        String(s.admission_no) === String(student.admission_no)
                     );
 
                     try {
-                        let targetId = null;
-
                         if (existing) {
                             // DUPLICATE FOUND
                             if (confirm(`Duplicate found: ${student.name} (Adm: ${student.admission_no}).\nUpdate existing record?`)) {
-                                // UPDATE via POST with ID (Backend Logic)
-                                const updatePayload = { ...payload, id: existing.id };
-                                const res = await fetch('/api/data/student', {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                                    body: JSON.stringify(updatePayload)
-                                });
-                                if (!res.ok) throw new Error("Update failed");
-                                targetId = existing.id;
+                                // Update existing student in allStudents array
+                                const existingIndex = allStudents.findIndex(s => String(s.admission_no) === String(student.admission_no));
+                                if (existingIndex !== -1) {
+                                    allStudents[existingIndex] = { ...allStudents[existingIndex], ...payload };
+                                }
                                 updated++;
                             } else {
                                 skipped++;
                                 continue;
                             }
                         } else {
-                            // NEW RECORD
-                            const res = await fetch('/api/data/student', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                                body: JSON.stringify(payload)
-                            });
-                            if (!res.ok) throw new Error("Create failed");
-                            const data = await res.json();
-                            targetId = data.id; // Capture New ID
+                            // NEW RECORD  - Assign a pseudo-ID
+                            allStudents.push({ ...payload, id: Date.now() + Math.random() });
                             success++;
                         }
-
-                        // UPLOAD MEASUREMENTS
-                        if (targetId && student.measurements && student.measurements.length > 0) {
-                            await fetch('/api/data/measurements', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                                body: JSON.stringify({
-                                    student_id: targetId,
-                                    data: student.measurements,
-                                    remarks: "Imported via Excel"
-                                })
-                            });
-                        }
-
                     } catch (e) {
                         console.error(e);
                         errors++;
                     }
                 }
+
+                // 4. Update UI & SYNC
+                allStudents = [...allStudents]; // Refresh ref
+                await syncToServer(); // PUSH DATA TO SERVER
 
                 alert(`Report:\n✅ Created: ${success}\n🔄 Updated: ${updated}\n⏭️ Skipped: ${skipped}\n❌ Errors: ${errors}`);
 
@@ -2744,7 +2734,9 @@
                 renderImportPreview();
 
                 document.getElementById('importModal').classList.add('hidden');
-                fetchData(); // Refresh main table
+
+                renderStudents(); // Refresh main table
+                renderDashboardStats();
 
             } catch (e) {
                 alert("Critical Error: " + e.message);

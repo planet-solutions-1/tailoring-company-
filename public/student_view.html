@@ -128,25 +128,40 @@
                 } catch (e) { console.error("Student parse error", e); }
             }
 
-            // Normal List Context
-            // Update UI Context
+            // Normal List Context (Mobile Scan View)
             document.getElementById('filterContext').innerText = `Class: ${filters.c || 'All'} • Section: ${filters.sec || 'All'}`;
 
-            // FETCH DATA
-            // NOTE: In a real public scenario, this endpoint must be public.
-            // For now, we simulate data or try to fetch.
+            // FETCH REAL DATA
+            const query = new URLSearchParams({
+                class: filters.c || '',
+                section: filters.sec || '',
+                // house: filters.h // Optional
+            }).toString();
 
-            // Mock Data for Prototype (Since we have no auth token)
-            // Ideally call: fetch(`/api/public/students?class=${filters.c}...`)
-            const mockStudents = [
-                { name: "Demo Student 1", class: filters.c || "10", section: filters.sec || "A" },
-                { name: "Demo Student 2", class: filters.c || "10", section: filters.sec || "A" },
-                { name: "Demo Student 3", class: filters.c || "10", section: filters.sec || "A" },
-                { name: "Demo Student 4", class: filters.c || "10", section: filters.sec || "A" },
-                { name: "Demo Student 5", class: filters.c || "10", section: filters.sec || "A" },
-            ];
+            try {
+                const res = await fetch(`/api/public/students?${query}`);
+                if (!res.ok) throw new Error("Server Error");
+                const students = await res.json();
 
-            renderTable(mockStudents);
+                if (students.length > 0) {
+                    renderTable(students);
+                } else {
+                    document.getElementById('studentTableBody').innerHTML = `
+                        <tr><td colspan="4" class="p-8 text-center text-slate-400">
+                            No students found for this class/section.<br>
+                            <span class="text-xs">Ensure data is synced from Dashboard.</span>
+                        </td></tr>`;
+                }
+            } catch (e) {
+                console.warn("Fetch Error, falling back to Demo if Local", e);
+                // Fallback for Local/Demo Mode
+                const mockStudents = [
+                    { name: "Demo Student 1", class: filters.c || "10", section: filters.sec || "A" },
+                    { name: "Demo Student 2", class: filters.c || "10", section: filters.sec || "A" }
+                ];
+                renderTable(mockStudents);
+                document.getElementById('filterContext').innerHTML += ` <span class="text-rose-400 font-bold">(Demo Data - Server Unreachable)</span>`;
+            }
         }
 
         function renderTable(data) {
