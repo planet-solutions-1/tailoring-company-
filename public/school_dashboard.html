@@ -483,6 +483,11 @@
                         onchange="renderStudents()">
                         <option value="">All Sections</option>
                     </select>
+                    <select id="filterHouse"
+                        class="bg-white border-none shadow-sm rounded-xl text-sm px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-300 font-medium text-slate-600"
+                        onchange="renderStudents()">
+                        <option value="">All Houses</option>
+                    </select>
                 </div>
                 <div class="flex items-center gap-3 pl-2">
                     <!-- Bulk Actions (Hidden by default) -->
@@ -1459,6 +1464,14 @@
                 const classes = [...new Set(activeClasses)].sort();
                 classes.forEach(c => classSelect.add(new Option(c, c)));
             }
+
+            // Populate House Filter
+            const houseSelect = document.getElementById('filterHouse');
+            if (houseSelect && houseSelect.options.length <= 1) {
+                const activeHouses = allStudents.filter(s => s.status !== 'Trash').map(s => s.house).filter(Boolean);
+                const houses = [...new Set(activeHouses)].sort();
+                houses.forEach(h => houseSelect.add(new Option(h, h)));
+            }
         }
 
         function populateSections() {
@@ -1489,6 +1502,7 @@
             const search = document.getElementById('searchInput').value.toLowerCase();
             const fClass = document.getElementById('filterClass').value;
             const fSec = document.getElementById('filterSection').value;
+            const fHouse = document.getElementById('filterHouse')?.value || '';
 
             populateFilters();
 
@@ -1499,7 +1513,8 @@
                 const matchSearch = (s.name?.toLowerCase().includes(search) || String(s.roll_no).toLowerCase().includes(search));
                 const matchClass = !fClass || s.class == fClass;
                 const matchSec = !fSec || s.section == fSec;
-                return matchSearch && matchClass && matchSec;
+                const matchHouse = !fHouse || s.house == fHouse;
+                return matchSearch && matchClass && matchSec && matchHouse;
             });
 
             currentFilteredList = filtered; // Update Global List
@@ -3663,11 +3678,11 @@
         window.generateBatchQr = function () {
             const clsSelect = document.getElementById('filterClass');
             const secSelect = document.getElementById('filterSection');
-            // const houseSelect = document.getElementById('filterHouse'); // Does not exist
+            const houseSelect = document.getElementById('filterHouse');
 
             const cls = clsSelect ? clsSelect.value : '';
             const sec = secSelect ? secSelect.value : '';
-            const house = ''; // Defaults to All for now
+            const house = houseSelect ? houseSelect.value : '';
             const school = sessionStorage.getItem('schoolName') || 'Unknown School';
 
             // Use Stored PIN
@@ -3749,7 +3764,7 @@
             const school = sessionStorage.getItem('schoolName') || 'Unknown School';
             const cls = document.getElementById('filterClass')?.value || '';
             const sec = document.getElementById('filterSection')?.value || '';
-            const house = ''; // No House Filter Logic
+            const house = document.getElementById('filterHouse')?.value || '';
 
             const date = new Date().toLocaleDateString();
 

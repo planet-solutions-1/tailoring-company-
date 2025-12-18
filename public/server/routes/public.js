@@ -25,6 +25,13 @@ router.get('/students', (req, res) => {
         params.push(sec);
     }
 
+    // Filter by House (if provided and not 'All')
+    const house = req.query.house || '';
+    if (house && house !== 'All') {
+        sql += " AND house = ?";
+        params.push(house);
+    }
+
     // Sort by name
     sql += " ORDER BY name ASC";
 
