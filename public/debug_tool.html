@@ -154,7 +154,8 @@
                 });
 
                 if (res.status === 401) {
-                    delStatus.innerHTML = "<span class='fail'>FAIL: 401 Unauthorized. The Server rejected your Token.</span>";
+                    const errText = await res.text();
+                    delStatus.innerHTML = `<span class='fail'>FAIL: 401 Unauthorized. The Server rejected your Token.</span><br>Server Said: ${errText}`;
                 } else if (res.status === 403) {
                     delStatus.innerHTML = "<span class='fail'>FAIL: 403 Forbidden. You don't have permission for this School ID.</span>";
                 } else if (res.status === 404) {
@@ -162,7 +163,9 @@
                 } else if (res.ok) {
                     delStatus.innerHTML = "<span class='pass'>SUCCESS: 200 OK. Deleted successfully.</span>";
                 } else {
-                    delStatus.innerHTML = `<span class='fail'>FAIL: Error ${res.status}</span>`;
+                } else {
+                    const errText = await res.text();
+                    delStatus.innerHTML = `<span class='fail'>FAIL: Error ${res.status}</span><br><pre>${errText}</pre>`;
                 }
             } catch (e) {
                 delStatus.innerHTML = "<span class='fail'>FAIL: Network Error.</span>";
