@@ -289,9 +289,16 @@ router.delete('/students/:id', authenticateToken, (req, res) => {
     const { id } = req.params;
 
     // Security Check: Find student by ID OR Admission No
-    const queryFind = "SELECT id, school_id, name FROM students WHERE id = ? OR admission_no = ?";
+    // Fix: MySQL Crash on "String vs Int" - Only query 'id' if numeric
+    let queryFind = "SELECT id, school_id, name FROM students WHERE admission_no = ?";
+    let params = [id];
 
-    db.get(queryFind, [id, id], (err, row) => {
+    if (/^\d+$/.test(id)) {
+        queryFind += " OR id = ?";
+        params.push(id);
+    }
+    
+    db.get(queryFind, params, (err, row) => {
         if (err) return res.status(500).json({ error: err.message });
         if (!row) return res.status(404).json({ error: "Student not found" });
 
