@@ -1577,6 +1577,13 @@
             // 'excel' = Active Only (Standard Export)
             // 'backup' = Active + Locally Archived Deleted Items (Settings > Backup)
 
+            // CRITICAL: Ensure we have data
+            if (!allStudents || allStudents.length === 0) {
+                console.log("Export: Data not ready, fetching...");
+                await fetchData();
+            }
+            if (!allStudents || allStudents.length === 0) return alert("No data available to export.");
+
             let dataToExport = [];
 
             if (type === 'backup') {
