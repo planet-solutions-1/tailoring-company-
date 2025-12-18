@@ -116,7 +116,6 @@ app.get('/api/public/students', (req, res) => {
     res.json(students);
 });
 
-// 3.5 DELETE Student (Fix 500 Error)
 // 3.5 DELETE Student (Fix 500 Error & 404 for Imported Data)
 app.delete('/api/data/students/:id', (req, res) => {
     const idToDelete = req.params.id;
@@ -137,7 +136,6 @@ app.delete('/api/data/students/:id', (req, res) => {
         res.status(404).json({ error: "Student not found" });
     }
 });
-
 
 // 4. Complaints Logic
 app.get(['/api/data/complaints/:id', '/api/data/my_complaints'], (req, res) => {
