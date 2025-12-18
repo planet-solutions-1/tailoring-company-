@@ -1981,7 +1981,10 @@
                 for (const item of items) {
                     try {
                         const id = item.admission_no || item.id;
-                        await fetch(`/api/data/students/${id}`, { method: 'DELETE' });
+                        await fetch(`/api/data/students/${id}`, {
+                            method: 'DELETE',
+                            headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('token') }
+                        });
                         successCount++;
                     } catch (e) { console.error("Del Err", e); }
                 }
