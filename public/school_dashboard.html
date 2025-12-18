@@ -1603,6 +1603,13 @@
                     : allStudents;
             }
 
+            // Capture Context
+            const schoolName = sessionStorage.getItem('schoolName') || 'SchoolData';
+            const fClass = document.getElementById('filterClass')?.value || 'All';
+            const fSec = document.getElementById('filterSection')?.value || 'All';
+            const fHouse = document.getElementById('filterHouse')?.value || 'All';
+            const dateStr = new Date().toISOString().slice(0, 10);
+
             if (dataToExport.length === 0) return alert("No data to export!");
 
             if (type === 'excel' || type === 'backup') {
@@ -1613,19 +1620,43 @@
                     "Class": s.class,
                     "Section": s.section,
                     "House": s.house,
-                    "Status": s.status || 'Active',
+                    "Status": s.order_status || 'Pending',
                     "Deleted At": s.deleted_at || ''
                 })));
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, ws, "Students");
-                XLSX.writeFile(wb, `School_Data_${type == 'backup' ? 'FULL_BACKUP_WithARCHIVE' : 'Export'}_${new Date().toISOString().slice(0, 10)}.xlsx`);
+
+                // Filename with School Name
+                const fileName = `${schoolName}_${type === 'backup' ? 'FULL_BACKUP' : 'Student_List'}_${dateStr}.xlsx`;
+                XLSX.writeFile(wb, fileName);
+
             } else if (type === 'pdf') {
                 const doc = new jspdf.jsPDF();
+
+                // Add Header
+                doc.setFontSize(18);
+                doc.text(schoolName, 14, 22);
+
+                doc.setFontSize(11);
+                doc.setTextColor(100);
+                doc.text(`Student List Report | ${dateStr}`, 14, 28);
+                doc.text(`Filters: Class: ${fClass} | Section: ${fSec} | House: ${fHouse}`, 14, 34);
+
                 doc.autoTable({
-                    head: [['Adm No', 'Name', 'Class', 'Roll No']],
-                    body: dataToExport.map(s => [s.admission_no, s.name, `${s.class} ${s.section || ''}`, s.roll_no]),
+                    startY: 40,
+                    head: [['Adm No', 'Name', 'Class/Sec', 'House', 'Status']],
+                    body: dataToExport.map(s => [
+                        s.admission_no,
+                        s.name,
+                        `${s.class} ${s.section || ''}`,
+                        s.house || '-',
+                        s.order_status || 'Pending'
+                    ]),
+                    theme: 'grid',
+                    styles: { fontSize: 9 },
+                    headStyles: { fillColor: [79, 70, 229] } // Indigo
                 });
-                doc.save('students.pdf');
+                doc.save(`${schoolName}_Student_List.pdf`);
             }
         }
 
