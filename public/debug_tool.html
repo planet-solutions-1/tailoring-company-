@@ -166,11 +166,9 @@
                     const errText = await res.text();
                     delStatus.innerHTML = `<span class='fail'>FAIL: Error ${res.status}</span><br><pre>${errText}</pre>`;
                 }
-                delStatus.innerHTML = `<span class='fail'>FAIL: Error ${res.status}</span><br><pre>${errText}</pre>`;
-            }
             } catch (e) {
-            delStatus.innerHTML = "<span class='fail'>FAIL: Network Error.</span>";
-        }
+                delStatus.innerHTML = "<span class='fail'>FAIL: Network Error.</span>";
+            }
         }
     </script>
 </body>
