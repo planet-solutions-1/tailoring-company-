@@ -55,6 +55,8 @@
             <div class="flex gap-2">
                 <button onclick="downloadPdf()"
                     class="px-4 py-2 bg-rose-50 text-rose-600 rounded-lg text-sm font-bold hover:bg-rose-100 transition">PDF</button>
+                <button onclick="downloadExcel()"
+                    class="px-4 py-2 bg-emerald-50 text-emerald-600 rounded-lg text-sm font-bold hover:bg-emerald-100 transition">Excel</button>
                 <button onclick="window.close()"
                     class="px-4 py-2 bg-slate-100 text-slate-600 rounded-lg text-sm font-bold hover:bg-slate-200 transition">Close</button>
             </div>
@@ -129,7 +131,9 @@
             }
 
             // Normal List Context (Mobile Scan View)
-            document.getElementById('filterContext').innerText = `Class: ${filters.c || 'All'} • Section: ${filters.sec || 'All'}`;
+            const schoolName = filters.s || 'School Data';
+            const contextText = `${schoolName} • Class: ${filters.c || 'All'} • Section: ${filters.sec || 'All'} • House: ${filters.h || 'All'}`;
+            document.getElementById('filterContext').innerText = contextText;
 
             // FETCH REAL DATA
             const query = new URLSearchParams({
@@ -250,6 +254,32 @@
                 </div>
             `;
             document.getElementById('filterContext').innerText = "Individual Student View";
+        }
+
+        // EXCEL EXPORT
+        function downloadExcel() {
+            const students = window.fetchedStudents || [];
+            if (students.length === 0) return alert("No data to export");
+
+            const schoolName = filters.s || 'School';
+            const fileName = `${schoolName}_Student_List_${new Date().toISOString().slice(0, 10)}.xlsx`;
+
+            // Flatten Data for Excel
+            const excelData = students.map(s => ({
+                "Admission No": s.id,
+                "Student Name": s.name,
+                "Class": s.class,
+                "Section": s.section,
+                "House": s.house,
+                "Status": s.status,
+                // Flatten Measurements if single item, or just summary
+                "Measurements": (s.measurements || []).map(m => `${m.Item}: ${m.Size} (Qty ${m.Qty})`).join('; ')
+            }));
+
+            const ws = XLSX.utils.json_to_sheet(excelData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Students");
+            XLSX.writeFile(wb, fileName);
         }
 
         async function downloadPdf() {
