@@ -79,8 +79,10 @@
     </div>
 
     <script>
-        const token = sessionStorage.getItem('token');
-        const schoolId = sessionStorage.getItem('schoolId');
+        // Get params from URL (injected by Dashboard) OR fallback to Session
+        const params = new URLSearchParams(window.location.search);
+        const token = params.get('token') || sessionStorage.getItem('token');
+        const schoolId = params.get('sid') || sessionStorage.getItem('schoolId');
 
         // 1. Token Check
         const tokenStatus = document.getElementById('tokenStatus');
