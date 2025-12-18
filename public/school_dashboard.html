@@ -3745,9 +3745,9 @@
             const doc = new jsPDF();
 
             const school = sessionStorage.getItem('schoolName') || 'Unknown School';
-            const cls = document.getElementById('filter_class').value || '';
-            const sec = document.getElementById('filter_section').value || '';
-            const house = document.getElementById('filter_house').value || '';
+            const cls = document.getElementById('filter_class')?.value || '';
+            const sec = document.getElementById('filter_section')?.value || '';
+            const house = document.getElementById('filter_house')?.value || '';
             const date = new Date().toLocaleDateString();
 
             // --- CALCULATE SUMMARY DATA ---
