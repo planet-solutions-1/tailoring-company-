@@ -1056,7 +1056,10 @@
                 console.log("Syncing to server...");
                 const res = await fetch('/api/sync', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
                     body: JSON.stringify({ students: allStudents })
                 });
                 if (res.ok) console.log("Sync Complete");
