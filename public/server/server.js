@@ -60,6 +60,70 @@ app.get('/uploads/:filename', (req, res) => {
 });
 
 // Routes
+// === DATABASE LOGIC (Injected Fix) ===
+const DB_FILE = path.join(__dirname, 'database', 'students.json');
+const COMPLAINTS_FILE = path.join(__dirname, 'database', 'complaints.json');
+
+// Ensure DB Dir
+if (!fs.existsSync(path.dirname(DB_FILE))) {
+    fs.mkdirSync(path.dirname(DB_FILE), { recursive: true });
+}
+
+function readJson(file) {
+    if (!fs.existsSync(file)) return [];
+    try {
+        return JSON.parse(fs.readFileSync(file, 'utf8'));
+    } catch (e) {
+        console.error("Read Error", file, e);
+        return [];
+    }
+}
+function writeJson(file, data) {
+    fs.writeFileSync(file, JSON.stringify(data, null, 2));
+}
+
+// === NEW API ENDPOINTS (Fixing 404s) ===
+// 1. School Details
+app.get('/api/schools/:id', (req, res) => {
+    res.json({ id: req.params.id, name: "Planets School (Synced)", address: "123 Education Lane", logo: "" });
+});
+
+// 2. Sync Logic (Laptop -> Server)
+app.post('/api/sync', (req, res) => {
+    const { students } = req.body;
+    if (Array.isArray(students)) {
+        writeJson(DB_FILE, students);
+        res.json({ success: true, count: students.length });
+    } else {
+        res.status(400).json({ error: "Invalid data" });
+    }
+});
+
+// 3. Public Student Fetch (Mobile View)
+app.get('/api/public/students', (req, res) => {
+    const { class: cls, section, admission_no } = req.query;
+    let students = readJson(DB_FILE);
+    if (cls) students = students.filter(s => String(s.class || '').trim() == cls);
+    if (section) students = students.filter(s => String(s.section || '').trim() == section);
+    if (admission_no) students = students.filter(s => String(s.admission_no || '') == admission_no);
+    res.json(students);
+});
+
+// 4. Complaints Logic
+app.get(['/api/data/complaints/:id', '/api/data/my_complaints'], (req, res) => {
+    res.json(readJson(COMPLAINTS_FILE));
+});
+app.post('/api/data/complaints', (req, res) => {
+    const ticket = { ...req.body, id: Date.now(), status: 'Pending', created_at: new Date() };
+    const tickets = readJson(COMPLAINTS_FILE);
+    tickets.push(ticket);
+    writeJson(COMPLAINTS_FILE, tickets);
+    res.json(ticket);
+});
+
+// === END INJECTED FIX ===
+
+// Serving Uploads
 const authRoutes = require('./routes/auth_v2');
 const dataRoutes = require('./routes/data');
 console.log("Mounting /api/auth and /api/data routes...");
