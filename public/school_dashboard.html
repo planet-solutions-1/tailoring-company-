@@ -1969,7 +1969,7 @@
                 let successCount = 0;
                 for (const item of items) {
                     try {
-                        const id = item.id || item.admission_no;
+                        const id = item.admission_no || item.id;
                         await fetch(`/api/data/students/${id}`, { method: 'DELETE' });
                         successCount++;
                     } catch (e) { console.error("Del Err", e); }
