@@ -3704,9 +3704,11 @@
 
             container.innerHTML = ''; // Clear
 
+            const url = `${window.location.origin}/student_view.html?filters=${encodeURIComponent(json)}`;
+
             try {
                 window.qrCodeObj = new QRCode(container, {
-                    text: json,
+                    text: url,
                     width: 200,
                     height: 200,
                     colorDark: "#000000",
