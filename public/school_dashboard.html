@@ -3690,6 +3690,7 @@
 
             const payload = {
                 s: school,
+                sid: schoolId, // CRITICAL: Pass School ID for filtering
                 f: { c: cls, sec: sec, h: house },
                 p: userPin,
                 t: Date.now()

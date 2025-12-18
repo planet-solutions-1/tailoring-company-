@@ -135,13 +135,15 @@
             const query = new URLSearchParams({
                 class: filters.c || '',
                 section: filters.sec || '',
-                house: filters.h || ''
+                house: filters.h || '',
+                sid: filters.sid || '' // CRITICAL: Filter by School ID
             }).toString();
 
             try {
                 const res = await fetch(`/api/public/students?${query}`);
                 if (!res.ok) throw new Error("Server Error");
                 const students = await res.json();
+                window.fetchedStudents = students; // Store for Modal
 
                 if (students.length > 0) {
                     renderTable(students);
@@ -166,46 +168,85 @@
 
         function renderTable(data) {
             const tbody = document.getElementById('studentTableBody');
-            tbody.innerHTML = data.map(s => `
+            tbody.innerHTML = data.map((s, index) => `
                 <tr class="hover:bg-slate-50 transition">
                     <td class="px-4 py-3 font-medium text-slate-800">${s.name}</td>
                     <td class="px-4 py-3 text-slate-500">${s.class}</td>
                     <td class="px-4 py-3 text-slate-500">${s.section}</td>
                     <td class="px-4 py-3 text-right">
-                        <button class="text-indigo-600 font-bold hover:underline">Details</button>
+                        <button onclick="showDetails(${index})" class="text-indigo-600 font-bold hover:underline">Details</button>
                     </td>
                 </tr>
             `).join('');
         }
 
+        // SHOW DETAILS MODAL
+        function showDetails(index) {
+            const s = window.fetchedStudents[index];
+            if (!s) return;
+
+            // Simple Alert or Custom Modal? Let's re-use Security Modal but change content,
+            // or just render the Card View overlay. Let's render Card View overlay for simplicity.
+
+            // Re-render as card overlay
+            renderStudentCard(s);
+        }
+
         function renderStudentCard(s) {
             const container = document.getElementById('studentTableBody').parentElement;
-            // Clear table and show card
+
+            // Build Measurements HTML
+            let measHtml = '';
+            if (s.measurements && s.measurements.length > 0) {
+                measHtml = `
+                    <div class="w-full text-left space-y-3 mt-4">
+                        <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest border-b pb-1">Measurements</h3>
+                        ${s.measurements.map(m => `
+                             <div class="bg-indigo-50 p-3 rounded-lg flex justify-between items-center">
+                                <div>
+                                    <p class="font-bold text-indigo-900">${m.Item || 'Item'}</p>
+                                    <p class="text-xs text-indigo-500">${m.Pattern || '-'}</p>
+                                </div>
+                                <div class="text-right">
+                                    <span class="font-mono font-bold text-lg">${m.Size || '-'}</span>
+                                    <p class="text-[10px] text-indigo-400">Qty: ${m.Qty || 1}</p>
+                                </div>
+                             </div>
+                        `).join('')}
+                    </div>
+                 `;
+            } else {
+                measHtml = `
+                     <div class="p-3 bg-slate-100 text-slate-500 text-xs rounded-lg mt-4">
+                        No measurements found.
+                     </div>
+                 `;
+            }
+
             container.innerHTML = `
-                <div class="p-8 flex flex-col items-center text-center">
+                <div class="p-8 flex flex-col items-center text-center animate-in slide-in-from-bottom-4">
+                    <button onclick="loadData()" class="self-start mb-4 text-slate-400 hover:text-slate-800 flex items-center gap-1 font-bold text-sm">
+                        ← Back to List
+                    </button>
                     <div class="w-24 h-24 bg-indigo-100 rounded-full flex items-center justify-center mb-4 text-3xl">🎓</div>
-                    <h2 class="text-2xl font-black text-slate-800 mb-1">${s.n || 'Unknown'}</h2>
-                    <p class="text-lg font-bold text-slate-500 mb-4">${s.c || '-'} ${s.s ? '(' + s.s + ')' : ''}</p>
+                    <h2 class="text-2xl font-black text-slate-800 mb-1">${s.name || 'Unknown'}</h2>
+                    <p class="text-lg font-bold text-slate-500 mb-4">${s.class || '-'} ${s.section ? '(' + s.section + ')' : ''}</p>
                     
                     <div class="grid grid-cols-2 gap-4 w-full max-w-xs mb-6">
                         <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
                             <p class="text-xs uppercase font-bold text-slate-400">ADM NO</p>
                             <p class="font-mono font-bold text-slate-700">${s.id || '--'}</p>
                         </div>
-                        <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
-                            <p class="text-xs uppercase font-bold text-slate-400">STATUS</p>
-                            <p class="font-bold text-indigo-600">${s.st || 'Unknown'}</p>
+                         <div class="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                            <p class="text-xs uppercase font-bold text-slate-400">HOUSE</p>
+                            <p class="font-bold text-slate-700">${s.house || '-'}</p>
                         </div>
                     </div>
-
-                    <div class="w-full max-w-xs space-y-3">
-                         <div class="p-3 bg-amber-50 text-amber-700 text-xs rounded-lg">
-                            Measurements not stored in QR. <br>Login to view full details.
-                         </div>
-                         <button onclick="window.location.href='index.html'" class="w-full py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800">
-                            Admin Login (Update)
-                         </button>
+                    
+                    <div class="w-full max-w-sm">
+                         ${measHtml}
                     </div>
+
                 </div>
             `;
             document.getElementById('filterContext').innerText = "Individual Student View";
