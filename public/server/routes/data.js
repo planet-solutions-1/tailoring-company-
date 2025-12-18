@@ -297,7 +297,7 @@ router.delete('/students/:id', authenticateToken, (req, res) => {
         queryFind += " OR id = ?";
         params.push(id);
     }
-    
+
     db.get(queryFind, params, (err, row) => {
         if (err) return res.status(500).json({ error: err.message });
         if (!row) return res.status(404).json({ error: "Student not found" });
@@ -308,10 +308,21 @@ router.delete('/students/:id', authenticateToken, (req, res) => {
         }
 
         // Perform Delete using the FOUND internal ID (Safe)
-        db.run("DELETE FROM students WHERE id = ?", [row.id], function (err) {
-            if (err) return res.status(500).json({ error: err.message });
-            if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'DELETE_STUDENT', `Deleted student: ${row.name}`);
-            res.json({ message: "Student deleted" });
+        // Fix: Manual Cascade Delete (Measurements & Orders first to avoid Foreign Key Error)
+        const studentId = row.id;
+
+        db.run("DELETE FROM measurements WHERE student_id = ?", [studentId], (errMc) => {
+            if (errMc) console.error("Warn: Measurement delete failed", errMc.message);
+
+            db.run("DELETE FROM orders WHERE student_id = ?", [studentId], (errOrd) => {
+                if (errOrd) console.error("Warn: Order delete failed", errOrd.message);
+
+                db.run("DELETE FROM students WHERE id = ?", [studentId], function (err) {
+                    if (err) return res.status(500).json({ error: err.message });
+                    if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'DELETE_STUDENT', `Deleted student: ${row.name}`);
+                    res.json({ message: "Student and related data deleted" });
+                });
+            });
         });
     });
 });
