@@ -3661,13 +3661,13 @@
 
         // 3. QR GENERATION
         window.generateBatchQr = function () {
-            const clsSelect = document.getElementById('filter_class');
-            const secSelect = document.getElementById('filter_section');
-            const houseSelect = document.getElementById('filter_house');
+            const clsSelect = document.getElementById('filterClass');
+            const secSelect = document.getElementById('filterSection');
+            // const houseSelect = document.getElementById('filterHouse'); // Does not exist
 
             const cls = clsSelect ? clsSelect.value : '';
             const sec = secSelect ? secSelect.value : '';
-            const house = houseSelect ? houseSelect.value : '';
+            const house = ''; // Defaults to All for now
             const school = sessionStorage.getItem('schoolName') || 'Unknown School';
 
             // Use Stored PIN
@@ -3745,9 +3745,10 @@
             const doc = new jsPDF();
 
             const school = sessionStorage.getItem('schoolName') || 'Unknown School';
-            const cls = document.getElementById('filter_class')?.value || '';
-            const sec = document.getElementById('filter_section')?.value || '';
-            const house = document.getElementById('filter_house')?.value || '';
+            const cls = document.getElementById('filterClass')?.value || '';
+            const sec = document.getElementById('filterSection')?.value || '';
+            const house = ''; // No House Filter Logic
+
             const date = new Date().toLocaleDateString();
 
             // --- CALCULATE SUMMARY DATA ---
