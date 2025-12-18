@@ -188,6 +188,9 @@ if (process.env.RAILWAY_ENVIRONMENT || process.env.NODE_ENV === 'production') {
                 }
             }
 
+            // STUDENTS TABLE MIGRATION
+            try { await promisePool.execute("ALTER TABLE students ADD COLUMN house VARCHAR(50)"); } catch (e) { }
+
             console.log("MySQL Tables Initialized.");
 
             // Seed OR Reset Admin

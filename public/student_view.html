@@ -160,7 +160,7 @@
                     { name: "Demo Student 2", class: filters.c || "10", section: filters.sec || "A" }
                 ];
                 renderTable(mockStudents);
-                document.getElementById('filterContext').innerHTML += ` <span class="text-rose-400 font-bold">(Demo Data - Server Unreachable)</span>`;
+                document.getElementById('filterContext').innerHTML += ` <span class="text-rose-500 font-bold block mt-1">(Error: ${e.message})</span>`;
             }
         }
 
