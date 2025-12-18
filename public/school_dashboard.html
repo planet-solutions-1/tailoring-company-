@@ -9,6 +9,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
@@ -1782,7 +1783,7 @@
                 measContainer.innerHTML = '<div class="text-slate-300 italic py-2 text-[10px]">No measurements found</div>';
             }
 
-            // Generate QR with JSON Data
+            // Generate QR with JSON Data (Client Side Optimization)
             const qrData = JSON.stringify({
                 id: student.admission_no,
                 n: student.name,
@@ -1790,9 +1791,72 @@
                 s: student.section,
                 st: student.status
             });
-            document.getElementById('idQrCode').src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(qrData)}`;
+
+            // Clear Previous
+            const qrContainer = document.getElementById('idQrCodeContainer');
+            if (qrContainer) {
+                qrContainer.innerHTML = '';
+                try {
+                    new QRCode(qrContainer, {
+                        text: qrData,
+                        width: 128,
+                        height: 128,
+                        colorDark: "#000000",
+                        colorLight: "#ffffff",
+                        correctLevel: QRCode.CorrectLevel.H
+                    });
+                } catch (e) {
+                    console.error("QR Gen Error", e);
+                    qrContainer.innerText = "QR Error";
+                }
+            }
 
             document.getElementById('idCardModal').showModal();
+        }
+
+        async function downloadIdCard() {
+            const element = document.getElementById('printableIdCard');
+            if (!element) return;
+
+            // Visual Feedback
+            const btn = document.querySelector('button[title="Download Card"]');
+            const originalText = btn ? btn.innerHTML : '';
+            if (btn) btn.innerText = "Generating...";
+
+            try {
+                // Wait for any images/fonts
+                await new Promise(r => setTimeout(r, 500));
+
+                const canvas = await html2canvas(element, {
+                    scale: 3, // High Quality
+                    backgroundColor: "#ffffff",
+                    useCORS: true // Allow cross-origin images
+                });
+
+                const imgData = canvas.toDataURL('image/png');
+                const { jsPDF } = window.jspdf;
+
+                // ID Card Size approx 350px width -> ~92mm
+                // PDF A4 is 210mm. Let's make it a small Card PDF or fit to page.
+                // Let's make a custom size PDF matching the card aspect ratio + margin
+                const pdfWidth = 100; // mm
+                const pdfHeight = (canvas.height / canvas.width) * pdfWidth;
+
+                const doc = new jsPDF({
+                    orientation: 'p',
+                    unit: 'mm',
+                    format: [pdfWidth + 20, pdfHeight + 20] // Padding
+                });
+
+                doc.addImage(imgData, 'PNG', 10, 10, pdfWidth, pdfHeight);
+                doc.save(`ID_Card_${document.getElementById('idAdm').innerText}.pdf`);
+
+            } catch (err) {
+                console.error("Card Export Error", err);
+                alert("Failed to create PDF. Please try again.");
+            } finally {
+                if (btn) btn.innerHTML = originalText;
+            }
         }
 
         function printIdCard() {
@@ -3426,9 +3490,9 @@
                             </div>
                         </div>
 
-                        <!-- QR Code -->
-                        <div class="bg-white p-2 rounded-xl shadow-sm">
-                            <img id="idQrCode" src="" alt="QR" class="w-24 h-24 object-contain opacity-90">
+                        <!-- QR Code (Client Side Optimised) -->
+                        <div class="bg-white p-2 rounded-xl shadow-sm flex justify-center items-center min-h-[120px]">
+                            <div id="idQrCodeContainer"></div>
                         </div>
                         <p class="text-[9px] text-slate-300 mt-2 font-mono">Scan to view full details</p>
                     </div>
@@ -3438,15 +3502,15 @@
                 <div class="p-4 border-t border-slate-100 flex justify-between bg-white">
                     <button onclick="document.getElementById('idCardModal').close()"
                         class="text-slate-400 hover:text-slate-600 font-bold text-sm px-4">Close</button>
-                    <button onclick="printIdCard()"
+                    <button onclick="downloadIdCard()" title="Download Card"
                         class="bg-indigo-600 text-white px-6 py-2 rounded-xl font-bold text-sm shadow-lg shadow-indigo-200 hover:shadow-indigo-400 transition-all flex items-center gap-2">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2">
-                            <polyline points="6 9 6 2 18 2 18 9"></polyline>
-                            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
-                            <rect x="6" y="14" width="12" height="8"></rect>
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
                         </svg>
-                        Print Card
+                        Download PDF
                     </button>
                 </div>
             </div>

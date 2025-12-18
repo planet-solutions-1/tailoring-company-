@@ -7,6 +7,7 @@
     <title>Student Access | School Data</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -195,11 +196,41 @@
             document.getElementById('filterContext').innerText = "Individual Student View";
         }
 
-        function downloadPdf() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            doc.text("Student List Filtered View", 10, 10);
-            doc.save("Student_List.pdf");
+        async function downloadPdf() {
+            const content = document.getElementById('mainContent');
+            const btn = document.querySelector('button[onclick="downloadPdf()"]');
+            const originalText = btn.innerText;
+            btn.innerText = "Processing...";
+
+            try {
+                // Ensure everything rendered
+                await new Promise(r => setTimeout(r, 500));
+
+                const canvas = await html2canvas(content, {
+                    scale: 2,
+                    useCORS: true,
+                    ignoreElements: (el) => el.tagName === 'BUTTON' || el.id === 'securityModal' // Hide buttons in PDF
+                });
+
+                const imgData = canvas.toDataURL('image/png');
+                const { jsPDF } = window.jspdf;
+
+                // Fit to A4 Height or Width logic
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                const pageWidth = pdf.internal.pageSize.getWidth();
+                const pageHeight = pdf.internal.pageSize.getHeight();
+
+                const imgWidth = pageWidth;
+                const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+                pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+                pdf.save("Student_View_Export.pdf");
+            } catch (err) {
+                console.error(err);
+                alert("PDF Error: " + err.message);
+            } finally {
+                btn.innerText = originalText;
+            }
         }
 
         // Auto-Focus Pin
