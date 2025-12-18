@@ -109,6 +109,7 @@ if (process.env.RAILWAY_ENVIRONMENT || process.env.NODE_ENV === 'production') {
                     section VARCHAR(50),
                     house VARCHAR(50),
                     gender VARCHAR(50),
+                    order_status VARCHAR(50) DEFAULT 'Pending',
                     is_active BOOLEAN DEFAULT 1,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     FOREIGN KEY (school_id) REFERENCES schools(id)
@@ -190,6 +191,7 @@ if (process.env.RAILWAY_ENVIRONMENT || process.env.NODE_ENV === 'production') {
 
             // STUDENTS TABLE MIGRATION
             try { await promisePool.execute("ALTER TABLE students ADD COLUMN house VARCHAR(50)"); } catch (e) { }
+            try { await promisePool.execute("ALTER TABLE students ADD COLUMN order_status VARCHAR(50) DEFAULT 'Pending'"); } catch (e) { }
 
             console.log("MySQL Tables Initialized.");
 
