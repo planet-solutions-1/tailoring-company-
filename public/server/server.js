@@ -123,9 +123,12 @@ app.post('/api/sync', authenticateToken, async (req, res) => {
 // Serving Helper Routes
 const authRoutes = require('./routes/auth_v2');
 const dataRoutes = require('./routes/data');
-console.log("Mounting /api/auth and /api/data routes...");
+const publicRoutes = require('./routes/public');
+
+console.log("Mounting /api/auth, /api/data, and /api/public routes...");
 app.use('/api/auth', authRoutes);
 app.use('/api/data', dataRoutes);
+app.use('/api/public', publicRoutes);
 
 // UPLOAD ENDPOINT
 app.post('/api/data/upload', upload.array('images', 5), (req, res) => {
