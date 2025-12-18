@@ -61,9 +61,9 @@ app.get('/uploads/:filename', (req, res) => {
 
 // Routes
 // === DATABASE LOGIC (Injected Fix) ===
-const DB_FILE = path.join(__dirname, 'database', 'students.json');
-const COMPLAINTS_FILE = path.join(__dirname, 'database', 'complaints.json');
-const SCHOOLS_FILE = path.join(__dirname, 'database', 'schools.json');
+const DB_FILE = path.join(__dirname, 'public', 'server', 'database', 'students.json');
+const COMPLAINTS_FILE = path.join(__dirname, 'public', 'server', 'database', 'complaints.json');
+const SCHOOLS_FILE = path.join(__dirname, 'public', 'server', 'database', 'schools.json');
 
 // Ensure DB Dir
 if (!fs.existsSync(path.dirname(DB_FILE))) {
