@@ -219,8 +219,7 @@
                 let students = await res.json();
                 window.fetchedStudents = students;
 
-                <span class="text-xs">Ensure data is synced.</span>
-                        </td ></tr > `;
+
                 // If adm is present, try to find and render that specific student
                 if (adm) {
                     const target = students.find(s => String(s.admission_no) === adm || String(s.temp_id) === adm || String(s.id) === adm);
@@ -232,9 +231,9 @@
 
             } catch (e) {
                 console.warn("Fallback", e);
-                 // Fallback
-                 const mockStudents = Array(5).fill(0).map((_,i) => ({
-                    name: `Student ${ i + 1 } `, class: filters.c||"10", section: filters.sec||"A",
+                // Fallback
+                const mockStudents = Array(5).fill(0).map((_, i) => ({
+                    name: `Student ${i + 1} `, class: filters.c || "10", section: filters.sec || "A",
                     measurements: [{ Item: "Shirt", Size: "32" }, { Item: "Pant", Size: 30 }]
                 }));
                 window.fetchedStudents = mockStudents;
@@ -246,7 +245,7 @@
         function renderList(data) {
             const listContainer = document.getElementById('listView');
 
-            if(data.length === 0) {
+            if (data.length === 0) {
                 listContainer.innerHTML = `< div class="p-8 text-center text-slate-400 font-bold" > No students found</div > `;
                 return;
             }
@@ -254,8 +253,7 @@
             // Mobile-Friendly Card Layout (Claymorphism)
             listContainer.innerHTML = `
                     < div class="grid gap-4 pb-20" >
-                        ${
-                            data.map((s, index) => `
+                        ${data.map((s, index) => `
                         <div onclick="showDetails(${index})" class="clay-btn bg-white p-4 flex justify-between items-center cursor-pointer hover:scale-[1.01] transition-transform">
                             <div class="flex items-center gap-4">
                                 <div class="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-500 font-bold text-lg">
@@ -299,8 +297,7 @@
             // Build Measurements HTML
             const measHtml = (s.measurements && s.measurements.length)
                 ? `< div class="w-full max-w-sm grid gap-3 mt-6" >
-                    ${
-                    s.measurements.map(m => `
+                    ${s.measurements.map(m => `
                         <div class="clay-btn p-4 flex justify-between items-center bg-white/50">
                             <div><p class="font-bold text-indigo-900">${m.Item}</p><p class="text-[10px] text-indigo-400">${m.Pattern || ''}</p></div>
                             <div class="font-mono font-black text-xl text-slate-700">${m.Size}</div>
@@ -327,7 +324,7 @@
                     </div>
                 </div>
 
-                ${ measHtml }
+                ${measHtml}
                 `;
             document.getElementById('filterContext').innerText = "Student Profile";
         }
@@ -338,7 +335,7 @@
             // Restore Context
             const params = new URLSearchParams(window.location.search);
             const sName = params.get('s') || (filters.s || 'School Data');
-            document.getElementById('filterContext').innerText = `${ sName } • Class: ${ filters.c || 'All' } • Sec: ${ filters.sec || 'All' } `;
+            document.getElementById('filterContext').innerText = `${sName} • Class: ${filters.c || 'All'} • Sec: ${filters.sec || 'All'} `;
         }
 
         // === NEW PDF LOGIC (AUTO TABLE) ===
@@ -354,15 +351,15 @@
             doc.setFontSize(10);
             doc.setTextColor(100);
             const dateStr = new Date().toLocaleDateString();
-            doc.text(`Student Measurement Report | ${ dateStr } `, 14, 26);
-            doc.text(`Filter: Class ${ filters.c || 'All' } - Section ${ filters.sec || 'All' } `, 14, 32);
+            doc.text(`Student Measurement Report | ${dateStr} `, 14, 26);
+            doc.text(`Filter: Class ${filters.c || 'All'} - Section ${filters.sec || 'All'} `, 14, 32);
 
             // Prepare Data
             const students = window.fetchedStudents || [];
             const tableBody = students.map(s => {
                 // Flatten Measurements
-                const measStr = (s.measurements || []).map(m => `${ m.Item }: ${ m.Size } `).join(', ');
-                return [s.name, `${ s.class } ${ s.section } `, s.admission_no || s.id, measStr || '-'];
+                const measStr = (s.measurements || []).map(m => `${m.Item}: ${m.Size} `).join(', ');
+                return [s.name, `${s.class} ${s.section} `, s.admission_no || s.id, measStr || '-'];
             });
 
             // AutoTable
@@ -378,7 +375,7 @@
                 }
             });
 
-            doc.save(`Student_Report_${ dateStr }.pdf`);
+            doc.save(`Student_Report_${dateStr}.pdf`);
         }
 
         // EXCEL EXPORT
@@ -388,7 +385,7 @@
             if (!students.length) return alert("No Data");
             const ws = XLSX.utils.json_to_sheet(students.map(s => ({
                 Name: s.name, Class: s.class, Section: s.section,
-                Measurements: (s.measurements || []).map(m => `${ m.Item }:${ m.Size }`).join(', ')
+                Measurements: (s.measurements || []).map(m => `${m.Item}:${m.Size}`).join(', ')
             })));
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Students");
