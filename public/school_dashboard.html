@@ -1577,6 +1577,8 @@
         }
 
         async function exportData(type) {
+            if (type === 'backup') alert("Starting Backup Process... Please wait.");
+
             // 'excel' = Active Only (Standard Export)
             // 'backup' = Active + Locally Archived Deleted Items (Settings > Backup)
 
@@ -1866,9 +1868,9 @@
             }
 
             // Generate QR with Dynamic URL (Always Fresh Data)
-            // Points to student_view.html with specific admission no
             const sName = sessionStorage.getItem('schoolName') || 'School';
-            const qrData = `${window.location.origin}/student_view.html?sid=${schoolId}&adm=${encodeURIComponent(student.admission_no || student.temp_id)}&s=${encodeURIComponent(sName)}`;
+            const sPin = localStorage.getItem(`default_qr_pin_${schoolId}`) || '1234';
+            const qrData = `${window.location.origin}/student_view.html?sid=${schoolId}&adm=${encodeURIComponent(student.admission_no || student.temp_id)}&s=${encodeURIComponent(sName)}&p=${encodeURIComponent(sPin)}`;
 
             // Clear Previous
             const qrContainer = document.getElementById('idQrCodeContainer');

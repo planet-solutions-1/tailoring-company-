@@ -91,13 +91,19 @@
         try {
             const params = new URLSearchParams(window.location.search);
             const filterStr = params.get('filters');
+
+            // Allow PIN override via URL param 'p' (for Individual QR)
+            const paramPin = params.get('p');
+            if (paramPin) {
+                CORRECT_PIN = paramPin;
+            }
+
             if (filterStr) {
                 filters = JSON.parse(decodeURIComponent(filterStr));
 
-                // Serverless Dynamic PIN from QR Payload
+                // Serverless Dynamic PIN from QR Payload (Batch QR)
                 if (filters.p && filters.p.toString().trim() !== "") {
                     CORRECT_PIN = filters.p.toString().trim();
-                    console.log("Using custom QR PIN");
                 }
             }
         } catch (e) { console.error("URL Params Parse Error", e); }
