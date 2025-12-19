@@ -1298,7 +1298,7 @@
                     bBtn.onclick = null;
                     bBtn.addEventListener('click', (e) => {
                         e.preventDefault();
-                        alert('Backup Button Clicked!'); // Immediate Feedback
+
                         if (window.exportData) window.exportData('backup');
                         else alert("Error: Export function missing");
                     });
@@ -1622,7 +1622,7 @@
 
                 // 1. UI Feedback
                 if (type === 'backup') {
-                    alert("Starting Backup Process... Please wait.");
+
                     if (btn) btn.innerText = "Processing...";
                 }
 
@@ -1679,7 +1679,7 @@
                     const fileName = `${safeSchoolName}_${type === 'backup' ? 'FULL_BACKUP' : 'Student_List'}_${dateStr}.xlsx`;
                     XLSX.writeFile(wb, fileName);
 
-                    if (type === 'backup') alert(`Backup Success! \nFile: ${fileName}`);
+
 
                 } else if (type === 'pdf') {
                     const doc = new jspdf.jsPDF();
