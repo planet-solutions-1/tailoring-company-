@@ -1577,106 +1577,109 @@
         }
 
         async function exportData(type) {
-            if (type === 'backup') alert("Starting Backup Process... Please wait.");
+            const btn = document.querySelector(type === 'backup' ? 'button[onclick*="backup"]' : 'button[title="Export PDF"]');
+            const originalText = btn ? btn.innerText : '';
 
-            // 'excel' = Active Only (Standard Export)
-            // 'backup' = Active + Locally Archived Deleted Items (Settings > Backup)
+            try {
+                // 0. Library Check
+                if ((type === 'excel' || type === 'backup') && typeof XLSX === 'undefined') throw new Error("Excel Library not loaded. Please refresh.");
+                if (type === 'pdf' && typeof jspdf === 'undefined') throw new Error("PDF Library not loaded. Please refresh.");
 
-            // CRITICAL: Ensure we have data
-            if (!allStudents || allStudents.length === 0) {
-                console.log("Export: Data not ready, fetching...");
-                await fetchData();
-            }
-            if (!allStudents || allStudents.length === 0) return alert("No data available to export.");
-
-            let dataToExport = [];
-
-            if (type === 'backup') {
-                // 1. Get Live Data
-                dataToExport = [...allStudents];
-
-                // 2. Append Archived Deleted Data from LocalStorage
-                try {
-                    const history = JSON.parse(localStorage.getItem('deleted_history') || '[]');
-                    // Add a visual marker for deleted items
-                    const archived = history.map(h => ({ ...h, status: 'Trash (Archived)' }));
-                    dataToExport = [...dataToExport, ...archived];
-                } catch (e) {
-                    console.error("Backup merge failed", e);
+                // 1. UI Feedback
+                if (type === 'backup') {
+                    alert("Starting Backup Process... Please wait.");
+                    if (btn) btn.innerText = "Processing...";
                 }
 
-                // Sort: Active first, then Trash
-                dataToExport.sort((a, b) => (String(a.status).includes('Trash') ? 1 : -1));
+                // 2. Data Check
+                if (!allStudents || allStudents.length === 0) {
+                    console.log("Export: Data not ready, fetching...");
+                    await fetchData();
+                }
+                if (!allStudents || allStudents.length === 0) throw new Error("No data available to export.");
 
-            } else {
-                // Standard Excel Export: Use current view
-                dataToExport = (typeof currentFilteredList !== 'undefined' && currentFilteredList.length > 0)
-                    ? currentFilteredList
-                    : allStudents;
-            }
+                // 3. Prepare Data
+                let dataToExport = [];
+                if (type === 'backup') {
+                    // Get Live Data
+                    dataToExport = [...allStudents];
+                    // Append Archived
+                    try {
+                        const history = JSON.parse(localStorage.getItem('deleted_history') || '[]');
+                        const archived = history.map(h => ({ ...h, status: 'Trash (Archived)', disabled: true }));
+                        dataToExport = [...dataToExport, ...archived];
+                    } catch (e) {
+                        console.error("Backup merge minor error", e);
+                    }
+                    // Sort: Active first
+                    dataToExport.sort((a, b) => (String(a.status).includes('Trash') ? 1 : -1));
+                } else {
+                    // Standard Excel/PDF
+                    dataToExport = (typeof currentFilteredList !== 'undefined' && currentFilteredList.length > 0)
+                        ? currentFilteredList
+                        : allStudents;
+                }
 
-            // Capture Context
-            const schoolName = sessionStorage.getItem('schoolName') || 'SchoolData';
-            const fClass = document.getElementById('filterClass')?.value || 'All';
-            const fSec = document.getElementById('filterSection')?.value || 'All';
-            const fHouse = document.getElementById('filterHouse')?.value || 'All';
-            const dateStr = new Date().toISOString().slice(0, 10);
+                if (dataToExport.length === 0) throw new Error("Export list is empty.");
 
-            if (dataToExport.length === 0) return alert("No data to export!");
-
-            if (type === 'excel' || type === 'backup') {
-                const ws = XLSX.utils.json_to_sheet(dataToExport.map(s => ({
-                    "Admission No": s.admission_no,
-                    "Student Name": s.name,
-                    "Roll No": s.roll_no,
-                    "Class": s.class,
-                    "Section": s.section,
-                    "House": s.house,
-                    "Status": s.order_status || 'Pending',
-                    "Deleted At": s.deleted_at || ''
-                })));
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, "Students");
-
-                // Filename with School Name (Sanitized)
+                // 4. Generate File
+                const schoolName = sessionStorage.getItem('schoolName') || 'SchoolData';
                 const safeSchoolName = schoolName.replace(/[^a-z0-9]/gi, '_').replace(/_+/g, '_');
-                const fileName = `${safeSchoolName}_${type === 'backup' ? 'FULL_BACKUP' : 'Student_List'}_${dateStr}.xlsx`;
+                const dateStr = new Date().toISOString().slice(0, 10);
 
-                try {
+                if (type === 'excel' || type === 'backup') {
+                    const ws = XLSX.utils.json_to_sheet(dataToExport.map(s => ({
+                        "Admission No": s.admission_no,
+                        "Student Name": s.name,
+                        "Roll No": s.roll_no,
+                        "Class": s.class,
+                        "Section": s.section,
+                        "House": s.house,
+                        "Status": s.order_status || 'Pending',
+                        "Deleted At": s.deleted_at || ''
+                    })));
+                    const wb = XLSX.utils.book_new();
+                    XLSX.utils.book_append_sheet(wb, ws, "Students");
+
+                    const fileName = `${safeSchoolName}_${type === 'backup' ? 'FULL_BACKUP' : 'Student_List'}_${dateStr}.xlsx`;
                     XLSX.writeFile(wb, fileName);
-                    if (type === 'backup') alert("Backup Exported Successfully!\nFile: " + fileName);
-                } catch (e) {
-                    console.error("Export Write Error", e);
-                    alert("Export Failed: Could not save file. Ensure valid filename characters.");
+
+                    if (type === 'backup') alert(`Backup Success! \nFile: ${fileName}`);
+
+                } else if (type === 'pdf') {
+                    const doc = new jspdf.jsPDF();
+                    doc.setFontSize(18);
+                    doc.text(schoolName, 14, 22);
+                    doc.setFontSize(11);
+                    doc.setTextColor(100);
+                    doc.text(`Student List Report | ${dateStr}`, 14, 28);
+
+                    const fClass = document.getElementById('filterClass')?.value || 'All';
+                    const fSec = document.getElementById('filterSection')?.value || 'All';
+                    doc.text(`Filters: Class: ${fClass} | Section: ${fSec}`, 14, 34);
+
+                    doc.autoTable({
+                        startY: 40,
+                        head: [['Adm No', 'Name', 'Class/Sec', 'House', 'Status']],
+                        body: dataToExport.map(s => [
+                            s.admission_no,
+                            s.name,
+                            `${s.class} ${s.section || ''}`,
+                            s.house || '-',
+                            s.order_status || 'Pending'
+                        ]),
+                        theme: 'grid',
+                        styles: { fontSize: 9 },
+                        headStyles: { fillColor: [79, 70, 229] }
+                    });
+                    doc.save(`${safeSchoolName}_Student_List.pdf`);
                 }
 
-            } else if (type === 'pdf') {
-                const doc = new jspdf.jsPDF();
-
-                // Add Header
-                doc.setFontSize(18);
-                doc.text(schoolName, 14, 22);
-
-                doc.setFontSize(11);
-                doc.setTextColor(100);
-                doc.text(`Student List Report | ${dateStr}`, 14, 28);
-                doc.text(`Filters: Class: ${fClass} | Section: ${fSec} | House: ${fHouse}`, 14, 34);
-
-                doc.autoTable({
-                    startY: 40,
-                    head: [['Adm No', 'Name', 'Class/Sec', 'House', 'Status']],
-                    body: dataToExport.map(s => [
-                        s.admission_no,
-                        s.name,
-                        `${s.class} ${s.section || ''}`,
-                        s.house || '-',
-                        s.order_status || 'Pending'
-                    ]),
-                    theme: 'grid',
-                    styles: { fontSize: 9 },
-                    headStyles: { fillColor: [79, 70, 229] } // Indigo
-                });
-                doc.save(`${schoolName}_Student_List.pdf`);
+            } catch (err) {
+                console.error("Export Error", err);
+                alert("Export Failed: " + err.message);
+            } finally {
+                if (btn && type === 'backup') btn.innerText = originalText;
             }
         }
 
