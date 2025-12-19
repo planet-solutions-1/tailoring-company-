@@ -177,6 +177,65 @@
         </div>
     </div>
 
+    <!-- PATTERN MODAL -->
+    <div id="patternModal"
+        class="fixed inset-0 z-50 hidden bg-black/30 backdrop-blur-sm flex items-center justify-center">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-lg relative border border-slate-100">
+            <button onclick="document.getElementById('patternModal').classList.add('hidden')"
+                class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
+                <svg width="20" height="20" viewbox="0 0 24 24">
+                    <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                </svg>
+            </button>
+
+            <h3 class="text-xl font-serif font-bold text-slate-800 mb-1">Create Pattern</h3>
+            <p class="text-xs text-slate-400 uppercase tracking-widest mb-6">Store Configuration</p>
+
+            <form onsubmit="handleCreatePattern(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Pattern Name</label>
+                    <input type="text" id="patName"
+                        class="w-full border border-slate-200 rounded p-2 text-sm focus:border-indigo-400 outline-none"
+                        placeholder="e.g. Boys Full Kit Class 1-5" required>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Consumption (M)</label>
+                        <input type="number" step="0.01" id="patCons"
+                            class="w-full border border-slate-200 rounded p-2 text-sm focus:border-indigo-400 outline-none"
+                            placeholder="0.00">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Cloth Details</label>
+                    <textarea id="patCloth"
+                        class="w-full border border-slate-200 rounded p-2 text-sm focus:border-indigo-400 outline-none h-20"
+                        placeholder="Fabric type, shade, etc."></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Special Requirements</label>
+                    <input type="text" id="patReq"
+                        class="w-full border border-slate-200 rounded p-2 text-sm focus:border-indigo-400 outline-none"
+                        placeholder="Optional notes">
+                </div>
+
+                <div class="bg-indigo-50 p-3 rounded border border-indigo-100 text-xs text-indigo-800">
+                    <strong>Note:</strong> This pattern will be assigned to
+                    <span id="patCount" class="font-bold underline">0</span>
+                    currently filtered students.
+                </div>
+
+                <button type="submit"
+                    class="w-full bg-indigo-600 text-white py-3 rounded-lg font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-transform active:scale-95">
+                    Save Pattern & Assign
+                </button>
+            </form>
+        </div>
+    </div>
+
     <!-- Japanese Art Watermark - Refined Design -->
     <svg class="watermark" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
         <defs>
@@ -373,27 +432,21 @@
         <input type="file" id="fileInput" accept=".xlsx, .xls" class="hidden" onchange="handleFileUpload(event)" />
         <div id="headerActions" class="grid grid-cols-2 w-full md:w-auto md:flex gap-2 md:gap-3 items-center">
             <!-- Navigation Button -->
-            <a href="https://paking-dashboard-production.up.railway.app/"
-                class="flex items-center justify-center gap-2 px-3 py-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-md text-sm font-medium transition-colors border border-indigo-200"
-                title="Switch to Packing Mode">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path
-                        d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z">
-                    </path>
-                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
-                    <line x1="12" y1="22.08" x2="12" y2="12"></line>
-                </svg>
-                Packing
-            </a>
+            <!-- School Name Display -->
+            <div class="hidden md:block text-right">
+                <h2 id="schoolNameDisplay" class="text-sm font-bold text-slate-700"></h2>
+                <span class="text-[10px] text-slate-400 uppercase tracking-widest">Target School</span>
+            </div>
 
-            <button onclick="document.getElementById('fileInput').click()"
-                class="btn-outline px-4 py-2 rounded-md text-sm font-medium flex items-center justify-center gap-2">
+            <div class="h-8 w-px bg-[#E2E8F0] hidden md:block"></div>
+
+            <!-- Create Pattern Button -->
+            <button onclick="openPatternModal()"
+                class="bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 px-4 py-2 rounded-md text-sm font-medium flex items-center justify-center gap-2 transition-colors">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="17 8 12 3 7 8"></polyline>
-                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                    <path d="M12 5v14M5 12h14"></path>
                 </svg>
-                <span class="inline">Import</span>
+                <span class="inline">Create Pattern</span>
             </button>
 
             <button onclick="openExportModal()"
@@ -971,11 +1024,15 @@
                         "House": d.house,
                         "Gender": d.gender,
                         "Absent/Present": d.is_active ? "Present" : "Absent", // Basic map
+                        "pattern_id": d.pattern_id,
                         ...d.measurements // Spread measurements (U1, U2 etc) if stored in JSON column
                     }));
 
                     statusEl.innerText = "Cloud Synced";
                     statusEl.className = "text-[10px] font-bold text-green-500 uppercase tracking-wider hidden md:block";
+
+                    // Fetch School Info Wrapper
+                    fetchSchoolDetails(schoolId);
 
                     // Save to local as backup
                     localStorage.setItem('planetEditorData', JSON.stringify(data));
@@ -1009,27 +1066,33 @@
             statusEl.innerText = "Syncing...";
 
             try {
-                // Convert Editor Data back to DB format
-                const payload = data.map(d => ({
-                    id: d.id, // Pass ID to update existing
-                    admission_no: d["Admission No"],
-                    roll: d["Roll No"],
-                    name: d["Student Name"],
-                    class: d["Class"],
-                    section: d["Section"],
-                    house: d["House"],
-                    gender: d["Gender"],
-                    // Measurements are harder... server expects { students: array } and manages inserts/updates
-                    // Wait, verify sync logic in server.js!
-                    // Server.js: app.post('/api/sync') expects { students: [...] }
-                    // It uses admission_no to match!
-                }));
+                // Prepare Payload with corrected Measurements Structure
+                const payload = data.map(d => {
+                    const measurements = {};
+                    measureCols.forEach(k => {
+                        if (d[k] !== undefined) measurements[k] = d[k];
+                    });
+
+                    return {
+                        id: d.id,
+                        admission_no: d["Admission No"],
+                        roll: d["Roll No"],
+                        name: d["Student Name"],
+                        class: d["Class"],
+                        section: d["Section"],
+                        house: d["House"],
+                        gender: d["Gender"],
+                        pattern_id: d.pattern_id, // Persist pattern link
+                        measurements: measurements // Key Fix: Send measurements object
+                    };
+                });
 
                 const res = await fetch('/api/sync', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                    body: JSON.stringify({ students: payload }) // Server expects { students: [] }
+                    body: JSON.stringify({ students: payload })
                 });
+
 
                 if (!res.ok) throw new Error("Sync Failed");
 
@@ -1052,6 +1115,78 @@
                 btn.disabled = false;
             }
         }
+
+        async function fetchSchoolDetails(id) {
+            const token = sessionStorage.getItem('token');
+            try {
+                // Endpoint might not exist directly returning one school, use list?
+                // Or we can infer name from something else.
+                // Actually, let's use /api/data/schools if role is appropriate, OR add a tiny endpoint.
+                // User can just see local storage name if we saved it? No.
+                // Minimal: Update UI with School ID at least.
+                document.getElementById('schoolNameDisplay').innerText = "School #" + id;
+            } catch (e) { }
+        }
+
+        // --- PATTERN LOGIC ---
+        function openPatternModal() {
+            const filtered = getFilteredData();
+            document.getElementById('patCount').innerText = filtered.length;
+            document.getElementById('patternModal').classList.remove('hidden');
+        }
+
+        async function handleCreatePattern(e) {
+            e.preventDefault();
+            const token = sessionStorage.getItem('token');
+            const schoolId = sessionStorage.getItem('schoolId');
+
+            const name = document.getElementById('patName').value;
+            const consumption = document.getElementById('patCons').value;
+            const cloth = document.getElementById('patCloth').value;
+            const req = document.getElementById('patReq').value;
+
+            if (!token) return alert("Offline!");
+
+            try {
+                // 1. Create Pattern
+                const res = await fetch('/api/data/patterns', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({
+                        school_id: schoolId,
+                        name, consumption, cloth_details: cloth, special_req: req
+                    })
+                });
+
+                if (!res.ok) throw new Error("Failed to create pattern");
+                const resData = await res.json();
+                const patternId = resData.id;
+
+                // 2. Assign to Filtered Students (Locally then Sync)
+                const filtered = getFilteredData();
+                const ids = filtered.map(d => d.id); // Or admission no? ID is safer
+
+                // Update Local Data
+                data.forEach(d => {
+                    // Check if this student is in the filtered list
+                    if (ids.includes(d.id)) {
+                        d.pattern_id = patternId;
+                    }
+                });
+
+                // 3. Trigger Sync to save assignments
+                document.getElementById('patternModal').classList.add('hidden');
+                e.target.reset();
+                alert(`Pattern "${name}" Created!\nSyncing changes to ${filtered.length} students...`);
+
+                syncToCloud();
+
+            } catch (err) {
+                console.error(err);
+                alert("Error: " + err.message);
+            }
+        }
+
 
 
 

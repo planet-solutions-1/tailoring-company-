@@ -95,17 +95,52 @@ app.post('/api/sync', authenticateToken, async (req, res) => {
                 db.get("SELECT id FROM students WHERE school_id = ? AND admission_no = ?", [schoolId, adm], (err, row) => {
                     if (err) return reject(err);
 
+                    let studentId = null;
+
+                    const afterStudent = (id) => {
+                        studentId = id;
+                        // Handle Measurements Sync
+                        if (s.measurements) {
+                            const measData = JSON.stringify(s.measurements);
+                            const remarks = s.remarks || "";
+                            
+                            // Check if measurement exists
+                            db.get("SELECT id FROM measurements WHERE student_id = ?", [studentId], (errM, rowM) => {
+                                if (!errM) {
+                                    if (rowM) {
+                                        db.run("UPDATE measurements SET data = ?, remarks = ?, updated_at = CURRENT_TIMESTAMP WHERE student_id = ?", [measData, remarks, studentId]);
+                                    } else {
+                                        db.run("INSERT INTO measurements (student_id, data, remarks) VALUES (?, ?, ?)", [studentId, measData, remarks]);
+                                    }
+                                }
+                            });
+                        }
+                        
+                        // Handle Pattern Link if provided
+                        if (s.pattern_id) {
+                             db.run("UPDATE students SET pattern_id = ? WHERE id = ?", [s.pattern_id, studentId]);
+                        }
+                        
+                        resolve();
+                    };
+
                     if (row) {
                         // Update
                         db.run("UPDATE students SET roll_no=?, name=?, class=?, section=?, house=?, gender=?, is_active=1 WHERE id=?",
                             [roll, name, cls, sec, house, gender, row.id],
-                            (err) => { if (err) reject(err); else resolve(); }
+                            (err) => { 
+                                if (err) reject(err); 
+                                else afterStudent(row.id); 
+                            }
                         );
                     } else {
                         // Insert
                         db.run("INSERT INTO students (school_id, admission_no, roll_no, name, class, section, house, gender) VALUES (?,?,?,?,?,?,?,?)",
                             [schoolId, adm, roll, name, cls, sec, house, gender],
-                            (err) => { if (err) reject(err); else resolve(); }
+                            function(err) { 
+                                if (err) reject(err); 
+                                else afterStudent(this.lastID); 
+                            }
                         );
                     }
                 });
