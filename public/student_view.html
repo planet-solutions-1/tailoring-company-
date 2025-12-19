@@ -152,12 +152,18 @@
             if (filterStr) {
                 filters = JSON.parse(decodeURIComponent(filterStr));
 
-                // Serverless Dynamic PIN from QR Payload (Batch QR)
+                // FIX: Unwrap nested 'f' object if present (Batch QR format)
+                if (filters.f) {
+                    filters.c = filters.f.c;
+                    filters.sec = filters.f.sec;
+                    filters.h = filters.f.h;
+                }
+
                 if (filters.p && String(filters.p).trim() !== "") {
                     CORRECT_PIN = String(filters.p).trim();
                 }
             }
-        } catch (e) { console.error("URL Error", e); }
+        } catch (e) { console.error("URL Params Parse Error", e); }
 
         function verifyPin() {
             const input = document.getElementById('accessPinInput').value;
@@ -177,40 +183,28 @@
         async function loadData() {
             const params = new URLSearchParams(window.location.search);
 
-            // 1. Direct Student Object (Legacy/Backup)
+            // 1. Legacy Support
             const studentStr = params.get('student');
-            if (studentStr) {
-                try {
-                    const studentObj = JSON.parse(decodeURIComponent(studentStr));
-                    renderStudentCard(studentObj);
-                    return;
-                } catch (e) { console.error("Student parse error", e); }
-            }
+            if (studentStr) { try { renderStudentCard(JSON.parse(decodeURIComponent(studentStr))); return; } catch (e) { } }
 
-            // 2. Extract Direct Parameters (New Dynamic QR)
+            // 2. Extract Direct Parameters
             const adm = params.get('adm');
             const sid = params.get('sid');
-            const sName = params.get('s');
+            const sName = params.get('s'); // Name from URL takes precedence or filters
 
-            // Merge into filters if present
             if (sid) filters.sid = sid;
             if (sName) filters.s = decodeURIComponent(sName);
 
             // Context Display
             const schoolName = filters.s || 'School Data';
+            const displayClass = filters.c || 'All';
+            const displaySec = filters.sec || 'All';
 
             if (adm) {
                 document.getElementById('filterContext').innerText = `${schoolName} • Ref: ${adm}`;
             } else {
-                const contextText = `${schoolName} • Class: ${filters.c || 'All'} • Sec: ${filters.sec || 'All'}`;
-                document.getElementById('filterContext').innerText = contextText;
+                document.getElementById('filterContext').innerText = `${schoolName} • Class: ${displayClass} • Sec: ${displaySec}`;
             }
-
-            // FETCH REAL DATA
-            // If we have an ID, we still fetch by School ID (and maybe class if we had it, but for single lookup we likely just have ID)
-            // Best approach: Fetch all for school (filtered by class if available in filters, otherwise all)
-            // Note: If fetching ALL students is heavy, we should optimize API to support ?adm=...
-            // For now, we assume standard fetch.
 
             const query = new URLSearchParams({
                 class: filters.c || '',
@@ -225,65 +219,61 @@
                 let students = await res.json();
                 window.fetchedStudents = students;
 
-                // 2.1 Filter by Admission Number if provided
+                <span class="text-xs">Ensure data is synced.</span>
+                        </td ></tr > `;
+                // If adm is present, try to find and render that specific student
                 if (adm) {
-                    const target = students.find(s => String(s.admission_no) === String(adm) || String(s.temp_id) === String(adm) || String(s.id) === String(adm));
-
-                    if (target) {
-                        // Directly Show Details
-                        renderStudentCard(target);
-                        return;
-                    } else {
-                        // Not found
-                        alert("Student not found in this list. Please check the school/class selection.");
-                        // Fallback to table view or empty state
-                    }
+                    const target = students.find(s => String(s.admission_no) === adm || String(s.temp_id) === adm || String(s.id) === adm);
+                    if (target) { renderStudentCard(target); return; }
+                    else alert("Student not found.");
                 }
 
-                // Standard List Render
-                if (students.length > 0) {
-                    renderTable(students);
-                } else {
-                    document.getElementById('studentTableBody').innerHTML = `
-                        <tr><td colspan="3" class="p-8 text-center text-slate-400">
-                            No students found.<br>
-                            <span class="text-xs">Ensure data is synced.</span>
-                        </td></tr>`;
-                }
+                renderList(students);
+
             } catch (e) {
-                console.warn("Demo Fallback", e);
-                // Fallback for Local/Demo Mode
-                if (adm) {
-                    // Mock Single
-                    const mock = { name: "Demo Student", class: "10", section: "A", admission_no: adm, id: adm };
-                    renderStudentCard(mock);
-                } else {
-                    const mockStudents = Array(5).fill(0).map((_, i) => ({
-                        name: `Demo Student ${i + 1}`, class: filters.c || "10", section: filters.sec || "A",
-                        measurements: [{ Item: "Shirt", Size: "32" }, { Item: "Pant", Size: 30 }]
-                    }));
-                    window.fetchedStudents = mockStudents;
-                    renderTable(mockStudents);
-                }
-                document.getElementById('filterContext').innerHTML += ` <span class="text-rose-500 font-bold block mt-1">(Error: ${e.message})</span>`;
+                console.warn("Fallback", e);
+                 // Fallback
+                 const mockStudents = Array(5).fill(0).map((_,i) => ({
+                    name: `Student ${ i + 1 } `, class: filters.c||"10", section: filters.sec||"A",
+                    measurements: [{ Item: "Shirt", Size: "32" }, { Item: "Pant", Size: 30 }]
+                }));
+                window.fetchedStudents = mockStudents;
+                renderList(mockStudents);
+                document.getElementById('filterContext').innerHTML += ` < span class="text-rose-500 font-bold block mt-1" > (Offline / Error)</span > `;
             }
         }
 
-        function renderTable(data) {
-            const tbody = document.getElementById('studentTableBody');
-            if (data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="3" class="p-8 text-center text-slate-400">No students found</td></tr>`;
+        function renderList(data) {
+            const listContainer = document.getElementById('listView');
+
+            if(data.length === 0) {
+                listContainer.innerHTML = `< div class="p-8 text-center text-slate-400 font-bold" > No students found</div > `;
                 return;
             }
-            tbody.innerHTML = data.map((s, index) => `
-                <tr class="hover:bg-indigo-50/50 transition border-b border-indigo-50/30 last:border-none">
-                    <td class="px-4 py-4 font-bold text-slate-700">${s.name}</td>
-                    <td class="px-4 py-4 text-slate-500 font-mono text-xs">${s.class} - ${s.section}</td>
-                    <td class="px-4 py-4 text-right">
-                        <button onclick="showDetails(${index})" class="clay-btn px-3 py-1 text-xs font-bold text-indigo-500">View</button>
-                    </td>
-                </tr>
-            `).join('');
+
+            // Mobile-Friendly Card Layout (Claymorphism)
+            listContainer.innerHTML = `
+                    < div class="grid gap-4 pb-20" >
+                        ${
+                            data.map((s, index) => `
+                        <div onclick="showDetails(${index})" class="clay-btn bg-white p-4 flex justify-between items-center cursor-pointer hover:scale-[1.01] transition-transform">
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 rounded-full bg-indigo-50 flex items-center justify-center text-indigo-500 font-bold text-lg">
+                                    ${s.name.charAt(0)}
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-slate-700 text-sm md:text-base">${s.name}</h3>
+                                    <p class="font-mono text-xs text-slate-400 uppercase">${s.class} ${s.section} • ADM: ${s.admission_no || s.id || '--'}</p>
+                                </div>
+                            </div>
+                            <div class="text-indigo-400">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                            </div>
+                        </div>
+                    `).join('')
+                }
+                </div >
+                    `;
         }
 
         // SHOW DETAILS MODAL
@@ -308,17 +298,19 @@
 
             // Build Measurements HTML
             const measHtml = (s.measurements && s.measurements.length)
-                ? `<div class="w-full max-w-sm grid gap-3 mt-6">
-                    ${s.measurements.map(m => `
+                ? `< div class="w-full max-w-sm grid gap-3 mt-6" >
+                    ${
+                    s.measurements.map(m => `
                         <div class="clay-btn p-4 flex justify-between items-center bg-white/50">
                             <div><p class="font-bold text-indigo-900">${m.Item}</p><p class="text-[10px] text-indigo-400">${m.Pattern || ''}</p></div>
                             <div class="font-mono font-black text-xl text-slate-700">${m.Size}</div>
-                        </div>`).join('')}
-                   </div>`
-                : `<div class="clay-btn p-4 w-full max-w-sm mt-6 text-center text-slate-400 text-sm">No measurements logged</div>`;
+                        </div>`).join('')
+                }
+                   </div > `
+                : `< div class="clay-btn p-4 w-full max-w-sm mt-6 text-center text-slate-400 text-sm" > No measurements logged</div > `;
 
             detailEl.innerHTML = `
-                <button onclick="closeDetails()" class="self-start mb-6 clay-btn px-4 py-2 text-slate-500 hover:text-slate-800 text-xs font-bold">← Back</button>
+                    < button onclick = "closeDetails()" class="self-start mb-6 clay-btn px-4 py-2 text-slate-500 hover:text-slate-800 text-xs font-bold" >← Back</button >
                 
                 <div class="w-24 h-24 rounded-full clay-btn flex items-center justify-center mb-4 text-4xl text-indigo-500">🎓</div>
                 <h2 class="text-2xl font-black text-slate-800">${s.name}</h2>
@@ -335,8 +327,8 @@
                     </div>
                 </div>
 
-                ${measHtml}
-            `;
+                ${ measHtml }
+                `;
             document.getElementById('filterContext').innerText = "Student Profile";
         }
 
@@ -346,7 +338,7 @@
             // Restore Context
             const params = new URLSearchParams(window.location.search);
             const sName = params.get('s') || (filters.s || 'School Data');
-            document.getElementById('filterContext').innerText = `${sName} • Class: ${filters.c || 'All'} • Sec: ${filters.sec || 'All'}`;
+            document.getElementById('filterContext').innerText = `${ sName } • Class: ${ filters.c || 'All' } • Sec: ${ filters.sec || 'All' } `;
         }
 
         // === NEW PDF LOGIC (AUTO TABLE) ===
@@ -362,15 +354,15 @@
             doc.setFontSize(10);
             doc.setTextColor(100);
             const dateStr = new Date().toLocaleDateString();
-            doc.text(`Student Measurement Report | ${dateStr}`, 14, 26);
-            doc.text(`Filter: Class ${filters.c || 'All'} - Section ${filters.sec || 'All'}`, 14, 32);
+            doc.text(`Student Measurement Report | ${ dateStr } `, 14, 26);
+            doc.text(`Filter: Class ${ filters.c || 'All' } - Section ${ filters.sec || 'All' } `, 14, 32);
 
             // Prepare Data
             const students = window.fetchedStudents || [];
             const tableBody = students.map(s => {
                 // Flatten Measurements
-                const measStr = (s.measurements || []).map(m => `${m.Item}: ${m.Size}`).join(', ');
-                return [s.name, `${s.class} ${s.section}`, s.admission_no || s.id, measStr || '-'];
+                const measStr = (s.measurements || []).map(m => `${ m.Item }: ${ m.Size } `).join(', ');
+                return [s.name, `${ s.class } ${ s.section } `, s.admission_no || s.id, measStr || '-'];
             });
 
             // AutoTable
@@ -386,7 +378,7 @@
                 }
             });
 
-            doc.save(`Student_Report_${dateStr}.pdf`);
+            doc.save(`Student_Report_${ dateStr }.pdf`);
         }
 
         // EXCEL EXPORT
@@ -396,7 +388,7 @@
             if (!students.length) return alert("No Data");
             const ws = XLSX.utils.json_to_sheet(students.map(s => ({
                 Name: s.name, Class: s.class, Section: s.section,
-                Measurements: (s.measurements || []).map(m => `${m.Item}:${m.Size}`).join(', ')
+                Measurements: (s.measurements || []).map(m => `${ m.Item }:${ m.Size }`).join(', ')
             })));
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Students");
