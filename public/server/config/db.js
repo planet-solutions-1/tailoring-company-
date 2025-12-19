@@ -168,6 +168,16 @@ if (process.env.RAILWAY_ENVIRONMENT || process.env.NODE_ENV === 'production') {
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     FOREIGN KEY (school_id) REFERENCES schools(id) ON DELETE CASCADE
+                )`,
+                `CREATE TABLE IF NOT EXISTS patterns (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    school_id INT NOT NULL,
+                    name VARCHAR(255) NOT NULL,
+                    consumption DECIMAL(10,2) DEFAULT 0,
+                    cloth_details TEXT,
+                    special_req TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (school_id) REFERENCES schools(id) ON DELETE CASCADE
                 )`
             ];
 
@@ -192,6 +202,7 @@ if (process.env.RAILWAY_ENVIRONMENT || process.env.NODE_ENV === 'production') {
             // STUDENTS TABLE MIGRATION
             try { await promisePool.execute("ALTER TABLE students ADD COLUMN house VARCHAR(50)"); } catch (e) { }
             try { await promisePool.execute("ALTER TABLE students ADD COLUMN order_status VARCHAR(50) DEFAULT 'Pending'"); } catch (e) { }
+            try { await promisePool.execute("ALTER TABLE students ADD COLUMN pattern_id INT"); } catch (e) { }
 
             console.log("MySQL Tables Initialized.");
 
@@ -344,6 +355,16 @@ function initSqliteDb(database) {
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (school_id) REFERENCES schools(id)
         );
+        CREATE TABLE IF NOT EXISTS patterns (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            school_id INTEGER NOT NULL,
+            name TEXT NOT NULL,
+            consumption REAL DEFAULT 0,
+            cloth_details TEXT,
+            special_req TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (school_id) REFERENCES schools(id) ON DELETE CASCADE
+        );
     `;
     database.exec(schema, (err) => {
         if (err) console.error(err);
@@ -356,6 +377,10 @@ function initSqliteDb(database) {
             ['student_name', 'student_reg_no', 'pattern_name', 'gender', 'issue_type', 'class', 'section', 'house'].forEach(col => {
                 database.run(`ALTER TABLE complaints ADD COLUMN ${col} TEXT`, () => { });
             });
+
+            // Pattern ID Migration
+            database.run("ALTER TABLE students ADD COLUMN pattern_id INTEGER REFERENCES patterns(id) ON DELETE SET NULL", () => { });
+
 
             database.get("SELECT count(*) as count FROM users", (err, row) => {
                 if (row && row.count == 0) {
