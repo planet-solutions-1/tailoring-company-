@@ -1636,9 +1636,17 @@
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, ws, "Students");
 
-                // Filename with School Name
-                const fileName = `${schoolName}_${type === 'backup' ? 'FULL_BACKUP' : 'Student_List'}_${dateStr}.xlsx`;
-                XLSX.writeFile(wb, fileName);
+                // Filename with School Name (Sanitized)
+                const safeSchoolName = schoolName.replace(/[^a-z0-9]/gi, '_').replace(/_+/g, '_');
+                const fileName = `${safeSchoolName}_${type === 'backup' ? 'FULL_BACKUP' : 'Student_List'}_${dateStr}.xlsx`;
+
+                try {
+                    XLSX.writeFile(wb, fileName);
+                    if (type === 'backup') alert("Backup Exported Successfully!\nFile: " + fileName);
+                } catch (e) {
+                    console.error("Export Write Error", e);
+                    alert("Export Failed: Could not save file. Ensure valid filename characters.");
+                }
 
             } else if (type === 'pdf') {
                 const doc = new jspdf.jsPDF();
