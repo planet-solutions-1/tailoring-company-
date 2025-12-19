@@ -45,6 +45,7 @@
     </dialog>
 
     <!-- CONTENT (Hidden by default) -->
+    <!-- CONTENT -->
     <div id="mainContent" class="hidden min-h-screen flex flex-col">
         <!-- Header -->
         <div class="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center sticky top-0 z-10">
@@ -62,8 +63,8 @@
             </div>
         </div>
 
-        <!-- Data Display -->
-        <div class="flex-1 p-4 overflow-auto">
+        <!-- LIST VIEW -->
+        <div id="listView" class="flex-1 p-4 overflow-auto">
             <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                 <table class="w-full text-sm text-left">
                     <thead class="bg-slate-50 text-slate-500 font-bold uppercase text-xs">
@@ -79,6 +80,11 @@
                     </tbody>
                 </table>
             </div>
+        </div>
+
+        <!-- DETAIL VIEW (Hidden by Default) -->
+        <div id="detailView" class="hidden flex-1 p-4 overflow-auto bg-white">
+            <!-- Content Injected Here -->
         </div>
     </div>
 
@@ -244,11 +250,17 @@
         }
 
         function renderStudentCard(s) {
-            const container = document.getElementById('studentTableBody').parentElement;
+            const listEl = document.getElementById('listView');
+            const detailEl = document.getElementById('detailView');
+
+            // Hide List, Show Detail
+            listEl.classList.add('hidden');
+            detailEl.classList.remove('hidden');
 
             // Build Measurements HTML
             let measHtml = '';
-            if (s.measurements && s.measurements.length > 0) {
+            // ... strict check for measurements array ...
+            if (s.measurements && Array.isArray(s.measurements) && s.measurements.length > 0) {
                 measHtml = `
                     <div class="w-full text-left space-y-3 mt-4">
                         <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest border-b pb-1">Measurements</h3>
@@ -274,9 +286,9 @@
                  `;
             }
 
-            container.innerHTML = `
+            detailEl.innerHTML = `
                 <div class="p-8 flex flex-col items-center text-center animate-in slide-in-from-bottom-4">
-                    <button onclick="loadData()" class="self-start mb-4 text-slate-400 hover:text-slate-800 flex items-center gap-1 font-bold text-sm">
+                    <button onclick="closeDetails()" class="self-start mb-4 text-slate-400 hover:text-slate-800 flex items-center gap-1 font-bold text-sm">
                         ← Back to List
                     </button>
                     <div class="w-24 h-24 bg-indigo-100 rounded-full flex items-center justify-center mb-4 text-3xl">🎓</div>
@@ -301,6 +313,15 @@
                 </div>
             `;
             document.getElementById('filterContext').innerText = "Individual Student View";
+        }
+
+        function closeDetails() {
+            document.getElementById('listView').classList.remove('hidden');
+            document.getElementById('detailView').classList.add('hidden');
+            // Restore Context
+            const params = new URLSearchParams(window.location.search);
+            const sName = params.get('s') || (filters.s || 'School Data');
+            document.getElementById('filterContext').innerText = `${sName} • Class: ${filters.c || 'All'} • Section: ${filters.sec || 'All'}`;
         }
 
         // EXCEL EXPORT
