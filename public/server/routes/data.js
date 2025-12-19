@@ -413,11 +413,14 @@ router.get('/all_students', authenticateToken, requireRole('company'), (req, res
             o.status as order_status, 
             o.is_packed, 
             o.priority as order_priority,
-            m.data as measurements
+            m.data as measurements,
+            p.name as pattern_name,
+            p.consumption as pattern_consumption
         FROM students st
         JOIN schools sc ON st.school_id = sc.id
         LEFT JOIN orders o ON st.id = o.student_id
         LEFT JOIN measurements m ON st.id = m.student_id
+        LEFT JOIN patterns p ON st.pattern_id = p.id
         WHERE st.is_active = 1
         ORDER BY sc.name ASC, st.class ASC, st.roll_no ASC
     `;
@@ -431,6 +434,20 @@ router.get('/all_students', authenticateToken, requireRole('company'), (req, res
             return r;
         });
         res.json(students);
+    });
+});
+
+// GET /api/data/patterns/all - All Patterns (Company)
+router.get('/patterns/all', authenticateToken, requireRole('company'), (req, res) => {
+    const query = `
+        SELECT p.*, s.name as school_name 
+        FROM patterns p
+        JOIN schools s ON p.school_id = s.id
+        ORDER BY p.created_at DESC
+    `;
+    db.all(query, [], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(rows);
     });
 });
 
