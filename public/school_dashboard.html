@@ -1183,6 +1183,7 @@
         }
 
         async function fetchData() {
+            alert(`DEBUG: fetchData START\nSchoolID: ${schoolId}\nToken: ${token ? 'Present' : 'Missing'}`);
             console.log(`Fetching data for School #${schoolId} with token: ${token ? 'Present' : 'Missing'}`);
             try {
                 const res = await fetch(`/api/data/students/${schoolId}`, {
@@ -1196,9 +1197,11 @@
 
                 if (Array.isArray(data)) {
                     allStudents = data;
+                    alert(`DEBUG: Fetch SUCCESS. Loaded: ${allStudents.length}`);
                     console.log(`Fetch Success: Loaded ${allStudents.length} students.`);
                 } else if (data && Array.isArray(data.students)) {
                     allStudents = data.students;
+                    alert(`DEBUG: Fetch SUCCESS (Wrapped). Loaded: ${allStudents.length}`);
                     console.log(`Fetch Success (Wrapped): Loaded ${allStudents.length} students.`);
                 } else {
                     console.warn("Fetch Warning: API returned unexpected format", data);
@@ -1608,6 +1611,7 @@
         }
 
         async function exportData(type) {
+            alert(`DEBUG: exportData Called.\nCurrent Loaded Students: ${allStudents ? allStudents.length : 'NULL'}`);
             const btn = document.querySelector(type === 'backup' ? 'button[onclick*="backup"]' : 'button[title="Export PDF"]');
             const originalText = btn ? btn.innerText : '';
 
