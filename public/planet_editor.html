@@ -114,6 +114,69 @@
 
 <body class="h-screen flex flex-col overflow-hidden relative">
 
+    <!-- LOGIN OVERLAY -->
+    <div id="loginOverlay" class="fixed inset-0 z-[100] bg-[#F9F9F7] flex items-center justify-center">
+        <div
+            class="bg-white p-8 rounded-xl shadow-2xl max-w-md w-full border border-indigo-50 relative overflow-hidden">
+            <!-- Decorative Header -->
+            <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-indigo-500 to-indigo-300"></div>
+
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">
+                    🔐
+                </div>
+                <h2 class="text-2xl font-serif font-bold text-slate-800">Planet Editor</h2>
+                <p class="text-slate-400 text-sm mt-1 uppercase tracking-wider">Authentication Required</p>
+            </div>
+
+            <!-- Tabs -->
+            <div class="flex border-b border-indigo-100 mb-6">
+                <button onclick="switchAuthTab('tailor')" id="tabTailor"
+                    class="flex-1 pb-2 text-sm font-bold text-indigo-600 border-b-2 border-indigo-600 transition-colors">Tailor
+                    Login</button>
+                <button onclick="switchAuthTab('code')" id="tabCode"
+                    class="flex-1 pb-2 text-sm font-bold text-slate-400 border-b-2 border-transparent hover:text-indigo-400 transition-colors">Access
+                    Code</button>
+            </div>
+
+            <!-- Tailor Form -->
+            <form id="formTailor" onsubmit="handleLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Username</label>
+                    <input type="text" id="loginUser"
+                        class="w-full border border-indigo-100 rounded p-3 outline-none focus:border-indigo-400 bg-indigo-50/30"
+                        placeholder="Enter username" required>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Password</label>
+                    <input type="password" id="loginPass"
+                        class="w-full border border-indigo-100 rounded p-3 outline-none focus:border-indigo-400 bg-indigo-50/30"
+                        placeholder="••••••••" required>
+                </div>
+                <button type="submit"
+                    class="w-full bg-indigo-600 text-white py-3 rounded-lg font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-transform active:scale-95">
+                    Secure Login
+                </button>
+            </form>
+
+            <!-- Access Code Form -->
+            <form id="formCode" onsubmit="handleAccessCode(event)" class="space-y-4 hidden">
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">6-Digit Access Code</label>
+                    <input type="text" id="accessCode"
+                        class="w-full border border-indigo-100 rounded p-3 outline-none focus:border-indigo-400 bg-indigo-50/30 font-mono text-center text-2xl tracking-widest uppercase"
+                        placeholder="XXXXXX" maxlength="6" required>
+                </div>
+                <button type="submit"
+                    class="w-full bg-indigo-600 text-white py-3 rounded-lg font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-transform active:scale-95">
+                    Unlock Editor
+                </button>
+            </form>
+
+            <p id="authError" class="text-rose-500 text-xs text-center mt-4 font-bold min-h-[1.5em]"></p>
+        </div>
+    </div>
+
     <!-- Japanese Art Watermark - Refined Design -->
     <svg class="watermark" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
         <defs>
@@ -285,6 +348,11 @@
     <header
         class="bg-white border-b border-[#E2E8F0] px-6 py-4 flex flex-col md:flex-row justify-between items-center shadow-sm z-30 relative gap-4">
         <div class="flex items-center gap-4">
+            <button onclick="logout()"
+                class="text-xs text-rose-500 border border-rose-200 px-2 py-1 rounded hover:bg-rose-50 font-bold"
+                title="Sign Out">
+                Logout
+            </button>
             <div class="bg-[#4A5568] text-white p-2 rounded-md shadow-sm">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -628,22 +696,25 @@
                     return;
                 }
 
-                container.innerHTML = data.map(c => `
-                    <div class="border rounded p-3 bg-white text-xs">
-                        <div class="flex justify-between font-bold text-[#2C3E50] mb-1">
-                            <span>${'★'.repeat(c.rating || 0)}</span>
-                            <span class="${c.status === 'Resolved' ? 'text-green-600' : 'text-rose-500'}">${c.status}</span>
-                        </div>
-                        <p class="text-gray-600 mb-2">"${c.comment}"</p>
-                        ${c.reply ? `
-                            <div class="bg-blue-50 p-2 rounded border border-blue-100 mt-2">
-                                <strong class="block text-blue-800 text-[10px] uppercase">Admin Reply:</strong>
-                                <p class="text-blue-900">${c.reply}</p>
+                if (Array.isArray(data)) {
+                    container.innerHTML = data.map(c => `
+                        <div class="border rounded p-3 bg-white text-xs">
+                            <div class="flex justify-between font-bold text-[#2C3E50] mb-1">
+                                <span>${'★'.repeat(c.rating || 0)}</span>
+                                <span class="${c.status === 'Resolved' ? 'text-green-600' : 'text-rose-500'}">${c.status}</span>
                             </div>
-                        ` : ''}
-                        <div class="text-[10px] text-gray-400 text-right mt-1">${new Date(c.created_at).toLocaleDateString()}</div>
-                    </div>
-                `).join('');
+                            <p class="text-gray-600 mb-2">"${c.comment}"</p>
+                            ${c.reply ? `
+                                <div class="bg-blue-50 p-2 rounded border border-blue-100 mt-2">
+                                    <strong class="block text-blue-800 text-[10px] uppercase">Admin Reply:</strong>
+                                    <p class="text-blue-900">${c.reply}</p>
+                                </div>
+                            ` : ''}
+                            <div class="text-[10px] text-gray-400 text-right mt-1">${new Date(c.created_at).toLocaleDateString()}</div>
+                        </div>
+                    `).join('');
+                }
+
 
             } catch (e) {
                 console.error(e);
@@ -654,7 +725,124 @@
 
 
 
+
+        // --- AUTH LOGIC ---
+        function switchAuthTab(type) {
+            const tailorBtn = document.getElementById('tabTailor');
+            const codeBtn = document.getElementById('tabCode');
+            const tailorForm = document.getElementById('formTailor');
+            const codeForm = document.getElementById('formCode');
+
+            if (type === 'tailor') {
+                tailorBtn.classList.replace('text-slate-400', 'text-indigo-600');
+                tailorBtn.classList.replace('border-transparent', 'border-indigo-600');
+                codeBtn.classList.replace('text-indigo-600', 'text-slate-400');
+                codeBtn.classList.replace('border-indigo-600', 'border-transparent');
+                tailorForm.classList.remove('hidden');
+                codeForm.classList.add('hidden');
+            } else {
+                codeBtn.classList.replace('text-slate-400', 'text-indigo-600');
+                codeBtn.classList.replace('border-transparent', 'border-indigo-600');
+                tailorBtn.classList.replace('text-indigo-600', 'text-slate-400');
+                tailorBtn.classList.replace('border-indigo-600', 'border-transparent');
+                codeForm.classList.remove('hidden');
+                tailorForm.classList.add('hidden');
+            }
+            document.getElementById('authError').innerText = "";
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const username = document.getElementById('loginUser').value;
+            const password = document.getElementById('loginPass').value;
+            const errorEl = document.getElementById('authError');
+
+            errorEl.innerText = "Authenticating...";
+
+            try {
+                const res = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await res.json();
+
+                if (!res.ok) throw new Error(data.error || "Login Failed");
+
+                // Check Role
+                if (data.role !== 'tailor' && data.role !== 'admin' && data.role !== 'company') {
+                    throw new Error("Unauthorized Role for Editor");
+                }
+
+                saveSession({ ...data, type: 'credentials' });
+            } catch (err) {
+                errorEl.innerText = err.message;
+            }
+        }
+
+        async function handleAccessCode(e) {
+            e.preventDefault();
+            const code = document.getElementById('accessCode').value.toUpperCase();
+            const errorEl = document.getElementById('authError');
+            errorEl.innerText = "Verifying...";
+
+            try {
+                const res = await fetch('/api/auth/access-code', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code })
+                });
+                const data = await res.json();
+
+                if (!res.ok) throw new Error(data.error || "Invalid Code");
+
+                // Only allow Access Code type 'editor' (mapped to role 'tailor' by backend)
+                if (data.role !== 'editor' && data.role !== 'tailor') {
+                    // Note: Backend map 'editor' -> 'tailor' role in JWT, but returns original type sometimes.
+                    // The auth endpoint returns { accessToken, role: type, ... } where type is 'editor' or 'packing'
+                    if (data.role !== 'editor') throw new Error("This code is for Packing DB, not Editor.");
+                }
+
+                saveSession({ ...data, type: 'code' });
+            } catch (err) {
+                errorEl.innerText = err.message;
+            }
+        }
+
+        function saveSession(sessionData) {
+            sessionStorage.setItem('token', sessionData.accessToken);
+            sessionStorage.setItem('schoolId', sessionData.schoolId);
+            sessionStorage.setItem('role', sessionData.role);
+
+            // Unlock
+            document.getElementById('loginOverlay').classList.add('hidden');
+            init();
+        }
+
+        function checkSession() {
+            const token = sessionStorage.getItem('token');
+            if (!token) {
+                // Show Login
+                document.getElementById('loginOverlay').classList.remove('hidden');
+            } else {
+                // Valid (Client-side assumption, API will reject real calls if expired)
+                document.getElementById('loginOverlay').classList.add('hidden');
+                init();
+            }
+        }
+
+        function logout() {
+            sessionStorage.clear();
+            window.location.reload();
+        }
+
         // --- INITIALIZATION ---
+        // Removed default auto-init, now called by checkSession
+        // function init() { ... } 
+
+        // Start Here
+        document.addEventListener('DOMContentLoaded', checkSession);
+
         function init() {
             const saved = localStorage.getItem('planetEditorData');
             if (saved) {
