@@ -135,11 +135,12 @@
             <button onclick="switchTab('data')" id="nav-data"
                 class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-r-lg hover:bg-stone-800 hover:text-stone-200 transition-all text-sm font-medium"><svg
                     width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path d="M3 3v18h18" />
-                    <path d="M18 17V9" />
-                    <path d="M13 17V5" />
-                    <path d="M8 17v-3" />
-                </svg> Global Data</button>
+                    <path
+                        d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z">
+                    </path>
+                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                    <line x1="12" y1="22.08" x2="12" y2="12"></line>
+                </svg> Tailoring Data</button>
             <button onclick="switchTab('users')" id="nav-users"
                 class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-r-lg hover:bg-stone-800 hover:text-stone-200 transition-all text-sm font-medium"><svg
                     width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
@@ -194,14 +195,6 @@
                     <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
                     <line x1="12" y1="22.08" x2="12" y2="12"></line>
                 </svg> Open Packing DB</button>
-
-            <button onclick="window.open('tailoring_dashboard.html', '_blank')"
-                class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-r-lg hover:bg-stone-800 hover:text-emerald-400 transition-all text-sm font-medium text-stone-400"><svg
-                    width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path d="M21.5 12H16c-.7 2-2 3-4 3s-3.3-1-4-3H2.5" />
-                    <path
-                        d="M5.5 5.1L2 12v6c0 1.1.9 2 2 2h16a2 2 0 0 0 2-2v-6l-3.5-6.9A2 2 0 0 0 16.7 4H7.3a2 2 0 0 0-1.8 1.1z" />
-                </svg> Open Tailoring DB</button>
         </nav>
         <div class="p-4 border-t border-stone-800"><button onclick="logout()"
                 class="w-full bg-rose-900/30 text-rose-400 hover:bg-rose-900/50 hover:text-rose-300 py-2 px-4 rounded transition-colors text-xs uppercase tracking-wider font-bold">Sign
@@ -259,9 +252,57 @@
             </div>
         </div>
 
-        <!-- 2. GLOBAL DATA -->
+        <!-- 2. TAILORING DATA (Consolidated) -->
         <div id="view-data" class="hidden space-y-4 fade-in">
-            <div class="glass-panel p-4 rounded-xl flex flex-wrap gap-3 md:gap-4 items-end">
+            <!-- Header with Exports -->
+            <div class="flex flex-col md:flex-row justify-between items-end gap-4">
+                <div>
+                    <h3 class="font-ink text-2xl">Tailoring Data</h3>
+                    <p class="text-stone-500 text-sm">Filter by Item to see measurements.</p>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="downloadPDF()"
+                        class="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded shadow-lg text-xs font-bold uppercase flex items-center gap-2 transition-transform active:scale-95">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
+                        Export PDF
+                    </button>
+                    <button onclick="downloadExcel()"
+                        class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded shadow-lg text-xs font-bold uppercase flex items-center gap-2 transition-transform active:scale-95">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="16" y1="8" x2="8" y2="8"></line>
+                            <line x1="16" y1="16" x2="8" y2="16"></line>
+                            <line x1="10" y1="12" x2="3" y2="12"></line>
+                        </svg>
+                        Export Excel
+                    </button>
+                </div>
+            </div>
+
+            <div
+                class="glass-panel p-4 rounded-xl flex flex-wrap gap-3 md:gap-4 items-end sticky top-0 bg-white/95 z-20 shadow-sm border-b">
+                <!-- Item Filter (Primary) -->
+                <div class="w-full md:w-auto flex-1"><label class="text-[10px] font-bold text-stone-500 uppercase">Item
+                        Type (Required for Measurements)</label><select id="filter-item" onchange="renderGlobalTable()"
+                        class="block w-full mt-1 text-xs border-amber-300 bg-amber-50 rounded shadow-sm py-2 font-bold text-stone-700">
+                        <option value="all">-- Select Item --</option>
+                    </select></div>
+
+                <div class="w-[47%] md:w-auto"><label
+                        class="text-[10px] font-bold text-stone-500 uppercase">Pattern</label><select
+                        id="filter-pattern" onchange="renderGlobalTable()"
+                        class="block w-full md:w-32 mt-1 text-xs border-gray-300 rounded shadow-sm">
+                        <option value="all">All Patterns</option>
+                    </select></div>
+
                 <div class="w-[47%] md:w-auto"><label
                         class="text-[10px] font-bold text-stone-500 uppercase">Class</label><input type="text"
                         id="filter-class" list="list-class" onchange="renderGlobalTable()"
@@ -302,49 +343,34 @@
                         <option value="packed">Packed</option>
                         <option value="pending">Pending</option>
                     </select></div>
-                <div class="w-[47%] md:w-auto"><label
-                        class="text-[10px] font-bold text-stone-500 uppercase">Pattern</label><select
-                        id="filter-pattern" onchange="renderGlobalTable()"
-                        class="block w-full md:w-32 mt-1 text-xs border-gray-300 rounded shadow-sm">
-                        <option value="all">All Patterns</option>
-                    </select></div>
                 <div class="w-full md:w-auto md:ml-auto"><label
                         class="text-[10px] font-bold text-stone-500 uppercase">Search</label><input type="text"
                         id="date-search" onkeyup="renderGlobalTable()" placeholder="Name / Roll No..."
                         class="block w-full md:w-32 mt-1 text-xs border-gray-300 rounded shadow-sm px-2 py-1.5"></div>
             </div>
 
-            <div
-                class="glass-panel p-3 rounded-xl flex flex-col md:flex-row items-start md:items-center gap-3 bg-stone-50/50">
-                <div class="w-full md:w-auto"><label class="text-[10px] font-bold text-stone-500 uppercase">Filter by
-                        Item</label><select id="filter-item" onchange="handleItemFilter()"
-                        class="block w-full md:w-48 mt-1 text-xs border-gray-300 rounded shadow-sm">
-                        <option value="all">Select Item Type...</option>
-                    </select></div>
-                <div class="hidden md:block h-8 w-px bg-stone-300 mx-2"></div>
-                <div class="md:hidden w-full h-px bg-stone-300 my-1"></div>
-                <div id="dynamic-filters-container" class="flex gap-2 flex-wrap items-end w-full"><span
-                        class="text-xs text-stone-400 italic mt-0 md:mt-4">Select an item above to filter by
-                        measurements.</span></div>
-            </div>
+            <!-- Removed dynamic-filters-container as we use Table Columns now -->
 
             <div class="glass-panel rounded-xl overflow-hidden shadow-lg border border-stone-200">
-                <div class="overflow-x-auto h-[550px]">
-                    <table class="w-full text-left border-collapse min-w-[800px]">
-                        <thead class="bg-stone-100 sticky top-0 z-10 shadow-sm">
+                <div class="overflow-x-auto h-[600px]">
+                    <table class="w-full text-left border-collapse min-w-[1000px] whitespace-nowrap">
+                        <thead
+                            class="bg-stone-50 sticky top-0 z-10 shadow-sm text-xs font-bold text-stone-500 uppercase tracking-wider">
                             <tr>
-                                <th class="p-4 text-xs font-bold text-stone-500 uppercase tracking-wider">School</th>
-                                <th class="p-4 text-xs font-bold text-stone-500 uppercase tracking-wider">Student
-                                    Details</th>
-                                <th class="p-4 text-xs font-bold text-stone-500 uppercase tracking-wider">Meta</th>
-                                <th class="p-4 text-xs font-bold text-stone-500 uppercase tracking-wider">Pattern</th>
-                                <th class="p-4 text-xs font-bold text-stone-500 uppercase tracking-wider">Measurements
-                                </th>
-                                <th class="p-4 text-xs font-bold text-stone-500 uppercase tracking-wider text-center">
-                                    Status</th>
+                                <th class="p-4 bg-stone-50 sticky left-0 z-20">School</th>
+                                <th class="p-4">Student</th>
+                                <th class="p-4">Class</th>
+                                <th class="p-4">Pattern</th>
+                                <!-- Dynamic Header -->
+                                <th class="p-4 text-center bg-amber-50 text-amber-700 border-x border-amber-100"
+                                    id="th-measurements">Measurements</th>
+                                <th class="p-4 text-center">Status</th>
+                            </tr>
+                            <tr id="th-sub-row" class="bg-stone-100 hidden">
+                                <!-- Populated by JS -->
                             </tr>
                         </thead>
-                        <tbody id="global-table-body" class="divide-y divide-stone-100 bg-white"></tbody>
+                        <tbody id="global-table-body" class="divide-y divide-stone-100 bg-white text-sm"></tbody>
                     </table>
                 </div>
             </div>
@@ -687,8 +713,8 @@
 
         async function updateSchoolMeta(id, f, v) { await fetch(`${API_BASE}/data/schools/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ [f]: v }) }); }
         async function viewSchoolStudents(n) { switchTab('data'); await fetchAllStudents(); document.getElementById('date-search').value = n; renderGlobalTable(); }
-        function populateDynamicFilters() { const c = [...new Set(globalStudents.map(s => s.class).filter(Boolean))].sort(), se = [...new Set(globalStudents.map(s => s.section).filter(Boolean))].sort(), h = [...new Set(globalStudents.map(s => s.house).filter(Boolean))].sort(); document.getElementById('list-class').innerHTML = c.map(x => `<option value="${x}">`).join(''); document.getElementById('list-section').innerHTML = se.map(x => `<option value="${x}">`).join(''); document.getElementById('list-house').innerHTML = h.map(x => `<option value="${x}">`).join(''); document.getElementById('filter-item').innerHTML = '<option value="all">Select Item Type...</option>' + allItems.map(i => `<option value="${i.name}">${i.name}</option>`).join(''); }
-        function handleItemFilter() { const n = document.getElementById('filter-item').value, c = document.getElementById('dynamic-filters-container'); c.innerHTML = ''; dynamicFilters = {}; if (n === 'all') { c.innerHTML = '<span class="text-xs text-stone-400 italic mt-4">Select an item above to filter by measurements.</span>'; renderGlobalTable(); return; } const i = allItems.find(x => x.name === n); if (i) i.cols.forEach(k => { const w = document.createElement('div'); w.className = "flex flex-col w-[47%] md:w-auto"; w.innerHTML = `<label class="text-[10px] font-bold text-stone-500 uppercase">${k}</label><input type="text" class="block w-full md:w-20 mt-1 text-xs border-gray-300 rounded shadow-sm px-2 py-1.5 focus:border-stone-500 outline-none" placeholder="e.g. 30-32" onkeyup="if(this.value)dynamicFilters['${k}']=this.value;else delete dynamicFilters['${k}'];renderGlobalTable()">`; c.appendChild(w); }); renderGlobalTable(); }
+        function populateDynamicFilters() { const c = [...new Set(globalStudents.map(s => s.class).filter(Boolean))].sort(), se = [...new Set(globalStudents.map(s => s.section).filter(Boolean))].sort(), h = [...new Set(globalStudents.map(s => s.house).filter(Boolean))].sort(); document.getElementById('list-class').innerHTML = c.map(x => `<option value="${x}">`).join(''); document.getElementById('list-section').innerHTML = se.map(x => `<option value="${x}">`).join(''); document.getElementById('list-house').innerHTML = h.map(x => `<option value="${x}">`).join(''); document.getElementById('filter-item').innerHTML = '<option value="all">-- Select Item --</option>' + allItems.map(i => `<option value="${i.name}">${i.name}</option>`).join(''); }
+        // REMOVED handleItemFilter - now handled in renderGlobalTable directly
         function advancedMatch(r, f) { if (!f || f === 'all') return true; if (r == null || r === "") return false; const rv = String(r).trim().toUpperCase(), fv = f.toUpperCase(); if (fv.includes(',')) return fv.split(',').map(p => p.trim()).includes(rv); if (fv.includes('-')) { const p = fv.split('-').map(x => x.trim()); if (p.length === 2) { const [mn, mx] = p; if (!isNaN(mn) && !isNaN(mx)) { const n = parseFloat(r); return !isNaN(n) && n >= parseFloat(mn) && n <= parseFloat(mx) } if (mn.length === 1 && mx.length === 1 && rv.length === 1) return rv >= mn && rv <= mx } } return rv === fv; }
 
         function getMeasurementsSafe(s) {
@@ -698,10 +724,10 @@
 
         function renderGlobalTable() {
             const pr = document.getElementById('filter-priority').value, pa = document.getElementById('filter-packed').value, cl = document.getElementById('filter-class').value, sc = document.getElementById('filter-section').value, ho = document.getElementById('filter-house').value, ge = document.getElementById('filter-gender').value, pt = document.getElementById('filter-pattern').value, it = document.getElementById('filter-item').value, se = document.getElementById('date-search').value.toLowerCase();
-            const f = globalStudents.filter(s => {
-                // SAFETY: Measurements
-                const m = getMeasurementsSafe(s);
 
+            // 1. Filter
+            const f = globalStudents.filter(s => {
+                const m = getMeasurementsSafe(s);
                 if (pr !== 'all' && s.school_priority !== pr) return false;
                 if (pa === 'packed' && !s.is_packed) return false;
                 if (pa === 'pending' && s.is_packed) return false;
@@ -715,27 +741,81 @@
                     const i = allItems.find(x => x.name === it);
                     if (i) {
                         if ((i.type === 'Male' && s.gender === 'Female') || (i.type === 'Female' && s.gender === 'Male')) return false;
-                        for (const [k, v] of Object.entries(dynamicFilters)) if (!advancedMatch(m[k.toLowerCase()] || "00", v)) return false;
                     }
                 }
                 return true;
             });
-            document.getElementById('record-count').innerText = `Showing ${f.length} records`;
-            document.getElementById('global-table-body').innerHTML = f.map(s => `<tr class="hover:bg-stone-50 transition-colors group"><td class="p-4 border-b border-stone-100"><div class="font-bold text-stone-800">${s.school_name}</div><div class="text-xs text-stone-500">${s.school_priority || 'Normal'} Priority</div></td><td class="p-4 border-b border-stone-100"><div class="font-medium text-stone-900">${s.name}</div><div class="text-xs text-stone-500">Roll: ${s.roll_no || '-'}</div></td><td class="p-4 border-b border-stone-100"><div class="text-sm">Class ${s.class || '-'} ${s.section || ''}</div><div class="text-xs text-stone-400">${s.house || ''} ${s.gender ? '(' + s.gender + ')' : ''}</div></td><td class="p-4 border-b border-stone-100 text-xs text-stone-600">${s.pattern_name ? `<span class="bg-indigo-50 text-indigo-700 px-2 py-1 rounded-md font-bold">${s.pattern_name}</span>` : '-'}</td><td class="p-4 border-b border-stone-100 text-xs font-mono text-stone-600">${renderMeasurements(s)}</td><td class="p-4 border-b border-stone-100 text-center"><span class="px-2 py-1 rounded-full text-xs font-bold ${s.is_packed ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${s.is_packed ? 'PACKED' : 'PENDING'}</span></td></tr>`).join('');
 
-            // Store filtered data for export
-            window.filteredDataForExport = f;
-        }
-        function renderMeasurements(s) {
-            const m = getMeasurementsSafe(s);
-            if (Object.keys(m).length === 0) return '<span class="text-rose-400">Missing</span>';
-            const n = document.getElementById('filter-item').value;
-            if (n !== 'all') {
-                const i = allItems.find(x => x.name === n);
-                if (i) return i.cols.map(c => `<span class="inline-block mr-2"><b class="text-stone-400">${c}:</b> ${m[c.toLowerCase()] || '-'}</span>`).join('');
+            // 2. Setup Columns for Measurement
+            let showCols = [];
+            const measHeader = document.getElementById('th-measurements');
+            const subRow = document.getElementById('th-sub-row');
+
+            if (it !== 'all') {
+                const def = allItems.find(x => x.name === it);
+                if (def) {
+                    showCols = def.cols;
+                    measHeader.innerText = def.name;
+                    measHeader.colSpan = showCols.length;
+                }
+            } else {
+                measHeader.innerText = "Measurements (Select Item)";
+                measHeader.colSpan = 1;
             }
-            return "✓ Captured";
+
+            // 3. Render sub-headers
+            if (showCols.length > 0) {
+                subRow.classList.remove('hidden');
+                subRow.innerHTML = `
+                    <th colspan="4" class="bg-stone-50 border-r"></th>
+                    ${showCols.map(c => `<th class="p-2 text-center border-x border-amber-200 text-amber-900 bg-amber-100">${c}</th>`).join('')}
+                    <th></th>
+                `;
+            } else {
+                subRow.classList.add('hidden');
+            }
+
+            // 4. Render Body
+            document.getElementById('record-count').innerText = `Showing ${f.length} records`;
+            document.getElementById('global-table-body').innerHTML = f.map(s => {
+                const m = getMeasurementsSafe(s);
+                let measCells = '';
+                if (showCols.length > 0) {
+                    measCells = showCols.map(k => `<td class="p-4 text-center border-b border-stone-100 font-mono font-bold text-stone-700 bg-amber-50/20">${m[k.toLowerCase()] || '-'}</td>`).join('');
+                } else {
+                    measCells = `<td class="p-4 border-b border-stone-100 text-xs italic text-stone-400">Select Item...</td>`;
+                }
+
+                return `<tr class="hover:bg-blue-50 transition-colors group">
+                    <td class="p-4 border-b border-stone-100 sticky left-0 bg-stone-50/50">
+                        <div class="font-bold text-stone-800">${s.school_name}</div>
+                        <div class="text-[10px] text-stone-500">${s.school_priority || 'Normal'}</div>
+                    </td>
+                    <td class="p-4 border-b border-stone-100">
+                        <div class="font-medium text-stone-900">${s.name}</div>
+                        <div class="text-xs text-stone-500">Roll: ${s.roll_no || '-'}</div>
+                    </td>
+                    <td class="p-4 border-b border-stone-100">
+                        <div class="text-sm">Class ${s.class || '-'} ${s.section || ''}</div>
+                        <div class="text-xs text-stone-400">${s.house || ''} ${s.gender ? '(' + s.gender + ')' : ''}</div>
+                    </td>
+                    <td class="p-4 border-b border-stone-100 text-xs font-mono text-stone-600">
+                        ${s.pattern_name ? `<span class="bg-indigo-50 text-indigo-700 px-2 py-1 rounded-md font-bold">${s.pattern_name}</span>` : '-'}
+                    </td>
+                    ${measCells}
+                    <td class="p-4 border-b border-stone-100 text-center">
+                        <span class="px-2 py-1 rounded-full text-xs font-bold ${s.is_packed ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${s.is_packed ? 'PACKED' : 'PENDING'}</span>
+                    </td>
+                </tr>`;
+            }).join('');
+
+            // Store filtered data & cols for export
+            window.filteredDataForExport = f;
+            window.currentCols = showCols;
         }
+
+        // Removed renderMeasurements Helper as it's now inline
+        function dummy() { }
 
         function renderCharts() {
             const p = globalStudents.filter(s => s.is_packed).length, pe = globalStudents.length - p;
@@ -760,25 +840,18 @@
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
             const data = window.filteredDataForExport || globalStudents;
-            const item = document.getElementById('filter-item').value;
+            const cols = window.currentCols || [];
 
-            doc.text("Global Data Report", 14, 15);
+            doc.text("Tailoring Data Report", 14, 15);
             doc.setFontSize(10);
             doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 22);
 
-            let head = [['School', 'Name', 'Class', 'Gender', 'Pattern', 'Packed']];
-            let measCols = [];
+            let head = [['School', 'Name', 'Class', 'Gender', 'Pattern']];
 
-            // Add Measurement Columns based on Item Filter
-            if (item !== 'all') {
-                const i = allItems.find(x => x.name === item);
-                if (i) {
-                    measCols = i.cols;
-                    head[0].push(...measCols);
-                }
-            } else {
-                head[0].push('Measurements'); // Generic
-            }
+            if (cols.length > 0) head[0].push(...cols);
+            else head[0].push("Measurements");
+
+            head[0].push('Packed');
 
             const body = data.map(s => {
                 const m = getMeasurementsSafe(s);
@@ -787,15 +860,16 @@
                     s.name,
                     `${s.class || ''} ${s.section || ''}`,
                     s.gender || '-',
-                    s.pattern_name || '-',
-                    s.is_packed ? 'Yes' : 'No'
+                    s.pattern_name || '-'
                 ];
 
-                if (measCols.length > 0) {
-                    measCols.forEach(k => row.push(m[k.toLowerCase()] || '-'));
+                if (cols.length > 0) {
+                    cols.forEach(k => row.push(m[k.toLowerCase()] || '-'));
                 } else {
-                    row.push(item === 'all' ? JSON.stringify(m).substring(0, 20) + '...' : '-');
+                    row.push("Select Item to View Details");
                 }
+
+                row.push(s.is_packed ? 'Yes' : 'No');
                 return row;
             });
 
@@ -812,7 +886,7 @@
 
         function downloadExcel() {
             const data = window.filteredDataForExport || globalStudents;
-            const item = document.getElementById('filter-item').value;
+            const cols = window.currentCols || [];
 
             const exportData = data.map(s => {
                 const m = getMeasurementsSafe(s);
@@ -828,16 +902,10 @@
                     "Status": s.is_packed ? "Packed" : "Pending"
                 };
 
-                // Add specific measurements if filtering by item, or just dump all common keys if we want logic
-                // User asked for "item measurements", so if item selected, show specific columns
-                if (item !== 'all') {
-                    const i = allItems.find(x => x.name === item);
-                    if (i) i.cols.forEach(k => base[k] = m[k.toLowerCase()] || '');
+                if (cols.length > 0) {
+                    cols.forEach(k => base[k] = m[k.toLowerCase()] || '');
                 } else {
-                    // Dump common measurements U1-U7, L1-L7
-                    ['u1', 'u2', 'u3', 'u4', 'u5', 'u6', 'u7', 'l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7'].forEach(k => {
-                        if (m[k]) base[k.toUpperCase()] = m[k];
-                    });
+                    base["Measurements"] = "Select Item to View Details";
                 }
                 return base;
             });
@@ -845,7 +913,7 @@
             const ws = XLSX.utils.json_to_sheet(exportData);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "GlobalData");
-            XLSX.writeFile(wb, "Global_Report.xlsx");
+            XLSX.writeFile(wb, "Tailoring_Report.xlsx");
         }
 
 
