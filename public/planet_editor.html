@@ -417,6 +417,24 @@
                 </svg>
                 <span class="md:hidden ml-2">Info</span>
             </button>
+
+            <!-- SYNC BUTTON -->
+            <div class="h-8 w-px bg-[#E2E8F0] hidden md:block"></div>
+            <div class="flex items-center gap-2">
+                <span id="syncStatus"
+                    class="text-[10px] font-bold text-slate-400 uppercase tracking-wider hidden md:block">Offline</span>
+                <button onclick="syncToCloud()" id="btnSync"
+                    class="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-bold hover:bg-indigo-700 shadow-md shadow-indigo-200 flex items-center gap-2 transition-all active:scale-95">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 2v6h-6"></path>
+                        <path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path>
+                        <path d="M3 22v-6h6"></path>
+                        <path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path>
+                    </svg>
+                    Sync
+                </button>
+            </div>
+
         </div>
     </header>
 
@@ -816,7 +834,9 @@
 
             // Unlock
             document.getElementById('loginOverlay').classList.add('hidden');
-            init();
+
+            // Trigger Cloud Fetch
+            fetchCloudData();
         }
 
         function checkSession() {
@@ -827,9 +847,10 @@
             } else {
                 // Valid (Client-side assumption, API will reject real calls if expired)
                 document.getElementById('loginOverlay').classList.add('hidden');
-                init();
+                fetchCloudData(); // Load data from cloud, fallback to local if fail
             }
         }
+
 
         function logout() {
             sessionStorage.clear();
@@ -913,6 +934,125 @@
         }
 
         // --- DATA SYNC LOGIC ---
+
+        async function fetchCloudData() {
+            const token = sessionStorage.getItem('token');
+            const schoolId = sessionStorage.getItem('schoolId');
+            const statusEl = document.getElementById('syncStatus');
+
+            if (!token || !schoolId) return init(); // Fallback to local if no auth
+
+            statusEl.innerText = "Fetching...";
+            statusEl.className = "text-[10px] font-bold text-blue-500 uppercase tracking-wider hidden md:block animate-pulse";
+
+            try {
+                // Use the route I verified in data.js: router.get('/students/:schoolId')
+                const res = await fetch(`/api/data/students/${schoolId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!res.ok) throw new Error("Fetch Failed");
+
+                const cloudData = await res.json();
+
+                if (Array.isArray(cloudData) && cloudData.length > 0) {
+                    console.log("Cloud Data Loaded:", cloudData.length);
+                    // Map DB fields to Editor keys if needed, OR just ensure init handles DB format
+                    // DB: name, admission_no, role_no, class, section, house, gender
+                    // Editor: "Student Name", "Admission No", "Roll No", "Class", "Section", "House", "Gender"
+
+                    data = cloudData.map(d => ({
+                        "id": d.id, // Keep ID for updates
+                        "Student Name": d.name,
+                        "Admission No": d.admission_no,
+                        "Roll No": d.roll_no,
+                        "Class": d.class,
+                        "Section": d.section,
+                        "House": d.house,
+                        "Gender": d.gender,
+                        "Absent/Present": d.is_active ? "Present" : "Absent", // Basic map
+                        ...d.measurements // Spread measurements (U1, U2 etc) if stored in JSON column
+                    }));
+
+                    statusEl.innerText = "Cloud Synced";
+                    statusEl.className = "text-[10px] font-bold text-green-500 uppercase tracking-wider hidden md:block";
+
+                    // Save to local as backup
+                    localStorage.setItem('planetEditorData', JSON.stringify(data));
+                } else {
+                    // No cloud data? Keep local or empty?
+                    // Let's rely on init() logic but maybe show "No Cloud Data"
+                    console.log("No cloud data found, using local/empty.");
+                }
+
+                init(); // Re-render
+
+            } catch (e) {
+                console.error("Cloud Fetch Error:", e);
+                statusEl.innerText = "Sync Error";
+                statusEl.className = "text-[10px] font-bold text-rose-500 uppercase tracking-wider hidden md:block";
+                init(); // Load local anyway
+            }
+        }
+
+        async function syncToCloud() {
+            const token = sessionStorage.getItem('token');
+            const schoolId = sessionStorage.getItem('schoolId');
+            const btn = document.getElementById('btnSync');
+            const statusEl = document.getElementById('syncStatus');
+
+            if (!token) return alert("You are offline. Login to sync.");
+
+            const originalText = btn.innerHTML;
+            btn.innerHTML = `Saving...`;
+            btn.disabled = true;
+            statusEl.innerText = "Syncing...";
+
+            try {
+                // Convert Editor Data back to DB format
+                const payload = data.map(d => ({
+                    id: d.id, // Pass ID to update existing
+                    admission_no: d["Admission No"],
+                    roll: d["Roll No"],
+                    name: d["Student Name"],
+                    class: d["Class"],
+                    section: d["Section"],
+                    house: d["House"],
+                    gender: d["Gender"],
+                    // Measurements are harder... server expects { students: array } and manages inserts/updates
+                    // Wait, verify sync logic in server.js!
+                    // Server.js: app.post('/api/sync') expects { students: [...] }
+                    // It uses admission_no to match!
+                }));
+
+                const res = await fetch('/api/sync', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ students: payload }) // Server expects { students: [] }
+                });
+
+                if (!res.ok) throw new Error("Sync Failed");
+
+                const result = await res.json();
+                console.log("Sync Result:", result);
+
+                statusEl.innerText = "Saved";
+                statusEl.className = "text-[10px] font-bold text-green-600 uppercase tracking-wider hidden md:block";
+                setTimeout(() => statusEl.innerText = "Cloud Synced", 2000);
+
+                alert(`Sync Successful!\nUpdated/Inserted: ${result.count}`);
+
+            } catch (e) {
+                console.error(e);
+                alert("Sync Failed. Check console.");
+                statusEl.innerText = "Error";
+                statusEl.className = "text-[10px] font-bold text-rose-600 uppercase tracking-wider hidden md:block";
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
 
 
 
