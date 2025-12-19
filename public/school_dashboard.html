@@ -252,7 +252,8 @@
                 </svg>
                 <span class="text-sm">Support</span>
                 <!-- Notification Badge -->
-                <span id="supportBadge" class="hidden absolute top-2 right-3 w-2.5 h-2.5 bg-rose-500 rounded-full ring-2 ring-white animate-pulse"></span>
+                <span id="supportBadge"
+                    class="hidden absolute top-2 right-3 w-2.5 h-2.5 bg-rose-500 rounded-full ring-2 ring-white animate-pulse"></span>
             </div>
             <div onclick="switchTab('settings')" id="nav-settings" class="nav-item mx-4">
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1856,14 +1857,10 @@
                 measContainer.innerHTML = '<div class="text-slate-300 italic py-2 text-[10px]">No measurements found</div>';
             }
 
-            // Generate QR with JSON Data (Client Side Optimization)
-            const qrData = JSON.stringify({
-                id: student.admission_no,
-                n: student.name,
-                c: student.class,
-                s: student.section,
-                st: student.status
-            });
+            // Generate QR with Dynamic URL (Always Fresh Data)
+            // Points to student_view.html with specific admission no
+            const sName = sessionStorage.getItem('schoolName') || 'School';
+            const qrData = `${window.location.origin}/student_view.html?sid=${schoolId}&adm=${encodeURIComponent(student.admission_no || student.temp_id)}&s=${encodeURIComponent(sName)}`;
 
             // Clear Previous
             const qrContainer = document.getElementById('idQrCodeContainer');
@@ -3041,8 +3038,8 @@
                 const hasUnread = data.some(t => t.reply && t.status !== 'Resolved');
                 const badge = document.getElementById('supportBadge');
                 if (badge) {
-                     if (hasUnread) badge.classList.remove('hidden');
-                     else badge.classList.add('hidden');
+                    if (hasUnread) badge.classList.remove('hidden');
+                    else badge.classList.add('hidden');
                 }
 
                 // GLOBAL DATA STORE (Fixes Click Issues)

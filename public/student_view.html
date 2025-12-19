@@ -118,54 +118,95 @@
 
         // === DATA LOGIC ===
         async function loadData() {
-            // Check for Individual Student Context first
             const params = new URLSearchParams(window.location.search);
-            const studentStr = params.get('student');
 
+            // 1. Direct Student Object (Legacy/Backup)
+            const studentStr = params.get('student');
             if (studentStr) {
                 try {
                     const studentObj = JSON.parse(decodeURIComponent(studentStr));
                     renderStudentCard(studentObj);
-                    return; // Stop table loading
+                    return;
                 } catch (e) { console.error("Student parse error", e); }
             }
 
-            // Normal List Context (Mobile Scan View)
+            // 2. Extract Direct Parameters (New Dynamic QR)
+            const adm = params.get('adm');
+            const sid = params.get('sid');
+            const sName = params.get('s');
+
+            // Merge into filters if present
+            if (sid) filters.sid = sid;
+            if (sName) filters.s = decodeURIComponent(sName);
+
+            // Context Display
             const schoolName = filters.s || 'School Data';
-            const contextText = `${schoolName} • Class: ${filters.c || 'All'} • Section: ${filters.sec || 'All'} • House: ${filters.h || 'All'}`;
-            document.getElementById('filterContext').innerText = contextText;
+
+            if (adm) {
+                document.getElementById('filterContext').innerText = `${schoolName} • Student Ref: ${adm}`;
+            } else {
+                const contextText = `${schoolName} • Class: ${filters.c || 'All'} • Section: ${filters.sec || 'All'} • House: ${filters.h || 'All'}`;
+                document.getElementById('filterContext').innerText = contextText;
+            }
 
             // FETCH REAL DATA
+            // If we have an ID, we still fetch by School ID (and maybe class if we had it, but for single lookup we likely just have ID)
+            // Best approach: Fetch all for school (filtered by class if available in filters, otherwise all)
+            // Note: If fetching ALL students is heavy, we should optimize API to support ?adm=...
+            // For now, we assume standard fetch.
+
             const query = new URLSearchParams({
                 class: filters.c || '',
                 section: filters.sec || '',
                 house: filters.h || '',
-                sid: filters.sid || '' // CRITICAL: Filter by School ID
+                sid: filters.sid || ''
             }).toString();
 
             try {
                 const res = await fetch(`/api/public/students?${query}`);
                 if (!res.ok) throw new Error("Server Error");
-                const students = await res.json();
-                window.fetchedStudents = students; // Store for Modal
+                let students = await res.json();
+                window.fetchedStudents = students;
 
+                // 2.1 Filter by Admission Number if provided
+                if (adm) {
+                    const target = students.find(s => String(s.admission_no) === String(adm) || String(s.temp_id) === String(adm) || String(s.id) === String(adm));
+
+                    if (target) {
+                        // Directly Show Details
+                        renderStudentCard(target);
+                        return;
+                    } else {
+                        // Not found
+                        alert("Student not found in this list. Please check the school/class selection.");
+                        // Fallback to table view or empty state
+                    }
+                }
+
+                // Standard List Render
                 if (students.length > 0) {
                     renderTable(students);
                 } else {
                     document.getElementById('studentTableBody').innerHTML = `
                         <tr><td colspan="4" class="p-8 text-center text-slate-400">
-                            No students found for this class/section.<br>
-                            <span class="text-xs">Ensure data is synced from Dashboard.</span>
+                            No students found.<br>
+                            <span class="text-xs">Ensure data is synced.</span>
                         </td></tr>`;
                 }
             } catch (e) {
                 console.warn("Fetch Error, falling back to Demo if Local", e);
                 // Fallback for Local/Demo Mode
-                const mockStudents = [
-                    { name: "Demo Student 1", class: filters.c || "10", section: filters.sec || "A" },
-                    { name: "Demo Student 2", class: filters.c || "10", section: filters.sec || "A" }
-                ];
-                renderTable(mockStudents);
+                if (adm) {
+                    // Mock Single
+                    const mock = { name: "Demo Student", class: "10", section: "A", admission_no: adm, id: adm };
+                    renderStudentCard(mock);
+                } else {
+                    const mockStudents = [
+                        { name: "Demo Student 1", class: filters.c || "10", section: filters.sec || "A" },
+                        { name: "Demo Student 2", class: filters.c || "10", section: filters.sec || "A" }
+                    ];
+                    renderTable(mockStudents);
+                }
                 document.getElementById('filterContext').innerHTML += ` <span class="text-rose-500 font-bold block mt-1">(Error: ${e.message})</span>`;
             }
         }
