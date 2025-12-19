@@ -1192,7 +1192,18 @@
                 if (res.status === 401) throw new Error("Unauthorized (401) - Please Login Again");
                 if (!res.ok) throw new Error(`Server Error: ${res.status}`);
 
-                allStudents = await res.json();
+                const data = await res.json();
+
+                if (Array.isArray(data)) {
+                    allStudents = data;
+                    console.log(`Fetch Success: Loaded ${allStudents.length} students.`);
+                } else if (data && Array.isArray(data.students)) {
+                    allStudents = data.students;
+                    console.log(`Fetch Success (Wrapped): Loaded ${allStudents.length} students.`);
+                } else {
+                    console.warn("Fetch Warning: API returned unexpected format", data);
+                    allStudents = [];
+                }
 
                 // Live Update UI
                 renderDashboardStats();
@@ -1364,6 +1375,10 @@
         let houseChart = null;
 
         function renderDashboardStats() {
+            // Safety Check: If not on dashboard (elements missing), just return
+            const totalEl = document.getElementById('dashTotal');
+            if (!totalEl) return;
+
             const total = allStudents.length;
 
             // Stats Calculation
@@ -1371,9 +1386,11 @@
             const pendingCount = total - completedCount;
 
             // Update Text Stats
-            document.getElementById('dashTotal').innerText = total;
-            document.getElementById('dashPending').innerText = pendingCount;
-            document.getElementById('dashCompleted').innerText = completedCount;
+            if (totalEl) totalEl.innerText = total;
+            const pendingEl = document.getElementById('dashPending');
+            if (pendingEl) pendingEl.innerText = pendingCount;
+            const completedEl = document.getElementById('dashCompleted');
+            if (completedEl) completedEl.innerText = completedCount;
 
             // --- CHARTS LOGIC ---
 
