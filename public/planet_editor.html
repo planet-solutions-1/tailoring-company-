@@ -222,6 +222,15 @@
                         placeholder="Optional notes">
                 </div>
 
+                <div class="mb-4 bg-yellow-50 p-3 rounded border border-yellow-200">
+                    <label class="block text-xs font-bold text-yellow-800 uppercase mb-2">Item Quantities
+                        (Default)</label>
+                    <div id="pattern-qty-grid"
+                        class="grid grid-cols-2 gap-2 text-xs max-h-40 overflow-y-auto custom-scrollbar">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+
                 <div class="bg-indigo-50 p-3 rounded border border-indigo-100 text-xs text-indigo-800">
                     <strong>Note:</strong> This pattern will be assigned to
                     <span id="patCount" class="font-bold underline">0</span>
@@ -229,8 +238,13 @@
                 </div>
 
                 <button type="submit"
-                    class="w-full bg-indigo-600 text-white py-3 rounded-lg font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-transform active:scale-95">
-                    Save Pattern & Assign
+                    class="w-full bg-rose-600 text-white py-3 rounded-lg font-bold shadow-lg shadow-rose-200 hover:bg-rose-700 transition-transform active:scale-95 flex justify-center items-center gap-2">
+                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="17 8 12 3 7 8" />
+                        <line x1="12" y1="3" x2="12" y2="15" />
+                    </svg>
+                    Upload Measurement Data
                 </button>
             </form>
         </div>
@@ -1129,9 +1143,24 @@
         }
 
         // --- PATTERN LOGIC ---
+        // --- PATTERN LOGIC ---
         function openPatternModal() {
             const filtered = getFilteredData();
             document.getElementById('patCount').innerText = filtered.length;
+
+            // Populate Quantities Grid
+            const grid = document.getElementById('pattern-qty-grid');
+            if (grid) {
+                grid.innerHTML = '';
+                allItems.forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = "flex items-center justify-between bg-white border border-gray-200 p-2 rounded";
+                    div.innerHTML = `<span class="text-[10px] font-mono font-bold text-gray-600 truncate mr-2" title="${item.name}">${item.name}</span>
+                    <input type="number" min="0" value="0" data-item="${item.name}" class="w-12 text-center border border-gray-300 rounded px-1 py-0.5 text-xs font-bold text-blue-600 outline-none focus:border-blue-500">`;
+                    grid.appendChild(div);
+                });
+            }
+
             document.getElementById('patternModal').classList.remove('hidden');
         }
 
@@ -1145,16 +1174,31 @@
             const cloth = document.getElementById('patCloth').value;
             const req = document.getElementById('patReq').value;
 
+            if (!name) return alert("Pattern Name Required");
             if (!token) return alert("Offline!");
 
+            // Gather Quantities
+            const quantities = {};
+            const grid = document.getElementById('pattern-qty-grid');
+            if (grid) {
+                grid.querySelectorAll('input').forEach(inp => {
+                    const val = parseInt(inp.value);
+                    if (val > 0) quantities[inp.getAttribute('data-item')] = val;
+                });
+            }
+
             try {
-                // 1. Create Pattern
+                // 1. Create Pattern (Upload Data)
                 const res = await fetch('/api/data/patterns', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                     body: JSON.stringify({
                         school_id: schoolId,
-                        name, consumption, cloth_details: cloth, special_req: req
+                        name: name,
+                        consumption: parseFloat(consumption),
+                        cloth_details: cloth,
+                        special_req: req,
+                        quantities: quantities
                     })
                 });
 
@@ -1162,23 +1206,22 @@
                 const resData = await res.json();
                 const patternId = resData.id;
 
-                // 2. Assign to Filtered Students (Locally then Sync)
+                // 2. Assign to Filtered Students
                 const filtered = getFilteredData();
-                const ids = filtered.map(d => d.id); // Or admission no? ID is safer
+                const ids = filtered.map(d => d.id);
 
-                // Update Local Data
                 data.forEach(d => {
-                    // Check if this student is in the filtered list
                     if (ids.includes(d.id)) {
                         d.pattern_id = patternId;
                     }
                 });
 
-                // 3. Trigger Sync to save assignments
                 document.getElementById('patternModal').classList.add('hidden');
-                e.target.reset();
-                alert(`Pattern "${name}" Created!\nSyncing changes to ${filtered.length} students...`);
+                e.target.reset(); // Reset form
 
+                alert(`✅ Upload Successful! Pattern "${name}" Saved.\nLinked to ${filtered.length} students.`);
+
+                // 3. Sync
                 syncToCloud();
 
             } catch (err) {

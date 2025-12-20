@@ -176,6 +176,7 @@ if (process.env.RAILWAY_ENVIRONMENT || process.env.NODE_ENV === 'production') {
                     consumption DECIMAL(10,2) DEFAULT 0,
                     cloth_details TEXT,
                     special_req TEXT,
+                    quantities JSON,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     FOREIGN KEY (school_id) REFERENCES schools(id) ON DELETE CASCADE
                 )`
@@ -198,6 +199,9 @@ if (process.env.RAILWAY_ENVIRONMENT || process.env.NODE_ENV === 'production') {
                     // Ignore duplicate column error 
                 }
             }
+
+            try { await promisePool.execute("ALTER TABLE patterns ADD COLUMN quantities JSON"); } catch (e) { }
+            try { await promisePool.execute("ALTER TABLE orders ADD COLUMN status VARCHAR(50) DEFAULT 'Pending'"); } catch (e) { }
 
             // STUDENTS TABLE MIGRATION
             try { await promisePool.execute("ALTER TABLE students ADD COLUMN house VARCHAR(50)"); } catch (e) { }

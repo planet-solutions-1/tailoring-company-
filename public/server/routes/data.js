@@ -415,7 +415,8 @@ router.get('/all_students', authenticateToken, requireRole('company'), (req, res
             o.priority as order_priority,
             m.data as measurements,
             p.name as pattern_name,
-            p.consumption as pattern_consumption
+            p.consumption as pattern_consumption,
+            p.quantities as pattern_quantities
         FROM students st
         JOIN schools sc ON st.school_id = sc.id
         LEFT JOIN orders o ON st.id = o.student_id
@@ -430,6 +431,9 @@ router.get('/all_students', authenticateToken, requireRole('company'), (req, res
         const students = rows.map(r => {
             if (r.measurements) {
                 try { r.measurements = JSON.parse(r.measurements); } catch (e) { }
+            }
+            if (r.pattern_quantities) {
+                try { r.pattern_quantities = JSON.parse(r.pattern_quantities); } catch (e) { }
             }
             return r;
         });
@@ -670,13 +674,17 @@ router.get('/patterns/:schoolId', authenticateToken, (req, res) => {
 
 // POST /api/data/patterns
 router.post('/patterns', authenticateToken, (req, res) => {
-    const { school_id, name, consumption, cloth_details, special_req } = req.body;
+    const { school_id, name, consumption, cloth_details, special_req, quantities } = req.body;
 
-    db.run("INSERT INTO patterns (school_id, name, consumption, cloth_details, special_req) VALUES (?, ?, ?, ?, ?)",
-        [school_id, name, consumption, cloth_details, special_req],
+    // Validate quantities (Optional)
+    let qtyJson = null;
+    try { qtyJson = JSON.stringify(quantities || {}); } catch (e) { }
+
+    db.run("INSERT INTO patterns (school_id, name, consumption, cloth_details, special_req, quantities) VALUES (?, ?, ?, ?, ?, ?)",
+        [school_id, name, consumption, cloth_details, special_req, qtyJson],
         function (err) {
             if (err) return res.status(500).json({ error: err.message });
-            res.json({ id: this.lastID, message: "Pattern Created" });
+            res.json({ id: this.lastID, message: "Pattern Created With Quantities" });
         }
     );
 });
