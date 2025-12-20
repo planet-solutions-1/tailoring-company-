@@ -192,9 +192,17 @@
                 <div class="h-8 w-px bg-[#E2E8F0] hidden sm:block mx-2"></div>
 
                 <select id="filterItem" onchange="handleItemFilter()"
-                    class="text-sm border border-[#E2E8F0] rounded-md px-3 py-1.5 outline-none focus:border-[#4A5568] bg-white text-[#4A5568] max-w-[180px] font-medium">
-                    <option value="">Filter by Item</option>
+                    class="text-sm border border-[#E2E8F0] rounded-md px-3 py-1.5 outline-none focus:border-[#4A5568] bg-white text-[#4A5568] max-w-[200px] font-medium">
+                    <option value="">All Measurements (U1-L8)</option>
                 </select>
+
+                <div class="flex items-center gap-2 pl-2 border-l border-[#E2E8F0] ml-2">
+                    <input type="checkbox" id="filterHasData" onchange="handleFilter()" checked
+                        class="w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500">
+                    <label for="filterHasData"
+                        class="text-sm text-[#4A5568] font-medium whitespace-nowrap select-none cursor-pointer">With
+                        Data Only</label>
+                </div>
 
                 <!-- School/Pattern Hidden Selects for View Mode Compatibility -->
                 <select id="f-school" class="hidden">
@@ -333,6 +341,7 @@
             gender: '',
             attendance: '',
             item: '',
+            hasData: true, // Default Checked
             components: {}
         };
         let searchTimeout = null;
@@ -346,7 +355,7 @@
             // I should update this to populate `filterItem`.
             const newItemSel = document.getElementById('filterItem');
             if (newItemSel) {
-                newItemSel.innerHTML = '<option value="">Filter by Item</option>' + allItems.map(i => `<option value="${i.name}">${i.name}</option>`).join('');
+                newItemSel.innerHTML = '<option value="">All Measurements (U1-L8)</option>' + allItems.map(i => `<option value="${i.name}">${i.name}</option>`).join('');
             }
 
             if (MODE === 'create') {
@@ -400,6 +409,7 @@
             filters.house = document.getElementById('filterHouse').value;
             filters.gender = document.getElementById('filterGender').value;
             filters.attendance = document.getElementById('filterAttendance').value;
+            filters.hasData = document.getElementById('filterHasData').checked;
             renderTable();
         }
 
@@ -634,6 +644,18 @@
                     }
                 }
 
+                // HAS DATA FILTER
+                if (filters.hasData) {
+                    const m = getMeasurementsSafe(s);
+                    // Check if ANY measurement column has a value != "00"/"0"/""
+                    // We check against ALL measureCols
+                    const hasAny = measureCols.some(k => {
+                        const val = m[k] || m[k.toLowerCase()];
+                        return val && val !== "00" && val !== "0";
+                    });
+                    if (!hasAny) return false;
+                }
+
                 return true;
             });
 
@@ -648,9 +670,10 @@
                 measHeader.innerText = fItem;
                 measHeader.colSpan = showCols.length;
             } else {
-                showCols = [];
-                measHeader.innerText = "Measurements (Select Item)";
-                measHeader.colSpan = 1;
+                // SHOW ALL
+                showCols = measureCols;
+                measHeader.innerText = "All Measurements";
+                measHeader.colSpan = showCols.length;
             }
 
             const tbody = document.getElementById('table-body');
@@ -771,6 +794,12 @@
         async function savePattern() {
             if (!draftMetadata) return alert("Missing Session Data");
 
+            // USE FILTERED DATA (User Intent: "These filtered data are used")
+            const targetData = window.filteredData && window.filteredData.length > 0 ? window.filteredData : allStudents;
+            const currentItem = filters.item ? allItems.find(i => i.name === filters.item) : null;
+
+            if (targetData.length === 0) return alert("No students selected for this pattern.");
+
             const name = document.getElementById('metaPattern').value;
             const consumption = document.getElementById('metaConsumption').value;
             const cloth = document.getElementById('metaClothDetails').value;
@@ -778,17 +807,22 @@
 
             if (!name) return alert("Pattern Code is Required");
 
-            const quantities = calculateTotalBreakdown(allStudents);
+            // Calculate Breakdown based on TARGET DATA
+            const quantities = calculateTotalBreakdown(targetData);
+
+            if (Object.keys(quantities).length === 0) {
+                if (!confirm("Warning: No quantities calculated. Provide quantities or check if measurements exist. Continue?")) return;
+            }
 
             try {
-                // 1. Create Pattern
+                // 1. Create Pattern Group
                 const res = await fetch('/api/data/patterns', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                     body: JSON.stringify({
                         school_id: draftMetadata.schoolId,
                         name: name,
-                        consumption: parseFloat(consumption),
+                        consumption: parseFloat(consumption) || 0,
                         cloth_details: cloth,
                         special_req: req,
                         quantities: quantities
@@ -799,78 +833,65 @@
                 const resData = await res.json();
                 const patternId = resData.id;
 
-                // 2. Link Students (Sync logic needs to happen on SERVER or we must push updates?)
-                // WE NEED TO UPDATE THE STUDENTS IN DB TO LINK TO THIS PATTERN.
-                // In Editor, we called `syncToCloud`. Here we don't have the full Sync logic.
-                // We should make a dedicated API call to "Link Students to Pattern".
-                // Since we have the IDs.
+                // 2. Link Students & Store Production Data
+                const syncPayload = targetData.map(s => {
+                    const prodData = {};
 
-                // Let's reuse `/api/sync` but we need to construct the payload.
-                // The payload expected by `/api/sync` is array of students.
-                // We only need to update `pattern_id`.
-                // Efficient way: POST /api/data/link_pattern  { pattern_id: X, student_ids: [...] }
-                // But that endpoint doesn't exist.
-                // Reuse Sync: Construct minimal payload { id: X, pattern_id: Y } for all students.
+                    // Logic: If Item Filter active, store ONLY that item.
+                    // If NO Item Filter, store ALL items? (Likely not intended for a specific pattern, but safer to store what's calculated)
 
-                const syncPayload = allStudents.map(s => ({
-                    id: s.id,
-                    pattern_id: patternId,
-                    // We must also send production_data if we want to ensure it's saved? 
-                    // Editor logic sent it. If we don't send, it stays as is?
-                    // Sync logic performs UPDATE. if we send `pattern_id`, it updates it.
-                    // Be careful not to wipe other fields.
-                    // Let's send `production_data` too just in case it wasn't there?
-                    // Actually, if we just came from Editor, the data might not be in Cloud yet?
-                    // Wait, Editor `filtered` data is LOCAL.
-                    // If the user made changes in Editor and clicked "Create Pattern", those changes are in `draftPatternData`.
-                    // But they are NOT in the database yet if they didn't click "Sync".
-                    // The user flow implies "Save & Create".
-                    // So we MUST sync everything: Measurements, everything.
-                    // This is heavy.
+                    const itemsToStore = currentItem ? [currentItem] : allItems;
 
-                    // Simple solution: We pass the FULL student object.
-                    // But we need to calculate `production_data` string for each item.
-                    // This logic is duplicated.
+                    itemsToStore.forEach(item => {
+                        // Calculate Qty for this item for this student
+                        // Check calculated first
+                        const valStr = calculateItemValue(s, item);
+                        const hasMeas = valStr.replace(/00/g, '').replace(/,/g, '').length > 0;
+                        if (hasMeas) {
+                            prodData[item.name] = "1"; // Default 1 if measured
+                        }
+                        // Check explicit Qty override (if we had it in data) - logic from breakdown
+                        const qtyKey = `Qty_${item.name}`;
+                        if (s[qtyKey] && !isNaN(parseFloat(s[qtyKey]))) {
+                            prodData[item.name] = String(s[qtyKey]);
+                        }
+                    });
 
-                    ...s, // Spread existing props (name, class etc)
-                    pattern_id: patternId,
-                    production_data: produceProductionData(s)
-                }));
+                    return {
+                        id: s.id, // ID must exist if we are syncing. In Create Mode, these are from DB or drafts?
+                        // Drafts from Editor have IDs if they came from DB. New rows have _tempId?
+                        // If they are new rows, they might not have IDs yet? 
+                        // Wait, Editor loads data from DB. New rows in Editor have _tempId.
+                        // If we sync _tempId, backend won't match. 
+                        // BUT the user says "store the datas". Backend handles INSERT if no ID match but match Admission No.
+                        // Create Mode data implies we are creating pattern for EXISTING students usually?
+                        // Ensure we pass necessary identifying info.
+                        admission_no: s.admission_no || s["Admission No"], // Fallback for safety
+                        roll_no: s.roll_no || s["Roll No"],
+                        name: s.name || s["Student Name"],
+                        school_id: draftMetadata.schoolId, // Ensure Context
 
-                await fetch('/api/sync', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                    body: JSON.stringify({ data: syncPayload, school_id: draftMetadata.schoolId })
+                        pattern_id: patternId,
+                        production_data: prodData
+                    };
                 });
 
-                alert("✅ Pattern Created & Data Linked Successfully!");
+                const syncRes = await fetch('/api/sync', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ students: syncPayload })
+                });
 
-                // Switch to View Mode
+                if (!syncRes.ok) throw new Error("Failed to link students.");
+
+                alert(`✅ Pattern '${name}' Created!\\nLinked ${targetData.length} Students.`);
                 window.location.href = `pattern_view.html?id=${patternId}`;
 
             } catch (e) {
                 alert("Error: " + e.message);
+                console.error(e);
             }
         }
-
-        function produceProductionData(row) {
-            const snapshot = {};
-            allItems.forEach(item => {
-                const val = calculateItemValue(row, item);
-                // Only save if meaningful?
-                // Editor logic: if (val && val !== ... ) snapshot[item.name] = val;
-                if (val && val.replace(/,/g, '').replace(/0/g, '').length > 0) {
-                    snapshot[item.name] = val;
-                }
-            });
-            return JSON.stringify(snapshot); // API expects string or object? 
-            // Server code: `const prodData = ... JSON.stringify(row.production_data)`
-            // Actually server expects Object in JSON body, and it stringifies it?
-            // No, let's look at server logic if needed.
-            // safe bet: send Object.
-            return snapshot;
-        }
-
 
         // --- EXPORT ---
         function downloadPDF() {
