@@ -695,20 +695,44 @@ router.post('/patterns', authenticateToken, (req, res) => {
 });
 
 
-// DELETE /api/data/patterns/:id - Delete Pattern
+// DELETE /api/data/patterns/:id - Delete Pattern & Revert Status
 router.delete('/patterns/:id', authenticateToken, requireRole('company'), (req, res) => {
     const { id } = req.params;
     db.serialize(() => {
-        // 1. Unlink students
-        db.run("UPDATE students SET pattern_id = NULL WHERE pattern_id = ?", [id], (err) => {
-            if (err) return res.status(500).json({ error: "Failed to unlink students: " + err.message });
+        // 1. Revert Order Status for linked students
+        // We need to find students with this pattern_id first, then update their orders.
+        // Or do a subquery update if supported.
+        // SQLite/MySQL syntax differs. Safer to do:
+        // UPDATE orders SET status = 'Pending' WHERE student_id IN (SELECT id FROM students WHERE pattern_id = ?)
 
-            // 2. Delete Pattern
-            db.run("DELETE FROM patterns WHERE id = ?", [id], (err2) => {
-                if (err2) return res.status(500).json({ error: "Failed to delete pattern: " + err2.message });
-                res.json({ message: "Pattern Deleted and Students Unlinked" });
+        const revertSql = "UPDATE orders SET status = 'Pending' WHERE student_id IN (SELECT id FROM students WHERE pattern_id = ?)";
+
+        db.run(revertSql, [id], (err0) => {
+            if (err0) console.error("Warn: Failed to revert order status", err0.message);
+
+            // 2. Unlink students
+            db.run("UPDATE students SET pattern_id = NULL WHERE pattern_id = ?", [id], (err) => {
+                if (err) return res.status(500).json({ error: "Failed to unlink students: " + err.message });
+
+                // 3. Delete Pattern
+                db.run("DELETE FROM patterns WHERE id = ?", [id], (err2) => {
+                    if (err2) return res.status(500).json({ error: "Failed to delete pattern: " + err2.message });
+                    res.json({ message: "Pattern Deleted, Students Unlinked, Status Reverted to Pending" });
+                });
             });
         });
+    });
+});
+
+// PUT /api/data/patterns/:id - Rename/Update Pattern
+router.put('/patterns/:id', authenticateToken, requireRole('company'), (req, res) => {
+    const { id } = req.params;
+    const { name, description } = req.body;
+
+    db.run("UPDATE patterns SET name = ?, description = ? WHERE id = ?", [name, description, id], function (err) {
+        if (err) return res.status(500).json({ error: err.message });
+        if (this.changes === 0) return res.status(404).json({ error: "Pattern not found" });
+        res.json({ message: "Pattern Updated" });
     });
 });
 

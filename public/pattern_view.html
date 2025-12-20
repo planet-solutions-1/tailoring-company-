@@ -231,6 +231,21 @@
             <div class="flex items-center gap-2 ml-auto">
                 <!-- Export Buttons from Header -->
                 <div id="viewActions" class="flex gap-2">
+                    <button id="btnToggleView" onclick="togglePatternView()"
+                        class="bg-stone-700 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-stone-800 shadow-sm flex items-center gap-1 transition-colors">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <rect x="3" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="14" width="7" height="7"></rect>
+                            <rect x="3" y="14" width="7" height="7"></rect>
+                        </svg>
+                        <span id="txtToggleView">View Groups</span>
+                    </button>
+                    <button onclick="openRenameModal()" id="btnRenamePattern"
+                        class="hidden bg-stone-100 text-stone-700 border border-stone-200 px-3 py-1.5 rounded text-xs font-bold hover:bg-stone-200 shadow-sm">
+                        Rename
+                    </button>
                     <button onclick="downloadPDF()"
                         class="btn-outline px-3 py-1.5 rounded text-xs font-bold text-rose-600 border-rose-200 hover:bg-rose-50">PDF</button>
                     <button onclick="downloadExcel()"
@@ -243,7 +258,7 @@
                             <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2">
                             </path>
                         </svg>
-                        Delete Pattern
+                        Delete
                     </button>
                 </div>
                 <div id="createActions" class="hidden flex items-center gap-4">
@@ -270,9 +285,20 @@
             </div>
         </div>
 
-        <!-- Data Table -->
-        <div
-            class="glass-panel rounded-xl overflow-hidden shadow-xl border border-stone-200 flex-1 min-h-[500px] flex flex-col">
+        <!-- Pattern Groups View (New Window/Section) -->
+        <div id="groupsView"
+            class="hidden flex-1 glass-panel rounded-xl p-6 shadow-xl border border-stone-200 overflow-auto">
+            <h2 class="text-xl font-ink font-bold text-stone-800 mb-6 flex items-center gap-2">
+                <span class="text-indigo-600 text-2xl">❖</span> Pattern Groups
+            </h2>
+            <div id="patternGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
+                <!-- Grid Items -->
+            </div>
+        </div>
+
+        <!-- Data Table View -->
+        <div id="tableView"
+            class="hidden glass-panel rounded-xl overflow-hidden shadow-xl border border-stone-200 flex-1 min-h-[500px] flex flex-col">
             <div class="overflow-auto flex-1 h-full">
                 <table class="w-full text-left border-collapse whitespace-nowrap">
                     <thead class="bg-stone-50 text-stone-500 uppercase text-xs sticky top-0 z-20 shadow-sm">
@@ -438,8 +464,10 @@
             const btnDel = document.getElementById('btnDeletePattern');
             if (fPattern && fPattern !== 'all') {
                 btnDel.classList.remove('hidden');
+                document.getElementById('btnRenamePattern').classList.remove('hidden');
             } else {
                 btnDel.classList.add('hidden');
+                document.getElementById('btnRenamePattern').classList.add('hidden');
             }
 
             renderTable();
@@ -527,6 +555,7 @@
             document.getElementById('createActions').classList.remove('hidden');
             document.getElementById('creationPanel').classList.remove('hidden');
             document.getElementById('creationPanel').classList.remove('hidden');
+            document.getElementById('tableView').classList.remove('hidden'); // Fix: Ensure Table is Visible
             // document.getElementById('filterPanel').classList.add('hidden'); // UNHIDDEN per user request
 
             // Load Draft Data
@@ -1119,6 +1148,150 @@
             XLSX.writeFile(wb, `Pattern_Data_${TARGET_PATTERN_ID || 'View'}.xlsx`);
         }
 
+    </script>
+    <!-- MODALS -->
+    <!-- Pattern Manager Modal REMOVED - Converted to Main View -->
+
+    <!-- Rename Modal -->
+    <div id="renameModal"
+        class="hidden fixed inset-0 bg-black/50 z-[70] flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl w-96 p-6">
+            <h3 class="font-bold text-lg mb-4 text-stone-800">Rename Pattern</h3>
+            <input type="hidden" id="renameId">
+            <div class="space-y-3">
+                <div>
+                    <label class="text-xs font-bold text-stone-500 uppercase">Pattern Name</label>
+                    <input type="text" id="renameName" class="w-full border p-2 rounded text-sm font-bold">
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-stone-500 uppercase">Description</label>
+                    <textarea id="renameDesc" class="w-full border p-2 rounded text-sm" rows="3"></textarea>
+                </div>
+                <div class="flex gap-2 justify-end pt-2">
+                    <button onclick="document.getElementById('renameModal').classList.add('hidden')"
+                        class="px-3 py-1.5 text-stone-500 text-sm font-bold hover:bg-stone-100 rounded">Cancel</button>
+                    <button onclick="executeRename()"
+                        class="px-3 py-1.5 bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 rounded shadow">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ... (Existing Script) ...
+
+        // --- VIEW SWITCHING LOGIC ---
+        let currentView = 'table'; // table | groups
+
+        async function togglePatternView(forceView) {
+            const target = forceView || (currentView === 'table' ? 'groups' : 'table');
+            const btnTxt = document.getElementById('txtToggleView');
+            const dataView = document.getElementById('tableView');
+            const groupsView = document.getElementById('groupsView');
+            const filterPanel = document.getElementById('filterPanel');
+
+            if (target === 'groups') {
+                await fetchPatterns();
+                renderGroupGrid();
+                dataView.classList.add('hidden');
+                groupsView.classList.remove('hidden');
+                filterPanel.classList.add('opacity-50', 'pointer-events-none'); // Disable filters in group view
+                btnTxt.innerText = "Back to Data";
+                currentView = 'groups';
+            } else {
+                dataView.classList.remove('hidden');
+                groupsView.classList.add('hidden');
+                filterPanel.classList.remove('opacity-50', 'pointer-events-none');
+                btnTxt.innerText = "All Patterns";
+                currentView = 'table';
+            }
+        }
+
+        // Initialize based on ID
+        if (!TARGET_PATTERN_ID && MODE !== 'create') {
+            // If no ID, show groups by default
+            setTimeout(() => togglePatternView('groups'), 100);
+        } else {
+            document.getElementById('tableView').classList.remove('hidden');
+        }
+
+        function renderGroupGrid() {
+            const grid = document.getElementById('patternGrid');
+            if (patterns.length === 0) {
+                grid.innerHTML = '<div class="col-span-full text-center text-stone-400 italic py-10">No patterns created yet.</div>';
+                return;
+            }
+            grid.innerHTML = patterns.map(p => `
+                <div onclick="selectPattern('${p.id}')" class="bg-white p-6 rounded-xl shadow-sm border border-stone-200 cursor-pointer hover:border-indigo-500 hover:shadow-lg hover:-translate-y-1 transition-all group relative">
+                    <div class="flex justify-between items-start mb-3">
+                        <div class="font-ink font-bold text-stone-800 text-xl group-hover:text-indigo-600">${p.name}</div>
+                         <div class="flex flex-col items-end gap-1">
+                            <span class="text-[10px] font-mono bg-stone-100 px-2 py-0.5 rounded text-stone-500">
+                            ${new Date(p.created_at).toLocaleDateString()}
+                            </span>
+                            <span class="text-[10px] font-bold uppercase text-indigo-400">#${p.id}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center gap-2 mb-3">
+                        <span class="px-2 py-1 rounded bg-amber-50 text-amber-700 text-xs font-bold border border-amber-100">${p.school_name}</span>
+                    </div>
+
+                    <div class="bg-stone-50 p-3 rounded-lg border border-stone-100 mb-4 h-20 overflow-hidden relative">
+                         <div class="text-xs text-stone-400 uppercase font-bold mb-1">Description</div>
+                        <div class="text-xs text-stone-600 italic leading-relaxed line-clamp-3">${p.description || "No description provided."}</div>
+                        <div class="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-stone-50 to-transparent"></div>
+                    </div>
+                    
+                    <div class="flex justify-between items-center pt-2 border-t border-stone-100 mt-auto">
+                         <span class="text-xs font-bold text-stone-400 uppercase tracking-widest group-hover:text-indigo-500 transition-colors">Open Group &rarr;</span>
+                         ${p.consumption ? `<span class="text-xs font-bold text-stone-500 bg-stone-100 px-2 py-1 rounded">${p.consumption}m / unit</span>` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function openPatternManager() { togglePatternView('groups'); } // Alias for safety
+
+        function selectPattern(id) {
+            // Update URL logic to avoid full reload? 
+            // Better to reload to ensure Clean State for Table View or just re-init?
+            // User requested "window", so reload is cleaner for "Entering" a pattern.
+            window.location.href = `pattern_view.html?id=${id}`;
+        }
+
+        // --- RENAME LOGIC ---
+        function openRenameModal() {
+            const id = document.getElementById('f-pattern').value;
+            if (!id || id === 'all') return;
+            const p = patterns.find(pat => pat.id == id);
+            if (!p) return;
+
+            document.getElementById('renameId').value = id;
+            document.getElementById('renameName').value = p.name;
+            document.getElementById('renameDesc').value = p.description || "";
+            document.getElementById('renameModal').classList.remove('hidden');
+        }
+
+        async function executeRename() {
+            const id = document.getElementById('renameId').value;
+            const name = document.getElementById('renameName').value;
+            const desc = document.getElementById('renameDesc').value;
+
+            try {
+                const res = await fetch(`${API_BASE}/data/patterns/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ name, description: desc })
+                });
+
+                if (!res.ok) throw new Error("Update failed");
+                alert("Pattern Updated!");
+                location.reload();
+            } catch (e) {
+                alert(e.message);
+            }
+        }
     </script>
 </body>
 
