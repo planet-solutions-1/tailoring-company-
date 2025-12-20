@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pattern View | Planet Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=Inter:wght@300;400;500;600&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --ink-black: #1c1917;
+            --rice-paper: #fafaf9;
+            --seal-red: #be123c;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--rice-paper);
+            color: #44403c;
+        }
+
+        .font-ink {
+            font-family: 'Noto Serif JP', serif;
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex flex-col">
+
+    <!-- Header -->
+    <header class="bg-stone-900 text-white p-4 shadow-md sticky top-0 z-50">
+        <div class="max-w-[1920px] mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-4">
+                <a href="planet_editor.html"
+                    class="text-stone-400 hover:text-white transition-colors flex items-center gap-2 text-sm font-bold uppercase tracking-wider">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                    Back to Editor
+                </a>
+                <div class="h-6 w-px bg-stone-700"></div>
+                <h1 class="font-ink text-xl flex items-center gap-2"><span class="text-rose-600 text-2xl">●</span>
+                    Pattern Details View</h1>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="downloadPDF()"
+                    class="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded shadow-lg text-xs font-bold uppercase flex items-center gap-2 transition-transform active:scale-95">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                    Download PDF
+                </button>
+                <button onclick="downloadExcel()"
+                    class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded shadow-lg text-xs font-bold uppercase flex items-center gap-2 transition-transform active:scale-95">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                        <line x1="16" y1="8" x2="8" y2="8"></line>
+                        <line x1="16" y1="16" x2="8" y2="16"></line>
+                        <line x1="10" y1="12" x2="3" y2="12"></line>
+                    </svg>
+                    Download Excel
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 p-4 md:p-6 max-w-[1920px] mx-auto w-full space-y-4">
+
+        <!-- Filters -->
+        <div class="glass-panel p-4 rounded-xl flex flex-wrap gap-4 items-end sticky top-20 z-40">
+            <!-- School -->
+            <div class="w-full sm:w-auto">
+                <label class="block text-[10px] font-bold text-stone-500 uppercase mb-1">School</label>
+                <select id="f-school" onchange="renderTable()"
+                    class="w-full sm:w-48 border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:border-rose-500 shadow-sm bg-gray-50 pointer-events-none opacity-80"
+                    tabindex="-1">
+                    <option value="all">Loading...</option>
+                </select>
+            </div>
+
+            <!-- Pattern -->
+            <div class="w-full sm:w-auto">
+                <label class="block text-[10px] font-bold text-stone-500 uppercase mb-1">Pattern</label>
+                <select id="f-pattern" onchange="renderTable()"
+                    class="w-full sm:w-48 border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:border-rose-500 shadow-sm bg-gray-50 pointer-events-none opacity-80"
+                    tabindex="-1">
+                    <option value="all">Loading...</option>
+                </select>
+            </div>
+
+            <!-- Item Type (CRITICAL) -->
+            <div class="w-full sm:w-auto flex-1">
+                <label class="block text-[10px] font-bold text-stone-500 uppercase mb-1">Measurement Type (Item)</label>
+                <select id="f-item" onchange="renderTable()"
+                    class="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:border-rose-500 shadow-sm font-medium text-stone-700 bg-amber-50/50">
+                    <option value="all">-- Select Item to View Measurements --</option>
+                </select>
+            </div>
+
+            <!-- Meta Filters -->
+            <div class="w-[30%] sm:w-24">
+                <label class="block text-[10px] font-bold text-stone-500 uppercase mb-1">Class</label>
+                <input type="text" id="f-class" onkeyup="renderTable()" placeholder="All"
+                    class="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none shadow-sm">
+            </div>
+            <div class="w-[30%] sm:w-24">
+                <label class="block text-[10px] font-bold text-stone-500 uppercase mb-1">Gender</label>
+                <select id="f-gender" onchange="renderTable()"
+                    class="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none shadow-sm">
+                    <option value="all">All</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                </select>
+            </div>
+            <div class="w-[30%] sm:w-32">
+                <label class="block text-[10px] font-bold text-stone-500 uppercase mb-1">Status</label>
+                <select id="f-packed" onchange="renderTable()"
+                    class="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none shadow-sm">
+                    <option value="all">All</option>
+                    <option value="pending">Pending</option>
+                    <option value="packed">Packed</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Data Table -->
+        <div
+            class="glass-panel rounded-xl overflow-hidden shadow-xl border border-stone-200 flex-1 min-h-[500px] flex flex-col">
+            <div class="overflow-auto flex-1 h-full">
+                <table class="w-full text-left border-collapse whitespace-nowrap">
+                    <thead class="bg-stone-50 text-stone-500 uppercase text-xs sticky top-0 z-20 shadow-sm">
+                        <tr>
+                            <th class="p-3 font-bold border-b border-r bg-stone-50 sticky left-0 z-30 w-16">No.</th>
+                            <th class="p-3 font-bold border-b">School</th>
+                            <th class="p-3 font-bold border-b">Student</th>
+                            <th class="p-3 font-bold border-b">Class</th>
+                            <th class="p-3 font-bold border-b">Pattern</th>
+                            <!-- Dynamic Measurement Headers -->
+                            <th class="p-3 font-bold border-b bg-amber-50 text-amber-700 text-center"
+                                id="meas-header-group" colspan="1">Measurements</th>
+                            <th class="p-3 font-bold border-b text-center">Status</th>
+                        </tr>
+                        <tr id="sub-header-row" class="bg-stone-100 text-[10px] font-mono text-stone-600 hidden">
+                            <!-- Will be populated by JS -->
+                        </tr>
+                    </thead>
+                    <tbody id="table-body" class="divide-y divide-stone-100 bg-white text-sm">
+                        <!-- Rows -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="p-2 border-t bg-stone-50 text-right text-xs text-stone-500 font-mono" id="row-count">Loading...
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        const API_BASE = '/api';
+        const token = sessionStorage.getItem('token');
+        if (!token) window.location.href = 'planet_editor.html'; // Back to Editor if no auth
+
+        // --- URL PARAMS ---
+        const urlParams = new URLSearchParams(window.location.search);
+        const TARGET_PATTERN_ID = urlParams.get('id');
+
+        // --- DATA ---
+        let allStudents = [];
+        let patterns = [];
+        let schools = [];
+
+        // --- CONFIG ---
+        const boysItems = [{ name: "BOYS - FORMAL SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Male" }, { name: "BOYS - TRACK T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Male" }, { name: "BOYS - UNIFORM T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Male" }, { name: "BOYS - JERKIN", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Male" }, { name: "BOYS - PULLOVER", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Male" }, { name: "BOYS - FORMAL PANT", cols: ["L1", "L2"], type: "Male" }, { name: "BOYS - TRACK PANT", cols: ["L1", "L2"], type: "Male" }, { name: "BOYS - FORMAL SHORTS", cols: ["L3", "L2"], type: "Male" }, { name: "BOYS - TRACK SHORTS", cols: ["L3", "L2"], type: "Male" }, { name: "BOYS - PANT SPECIAL CASE", cols: ["L1", "L2", "L6", "L7"], type: "Male" }];
+        const girlsItems = [{ name: "GIRLS - FORMAL SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Female" }, { name: "GIRLS - TRACK T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Female" }, { name: "GIRLS - UNIFORM T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Female" }, { name: "GIRLS - JERKIN", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Female" }, { name: "GIRLS - FULL SLEEVE SHIRT", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Female" }, { name: "GIRLS - PULLOVER", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Female" }, { name: "GIRLS - KURTHA SHIRT", cols: ["U7", "U2", "U3", "U4", "U6"], type: "Female" }, { name: "GIRLS - SPECIAL FROCKS", cols: ["U7", "U2", "U3", "U4", "U6"], type: "Female" }, { name: "GIRLS - FORMAL PANT", cols: ["L1", "L2"], type: "Female" }, { name: "GIRLS - TRACK PANT", cols: ["L1", "L2"], type: "Female" }, { name: "GIRLS - TRACK SHORTS", cols: ["L3", "L2"], type: "Female" }, { name: "GIRLS - PINOFORE", cols: ["L4", "L2"], type: "Female" }, { name: "GIRLS - SKIRT", cols: ["L5", "L2"], type: "Female" }, { name: "GIRLS - PANT SPECIAL CASE", cols: ["L1", "L2", "L6", "L7"], type: "Female" }];
+        const allItems = [...boysItems, ...girlsItems];
+
+        // --- INIT ---
+        async function init() {
+            // Populate Items
+            const itemSel = document.getElementById('f-item');
+            allItems.forEach(i => {
+                const opt = document.createElement('option');
+                opt.value = i.name;
+                opt.text = i.name;
+                itemSel.appendChild(opt);
+            });
+
+            await Promise.all([
+                fetchData(),
+                fetchPatterns(),
+                fetchSchools()
+            ]);
+
+            // APPLY AUTO-SELECT IF TARGET ID EXISTS
+            if (TARGET_PATTERN_ID) {
+                const patSel = document.getElementById('f-pattern');
+                const schSel = document.getElementById('f-school');
+
+                // Set Pattern
+                patSel.value = TARGET_PATTERN_ID;
+
+                // Attempt to Auto-Set School based on Pattern
+                const targetPattern = patterns.find(p => p.id == TARGET_PATTERN_ID);
+                if (targetPattern) {
+                    schSel.value = targetPattern.school_id;
+                }
+            }
+
+            renderTable();
+        }
+        init();
+
+        async function fetchData() {
+            try {
+                // Optimized: Can we fetch only students for this school/pattern? 
+                // For now, reusing all_students endpoint but filtered client-side (safe enough for this user role)
+                const res = await fetch(`${API_BASE}/data/all_students`, { headers: { 'Authorization': `Bearer ${token}` } });
+                allStudents = await res.json();
+            } catch (e) { console.error(e); }
+        }
+
+        async function fetchPatterns() {
+            try {
+                const res = await fetch(`${API_BASE}/data/patterns/all`, { headers: { 'Authorization': `Bearer ${token}` } });
+                patterns = await res.json();
+                const sel = document.getElementById('f-pattern');
+                sel.innerHTML = '<option value="all">All Patterns</option>'; // Reset
+                patterns.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.id;
+                    opt.text = `${p.name} (${p.school_name})`;
+                    sel.appendChild(opt);
+                });
+            } catch (e) { console.error(e); }
+        }
+
+        async function fetchSchools() {
+            try {
+                const res = await fetch(`${API_BASE}/data/schools`, { headers: { 'Authorization': `Bearer ${token}` } });
+                schools = await res.json();
+                const sel = document.getElementById('f-school');
+                sel.innerHTML = '<option value="all">All Schools</option>'; // Reset
+                schools.forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = s.id;
+                    opt.text = s.name;
+                    sel.appendChild(opt);
+                });
+            } catch (e) { console.error(e); }
+        }
+
+        // --- RENDER ---
+        function renderTable() {
+            const fSchool = document.getElementById('f-school').value;
+            const fPattern = document.getElementById('f-pattern').value;
+            const fItem = document.getElementById('f-item').value;
+            const fClass = document.getElementById('f-class').value.toLowerCase();
+            const fGender = document.getElementById('f-gender').value;
+            const fPacked = document.getElementById('f-packed').value;
+
+            // 1. FILTER
+            const data = allStudents.filter(s => {
+                if (fSchool !== 'all' && s.school_id != fSchool) return false;
+                if (fPattern !== 'all' && s.pattern_id != fPattern) return false;
+                if (fGender !== 'all' && s.gender !== fGender) return false;
+                if (fPacked === 'packed' && !s.is_packed) return false;
+                if (fPacked === 'pending' && s.is_packed) return false;
+                if (fClass && !(s.class || '').toLowerCase().includes(fClass)) return false;
+
+                if (fItem !== 'all') {
+                    const def = allItems.find(x => x.name === fItem);
+                    if (def && s.gender && def.type && s.gender !== def.type) return false;
+                }
+
+                return true;
+            });
+
+            // 2. SETUP COLUMNS
+            const measHeader = document.getElementById('meas-header-group');
+            const thead = document.querySelector('thead');
+            let subRow = document.getElementById('sub-header-row');
+
+            let showCols = [];
+            if (fItem !== 'all') {
+                const def = allItems.find(x => x.name === fItem);
+                if (def) showCols = def.cols; // ["U1", "U2"]
+                measHeader.innerText = fItem;
+                measHeader.colSpan = showCols.length;
+            } else {
+                showCols = [];
+                measHeader.innerText = "Measurements (Select Item)";
+                measHeader.colSpan = 1;
+            }
+
+            // 3. BUILD ROWS
+            const tbody = document.getElementById('table-body');
+            tbody.innerHTML = data.map((s, idx) => {
+                // Production Data Priority over Raw Measurements
+                // If Item is selected, try to find snapshot data in `production_data`?
+                // The current backend storage for production_data is JSON.
+                // In `planet_editor.html`, we store `production_data: { "Item Name": "12,34" }`.
+                // But here we want individual columns U1, U2.
+                // The `production_data` logic I added earlier was: `snapshot[item.name] = val;` where val is calculated string.
+                // If I want to show breakdown, I should probably parse the String value?
+                // OR fallback to raw measurements if available.
+                // `getMeasurementsSafe` reads `s.measurements`.
+                // Let's stick to `s.measurements` which is the RAW data. The Pattern/Order also has `quantities` but that is aggregate.
+                // The Student Row has linked `pattern_id`.
+
+                // NOTE: `planet_editor.html` sends `measurements` AND `production_data`.
+                // `tailoring_dashboard.html` uses `s.measurements`.
+                // This should be fine as `planet_editor` preserves raw measurements.
+
+                const m = getMeasurementsSafe(s);
+
+                let measCells = '';
+                if (showCols.length > 0) {
+                    measCells = showCols.map(k => `<td class="p-3 text-center font-mono font-bold bg-amber-50/30 text-stone-700 border-b border-stone-100">${m[k.toLowerCase()] || '-'}</td>`).join('');
+                } else {
+                    measCells = `<td class="p-3 text-xs text-stone-400 italic border-b border-stone-100">Select Item Type...</td>`;
+                }
+
+                return `<tr class="hover:bg-blue-50 transition-colors">
+                    <td class="p-3 border-b border-r bg-stone-50/50 sticky left-0 font-mono text-xs text-stone-400 font-bold">${idx + 1}</td>
+                    <td class="p-3 border-b border-stone-100 font-bold text-stone-700">${s.school_name}</td>
+                    <td class="p-3 border-b border-stone-100">
+                        <div class="font-bold text-stone-800">${s.name}</div>
+                        <div class="text-[10px] text-stone-500 font-mono">Roll: ${s.roll_no || '-'}</div>
+                    </td>
+                    <td class="p-3 border-b border-stone-100 text-sm">${s.class || ''} ${s.section || ''} <span class="text-xs text-stone-400">(${s.gender?.[0] || '?'})</span></td>
+                    <td class="p-3 border-b border-stone-100">
+                        ${s.pattern_name ? `<span class="px-2 py-1 bg-indigo-50 text-indigo-700 rounded text-xs font-bold ring-1 ring-indigo-200">${s.pattern_name}</span>` : '<span class="text-stone-300">-</span>'}
+                    </td>
+                    ${measCells}
+                    <td class="p-3 border-b border-stone-100 text-center">
+                        <span class="px-2 py-1 rounded-full text-[10px] font-bold uppercase ${s.is_packed ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${s.is_packed ? 'Packed' : 'Pending'}</span>
+                    </td>
+                </tr>`;
+            }).join('');
+
+            // 4. Update Sub-Header
+            if (showCols.length > 0) {
+                subRow.classList.remove('hidden');
+                subRow.innerHTML = `
+                    <th colspan="5"></th>
+                    ${showCols.map(c => `<th class="p-2 text-center bg-amber-100 text-amber-800 border-x border-amber-200">${c}</th>`).join('')}
+                    <th></th>
+                `;
+            } else {
+                subRow.classList.add('hidden');
+            }
+
+            document.getElementById('row-count').innerText = `Showing ${data.length} Records`;
+            window.filteredData = data;
+            window.currentCols = showCols;
+        }
+
+        function getMeasurementsSafe(s) {
+            // Support both object and string format (DB might return either depending on driver/parsing)
+            if (typeof s.measurements === 'string') { try { return JSON.parse(s.measurements); } catch (e) { return {}; } }
+            return s.measurements || {};
+        }
+
+        // --- EXPORT ---
+        function downloadPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('l', 'mm', 'a4');
+            const data = window.filteredData || allStudents;
+            const cols = window.currentCols || [];
+            const item = document.getElementById('f-item').value;
+            const patternName = document.getElementById('f-pattern').options[document.getElementById('f-pattern').selectedIndex].text;
+
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(14);
+            doc.text("Pattern Details Report", 14, 15);
+            doc.setFontSize(10);
+            doc.text(`Generated: ${new Date().toLocaleString()} | Pattern: ${patternName} | Item: ${item}`, 14, 22);
+
+            let headers = ['School', 'Name', 'Class', 'Pattern'];
+            if (cols.length > 0) headers.push(...cols);
+            else headers.push("Measurements");
+            headers.push("Status");
+
+            const body = data.map(s => {
+                const m = getMeasurementsSafe(s);
+                const row = [
+                    s.school_name,
+                    s.name,
+                    `${s.class || ''} (${s.gender?.[0] || '?'})`,
+                    s.pattern_name || '-'
+                ];
+
+                if (cols.length > 0) {
+                    cols.forEach(k => row.push(m[k.toLowerCase()] || '-'));
+                } else {
+                    row.push('Select Item...');
+                }
+
+                row.push(s.is_packed ? 'Packed' : 'Pending');
+                return row;
+            });
+
+            doc.autoTable({
+                head: [headers],
+                body: body,
+                startY: 28,
+                theme: 'grid',
+                headStyles: { fillColor: [40, 40, 40], textColor: 255 },
+                styles: { fontSize: 8, cellPadding: 2 }
+            });
+
+            doc.save(`Pattern_Data_${TARGET_PATTERN_ID || 'View'}.pdf`);
+        }
+
+        function downloadExcel() {
+            const data = window.filteredData || allStudents;
+            const cols = window.currentCols || [];
+
+            const exportData = data.map(s => {
+                const m = getMeasurementsSafe(s);
+                const row = {
+                    "School": s.school_name,
+                    "Name": s.name,
+                    "Class": s.class,
+                    "Section": s.section,
+                    "Gender": s.gender,
+                    "Pattern": s.pattern_name,
+                    "Status": s.is_packed ? "Packed" : "Pending"
+                };
+
+                if (cols.length > 0) {
+                    cols.forEach(k => row[k] = m[k.toLowerCase()] || '');
+                } else {
+                    row["Measurements"] = "Select Item to View";
+                }
+                return row;
+            });
+
+            const ws = XLSX.utils.json_to_sheet(exportData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "PatternData");
+            XLSX.writeFile(wb, `Pattern_Data_${TARGET_PATTERN_ID || 'View'}.xlsx`);
+        }
+
+    </script>
+</body>
+
+</html>
