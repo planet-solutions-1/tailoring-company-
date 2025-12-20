@@ -2225,6 +2225,32 @@
                 return total;
             }
 
+            function calculateTotalBreakdown(dataset) {
+                const breakdown = {};
+                dataset.forEach(row => {
+                    allItems.forEach(item => {
+                        const qtyKey = `Qty_${item.name}`;
+                        let rawQ = row[qtyKey];
+                        if (typeof rawQ === 'string' && rawQ.includes(',')) rawQ = NaN;
+                        let q = parseFloat(rawQ);
+
+                        // Logic matches calculateTotalQty:
+                        // 1. Explicit Quantity?
+                        if (!isNaN(q)) {
+                            breakdown[item.name] = (breakdown[item.name] || 0) + q;
+                        } else {
+                            // 2. Calculated Value?
+                            const valStr = calculateItemValue(row, item);
+                            const hasMeasurements = valStr.replace(/00/g, '').replace(/,/g, '').length > 0;
+                            if (hasMeasurements) {
+                                breakdown[item.name] = (breakdown[item.name] || 0) + 1;
+                            }
+                        }
+                    });
+                });
+                return breakdown;
+            }
+
             function updateExportTotal() {
                 const consumption = parseFloat(document.getElementById('metaConsumption').value) || 0;
                 const filteredData = getFilteredData();
@@ -2691,8 +2717,8 @@
                     consumption: parseFloat(document.getElementById('metaConsumption').value) || 0,
                     cloth_details: document.getElementById('metaClothDetails').value,
                     special_req: document.getElementById('metaSpecialReq').value,
-                    // Store Total Items in 'quantities' field of pattern for reference
-                    quantities: { "Total Items": document.getElementById('exportTotalQty').innerText }
+                    // Store Individual Item Breakdown
+                    quantities: calculateTotalBreakdown(getFilteredData())
                 };
 
                 try {
