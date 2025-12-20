@@ -796,8 +796,8 @@ router.post('/fix_db', authenticateToken, requireRole('company'), (req, res) => 
     queries.forEach(q => {
         chain = chain.then(() => new Promise(resolve => {
             db.run(q.sql, [], (err) => {
-                if (err) logs.push(`❌ \${q.label}: \${err.message}`);
-                else logs.push(`✅ \${q.label}: Success`);
+                if (err) logs.push(`❌ ${q.label}: ${err.message}`);
+                else logs.push(`✅ ${q.label}: Success`);
                 resolve();
             });
         }));
@@ -810,12 +810,12 @@ router.post('/fix_db', authenticateToken, requireRole('company'), (req, res) => 
                 // Ignore "duplicate column" errors
                 if (err) {
                     if (err.message.includes("duplicate") || err.message.includes("exists")) {
-                        logs.push(`ℹ️ \${q.label}: Already exists`);
+                        logs.push(`ℹ️ ${q.label}: Already exists`);
                     } else {
-                        logs.push(`❌ \${q.label}: \${err.message}`);
+                        logs.push(`❌ ${q.label}: ${err.message}`);
                     }
                 } else {
-                    logs.push(`✅ \${q.label}: Success`);
+                    logs.push(`✅ ${q.label}: Success`);
                 }
                 resolve();
             });
@@ -824,7 +824,7 @@ router.post('/fix_db', authenticateToken, requireRole('company'), (req, res) => 
 
     chain.then(() => {
         if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'FIX_DB', 'Ran schema repair.');
-        res.json({ message: "Repair Report:\\n" + logs.join("\\n") });
+        res.json({ message: "Repair Report:\n" + logs.join("\n") });
     }).catch(e => {
         res.status(500).json({ error: "Fatal Repair Error: " + e.message });
     });
