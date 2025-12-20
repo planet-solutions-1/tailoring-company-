@@ -297,7 +297,7 @@
         <div
             class="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden transform transition-all scale-100">
             <div class="px-6 py-4 border-b border-[#E2E8F0] bg-[#F9F9F7] flex justify-between items-center shrink-0">
-                <h3 class="font-bold text-[#2C3E50] text-lg">Export Details</h3>
+                <h3 class="font-bold text-[#2C3E50] text-lg">Upload / Export Data</h3>
                 <button onclick="closeExportModal()" class="text-[#7F8C8D] hover:text-[#2C3E50]">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -380,6 +380,18 @@
                 <button onclick="closeExportModal()"
                     class="btn-outline px-4 py-2 rounded text-sm font-medium">Cancel</button>
                 <div class="flex gap-2">
+                    <!-- Upload Data Button (New) -->
+                    <button onclick="handleDataUpload()"
+                        class="px-5 py-2 rounded text-sm font-bold shadow-md bg-indigo-600 text-white hover:bg-indigo-700 flex items-center gap-2">
+                        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
+                            viewBox="0 0 24 24">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                            <polyline points="17 8 12 3 7 8" />
+                            <line x1="12" y1="3" x2="12" y2="15" />
+                        </svg>
+                        Upload Data
+                    </button>
+                    <div class="w-px bg-gray-300 mx-1"></div>
                     <button onclick="confirmExportPDF()"
                         class="btn-outline px-5 py-2 rounded text-sm font-medium shadow-sm hover:bg-gray-50 text-[#C0392B] border-[#C0392B]/30">Export
                         PDF</button>
@@ -2619,6 +2631,20 @@
         }
 
 
+
+
+        async function handleDataUpload() {
+            const c = confirm("Are you sure you want to UPLOAD this data to the database?\nThis will update measurements and quantities for all filtered students.");
+            if (!c) return;
+
+            try {
+                // Re-use sync logic which now snapshots production_data
+                await syncToCloud();
+                closeExportModal();
+            } catch (e) {
+                alert("Upload Failed: " + e.message);
+            }
+        }
 
         init();
     </script>
