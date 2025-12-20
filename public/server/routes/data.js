@@ -679,14 +679,14 @@ router.get('/patterns/:schoolId', authenticateToken, (req, res) => {
 
 // POST /api/data/patterns
 router.post('/patterns', authenticateToken, (req, res) => {
-    const { school_id, name, consumption, cloth_details, special_req, quantities } = req.body;
+    const { school_id, name, description, consumption, cloth_details, special_req, quantities } = req.body;
 
     // Validate quantities (Optional)
     let qtyJson = null;
     try { qtyJson = JSON.stringify(quantities || {}); } catch (e) { }
 
-    db.run("INSERT INTO patterns (school_id, name, consumption, cloth_details, special_req, quantities) VALUES (?, ?, ?, ?, ?, ?)",
-        [school_id, name, consumption, cloth_details, special_req, qtyJson],
+    db.run("INSERT INTO patterns (school_id, name, description, consumption, cloth_details, special_req, quantities) VALUES (?, ?, ?, ?, ?, ?, ?)",
+        [school_id, name, description, consumption, cloth_details, special_req, qtyJson],
         function (err) {
             if (err) return res.status(500).json({ error: err.message });
             res.json({ id: this.lastID, message: "Pattern Created With Quantities" });
@@ -793,7 +793,9 @@ router.post('/fix_db', authenticateToken, requireRole('company'), (req, res) => 
         { label: "Add 'is_packed' to orders", sql: "ALTER TABLE orders ADD COLUMN is_packed TINYINT DEFAULT 0" },
         { label: "Add 'remarks' to measurements", sql: "ALTER TABLE measurements ADD COLUMN remarks TEXT" },
         { label: "Add 'is_absent' to measurements", sql: "ALTER TABLE measurements ADD COLUMN is_absent TINYINT DEFAULT 0" },
-        { label: "Add 'item_quantities' to measurements", sql: "ALTER TABLE measurements ADD COLUMN item_quantities TEXT" }
+        { label: "Add 'is_absent' to measurements", sql: "ALTER TABLE measurements ADD COLUMN is_absent TINYINT DEFAULT 0" },
+        { label: "Add 'item_quantities' to measurements", sql: "ALTER TABLE measurements ADD COLUMN item_quantities TEXT" },
+        { label: "Add 'description' to patterns", sql: "ALTER TABLE patterns ADD COLUMN description TEXT" }
     ];
 
     // Helper to run sequential

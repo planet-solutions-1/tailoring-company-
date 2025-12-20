@@ -833,6 +833,7 @@
             if (targetData.length === 0) return alert("No students selected for this pattern.");
 
             const name = document.getElementById('metaPattern').value;
+            const description = document.getElementById('metaDesc').value;
             const consumption = document.getElementById('metaConsumption').value;
             const cloth = document.getElementById('metaClothDetails').value;
             const req = document.getElementById('metaSpecialReq').value;
@@ -854,6 +855,7 @@
                     body: JSON.stringify({
                         school_id: draftMetadata.schoolId,
                         name: name,
+                        description: description,
                         consumption: parseFloat(consumption) || 0,
                         cloth_details: cloth,
                         special_req: req,
@@ -1041,9 +1043,15 @@
             const details = `Item: ${document.getElementById('f-item').value} | Material/Unit: ${consumption}m | Total: ${totalMaterial}`;
             doc.text(details, 148.5, 22, { align: "center" });
 
-            // Description (If available in context, tricky to get if not passed in)
-            // User requested "discription, special requirments it commenly show it inside the pattern name"
-            // We'll append it if we have it.
+            // Description
+            const description = MODE === 'create' ? document.getElementById('metaDesc').value : (data[0]?.pattern_description || "");
+
+            if (description) {
+                doc.setFont("helvetica", "italic");
+                doc.text(`"${description}"`, 148.5, 27, { align: "center" });
+            }
+
+            // Table
 
             // Table
             let headers = [['School', 'Name', 'Class', 'Admsn No', ...cols, 'Status']];
