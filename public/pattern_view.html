@@ -144,60 +144,99 @@
         </div>
 
 
-        <!-- Filters (Hidden in Create Mode) -->
-        <div id="filterPanel" class="glass-panel p-4 rounded-xl flex flex-wrap gap-4 items-end sticky top-20 z-40">
-            <!-- School -->
-            <div class="w-full sm:w-auto">
-                <label class="block text-[10px] font-bold text-stone-500 uppercase mb-1">School</label>
-                <select id="f-school" onchange="renderTable()"
-                    class="w-full sm:w-48 border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:border-rose-500 shadow-sm bg-gray-50 pointer-events-none opacity-80"
-                    tabindex="-1">
-                    <option value="all">Loading...</option>
-                </select>
-            </div>
+        <!-- Advanced Toolbar (Ported from Editor) -->
+        <div id="filterPanel"
+            class="bg-white border-b border-[#E2E8F0] px-6 py-3 flex flex-col sm:flex-row items-start sm:items-center gap-4 overflow-x-auto no-scrollbar z-20 relative sticky top-0">
 
-            <!-- Pattern -->
-            <div class="w-full sm:w-auto">
-                <label class="block text-[10px] font-bold text-stone-500 uppercase mb-1">Pattern</label>
-                <select id="f-pattern" onchange="renderTable()"
-                    class="w-full sm:w-48 border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:border-rose-500 shadow-sm bg-gray-50 pointer-events-none opacity-80"
-                    tabindex="-1">
-                    <option value="all">Loading...</option>
-                </select>
-            </div>
+            <!-- Search & Filters -->
+            <div class="flex items-center gap-3 w-full sm:w-auto overflow-x-auto">
+                <div class="relative">
+                    <svg class="absolute left-3 top-2 text-[#A0AEC0]" width="16" height="16" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input type="text" id="searchInput" oninput="handleSearch()" placeholder="Search..."
+                        class="pl-9 pr-3 py-1.5 text-sm border border-[#E2E8F0] rounded-md focus:border-[#4A5568] outline-none w-32 sm:w-48 bg-[#F9F9F7] focus:bg-white transition-colors">
+                </div>
 
-            <!-- Item Type (CRITICAL) -->
-            <div class="w-full sm:w-auto flex-1">
-                <label class="block text-[10px] font-bold text-stone-500 uppercase mb-1">Measurement Type (Item)</label>
-                <select id="f-item" onchange="renderTable()"
-                    class="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none focus:border-rose-500 shadow-sm font-medium text-stone-700 bg-amber-50/50">
-                    <option value="all">-- Select Item to View Measurements --</option>
+                <select id="filterClass" onchange="handleFilter()"
+                    class="text-sm border border-[#E2E8F0] rounded-md px-3 py-1.5 outline-none focus:border-[#4A5568] bg-white text-[#4A5568]">
+                    <option value="">All Classes</option>
                 </select>
-            </div>
 
-            <!-- Meta Filters -->
-            <div class="w-[30%] sm:w-24">
-                <label class="block text-[10px] font-bold text-stone-500 uppercase mb-1">Class</label>
-                <input type="text" id="f-class" onkeyup="renderTable()" placeholder="All"
-                    class="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none shadow-sm">
-            </div>
-            <div class="w-[30%] sm:w-24">
-                <label class="block text-[10px] font-bold text-stone-500 uppercase mb-1">Gender</label>
-                <select id="f-gender" onchange="renderTable()"
-                    class="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none shadow-sm">
+                <select id="filterSection" onchange="handleFilter()"
+                    class="text-sm border border-[#E2E8F0] rounded-md px-3 py-1.5 outline-none focus:border-[#4A5568] bg-white text-[#4A5568]">
+                    <option value="">All Sections</option>
+                </select>
+
+                <select id="filterHouse" onchange="handleFilter()"
+                    class="text-sm border border-[#E2E8F0] rounded-md px-3 py-1.5 outline-none focus:border-[#4A5568] bg-white text-[#4A5568]">
+                    <option value="">All Houses</option>
+                </select>
+
+                <select id="filterGender" onchange="handleFilter()"
+                    class="text-sm border border-[#E2E8F0] rounded-md px-3 py-1.5 outline-none focus:border-[#4A5568] bg-white text-[#4A5568]">
+                    <option value="">All Genders</option>
+                    <option value="M">Male</option>
+                    <option value="F">Female</option>
+                </select>
+
+                <select id="filterAttendance" onchange="handleFilter()"
+                    class="text-sm border border-[#E2E8F0] rounded-md px-3 py-1.5 outline-none focus:border-[#4A5568] bg-white text-[#4A5568]">
+                    <option value="">All Attendance</option>
+                    <option value="Present">Present</option>
+                    <option value="Absent">Absent</option>
+                </select>
+
+                <div class="h-8 w-px bg-[#E2E8F0] hidden sm:block mx-2"></div>
+
+                <select id="filterItem" onchange="handleItemFilter()"
+                    class="text-sm border border-[#E2E8F0] rounded-md px-3 py-1.5 outline-none focus:border-[#4A5568] bg-white text-[#4A5568] max-w-[180px] font-medium">
+                    <option value="">Filter by Item</option>
+                </select>
+
+                <!-- School/Pattern Hidden Selects for View Mode Compatibility -->
+                <select id="f-school" class="hidden">
                     <option value="all">All</option>
-                    <option value="Male">Male</option>
-                    <option value="Female">Female</option>
                 </select>
-            </div>
-            <div class="w-[30%] sm:w-32">
-                <label class="block text-[10px] font-bold text-stone-500 uppercase mb-1">Status</label>
-                <select id="f-packed" onchange="renderTable()"
-                    class="w-full border border-gray-300 rounded px-3 py-2 text-sm outline-none shadow-sm">
+                <select id="f-pattern" class="hidden">
                     <option value="all">All</option>
-                    <option value="pending">Pending</option>
-                    <option value="packed">Packed</option>
                 </select>
+                <!-- Legacy IDs Mapped -->
+                <input type="hidden" id="f-class" value="">
+                <input type="hidden" id="f-gender" value="all">
+                <input type="hidden" id="f-packed" value="all">
+                <input type="hidden" id="f-item" value="all">
+
+                <!-- Dynamic Component Filters Container -->
+                <div id="dynamicFilters" class="flex flex-wrap items-center gap-2">
+                    <!-- Dropdowns will be injected here -->
+                </div>
+            </div>
+
+            <div class="h-8 w-px bg-[#E2E8F0] hidden sm:block"></div>
+
+            <div class="flex items-center gap-2 ml-auto">
+                <!-- Export Buttons from Header -->
+                <div id="viewActions" class="flex gap-2">
+                    <button onclick="downloadPDF()"
+                        class="btn-outline px-3 py-1.5 rounded text-xs font-bold text-rose-600 border-rose-200 hover:bg-rose-50">PDF</button>
+                    <button onclick="downloadExcel()"
+                        class="bg-indigo-600 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-indigo-700 shadow-sm">Excel</button>
+                </div>
+                <div id="createActions" class="hidden">
+                    <button onclick="savePattern()"
+                        class="bg-indigo-600 text-white px-4 py-2 rounded text-sm font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-200 flex items-center gap-2 transition-transform active:scale-95">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                            <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                            <polyline points="7 3 7 8 15 8"></polyline>
+                        </svg>
+                        Save & Create Pattern
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -251,20 +290,64 @@
         let draftMetadata = null;
 
         // --- CONFIG ---
-        const boysItems = [{ name: "BOYS - FORMAL SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Male" }, { name: "BOYS - TRACK T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Male" }, { name: "BOYS - UNIFORM T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Male" }, { name: "BOYS - JERKIN", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Male" }, { name: "BOYS - PULLOVER", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Male" }, { name: "BOYS - FORMAL PANT", cols: ["L1", "L2"], type: "Male" }, { name: "BOYS - TRACK PANT", cols: ["L1", "L2"], type: "Male" }, { name: "BOYS - FORMAL SHORTS", cols: ["L3", "L2"], type: "Male" }, { name: "BOYS - TRACK SHORTS", cols: ["L3", "L2"], type: "Male" }, { name: "BOYS - PANT SPECIAL CASE", cols: ["L1", "L2", "L6", "L7"], type: "Male" }];
-        const girlsItems = [{ name: "GIRLS - FORMAL SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Female" }, { name: "GIRLS - TRACK T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Female" }, { name: "GIRLS - UNIFORM T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Female" }, { name: "GIRLS - JERKIN", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Female" }, { name: "GIRLS - FULL SLEEVE SHIRT", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Female" }, { name: "GIRLS - PULLOVER", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Female" }, { name: "GIRLS - KURTHA SHIRT", cols: ["U7", "U2", "U3", "U4", "U6"], type: "Female" }, { name: "GIRLS - SPECIAL FROCKS", cols: ["U7", "U2", "U3", "U4", "U6"], type: "Female" }, { name: "GIRLS - FORMAL PANT", cols: ["L1", "L2"], type: "Female" }, { name: "GIRLS - TRACK PANT", cols: ["L1", "L2"], type: "Female" }, { name: "GIRLS - TRACK SHORTS", cols: ["L3", "L2"], type: "Female" }, { name: "GIRLS - PINOFORE", cols: ["L4", "L2"], type: "Female" }, { name: "GIRLS - SKIRT", cols: ["L5", "L2"], type: "Female" }, { name: "GIRLS - PANT SPECIAL CASE", cols: ["L1", "L2", "L6", "L7"], type: "Female" }];
+        // --- CONFIG ---
+        const infoCols = ["S.No", "Roll No", "Admission No", "Student Name", "Class", "Section", "House", "Gender", "Absent/Present"];
+        const measureCols = ["U1", "U2", "U3", "U4", "U5", "U6", "U7", "U8", "L1", "L2", "L3", "L4", "L5", "L6", "L7", "L8"];
+
+        const boysItems = [
+            { name: "BOYS - FORMAL SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Male" },
+            { name: "BOYS - TRACK T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Male" },
+            { name: "BOYS - UNIFORM T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Male" },
+            { name: "BOYS - JERKIN", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Male" },
+            { name: "BOYS - PULLOVER", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Male" },
+            { name: "BOYS - FORMAL PANT", cols: ["L1", "L2"], type: "Male" },
+            { name: "BOYS - TRACK PANT", cols: ["L1", "L2"], type: "Male" },
+            { name: "BOYS - FORMAL SHORTS", cols: ["L3", "L2"], type: "Male" },
+            { name: "BOYS - TRACK SHORTS", cols: ["L3", "L2"], type: "Male" },
+            { name: "BOYS - PANT SPECIAL CASE", cols: ["L1", "L2", "L6", "L7"], type: "Male" },
+        ];
+
+        const girlsItems = [
+            { name: "GIRLS - FORMAL SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Female" },
+            { name: "GIRLS - TRACK T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Female" },
+            { name: "GIRLS - UNIFORM T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Female" },
+            { name: "GIRLS - JERKIN", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Female" },
+            { name: "GIRLS - FULL SLEEVE SHIRT", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Female" },
+            { name: "GIRLS - PULLOVER", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Female" },
+            { name: "GIRLS - KURTHA SHIRT", cols: ["U7", "U2", "U3", "U4", "U6"], type: "Female" },
+            { name: "GIRLS - SPECIAL FROCKS", cols: ["U7", "U2", "U3", "U4", "U6"], type: "Female" },
+            { name: "GIRLS - FORMAL PANT", cols: ["L1", "L2"], type: "Female" },
+            { name: "GIRLS - TRACK PANT", cols: ["L1", "L2"], type: "Female" },
+            { name: "GIRLS - TRACK SHORTS", cols: ["L3", "L2"], type: "Female" },
+            { name: "GIRLS - PINOFORE", cols: ["L4", "L2"], type: "Female" },
+            { name: "GIRLS - SKIRT", cols: ["L5", "L2"], type: "Female" },
+            { name: "GIRLS - PANT SPECIAL CASE", cols: ["L1", "L2", "L6", "L7"], type: "Female" },
+        ];
         const allItems = [...boysItems, ...girlsItems];
+
+        let filters = {
+            search: '',
+            class: '',
+            section: '',
+            house: '',
+            gender: '',
+            attendance: '',
+            item: '',
+            components: {}
+        };
+        let searchTimeout = null;
 
         // --- INIT ---
         async function init() {
-            // Populate Items
-            const itemSel = document.getElementById('f-item');
-            allItems.forEach(i => {
-                const opt = document.createElement('option');
-                opt.value = i.name;
-                opt.text = i.name;
-                itemSel.appendChild(opt);
-            });
+            // Populate Items (handled by populateFilters and static options)
+            // But we need to load initial items into Item Select
+            const itemSel = document.getElementById('f-item'); // Note: ID changed to filterItem in new HTML but kept aliases
+            // Wait, I replaced the HTML. The new ID is `filterItem`. The old one `f-item` is hidden.
+            // I should update this to populate `filterItem`.
+            const newItemSel = document.getElementById('filterItem');
+            if (newItemSel) {
+                newItemSel.innerHTML = '<option value="">Filter by Item</option>' + allItems.map(i => `<option value="${i.name}">${i.name}</option>`).join('');
+            }
 
             if (MODE === 'create') {
                 setupCreateMode();
@@ -273,6 +356,128 @@
             }
         }
         init();
+
+        // --- FILTERING LOGIC ---
+        function populateFilters() {
+            const classes = new Set();
+            const sections = new Set();
+            const houses = new Set();
+
+            allStudents.forEach(s => {
+                const c = getStudentProp(s, 'class');
+                const sec = getStudentProp(s, 'section');
+                const h = getStudentProp(s, 'house'); // Assuming 'house' prop handled in getStudentProp
+                if (c) classes.add(c);
+                if (sec) sections.add(sec);
+                if (h) houses.add(h);
+            });
+
+            const fillParam = (id, set) => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                const current = el.value;
+                el.innerHTML = `<option value="">All ${id.replace('filter', '')}s</option>` +
+                    [...set].sort().map(v => `<option value="${v}">${v}</option>`).join('');
+                el.value = current;
+            };
+
+            fillParam('filterClass', classes);
+            fillParam('filterSection', sections);
+            fillParam('filterHouse', houses);
+        }
+
+        function handleSearch() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                filters.search = document.getElementById('searchInput').value.toLowerCase();
+                renderTable();
+            }, 300);
+        }
+
+        function handleFilter() {
+            filters.class = document.getElementById('filterClass').value;
+            filters.section = document.getElementById('filterSection').value;
+            filters.house = document.getElementById('filterHouse').value;
+            filters.gender = document.getElementById('filterGender').value;
+            filters.attendance = document.getElementById('filterAttendance').value;
+            renderTable();
+        }
+
+        function handleItemFilter() {
+            const itemName = document.getElementById('filterItem').value;
+            filters.item = itemName;
+            filters.components = {};
+
+            const container = document.getElementById('dynamicFilters');
+            container.innerHTML = '';
+
+            if (itemName) {
+                const item = allItems.find(i => i.name === itemName);
+                if (item) {
+                    item.cols.forEach(col => {
+                        // Extract unique values for this col from data
+                        // Need to use getMeasurementsSafe and handle flat/nested
+                        const values = new Set();
+                        allStudents.forEach(s => {
+                            const m = getMeasurementsSafe(s);
+                            // Robust access: U1 or u1
+                            const val = m[col] || m[col.toLowerCase()];
+                            if (val && val !== "00") values.add(val);
+                        });
+                        const sortedValues = [...values].sort();
+
+                        const wrapper = document.createElement('div');
+                        wrapper.className = "relative inline-block";
+
+                        const input = document.createElement('input');
+                        input.setAttribute('list', `list-${col}`);
+                        input.type = "text";
+                        input.placeholder = col;
+                        input.className = "text-sm border border-[#E2E8F0] rounded-md px-2 py-1.5 outline-none focus:border-[#4A5568] bg-white w-24 text-[#4A5568] placeholder-gray-400";
+
+                        input.onchange = (e) => {
+                            if (e.target.value) filters.components[col] = e.target.value;
+                            else delete filters.components[col];
+                            renderTable();
+                        };
+
+                        const datalist = document.createElement('datalist');
+                        datalist.id = `list-${col}`;
+                        datalist.innerHTML = sortedValues.map(v => `<option value="${v}">`).join('');
+
+                        wrapper.appendChild(input);
+                        wrapper.appendChild(datalist);
+                        container.appendChild(wrapper);
+                    });
+                }
+            }
+            renderTable();
+        }
+
+        // Advanced Matching Helper
+        function advancedMatch(rowVal, filterVal) {
+            if (!filterVal) return true;
+            if (rowVal == null || rowVal === "") return false;
+            const rVal = String(rowVal).trim().toUpperCase();
+            const fVal = filterVal.toUpperCase();
+
+            // Comma List
+            if (fVal.includes(',')) {
+                return fVal.split(',').map(p => p.trim()).includes(rVal);
+            }
+            // Range
+            if (fVal.includes('-')) {
+                const [min, max] = fVal.split('-').map(p => p.trim());
+                if (!isNaN(min) && !isNaN(max)) {
+                    const numVal = parseFloat(rowVal);
+                    return !isNaN(numVal) && numVal >= parseFloat(min) && numVal <= parseFloat(max);
+                }
+                if (min.length === 1 && max.length === 1 && rVal.length === 1) {
+                    return rVal >= min && rVal <= max;
+                }
+            }
+            return rVal === fVal;
+        }
 
         function setupCreateMode() {
             document.getElementById('pageTitle').innerText = "Create New Pattern";
@@ -289,6 +494,7 @@
                     allStudents = draft.students; // Flat objects from Editor
                     draftMetadata = draft;
                     document.getElementById('metaSchool').value = draft.schoolName || 'Unknown';
+                    populateFilters(); // Populate dropdowns from Loaded Data
                     renderTable();
                 } else {
                     alert("No data passed for creation. Returning to Editor.");
@@ -366,58 +572,77 @@
             if (prop === 'pattern_name') return '';
             if (prop === 'is_packed') return false;
 
+            if (prop === 'attendance') return s["Absent/Present"] || s["attendance"] || "Present";
+            if (prop === 'school_id') return s.school_id;
             return '';
         }
 
         // --- RENDER ---
         function renderTable() {
-            // Use different filtering based on Mode
-            let data = [];
+            // 1. FILTERING
+            let data = allStudents.filter(s => {
+                // Search
+                if (filters.search) {
+                    const name = (getStudentProp(s, 'name') || '').toLowerCase();
+                    const roll = String(getStudentProp(s, 'roll') || '').toLowerCase();
+                    if (!name.includes(filters.search) && !roll.includes(filters.search)) return false;
+                }
 
-            if (MODE === 'create') {
-                // In create mode, we show ALL students passed in draft, filtered only by Item/Class if needed
-                // But typically we want to show exactly what was passed.
-                // Let's rely on item filter though.
-                const fItem = document.getElementById('f-item').value;
-                data = allStudents.filter(s => {
-                    // Still allow Item Filter to see columns
-                    if (fItem !== 'all') {
-                        const def = allItems.find(x => x.name === fItem);
-                        if (def && s.gender && def.type && s.gender !== def.type) return false;
+                // View Mode Specific Filters (Legacy preservation)
+                if (MODE !== 'create') {
+                    const fSchool = document.getElementById('f-school').value;
+                    const fPattern = document.getElementById('f-pattern').value;
+                    /* Legacy Packed Filter check - hidden in UI now but logic remains valid if used */
+                    // if (fPattern !== 'all' && s.pattern_id != fPattern) return false;
+                }
+
+                // ADVANCED FILTERS
+                if (!advancedMatch(getStudentProp(s, 'class'), filters.class)) return false;
+                if (!advancedMatch(getStudentProp(s, 'section'), filters.section)) return false;
+                if (!advancedMatch(getStudentProp(s, 'house'), filters.house)) return false;
+
+                if (filters.gender) {
+                    const g = getStudentProp(s, 'gender');
+                    if (filters.gender === 'M' && g !== 'Male' && g !== 'M') return false;
+                    if (filters.gender === 'F' && g !== 'Female' && g !== 'F') return false;
+                    if (filters.gender !== 'M' && filters.gender !== 'F' && g !== filters.gender) return false;
+                }
+
+                if (filters.attendance) {
+                    const status = (getStudentProp(s, 'attendance') || '').toLowerCase();
+                    if (filters.attendance === 'Absent' && !status.includes('absent')) return false;
+                    if (filters.attendance === 'Present' && status.includes('absent')) return false;
+                }
+
+                // Item & Dynamic Filters
+                if (filters.item) {
+                    const def = allItems.find(x => x.name === filters.item);
+                    const sGen = getStudentProp(s, 'gender');
+                    // Gender Check for Item
+                    if (def && sGen && def.type) {
+                        const normGen = (sGen === 'Male' || sGen === 'M') ? 'Male' : (sGen === 'Female' || sGen === 'F') ? 'Female' : '';
+                        if (normGen && normGen !== def.type) return false;
                     }
-                    return true;
-                });
-            } else {
-                // View Mode Filtering
-                const fSchool = document.getElementById('f-school').value;
-                const fPattern = document.getElementById('f-pattern').value;
-                const fItem = document.getElementById('f-item').value;
-                const fClass = document.getElementById('f-class').value.toLowerCase();
-                const fGender = document.getElementById('f-gender').value;
-                const fPacked = document.getElementById('f-packed').value;
 
-                data = allStudents.filter(s => {
-                    if (fSchool !== 'all' && s.school_id != fSchool) return false;
-                    if (fPattern !== 'all' && s.pattern_id != fPattern) return false;
-                    if (fGender !== 'all' && s.gender !== fGender) return false;
-                    if (fPacked === 'packed' && !s.is_packed) return false;
-                    if (fPacked === 'pending' && s.is_packed) return false;
-                    if (fClass && !(s.class || '').toLowerCase().includes(fClass)) return false;
-
-                    if (fItem !== 'all') {
-                        const def = allItems.find(x => x.name === fItem);
-                        if (def && s.gender && def.type && s.gender !== def.type) return false;
+                    // Dynamic Components (Range Filters)
+                    if (filters.components && Object.keys(filters.components).length > 0) {
+                        const m = getMeasurementsSafe(s);
+                        for (const [col, fVal] of Object.entries(filters.components)) {
+                            const mVal = m[col] || m[col.toLowerCase()] || "";
+                            if (!advancedMatch(mVal, fVal)) return false;
+                        }
                     }
-                    return true;
-                });
-            }
+                }
 
-            const fItem = document.getElementById('f-item').value;
+                return true;
+            });
+
+            const fItem = filters.item; // Use state
             const measHeader = document.getElementById('meas-header-group');
             let subRow = document.getElementById('sub-header-row');
             let showCols = [];
 
-            if (fItem !== 'all') {
+            if (fItem) { // Check state instead of DOM value
                 const def = allItems.find(x => x.name === fItem);
                 if (def) showCols = def.cols;
                 measHeader.innerText = fItem;
