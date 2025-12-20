@@ -475,7 +475,7 @@
             <div class="h-8 w-px bg-[#E2E8F0] hidden md:block"></div>
 
             <!-- Create Pattern Button -->
-            <button onclick="openExportModal()"
+            <button onclick="goToPatternCreation()"
                 class="bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 px-4 py-2 rounded-md text-sm font-medium flex items-center justify-center gap-2 transition-colors">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M12 5v14M5 12h14"></path>
@@ -2750,6 +2750,27 @@
             } catch (e) {
                 alert("Upload Failed: " + e.message);
             }
+        }
+
+        function goToPatternCreation() {
+            const filtered = getFilteredData();
+            // Try to get school name safely
+            const headerName = document.getElementById('schoolNameDisplay') ? document.getElementById('schoolNameDisplay').innerText : "";
+            const schoolName = headerName.replace('School: ', '').replace('Target School', '').trim();
+
+            // Validate
+            if (filtered.length === 0) return alert("Please filter/load students first.");
+
+            // Store Draft Data
+            const draft = {
+                students: filtered,
+                schoolName: schoolName,
+                schoolId: sessionStorage.getItem('schoolId')
+            };
+            sessionStorage.setItem('draftPatternData', JSON.stringify(draft));
+
+            // Redirect to Create Mode
+            window.location.href = 'pattern_view.html?mode=create';
         }
 
         init();

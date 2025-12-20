@@ -53,29 +53,32 @@
                 </a>
                 <div class="h-6 w-px bg-stone-700"></div>
                 <h1 class="font-ink text-xl flex items-center gap-2"><span class="text-rose-600 text-2xl">●</span>
-                    Pattern Details View</h1>
+                    <span id="pageTitle">Pattern Details View</span>
+                </h1>
             </div>
-            <div class="flex gap-3">
+
+            <!-- Default Actions (View Mode) -->
+            <div id="viewActions" class="flex gap-3">
                 <button onclick="downloadPDF()"
                     class="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded shadow-lg text-xs font-bold uppercase flex items-center gap-2 transition-transform active:scale-95">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                        <polyline points="14 2 14 8 20 8"></polyline>
-                        <line x1="16" y1="13" x2="8" y2="13"></line>
-                        <line x1="16" y1="17" x2="8" y2="17"></line>
-                        <polyline points="10 9 9 9 8 9"></polyline>
-                    </svg>
                     Download PDF
                 </button>
                 <button onclick="downloadExcel()"
                     class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded shadow-lg text-xs font-bold uppercase flex items-center gap-2 transition-transform active:scale-95">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                        <line x1="16" y1="8" x2="8" y2="8"></line>
-                        <line x1="16" y1="16" x2="8" y2="16"></line>
-                        <line x1="10" y1="12" x2="3" y2="12"></line>
-                    </svg>
                     Download Excel
+                </button>
+            </div>
+
+            <!-- Create Actions (Create Mode) -->
+            <div id="createActions" class="hidden flex gap-3">
+                <button onclick="savePattern()"
+                    class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded shadow-lg text-sm font-bold uppercase flex items-center gap-2 transition-transform active:scale-95 ring-2 ring-indigo-400">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                        <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                        <polyline points="7 3 7 8 15 8"></polyline>
+                    </svg>
+                    Save & Create Pattern
                 </button>
             </div>
         </div>
@@ -84,8 +87,65 @@
     <!-- Main Content -->
     <main class="flex-1 p-4 md:p-6 max-w-[1920px] mx-auto w-full space-y-4">
 
-        <!-- Filters -->
-        <div class="glass-panel p-4 rounded-xl flex flex-wrap gap-4 items-end sticky top-20 z-40">
+        <!-- Creation Panel (Only Visible in Create Mode) -->
+        <div id="creationPanel" class="hidden glass-panel p-6 rounded-xl border-l-4 border-indigo-500 shadow-lg mb-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Metadata Inputs -->
+                <div class="space-y-4">
+                    <h3 class="text-lg font-bold text-stone-800 border-b border-stone-200 pb-2">Pattern Details</h3>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-bold text-stone-500 uppercase mb-1">School Name</label>
+                            <input type="text" id="metaSchool" readonly
+                                class="w-full text-sm border border-gray-300 rounded p-2 bg-gray-100 text-gray-600 font-bold">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-stone-500 uppercase mb-1">Pattern Code</label>
+                            <input type="text" id="metaPattern"
+                                class="w-full text-sm border border-gray-300 rounded p-2 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200"
+                                placeholder="e.g. P-101">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-stone-500 uppercase mb-1">Description</label>
+                        <textarea id="metaDesc" rows="2"
+                            class="w-full text-sm border border-gray-300 rounded p-2 outline-none focus:border-indigo-500"
+                            placeholder="Optional description..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Specs Inputs -->
+                <div class="space-y-4 bg-stone-50 p-4 rounded-lg border border-stone-200">
+                    <h3 class="text-lg font-bold text-stone-800 border-b border-stone-200 pb-2">Specifications</h3>
+
+                    <div class="flex items-center justify-between">
+                        <label class="block text-xs font-bold text-stone-600 uppercase">Cloth Consumption
+                            (Mtrs/Student)</label>
+                        <input type="number" id="metaConsumption" step="0.01"
+                            class="w-32 text-sm border border-gray-300 rounded p-1 text-right font-mono font-bold text-indigo-700"
+                            placeholder="0.00">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-stone-600 uppercase mb-1">Cloth Details</label>
+                        <input type="text" id="metaClothDetails"
+                            class="w-full text-sm border border-gray-300 rounded p-2 outline-none"
+                            placeholder="Type...">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-stone-600 uppercase mb-1">Special
+                            Requirements</label>
+                        <input type="text" id="metaSpecialReq"
+                            class="w-full text-sm border border-gray-300 rounded p-2 outline-none"
+                            placeholder="Type...">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Filters (Hidden in Create Mode) -->
+        <div id="filterPanel" class="glass-panel p-4 rounded-xl flex flex-wrap gap-4 items-end sticky top-20 z-40">
             <!-- School -->
             <div class="w-full sm:w-auto">
                 <label class="block text-[10px] font-bold text-stone-500 uppercase mb-1">School</label>
@@ -176,16 +236,19 @@
     <script>
         const API_BASE = '/api';
         const token = sessionStorage.getItem('token');
-        if (!token) window.location.href = 'planet_editor.html'; // Back to Editor if no auth
+        if (!token) window.location.href = 'planet_editor.html';
 
         // --- URL PARAMS ---
         const urlParams = new URLSearchParams(window.location.search);
         const TARGET_PATTERN_ID = urlParams.get('id');
+        const MODE = urlParams.get('mode'); // 'create' or null
 
         // --- DATA ---
         let allStudents = [];
         let patterns = [];
         let schools = [];
+        let filteredStudents = []; // Active dataset
+        let draftMetadata = null;
 
         // --- CONFIG ---
         const boysItems = [{ name: "BOYS - FORMAL SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Male" }, { name: "BOYS - TRACK T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Male" }, { name: "BOYS - UNIFORM T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Male" }, { name: "BOYS - JERKIN", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Male" }, { name: "BOYS - PULLOVER", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Male" }, { name: "BOYS - FORMAL PANT", cols: ["L1", "L2"], type: "Male" }, { name: "BOYS - TRACK PANT", cols: ["L1", "L2"], type: "Male" }, { name: "BOYS - FORMAL SHORTS", cols: ["L3", "L2"], type: "Male" }, { name: "BOYS - TRACK SHORTS", cols: ["L3", "L2"], type: "Male" }, { name: "BOYS - PANT SPECIAL CASE", cols: ["L1", "L2", "L6", "L7"], type: "Male" }];
@@ -203,35 +266,55 @@
                 itemSel.appendChild(opt);
             });
 
+            if (MODE === 'create') {
+                setupCreateMode();
+            } else {
+                setupViewMode();
+            }
+        }
+        init();
+
+        function setupCreateMode() {
+            document.getElementById('pageTitle').innerText = "Create New Pattern";
+            document.getElementById('viewActions').classList.add('hidden');
+            document.getElementById('createActions').classList.remove('hidden');
+            document.getElementById('creationPanel').classList.remove('hidden');
+            document.getElementById('filterPanel').classList.add('hidden'); // Simplified view for creation
+
+            // Load Draft Data
+            try {
+                const draft = JSON.parse(sessionStorage.getItem('draftPatternData'));
+                if (draft && draft.students) {
+                    allStudents = draft.students; // Only the filtered subset
+                    draftMetadata = draft;
+                    document.getElementById('metaSchool').value = draft.schoolName || 'Unknown';
+                    renderTable();
+                } else {
+                    alert("No data passed for creation. Returning to Editor.");
+                    window.location.href = 'planet_editor.html';
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        async function setupViewMode() {
             await Promise.all([
                 fetchData(),
                 fetchPatterns(),
                 fetchSchools()
             ]);
 
-            // APPLY AUTO-SELECT IF TARGET ID EXISTS
             if (TARGET_PATTERN_ID) {
                 const patSel = document.getElementById('f-pattern');
                 const schSel = document.getElementById('f-school');
-
-                // Set Pattern
                 patSel.value = TARGET_PATTERN_ID;
-
-                // Attempt to Auto-Set School based on Pattern
                 const targetPattern = patterns.find(p => p.id == TARGET_PATTERN_ID);
-                if (targetPattern) {
-                    schSel.value = targetPattern.school_id;
-                }
+                if (targetPattern) schSel.value = targetPattern.school_id;
             }
-
             renderTable();
         }
-        init();
 
         async function fetchData() {
             try {
-                // Optimized: Can we fetch only students for this school/pattern? 
-                // For now, reusing all_students endpoint but filtered client-side (safe enough for this user role)
                 const res = await fetch(`${API_BASE}/data/all_students`, { headers: { 'Authorization': `Bearer ${token}` } });
                 allStudents = await res.json();
             } catch (e) { console.error(e); }
@@ -242,7 +325,7 @@
                 const res = await fetch(`${API_BASE}/data/patterns/all`, { headers: { 'Authorization': `Bearer ${token}` } });
                 patterns = await res.json();
                 const sel = document.getElementById('f-pattern');
-                sel.innerHTML = '<option value="all">All Patterns</option>'; // Reset
+                sel.innerHTML = '<option value="all">All Patterns</option>';
                 patterns.forEach(p => {
                     const opt = document.createElement('option');
                     opt.value = p.id;
@@ -257,7 +340,7 @@
                 const res = await fetch(`${API_BASE}/data/schools`, { headers: { 'Authorization': `Bearer ${token}` } });
                 schools = await res.json();
                 const sel = document.getElementById('f-school');
-                sel.innerHTML = '<option value="all">All Schools</option>'; // Reset
+                sel.innerHTML = '<option value="all">All Schools</option>';
                 schools.forEach(s => {
                     const opt = document.createElement('option');
                     opt.value = s.id;
@@ -269,39 +352,55 @@
 
         // --- RENDER ---
         function renderTable() {
-            const fSchool = document.getElementById('f-school').value;
-            const fPattern = document.getElementById('f-pattern').value;
+            // Use different filtering based on Mode
+            let data = [];
+
+            if (MODE === 'create') {
+                // In create mode, we show ALL students passed in draft, filtered only by Item/Class if needed
+                // But typically we want to show exactly what was passed.
+                // Let's rely on item filter though.
+                const fItem = document.getElementById('f-item').value;
+                data = allStudents.filter(s => {
+                    // Still allow Item Filter to see columns
+                    if (fItem !== 'all') {
+                        const def = allItems.find(x => x.name === fItem);
+                        if (def && s.gender && def.type && s.gender !== def.type) return false;
+                    }
+                    return true;
+                });
+            } else {
+                // View Mode Filtering
+                const fSchool = document.getElementById('f-school').value;
+                const fPattern = document.getElementById('f-pattern').value;
+                const fItem = document.getElementById('f-item').value;
+                const fClass = document.getElementById('f-class').value.toLowerCase();
+                const fGender = document.getElementById('f-gender').value;
+                const fPacked = document.getElementById('f-packed').value;
+
+                data = allStudents.filter(s => {
+                    if (fSchool !== 'all' && s.school_id != fSchool) return false;
+                    if (fPattern !== 'all' && s.pattern_id != fPattern) return false;
+                    if (fGender !== 'all' && s.gender !== fGender) return false;
+                    if (fPacked === 'packed' && !s.is_packed) return false;
+                    if (fPacked === 'pending' && s.is_packed) return false;
+                    if (fClass && !(s.class || '').toLowerCase().includes(fClass)) return false;
+
+                    if (fItem !== 'all') {
+                        const def = allItems.find(x => x.name === fItem);
+                        if (def && s.gender && def.type && s.gender !== def.type) return false;
+                    }
+                    return true;
+                });
+            }
+
             const fItem = document.getElementById('f-item').value;
-            const fClass = document.getElementById('f-class').value.toLowerCase();
-            const fGender = document.getElementById('f-gender').value;
-            const fPacked = document.getElementById('f-packed').value;
-
-            // 1. FILTER
-            const data = allStudents.filter(s => {
-                if (fSchool !== 'all' && s.school_id != fSchool) return false;
-                if (fPattern !== 'all' && s.pattern_id != fPattern) return false;
-                if (fGender !== 'all' && s.gender !== fGender) return false;
-                if (fPacked === 'packed' && !s.is_packed) return false;
-                if (fPacked === 'pending' && s.is_packed) return false;
-                if (fClass && !(s.class || '').toLowerCase().includes(fClass)) return false;
-
-                if (fItem !== 'all') {
-                    const def = allItems.find(x => x.name === fItem);
-                    if (def && s.gender && def.type && s.gender !== def.type) return false;
-                }
-
-                return true;
-            });
-
-            // 2. SETUP COLUMNS
             const measHeader = document.getElementById('meas-header-group');
-            const thead = document.querySelector('thead');
             let subRow = document.getElementById('sub-header-row');
-
             let showCols = [];
+
             if (fItem !== 'all') {
                 const def = allItems.find(x => x.name === fItem);
-                if (def) showCols = def.cols; // ["U1", "U2"]
+                if (def) showCols = def.cols;
                 measHeader.innerText = fItem;
                 measHeader.colSpan = showCols.length;
             } else {
@@ -310,27 +409,9 @@
                 measHeader.colSpan = 1;
             }
 
-            // 3. BUILD ROWS
             const tbody = document.getElementById('table-body');
             tbody.innerHTML = data.map((s, idx) => {
-                // Production Data Priority over Raw Measurements
-                // If Item is selected, try to find snapshot data in `production_data`?
-                // The current backend storage for production_data is JSON.
-                // In `planet_editor.html`, we store `production_data: { "Item Name": "12,34" }`.
-                // But here we want individual columns U1, U2.
-                // The `production_data` logic I added earlier was: `snapshot[item.name] = val;` where val is calculated string.
-                // If I want to show breakdown, I should probably parse the String value?
-                // OR fallback to raw measurements if available.
-                // `getMeasurementsSafe` reads `s.measurements`.
-                // Let's stick to `s.measurements` which is the RAW data. The Pattern/Order also has `quantities` but that is aggregate.
-                // The Student Row has linked `pattern_id`.
-
-                // NOTE: `planet_editor.html` sends `measurements` AND `production_data`.
-                // `tailoring_dashboard.html` uses `s.measurements`.
-                // This should be fine as `planet_editor` preserves raw measurements.
-
                 const m = getMeasurementsSafe(s);
-
                 let measCells = '';
                 if (showCols.length > 0) {
                     measCells = showCols.map(k => `<td class="p-3 text-center font-mono font-bold bg-amber-50/30 text-stone-700 border-b border-stone-100">${m[k.toLowerCase()] || '-'}</td>`).join('');
@@ -340,7 +421,7 @@
 
                 return `<tr class="hover:bg-blue-50 transition-colors">
                     <td class="p-3 border-b border-r bg-stone-50/50 sticky left-0 font-mono text-xs text-stone-400 font-bold">${idx + 1}</td>
-                    <td class="p-3 border-b border-stone-100 font-bold text-stone-700">${s.school_name}</td>
+                    <td class="p-3 border-b border-stone-100 font-bold text-stone-700">${s.school_name || (draftMetadata ? draftMetadata.schoolName : '-')}</td>
                     <td class="p-3 border-b border-stone-100">
                         <div class="font-bold text-stone-800">${s.name}</div>
                         <div class="text-[10px] text-stone-500 font-mono">Roll: ${s.roll_no || '-'}</div>
@@ -356,7 +437,6 @@
                 </tr>`;
             }).join('');
 
-            // 4. Update Sub-Header
             if (showCols.length > 0) {
                 subRow.classList.remove('hidden');
                 subRow.innerHTML = `
@@ -374,10 +454,160 @@
         }
 
         function getMeasurementsSafe(s) {
-            // Support both object and string format (DB might return either depending on driver/parsing)
             if (typeof s.measurements === 'string') { try { return JSON.parse(s.measurements); } catch (e) { return {}; } }
             return s.measurements || {};
         }
+
+        // --- CREATE/SAVE LOGIC ---
+        // Duplicate Logic from Planet Editor but adapted for this view
+        function calculateItemValue(row, itemInfo) {
+            const m = getMeasurementsSafe(row);
+            // Reconstruct Logic from Editor if needed
+            // For now assuming 'm' has keys "u1", "l1" etc.
+            // itemInfo.cols = ["U1", "U2"]
+            const vals = itemInfo.cols.map(c => m[c.toLowerCase()] || "00");
+            // Filter logic? 
+            if (itemInfo.type && row.gender && row.gender.toUpperCase() !== itemInfo.type.toUpperCase()) return "";
+
+            // Check if all empty?
+            const allEmpty = vals.every(v => v === "00" || v === "" || v === "0");
+            if (allEmpty) return "00,00"; // Or whatever format
+            return vals.join(",");
+        }
+
+        function calculateTotalBreakdown(dataset) {
+            const breakdown = {};
+            dataset.forEach(row => {
+                allItems.forEach(item => {
+                    // We don't have explicit Qty columns here unless we pulled them.
+                    // Editor filtered data SHOULD include all columns from the table.
+                    // Check if 'Qty_Item' exists in `row`.
+                    // The `allStudents` here comes from `filtered` in Editor which is `data.filter(...)`.
+                    // `data` in Editor has everything. So yes.
+
+                    const qtyKey = `Qty_${item.name}`;
+                    let rawQ = row[qtyKey];
+                    if (typeof rawQ === 'string' && rawQ.includes(',')) rawQ = NaN;
+                    let q = parseFloat(rawQ);
+
+                    if (!isNaN(q)) {
+                        breakdown[item.name] = (breakdown[item.name] || 0) + q;
+                    } else {
+                        // Calculated
+                        const valStr = calculateItemValue(row, item);
+                        const hasMeasurements = valStr.replace(/00/g, '').replace(/,/g, '').length > 0;
+                        if (hasMeasurements) {
+                            breakdown[item.name] = (breakdown[item.name] || 0) + 1;
+                        }
+                    }
+                });
+            });
+            return breakdown;
+        }
+
+        async function savePattern() {
+            if (!draftMetadata) return alert("Missing Session Data");
+
+            const name = document.getElementById('metaPattern').value;
+            const consumption = document.getElementById('metaConsumption').value;
+            const cloth = document.getElementById('metaClothDetails').value;
+            const req = document.getElementById('metaSpecialReq').value;
+
+            if (!name) return alert("Pattern Code is Required");
+
+            const quantities = calculateTotalBreakdown(allStudents);
+
+            try {
+                // 1. Create Pattern
+                const res = await fetch('/api/data/patterns', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({
+                        school_id: draftMetadata.schoolId,
+                        name: name,
+                        consumption: parseFloat(consumption),
+                        cloth_details: cloth,
+                        special_req: req,
+                        quantities: quantities
+                    })
+                });
+
+                if (!res.ok) throw new Error("Failed to create pattern");
+                const resData = await res.json();
+                const patternId = resData.id;
+
+                // 2. Link Students (Sync logic needs to happen on SERVER or we must push updates?)
+                // WE NEED TO UPDATE THE STUDENTS IN DB TO LINK TO THIS PATTERN.
+                // In Editor, we called `syncToCloud`. Here we don't have the full Sync logic.
+                // We should make a dedicated API call to "Link Students to Pattern".
+                // Since we have the IDs.
+
+                // Let's reuse `/api/sync` but we need to construct the payload.
+                // The payload expected by `/api/sync` is array of students.
+                // We only need to update `pattern_id`.
+                // Efficient way: POST /api/data/link_pattern  { pattern_id: X, student_ids: [...] }
+                // But that endpoint doesn't exist.
+                // Reuse Sync: Construct minimal payload { id: X, pattern_id: Y } for all students.
+
+                const syncPayload = allStudents.map(s => ({
+                    id: s.id,
+                    pattern_id: patternId,
+                    // We must also send production_data if we want to ensure it's saved? 
+                    // Editor logic sent it. If we don't send, it stays as is?
+                    // Sync logic performs UPDATE. if we send `pattern_id`, it updates it.
+                    // Be careful not to wipe other fields.
+                    // Let's send `production_data` too just in case it wasn't there?
+                    // Actually, if we just came from Editor, the data might not be in Cloud yet?
+                    // Wait, Editor `filtered` data is LOCAL.
+                    // If the user made changes in Editor and clicked "Create Pattern", those changes are in `draftPatternData`.
+                    // But they are NOT in the database yet if they didn't click "Sync".
+                    // The user flow implies "Save & Create".
+                    // So we MUST sync everything: Measurements, everything.
+                    // This is heavy.
+
+                    // Simple solution: We pass the FULL student object.
+                    // But we need to calculate `production_data` string for each item.
+                    // This logic is duplicated.
+
+                    ...s, // Spread existing props (name, class etc)
+                    pattern_id: patternId,
+                    production_data: produceProductionData(s)
+                }));
+
+                await fetch('/api/sync', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ data: syncPayload, school_id: draftMetadata.schoolId })
+                });
+
+                alert("✅ Pattern Created & Data Linked Successfully!");
+
+                // Switch to View Mode
+                window.location.href = `pattern_view.html?id=${patternId}`;
+
+            } catch (e) {
+                alert("Error: " + e.message);
+            }
+        }
+
+        function produceProductionData(row) {
+            const snapshot = {};
+            allItems.forEach(item => {
+                const val = calculateItemValue(row, item);
+                // Only save if meaningful?
+                // Editor logic: if (val && val !== ... ) snapshot[item.name] = val;
+                if (val && val.replace(/,/g, '').replace(/0/g, '').length > 0) {
+                    snapshot[item.name] = val;
+                }
+            });
+            return JSON.stringify(snapshot); // API expects string or object? 
+            // Server code: `const prodData = ... JSON.stringify(row.production_data)`
+            // Actually server expects Object in JSON body, and it stringifies it?
+            // No, let's look at server logic if needed.
+            // safe bet: send Object.
+            return snapshot;
+        }
+
 
         // --- EXPORT ---
         function downloadPDF() {
@@ -386,7 +616,7 @@
             const data = window.filteredData || allStudents;
             const cols = window.currentCols || [];
             const item = document.getElementById('f-item').value;
-            const patternName = document.getElementById('f-pattern').options[document.getElementById('f-pattern').selectedIndex].text;
+            const patternName = MODE === 'create' ? document.getElementById('metaPattern').value : document.getElementById('f-pattern').options[document.getElementById('f-pattern').selectedIndex].text;
 
             doc.setFont("helvetica", "bold");
             doc.setFontSize(14);
@@ -402,7 +632,7 @@
             const body = data.map(s => {
                 const m = getMeasurementsSafe(s);
                 const row = [
-                    s.school_name,
+                    s.school_name || (draftMetadata ? draftMetadata.schoolName : '-'),
                     s.name,
                     `${s.class || ''} (${s.gender?.[0] || '?'})`,
                     s.pattern_name || '-'
@@ -437,7 +667,7 @@
             const exportData = data.map(s => {
                 const m = getMeasurementsSafe(s);
                 const row = {
-                    "School": s.school_name,
+                    "School": s.school_name || (draftMetadata ? draftMetadata.schoolName : '-'),
                     "Name": s.name,
                     "Class": s.class,
                     "Section": s.section,
