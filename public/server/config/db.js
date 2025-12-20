@@ -168,6 +168,16 @@ if (process.env.RAILWAY_ENVIRONMENT || process.env.NODE_ENV === 'production') {
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     FOREIGN KEY (school_id) REFERENCES schools(id) ON DELETE CASCADE
+                )`,
+                `CREATE TABLE IF NOT EXISTS patterns (
+                    id INT AUTO_INCREMENT PRIMARY KEY,
+                    school_id INT NOT NULL,
+                    name VARCHAR(255) NOT NULL,
+                    consumption DECIMAL(10,2) DEFAULT 0,
+                    cloth_details TEXT,
+                    special_req TEXT,
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (school_id) REFERENCES schools(id) ON DELETE CASCADE
                 )`
             ];
 
@@ -175,23 +185,22 @@ if (process.env.RAILWAY_ENVIRONMENT || process.env.NODE_ENV === 'production') {
                 await promisePool.execute(sql);
             }
 
-            // MySQL Migration: Attempt to add columns to existing table
+            // MySQL Migration: Attempt to add columns to existing tables
             const newCols = [
                 'student_name VARCHAR(255)', 'student_reg_no VARCHAR(255)', 'pattern_name VARCHAR(255)',
                 'gender VARCHAR(50)', 'issue_type VARCHAR(100)', 'class VARCHAR(50)', 'section VARCHAR(50)', 'house VARCHAR(100)'
             ];
             for (const colDef of newCols) {
                 try {
-                    // Simple unconditional add - will fail if exists, which is fine
                     await promisePool.execute(`ALTER TABLE complaints ADD COLUMN ${colDef}`);
-                } catch (e) {
-                    // Ignore duplicate column error 
-                }
+                } catch (e) { }
             }
 
             // STUDENTS TABLE MIGRATION
             try { await promisePool.execute("ALTER TABLE students ADD COLUMN house VARCHAR(50)"); } catch (e) { }
             try { await promisePool.execute("ALTER TABLE students ADD COLUMN order_status VARCHAR(50) DEFAULT 'Pending'"); } catch (e) { }
+            try { await promisePool.execute("ALTER TABLE students ADD COLUMN pattern_id INT"); } catch (e) { }
+            try { await promisePool.execute("ALTER TABLE students ADD COLUMN production_data TEXT"); } catch (e) { }
 
             console.log("MySQL Tables Initialized.");
 

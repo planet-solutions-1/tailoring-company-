@@ -210,7 +210,12 @@
                 <p id="page-subtitle" class="text-stone-500 mt-2 text-sm">Real-time data from all schools & production
                     units.</p>
             </div>
-            <div class="flex gap-3"><button onclick="fixDatabase()"
+            <div class="flex gap-3">
+                <button onclick="resetDatabase()"
+                    class="bg-red-50 text-red-600 px-4 py-2 rounded-full text-xs font-bold hover:bg-red-100 border border-red-200 shadow-sm transition-transform active:scale-95 whitespace-nowrap">Reset
+                    DB</button>
+
+                <button onclick="fixDatabase()"
                     class="bg-blue-50 text-blue-600 px-4 py-2 rounded-full text-xs font-bold hover:bg-blue-100 border border-blue-200 shadow-sm transition-transform active:scale-95 whitespace-nowrap">Repair
                     DB</button>
                 <div
@@ -1309,6 +1314,29 @@
             </div>
         </div>
     </div>
+
+    <script>
+        async function resetDatabase() {
+            if (!confirm("⚠️ DANGER: This will DELETE ALL PATTERNS, MEASUREMENTS and UNLINK STUDENTS from the database.\\n\\nThis action cannot be undone on Production.\\n\\nType 'RESET' to confirm:")) return;
+
+            const conf = prompt("Type 'RESET' to confirm deletion:");
+            if (conf !== 'RESET') return alert("Cancelled.");
+
+            try {
+                const res = await fetch(`${API_BASE}/data/reset_tables`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                const d = await res.json();
+                if (!res.ok) throw new Error(d.error || "Reset failed");
+                alert("✅ " + d.message);
+                location.reload();
+            } catch (e) {
+                alert("Error: " + e.message);
+            }
+        }
+    </script>
 
 </body>
 
