@@ -1150,10 +1150,7 @@
                                     if (iType === "FEMALE" && gender !== "FEMALE") return;
 
                                     const val = calculateItemValue(d, item);
-                                    // Validation Matching Export Logic:
-                                    // Remove '00' and commas. If anything remains, it has real data.
-                                    const hasData = val.replace(/00/g, '').replace(/,/g, '').length > 0;
-                                    if (hasData) {
+                                    if (val && val !== "" && val !== "0" && val !== "00") {
                                         snapshot[item.name] = val;
                                     }
                                 });
