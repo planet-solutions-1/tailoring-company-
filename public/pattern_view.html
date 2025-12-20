@@ -205,11 +205,14 @@
                 </div>
 
                 <!-- School/Pattern Hidden Selects for View Mode Compatibility -->
-                <select id="f-school" class="hidden">
-                    <option value="all">All</option>
+                <!-- School/Pattern Filters (Unhidden for Pattern Management) -->
+                <select id="f-school" onchange="handleFilter()"
+                    class="text-sm border border-[#E2E8F0] rounded-md px-3 py-1.5 outline-none focus:border-[#4A5568] bg-white text-[#4A5568] max-w-[150px]">
+                    <option value="all">All Schools</option>
                 </select>
-                <select id="f-pattern" class="hidden">
-                    <option value="all">All</option>
+                <select id="f-pattern" onchange="handleFilter()"
+                    class="text-sm border border-[#E2E8F0] rounded-md px-3 py-1.5 outline-none focus:border-[#4A5568] bg-white text-[#4A5568] max-w-[150px]">
+                    <option value="all">All Patterns</option>
                 </select>
                 <!-- Legacy IDs Mapped -->
                 <input type="hidden" id="f-class" value="">
@@ -232,6 +235,16 @@
                         class="btn-outline px-3 py-1.5 rounded text-xs font-bold text-rose-600 border-rose-200 hover:bg-rose-50">PDF</button>
                     <button onclick="downloadExcel()"
                         class="bg-indigo-600 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-indigo-700 shadow-sm">Excel</button>
+                    <button id="btnDeletePattern" onclick="deletePattern()"
+                        class="hidden bg-red-100 text-red-700 border border-red-200 px-3 py-1.5 rounded text-xs font-bold hover:bg-red-200 shadow-sm flex items-center gap-1">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2">
+                            </path>
+                        </svg>
+                        Delete Pattern
+                    </button>
                 </div>
                 <div id="createActions" class="hidden">
                     <button onclick="savePattern()"
@@ -410,6 +423,16 @@
             filters.gender = document.getElementById('filterGender').value;
             filters.attendance = document.getElementById('filterAttendance').value;
             filters.hasData = document.getElementById('filterHasData').checked;
+
+            // Show/Hide Delete Button based on Pattern Selection
+            const fPattern = document.getElementById('f-pattern').value;
+            const btnDel = document.getElementById('btnDeletePattern');
+            if (fPattern && fPattern !== 'all') {
+                btnDel.classList.remove('hidden');
+            } else {
+                btnDel.classList.add('hidden');
+            }
+
             renderTable();
         }
 
@@ -890,6 +913,28 @@
             } catch (e) {
                 alert("Error: " + e.message);
                 console.error(e);
+            }
+        }
+
+
+        async function deletePattern() {
+            const patId = document.getElementById('f-pattern').value;
+            if (!patId || patId === 'all') return;
+
+            if (!confirm("Are you sure you want to DELETE this pattern?\\nStudents will be unlinked (data preserved) but the Pattern Group will be removed.")) return;
+
+            try {
+                const res = await fetch(`/api/data/patterns/${patId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!res.ok) throw new Error("Delete failed");
+
+                alert("Pattern Deleted Successfully.");
+                window.location.href = 'pattern_view.html'; // Reset view
+            } catch (e) {
+                alert("Error: " + e.message);
             }
         }
 

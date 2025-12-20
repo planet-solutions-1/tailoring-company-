@@ -690,4 +690,21 @@ router.post('/patterns', authenticateToken, (req, res) => {
 });
 
 
+// DELETE /api/data/patterns/:id - Delete Pattern
+router.delete('/patterns/:id', authenticateToken, requireRole('company'), (req, res) => {
+    const { id } = req.params;
+    db.serialize(() => {
+        // 1. Unlink students
+        db.run("UPDATE students SET pattern_id = NULL WHERE pattern_id = ?", [id], (err) => {
+            if (err) return res.status(500).json({ error: "Failed to unlink students: " + err.message });
+
+            // 2. Delete Pattern
+            db.run("DELETE FROM patterns WHERE id = ?", [id], (err2) => {
+                if (err2) return res.status(500).json({ error: "Failed to delete pattern: " + err2.message });
+                res.json({ message: "Pattern Deleted and Students Unlinked" });
+            });
+        });
+    });
+});
+
 module.exports = router;
