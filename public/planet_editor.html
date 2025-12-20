@@ -1051,7 +1051,23 @@
                         "Gender": d.gender,
                         "Absent/Present": d.is_active ? "Present" : "Absent", // Basic map
                         "pattern_id": d.pattern_id,
-                        ...d.measurements // Spread measurements (U1, U2 etc) if stored in JSON column
+                        ...d.measurements, // Spread measurements (U1, U2 etc) if stored in JSON column
+
+                        // Hydrate Production Data (Quantities)
+                        ...(() => {
+                            const qtyMap = {};
+                            if (d.production_data) {
+                                // If production_data exists (Snapshot), use it to restore Qty fields
+                                Object.keys(d.production_data).forEach(k => {
+                                    // Ignore metadata keys
+                                    if (k === 'Calculated' || k === 'Timestamp') return;
+
+                                    // Map "Item Name" -> "Qty_ItemName"
+                                    qtyMap[`Qty_${k}`] = d.production_data[k];
+                                });
+                            }
+                            return qtyMap;
+                        })()
                     }));
 
                     statusEl.innerText = "Cloud Synced";
