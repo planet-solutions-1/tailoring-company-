@@ -309,7 +309,7 @@ router.delete('/students/:id', authenticateToken, (req, res) => {
     let queryFind = "SELECT id, school_id, name FROM students WHERE admission_no = ?";
     let params = [id];
 
-    if (/^\d+$/.test(id)) {
+    if (/^\\d+$/.test(id)) {
         queryFind += " OR id = ?";
         params.push(id);
     }
@@ -741,45 +741,92 @@ router.post('/reset_tables', authenticateToken, requireRole('company'), (req, re
 
 // POST /api/data/fix_db - Force Schema Migration (Repair)
 router.post('/fix_db', authenticateToken, requireRole('company'), (req, res) => {
-    const queries = [
-        `CREATE TABLE IF NOT EXISTS patterns (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            school_id INT NOT NULL,
-            name VARCHAR(255) NOT NULL,
-            consumption DECIMAL(10,2) DEFAULT 0,
-            cloth_details TEXT,
-            special_req TEXT,
-            quantities TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            FOREIGN KEY (school_id) REFERENCES schools(id) ON DELETE CASCADE
-        )`
+    const isMySQL = (process.env.RAILWAY_ENVIRONMENT || process.env.NODE_ENV === 'production');
+    const logs = [];
+
+    const queries = [];
+
+    // 1. PATTERNS TABLE
+    if (isMySQL) {
+        queries.push({
+            label: "Create Table 'patterns' (MySQL)",
+            sql: `CREATE TABLE IF NOT EXISTS patterns (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                school_id INT NOT NULL,
+                name VARCHAR(255) NOT NULL,
+                consumption DECIMAL(10,2) DEFAULT 0,
+                cloth_details TEXT,
+                special_req TEXT,
+                quantities TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (school_id) REFERENCES schools(id) ON DELETE CASCADE
+            )`
+        });
+    } else {
+        queries.push({
+            label: "Create Table 'patterns' (SQLite)",
+            sql: `CREATE TABLE IF NOT EXISTS patterns (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                school_id INTEGER NOT NULL,
+                name TEXT NOT NULL,
+                consumption REAL DEFAULT 0,
+                cloth_details TEXT,
+                special_req TEXT,
+                quantities TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (school_id) REFERENCES schools(id) ON DELETE CASCADE
+            )`
+        });
+    }
+
+    // 2. ALTER TABLE (Columns) - Try/Catch wrapper logic
+    // We can't batch these easily in a transaction loop with this abstraction, so we run sequentially.
+    const alters = [
+        { label: "Add 'pattern_id' to students", sql: "ALTER TABLE students ADD COLUMN pattern_id INT" },
+        { label: "Add 'production_data' to students", sql: "ALTER TABLE students ADD COLUMN production_data TEXT" },
+        { label: "Add 'house' to students", sql: "ALTER TABLE students ADD COLUMN house VARCHAR(50)" },
+        { label: "Add 'is_packed' to orders", sql: "ALTER TABLE orders ADD COLUMN is_packed TINYINT DEFAULT 0" },
+        { label: "Add 'remarks' to measurements", sql: "ALTER TABLE measurements ADD COLUMN remarks TEXT" }
     ];
 
-    // Explicitly handle the promise chain or use serialize if available (db.run style)
-    // Since we use db.run abstraction in this file:
+    // Helper to run sequential
+    let chain = Promise.resolve();
 
-    // 1. Create Tables
-    db.run(queries[0], [], (err) => {
-        if (err && !err.message.includes("already exists")) console.error("FixDB Table Error:", err);
-
-        // 2. Add Columns to Students
-        const alters = [
-            "ALTER TABLE students ADD COLUMN pattern_id INT",
-            "ALTER TABLE students ADD COLUMN production_data TEXT",
-            "ALTER TABLE students ADD COLUMN house VARCHAR(50)",
-            "ALTER TABLE orders ADD COLUMN is_packed TINYINT DEFAULT 0"
-        ];
-
-        let completed = 0;
-        alters.forEach(sql => {
-            db.run(sql, [], (e) => {
-                completed++;
-                if (completed === alters.length) {
-                    if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'FIX_DB', 'Ran schema repair.');
-                    res.json({ message: "Database Repair Attempted. Tables and Columns checked." });
-                }
+    // First, Create Tables
+    queries.forEach(q => {
+        chain = chain.then(() => new Promise(resolve => {
+            db.run(q.sql, [], (err) => {
+                if (err) logs.push(`❌ \${q.label}: \${err.message}`);
+                else logs.push(`✅ \${q.label}: Success`);
+                resolve();
             });
-        });
+        }));
+    });
+
+    // Then, Alters
+    alters.forEach(q => {
+        chain = chain.then(() => new Promise(resolve => {
+            db.run(q.sql, [], (err) => {
+                // Ignore "duplicate column" errors
+                if (err) {
+                    if (err.message.includes("duplicate") || err.message.includes("exists")) {
+                        logs.push(`ℹ️ \${q.label}: Already exists`);
+                    } else {
+                        logs.push(`❌ \${q.label}: \${err.message}`);
+                    }
+                } else {
+                    logs.push(`✅ \${q.label}: Success`);
+                }
+                resolve();
+            });
+        }));
+    });
+
+    chain.then(() => {
+        if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'FIX_DB', 'Ran schema repair.');
+        res.json({ message: "Repair Report:\\n" + logs.join("\\n") });
+    }).catch(e => {
+        res.status(500).json({ error: "Fatal Repair Error: " + e.message });
     });
 });
 
