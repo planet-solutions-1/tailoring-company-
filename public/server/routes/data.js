@@ -707,4 +707,36 @@ router.delete('/patterns/:id', authenticateToken, requireRole('company'), (req, 
     });
 });
 
+// POST /api/data/reset_tables - Clear Pattern/Measurement Data (Admin)
+router.post('/reset_tables', authenticateToken, requireRole('company'), (req, res) => {
+    db.serialize ? db.serialize(runReset) : runReset();
+
+    function runReset() {
+        // 1. Clear Measurements
+        const q1 = "DELETE FROM measurements";
+
+        // 2. Clear Patterns
+        const q2 = "DELETE FROM patterns";
+
+        // 3. Unlink Students
+        const q3 = "UPDATE students SET pattern_id = NULL";
+
+        // Execute Sequence
+        db.run(q1, [], (err1) => {
+            if (err1) return res.status(500).json({ error: "Failed to clear measurements: " + err1.message });
+
+            db.run(q2, [], (err2) => {
+                if (err2) return res.status(500).json({ error: "Failed to clear patterns: " + err2.message });
+
+                db.run(q3, [], (err3) => {
+                    if (err3) return res.status(500).json({ error: "Failed to unlink students: " + err3.message });
+
+                    if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'RESET_DB', 'Cleared patterns, measurements, and unlinked students.');
+                    res.json({ message: "Database Tables Reset Successfully (Patterns & Measurements Cleared)." });
+                });
+            });
+        });
+    }
+});
+
 module.exports = router;
