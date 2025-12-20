@@ -739,4 +739,48 @@ router.post('/reset_tables', authenticateToken, requireRole('company'), (req, re
     }
 });
 
+// POST /api/data/fix_db - Force Schema Migration (Repair)
+router.post('/fix_db', authenticateToken, requireRole('company'), (req, res) => {
+    const queries = [
+        `CREATE TABLE IF NOT EXISTS patterns (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            school_id INT NOT NULL,
+            name VARCHAR(255) NOT NULL,
+            consumption DECIMAL(10,2) DEFAULT 0,
+            cloth_details TEXT,
+            special_req TEXT,
+            quantities TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (school_id) REFERENCES schools(id) ON DELETE CASCADE
+        )`
+    ];
+
+    // Explicitly handle the promise chain or use serialize if available (db.run style)
+    // Since we use db.run abstraction in this file:
+
+    // 1. Create Tables
+    db.run(queries[0], [], (err) => {
+        if (err && !err.message.includes("already exists")) console.error("FixDB Table Error:", err);
+
+        // 2. Add Columns to Students
+        const alters = [
+            "ALTER TABLE students ADD COLUMN pattern_id INT",
+            "ALTER TABLE students ADD COLUMN production_data TEXT",
+            "ALTER TABLE students ADD COLUMN house VARCHAR(50)",
+            "ALTER TABLE orders ADD COLUMN is_packed TINYINT DEFAULT 0"
+        ];
+
+        let completed = 0;
+        alters.forEach(sql => {
+            db.run(sql, [], (e) => {
+                completed++;
+                if (completed === alters.length) {
+                    if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'FIX_DB', 'Ran schema repair.');
+                    res.json({ message: "Database Repair Attempted. Tables and Columns checked." });
+                }
+            });
+        });
+    });
+});
+
 module.exports = router;

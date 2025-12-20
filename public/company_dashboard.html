@@ -1336,6 +1336,20 @@
                 alert("Error: " + e.message);
             }
         }
+
+        async function fixDatabase() {
+            if (!confirm("Attempt to repair database schema? (Adds missing tables/columns)")) return;
+            try {
+                const res = await fetch(`${API_BASE}/data/fix_db`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const d = await res.json();
+                alert(d.message);
+            } catch (e) {
+                alert("Repair Error: " + e.message);
+            }
+        }
     </script>
 
 </body>
