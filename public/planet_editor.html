@@ -1097,7 +1097,31 @@
                         house: d["House"],
                         gender: d["Gender"],
                         pattern_id: d.pattern_id, // Persist pattern link
-                        measurements: measurements // Key Fix: Send measurements object
+                        measurements: measurements, // Key Fix: Send measurements object
+                        production_data: (() => {
+                            // Snapshot Calculated Production Data
+                            const snapshot = {};
+                            const gender = (d["Gender"] || "").toUpperCase();
+
+                            // 1. Snapshot Item Output (e.g. "Boys Shirt": "2")
+                            allItems.forEach(item => {
+                                // Skip if gender mismatch (optimization)
+                                const iType = item.type.toUpperCase();
+                                if (iType === "MALE" && gender !== "MALE") return;
+                                if (iType === "FEMALE" && gender !== "FEMALE") return;
+
+                                const val = calculateItemValue(d, item);
+                                if (val && val !== "" && val !== "0" && val !== "00") {
+                                    snapshot[item.name] = val;
+                                }
+                            });
+
+                            // 2. Snapshot Raw Measurements (U1, L2 etc) flattened ?
+                            // User asked for "full measurement datas". The raw measurements are in `measurements` col.
+                            // The calculated item outputs are in `snapshot`.
+                            // Storing both covers all bases.
+                            return snapshot;
+                        })()
                     };
                 });
 

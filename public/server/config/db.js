@@ -207,6 +207,8 @@ if (process.env.RAILWAY_ENVIRONMENT || process.env.NODE_ENV === 'production') {
             try { await promisePool.execute("ALTER TABLE students ADD COLUMN house VARCHAR(50)"); } catch (e) { }
             try { await promisePool.execute("ALTER TABLE students ADD COLUMN order_status VARCHAR(50) DEFAULT 'Pending'"); } catch (e) { }
             try { await promisePool.execute("ALTER TABLE students ADD COLUMN pattern_id INT"); } catch (e) { }
+            try { await promisePool.execute("ALTER TABLE students ADD COLUMN production_data JSON"); } catch (e) { }
+
 
             console.log("MySQL Tables Initialized.");
 

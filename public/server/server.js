@@ -103,7 +103,7 @@ app.post('/api/sync', authenticateToken, async (req, res) => {
                         if (s.measurements) {
                             const measData = JSON.stringify(s.measurements);
                             const remarks = s.remarks || "";
-                            
+
                             // Check if measurement exists
                             db.get("SELECT id FROM measurements WHERE student_id = ?", [studentId], (errM, rowM) => {
                                 if (!errM) {
@@ -115,12 +115,26 @@ app.post('/api/sync', authenticateToken, async (req, res) => {
                                 }
                             });
                         }
-                        
-                        // Handle Pattern Link if provided
-                        if (s.pattern_id) {
-                             db.run("UPDATE students SET pattern_id = ? WHERE id = ?", [s.pattern_id, studentId]);
+
+                        // Handle Pattern Link & Production Data
+                        if (s.pattern_id || s.production_data) {
+                            const pid = s.pattern_id || null;
+                            const pdata = s.production_data ? JSON.stringify(s.production_data) : null;
+
+                            // Build Dynamic Update
+                            let sql = "UPDATE students SET ";
+                            const params = [];
+                            if (pid) { sql += "pattern_id = ?, "; params.push(pid); }
+                            if (pdata) { sql += "production_data = ?, "; params.push(pdata); }
+
+                            // Strip trailing comma
+                            sql = sql.slice(0, -2);
+                            sql += " WHERE id = ?";
+                            params.push(studentId);
+
+                            if (params.length > 1) db.run(sql, params);
                         }
-                        
+
                         resolve();
                     };
 
@@ -128,18 +142,18 @@ app.post('/api/sync', authenticateToken, async (req, res) => {
                         // Update
                         db.run("UPDATE students SET roll_no=?, name=?, class=?, section=?, house=?, gender=?, is_active=1 WHERE id=?",
                             [roll, name, cls, sec, house, gender, row.id],
-                            (err) => { 
-                                if (err) reject(err); 
-                                else afterStudent(row.id); 
+                            (err) => {
+                                if (err) reject(err);
+                                else afterStudent(row.id);
                             }
                         );
                     } else {
                         // Insert
                         db.run("INSERT INTO students (school_id, admission_no, roll_no, name, class, section, house, gender) VALUES (?,?,?,?,?,?,?,?)",
                             [schoolId, adm, roll, name, cls, sec, house, gender],
-                            function(err) { 
-                                if (err) reject(err); 
-                                else afterStudent(this.lastID); 
+                            function (err) {
+                                if (err) reject(err);
+                                else afterStudent(this.lastID);
                             }
                         );
                     }
