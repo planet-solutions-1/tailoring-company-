@@ -250,7 +250,7 @@ router.get('/students/:schoolId', authenticateToken, (req, res) => {
 
     const query = `
         SELECT s.*, 
-               m.data as measurements, m.remarks,
+               m.data as measurements, m.remarks, m.is_absent, m.item_quantities,
                o.status as order_status, o.is_packed, o.priority
         FROM students s
         LEFT JOIN measurements m ON s.id = m.student_id
@@ -263,6 +263,9 @@ router.get('/students/:schoolId', authenticateToken, (req, res) => {
         const students = rows.map(r => {
             if (r.measurements) {
                 try { r.measurements = JSON.parse(r.measurements); } catch (e) { }
+            }
+            if (r.item_quantities) {
+                try { r.item_quantities = JSON.parse(r.item_quantities); } catch (e) { }
             }
             return r;
         });
@@ -345,17 +348,19 @@ router.delete('/students/:id', authenticateToken, (req, res) => {
 
 // POST /api/data/measurements
 router.post('/measurements', authenticateToken, (req, res) => {
-    const { student_id, data, remarks } = req.body;
+    const { student_id, data, remarks, is_absent, item_quantities } = req.body;
 
     db.get("SELECT id FROM measurements WHERE student_id = ?", [student_id], (err, row) => {
         if (err) return res.status(500).json({ error: err.message });
 
         const dataStr = JSON.stringify(data);
+        const qtyStr = item_quantities ? JSON.stringify(item_quantities) : null;
+        const absentVal = is_absent ? 1 : 0;
 
         if (row) {
             // Update
-            db.run("UPDATE measurements SET data = ?, remarks = ?, updated_at = CURRENT_TIMESTAMP WHERE student_id = ?",
-                [dataStr, remarks, student_id],
+            db.run("UPDATE measurements SET data = ?, remarks = ?, is_absent = ?, item_quantities = ?, updated_at = CURRENT_TIMESTAMP WHERE student_id = ?",
+                [dataStr, remarks, absentVal, qtyStr, student_id],
                 (err) => {
                     if (err) return res.status(500).json({ error: err.message });
                     if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'UPDATE_MEASUREMENTS', `Updated for student #${student_id}`);
@@ -364,8 +369,8 @@ router.post('/measurements', authenticateToken, (req, res) => {
             );
         } else {
             // Insert
-            db.run("INSERT INTO measurements (student_id, data, remarks) VALUES (?, ?, ?)",
-                [student_id, dataStr, remarks],
+            db.run("INSERT INTO measurements (student_id, data, remarks, is_absent, item_quantities) VALUES (?, ?, ?, ?, ?)",
+                [student_id, dataStr, remarks, absentVal, qtyStr],
                 (err) => {
                     if (err) return res.status(500).json({ error: err.message });
                     if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'CREATE_MEASUREMENTS', `Created for student #${student_id}`);
@@ -786,7 +791,9 @@ router.post('/fix_db', authenticateToken, requireRole('company'), (req, res) => 
         { label: "Add 'production_data' to students", sql: "ALTER TABLE students ADD COLUMN production_data TEXT" },
         { label: "Add 'house' to students", sql: "ALTER TABLE students ADD COLUMN house VARCHAR(50)" },
         { label: "Add 'is_packed' to orders", sql: "ALTER TABLE orders ADD COLUMN is_packed TINYINT DEFAULT 0" },
-        { label: "Add 'remarks' to measurements", sql: "ALTER TABLE measurements ADD COLUMN remarks TEXT" }
+        { label: "Add 'remarks' to measurements", sql: "ALTER TABLE measurements ADD COLUMN remarks TEXT" },
+        { label: "Add 'is_absent' to measurements", sql: "ALTER TABLE measurements ADD COLUMN is_absent TINYINT DEFAULT 0" },
+        { label: "Add 'item_quantities' to measurements", sql: "ALTER TABLE measurements ADD COLUMN item_quantities TEXT" }
     ];
 
     // Helper to run sequential

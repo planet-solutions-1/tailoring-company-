@@ -144,23 +144,10 @@
             class="glass-panel rounded-xl overflow-hidden shadow-xl border border-stone-200 flex-1 min-h-[500px] flex flex-col">
             <div class="overflow-auto flex-1 h-full">
                 <table class="w-full text-left border-collapse whitespace-nowrap">
-                    <thead class="bg-stone-50 text-stone-500 uppercase text-xs sticky top-0 z-20 shadow-sm">
-                        <tr>
-                            <th class="p-3 font-bold border-b border-r bg-stone-50 sticky left-0 z-30 w-16">No.</th>
-                            <th class="p-3 font-bold border-b">School</th>
-                            <th class="p-3 font-bold border-b">Student</th>
-                            <th class="p-3 font-bold border-b">Class</th>
-                            <th class="p-3 font-bold border-b">Pattern</th>
-                            <!-- Dynamic Measurement Headers -->
-                            <th class="p-3 font-bold border-b bg-amber-50 text-amber-700 text-center"
-                                id="meas-header-group" colspan="1">Measurements</th>
-                            <th class="p-3 font-bold border-b text-center">Status</th>
-                        </tr>
-                        <tr id="sub-header-row" class="bg-stone-100 text-[10px] font-mono text-stone-600 hidden">
-                            <!-- Will be populated by JS -->
-                        </tr>
+                    <thead class="bg-stone-50 text-stone-500 uppercase text-xs sticky top-0 z-20 shadow-sm" id="thead">
+                        <!-- JS injected -->
                     </thead>
-                    <tbody id="table-body" class="divide-y divide-stone-100 bg-white text-sm">
+                    <tbody id="tbody" class="divide-y divide-stone-100 bg-white text-sm">
                         <!-- Rows -->
                     </tbody>
                 </table>
@@ -170,6 +157,28 @@
         </div>
 
     </main>
+
+    <!-- Qty Modal -->
+    <div id="qty-modal"
+        class="fixed inset-0 bg-black/50 hidden z-[60] flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white rounded-lg shadow-2xl w-full max-w-sm overflow-hidden">
+            <div class="bg-stone-900 text-white px-4 py-3 flex justify-between items-center">
+                <h3 class="font-bold">Quantity: <span id="qty-student-name" class="font-mono text-amber-400"></span>
+                </h3>
+                <button onclick="closeQtyModal()" class="text-stone-400 hover:text-white">&times;</button>
+            </div>
+            <div class="p-4 max-h-[60vh] overflow-y-auto" id="qty-list">
+                <!-- Inputs injected here -->
+            </div>
+            <div class="p-4 bg-gray-50 flex justify-end gap-2 border-t">
+                <button onclick="closeQtyModal()"
+                    class="px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded text-sm text-gray-700">Cancel</button>
+                <button onclick="saveQty()"
+                    class="px-3 py-1 bg-rose-600 hover:bg-rose-700 text-white rounded text-sm font-bold shadow">Save
+                    Quantities</button>
+            </div>
+        </div>
+    </div>
 
     <script>
         const API_BASE = '/api';
@@ -186,9 +195,15 @@
         const girlsItems = [{ name: "GIRLS - FORMAL SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Female" }, { name: "GIRLS - TRACK T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Female" }, { name: "GIRLS - UNIFORM T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Female" }, { name: "GIRLS - JERKIN", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Female" }, { name: "GIRLS - FULL SLEEVE SHIRT", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Female" }, { name: "GIRLS - PULLOVER", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Female" }, { name: "GIRLS - KURTHA SHIRT", cols: ["U7", "U2", "U3", "U4", "U6"], type: "Female" }, { name: "GIRLS - SPECIAL FROCKS", cols: ["U7", "U2", "U3", "U4", "U6"], type: "Female" }, { name: "GIRLS - FORMAL PANT", cols: ["L1", "L2"], type: "Female" }, { name: "GIRLS - TRACK PANT", cols: ["L1", "L2"], type: "Female" }, { name: "GIRLS - TRACK SHORTS", cols: ["L3", "L2"], type: "Female" }, { name: "GIRLS - PINOFORE", cols: ["L4", "L2"], type: "Female" }, { name: "GIRLS - SKIRT", cols: ["L5", "L2"], type: "Female" }, { name: "GIRLS - PANT SPECIAL CASE", cols: ["L1", "L2", "L6", "L7"], type: "Female" }];
         const allItems = [...boysItems, ...girlsItems];
 
+        // List of items for Quantity Modal (Derived usually, but hardcoded for now)
+        const qtyItems = [
+            "Shirt (Formal)", "Track Tshirt", "Uniform Tshirt", "Jerkin", "Pullover",
+            "Pant (Formal)", "Track Pant", "Shorts (Formal)", "Track Shorts",
+            "Skirt", "Pinafore", "Kurtha", "Frock"
+        ];
+
         // --- INIT ---
         async function init() {
-            // Populate Items
             const itemSel = document.getElementById('f-item');
             allItems.forEach(i => {
                 const opt = document.createElement('option');
@@ -259,135 +274,237 @@
                 if (fPacked === 'packed' && !s.is_packed) return false;
                 if (fPacked === 'pending' && s.is_packed) return false;
                 if (fClass && !(s.class || '').toLowerCase().includes(fClass)) return false;
-
-                // CRITICAL REQUIREMENT: If pattern created, do not show here?
-                // User said: "if once pattern created datas not showsin tailor dashboard again"
-                // So we filter OUT if s.pattern_id is present?
-                // BUT User also said "if click the pattern show the students datas under the pattern group"
-                // Let's assume if Pattern Filter is 'all', we HIDE patterned students. 
-                // If specific pattern selected, we SHOW them (for reference)? 
-                // Or maybe strictly: Tailor Dashboard = Unassigned Students Only.
-                // Let's strict filter: if(s.pattern_id) return false; (Unless we are in a 'View All' mode?)
-                // User's JSON: "if once pattern created datas not showsin tailor dashboard again"
-                // Let's respect that strictly for the default view.
-                if (s.pattern_id) return false;
-
-                // Item Logic
+                if (s.pattern_id) return false; // Hide if already patterned
                 if (fItem !== 'all') {
                     const def = allItems.find(x => x.name === fItem);
                     if (def && s.gender && def.type && s.gender !== def.type) return false;
                 }
-
                 return true;
             });
 
             // 2. SETUP COLUMNS
-            const measHeader = document.getElementById('meas-header-group');
-            let subRow = document.getElementById('sub-header-row');
-
-            let showCols = [];
+            let cols = [];
             if (fItem !== 'all') {
                 const def = allItems.find(x => x.name === fItem);
-                if (def) showCols = def.cols;
-                measHeader.innerText = fItem;
-                measHeader.colSpan = showCols.length;
-            } else {
-                showCols = [];
-                measHeader.innerText = "Measurements (Select Item)";
-                measHeader.colSpan = 1;
+                if (def) cols = def.cols;
             }
 
-            // 3. BUILD ROWS
-            const tbody = document.getElementById('table-body');
-            tbody.innerHTML = data.map((s, idx) => {
-                const m = getMeasurementsSafe(s);
+            let headers = ['No.', 'School', 'Name', 'Class', 'Att.', 'Qty'];
+            // If item selected, add measurement cols
+            if (cols.length > 0) headers.push(...cols);
+            else headers.push("Measurements");
+            headers.push("Status");
 
-                let measCells = '';
-                if (showCols.length > 0) {
-                    measCells = showCols.map(k => {
-                        const val = m[k.toLowerCase()] || '';
-                        // INPUT FIELD
-                        return `<td class="p-1 border-b border-stone-100">
-                            <input type="text" value="${val}" 
-                                onchange="updateMeasurement(${s.id}, '${k.toLowerCase()}', this.value)"
-                                class="w-16 p-2 text-center text-stone-900 bg-amber-50 border border-stone-200 rounded focus:border-rose-500 focus:ring-1 focus:ring-rose-500 font-mono font-bold"
+            const thead = document.getElementById('thead');
+            thead.innerHTML = `<tr>${headers.map(h => `<th class="px-4 py-3 text-left text-xs font-bold text-stone-500 uppercase tracking-wider border-b bg-stone-50">${h}</th>`).join('')}</tr>`;
+
+            const tbody = document.getElementById('tbody');
+            tbody.innerHTML = '';
+
+            data.forEach((student, idx) => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-blue-50 transition-colors border-b border-stone-100";
+
+                const m = getMeasurementsSafe(student);
+                const isAbsent = student.is_absent === 1;
+                const qtys = student.item_quantities || {};
+                const qtyCount = countQtys(qtys);
+
+                // 1. Basic Info
+                let html = `
+                    <td class="px-4 py-3 whitespace-nowrap text-xs text-mono text-stone-400 font-bold">${idx + 1}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm font-bold text-stone-700">${student.school_name}</td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm font-bold text-stone-800">${student.name} <div class="text-[10px] font-mono font-normal text-stone-400">Roll: ${student.roll_no || '-'}</div></td>
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-stone-500">${student.class || '-'} (${student.gender?.[0] || '?'})</td>
+                `;
+
+                // 2. Attendance Toggle
+                // Using a nicer toggle
+                html += `
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" class="sr-only peer" onchange="toggleAttendance(${student.id}, this)" ${!isAbsent ? 'checked' : ''}>
+                            <div class="w-9 h-5 bg-stone-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600"></div>
+                            <span class="ml-2 text-xs font-bold ${isAbsent ? 'text-rose-600' : 'text-emerald-700'}">${isAbsent ? 'ABS' : 'PRE'}</span>
+                        </label>
+                    </td>
+                `;
+
+                // 3. Qty Button
+                html += `
+                    <td class="px-4 py-3 whitespace-nowrap">
+                        <button onclick="openQtyModal(${student.id}, '${student.name.replace(/'/g, "")}')" 
+                            class="text-xs px-2 py-1 rounded border font-bold transition-all ${qtyCount > 0 ? 'bg-amber-100 text-amber-800 border-amber-300 shadow-sm' : 'text-stone-400 border-stone-200 hover:border-stone-400 bg-white'}">
+                            ${qtyCount > 0 ? qtyCount + ' Items' : '+ Add'}
+                        </button>
+                    </td>
+                `;
+
+                // 4. Measurements
+                const disabled = isAbsent ? 'disabled style="background-color:#f5f5f4; color:#a8a29e;"' : 'style="background-color:#fffbeb;"';
+
+                if (cols.length > 0) {
+                    cols.forEach(col => {
+                        const val = m[col.toLowerCase()] || '';
+                        html += `<td class="px-4 py-3 whitespace-nowrap">
+                            <input type="text" value="${val}" ${disabled}
+                                class="w-12 p-2 text-center border border-stone-200 rounded focus:ring-1 focus:ring-rose-500 font-mono font-bold text-stone-900"
+                                onchange="updateMeasurement(${student.id}, '${col.toLowerCase()}', this.value)"
                             >
                         </td>`;
-                    }).join('');
+                    });
                 } else {
-                    measCells = `<td class="p-3 text-xs text-stone-400 italic border-b border-stone-100">Select Item Type...</td>`;
+                    html += `<td class="px-4 py-3 text-xs text-stone-400 italic">Select Item Type from Filters</td>`;
                 }
 
-                return `<tr class="hover:bg-blue-50 transition-colors">
-                    <td class="p-3 border-b border-r bg-stone-50/50 sticky left-0 font-mono text-xs text-stone-400 font-bold">${idx + 1}</td>
-                    <td class="p-3 border-b border-stone-100 font-bold text-stone-700">${s.school_name}</td>
-                    <td class="p-3 border-b border-stone-100">
-                        <div class="font-bold text-stone-800">${s.name}</div>
-                        <div class="text-[10px] text-stone-500 font-mono">Roll: ${s.roll_no || '-'}</div>
-                    </td>
-                    <td class="p-3 border-b border-stone-100 text-sm">${s.class || ''} ${s.section || ''} <span class="text-xs text-stone-400">(${s.gender?.[0] || '?'})</span></td>
-                    <td class="p-3 border-b border-stone-100">
-                        <span class="text-stone-300">-</span>
-                    </td>
-                    ${measCells}
-                    <td class="p-3 border-b border-stone-100 text-center">
-                         <span class="px-2 py-1 rounded-full text-[10px] font-bold uppercase ${s.is_packed ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${s.is_packed ? 'Packed' : 'Pending'}</span>
-                    </td>
-                </tr>`;
-            }).join('');
+                // 5. Status
+                const statusColor = student.is_packed ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700';
+                html += `<td class="px-4 py-3 whitespace-nowrap"><span class="px-2 py-1 inline-flex text-[10px] font-bold uppercase rounded-full ${statusColor}">${student.is_packed ? 'Packed' : 'Pending'}</span></td>`;
 
-            // 4. Update Sub-Header
-            if (showCols.length > 0) {
-                subRow.classList.remove('hidden');
-                subRow.innerHTML = `
-                    <th colspan="5"></th>
-                    ${showCols.map(c => `<th class="p-2 text-center bg-amber-100 text-amber-800 border-x border-amber-200 w-16">${c}</th>`).join('')}
-                    <th></th>
-                `;
-            } else {
-                subRow.classList.add('hidden');
-            }
+                tr.innerHTML = html;
+                tbody.appendChild(tr);
+            });
 
-            document.getElementById('row-count').innerText = `Showing ${data.length} Records (Pattern-Free Only)`;
+            document.getElementById('row-count').innerText = `Showing ${data.length} Records`;
             window.filteredData = data;
-            window.currentCols = showCols;
+            window.currentCols = cols;
         }
 
-        async function updateMeasurement(studentId, key, value) {
-            // Find student locally first to update model?
-            const student = allStudents.find(s => s.id === studentId);
-            if (!student) return;
+        // --- LOGIC ---
 
-            const currentMeas = getMeasurementsSafe(student);
-            currentMeas[key] = value;
+        function countQtys(q) {
+            if (!q) return 0;
+            let sum = 0;
+            Object.values(q).forEach(v => sum += v);
+            return sum;
+        }
 
-            // Optimistic UI Update
-            student.measurements = JSON.stringify(currentMeas); // Update local store
+        async function toggleAttendance(id, checkbox) {
+            const isPresent = checkbox.checked;
+            const isAbsent = !isPresent;
 
-            // API Call
+            // Updates
+            const row = checkbox.closest('tr');
+            const inputs = row.querySelectorAll('input[type="text"]');
+            const label = checkbox.parentElement.querySelector('span');
+
+            label.innerText = isAbsent ? 'ABS' : 'PRE';
+            label.className = `ml-2 text-xs font-bold ${isAbsent ? 'text-rose-600' : 'text-emerald-700'}`;
+
+            inputs.forEach(inp => {
+                inp.disabled = isAbsent;
+                if (isAbsent) {
+                    inp.style.backgroundColor = '#f5f5f4';
+                    inp.style.color = '#a8a29e';
+                } else {
+                    inp.style.backgroundColor = '#fffbeb';
+                    inp.style.color = '#1c1917';
+                }
+            });
+
+            await saveStudentData(id, { is_absent: isAbsent ? 1 : 0 });
+
+            // Update local model
+            const s = allStudents.find(x => x.id === id);
+            if (s) s.is_absent = isAbsent ? 1 : 0;
+        }
+
+        let currentQtyStudentId = null;
+
+        function openQtyModal(id, name) {
+            currentQtyStudentId = id;
+            document.getElementById('qty-student-name').innerText = name;
+            document.getElementById('qty-modal').classList.remove('hidden');
+
+            const s = allStudents.find(x => x.id === id);
+            const qtys = s?.item_quantities || {};
+
+            let html = '';
+            qtyItems.forEach(item => {
+                const val = qtys[item] || '';
+                html += `
+                    <div class="flex items-center justify-between p-3 border-b hover:bg-stone-50">
+                        <span class="text-sm font-medium text-stone-700">${item}</span>
+                        <input type="number" class="w-16 p-1 border rounded text-center font-bold" min="0" placeholder="0" value="${val}" id="qty-input-${item.replace(/\s/g, '-')}">
+                    </div>
+                `;
+            });
+            document.getElementById('qty-list').innerHTML = html;
+        }
+
+        async function saveQty() {
+            if (!currentQtyStudentId) return;
+
+            const newQtys = {};
+            let hasData = false;
+
+            qtyItems.forEach(item => {
+                const id = `qty-input-${item.replace(/\s/g, '-')}`;
+                const val = document.getElementById(id).value;
+                if (val && parseInt(val) > 0) {
+                    newQtys[item] = parseInt(val);
+                    hasData = true;
+                }
+            });
+
+            // Verify
+            await saveStudentData(currentQtyStudentId, { item_quantities: hasData ? newQtys : null });
+
+            // Update Local
+            const s = allStudents.find(x => x.id === currentQtyStudentId);
+            if (s) s.item_quantities = hasData ? newQtys : null;
+
+            closeQtyModal();
+            renderTable(); // Refresh button count
+        }
+
+        function closeQtyModal() {
+            document.getElementById('qty-modal').classList.add('hidden');
+            currentQtyStudentId = null;
+        }
+
+        // Generic Save
+        async function saveStudentData(id, payload) {
+            const s = allStudents.find(x => x.id === id);
+            if (!s) return;
+
+            // Merge with existing state from `s` to ensure we don't nullify other fields
+            // Backend expects: student_id, data, remarks, is_absent, item_quantities
+            // If we send null for `data`, it fails.
+
+            const finalPayload = {
+                student_id: id,
+                data: s.measurements ? (typeof s.measurements === 'string' ? JSON.parse(s.measurements) : s.measurements) : {},
+                remarks: s.remarks,
+                is_absent: s.is_absent,
+                item_quantities: s.item_quantities
+            };
+
+            // Override with new payload
+            Object.assign(finalPayload, payload);
+
             try {
-                // Construct payload
-                const payload = {
-                    student_id: studentId,
-                    data: currentMeas,
-                    remarks: student.remarks || '' // Preserve or empty
-                };
-
                 const res = await fetch(`${API_BASE}/data/measurements`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                    body: JSON.stringify(payload)
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(finalPayload)
                 });
+                if (!res.ok) throw new Error("Save error");
+            } catch (e) { console.error(e); }
+        }
 
-                if (!res.ok) throw new Error("Save failed");
+        async function updateMeasurement(id, key, value) {
+            const s = allStudents.find(x => x.id === id);
+            if (!s) return;
 
-                // Visual Indicator? maybe border flash?
-                // For now, silent success or console
-                console.log(`Saved ${key}=${value} for #${studentId}`);
-            } catch (e) {
-                console.error("Update Error", e);
-                alert("Failed to save measurement. Please check connection.");
-            }
+            let m = getMeasurementsSafe(s);
+            m[key] = value;
+            s.measurements = m; // Update local
+
+            await saveStudentData(id, { data: m });
         }
 
         function getMeasurementsSafe(s) {
@@ -398,29 +515,34 @@
         // --- EXPORT ---
         function downloadPDF() {
             const { jsPDF } = window.jspdf;
-            const doc = new jsPDF('l', 'mm', 'a4'); // Landscape
+            const doc = new jsPDF('l', 'mm', 'a4');
             const data = window.filteredData || allStudents;
             const cols = window.currentCols || [];
             const item = document.getElementById('f-item').value;
+            const timestamp = new Date().toLocaleString();
 
             doc.setFont("helvetica", "bold");
             doc.setFontSize(14);
             doc.text("Tailoring Production Data", 14, 15);
             doc.setFontSize(10);
-            doc.text(`Generated: ${new Date().toLocaleString()} | Filter: ${item}`, 14, 22);
+            doc.text(`Generated: ${timestamp} | Filter: ${item}`, 14, 22);
 
-            let headers = ['School', 'Name', 'Class', 'Pattern'];
+            let headers = ['School', 'Name', 'Class', 'Att.', 'Quantities'];
             if (cols.length > 0) headers.push(...cols);
             else headers.push("Measurements");
             headers.push("Status");
 
             const body = data.map(s => {
                 const m = getMeasurementsSafe(s);
+                const isAbsent = s.is_absent === 1;
+                const qtyStr = s.item_quantities ? Object.entries(s.item_quantities).map(([k, v]) => `${k}:${v}`).join(', ') : '-';
+
                 const row = [
                     s.school_name,
                     s.name,
                     `${s.class || ''} (${s.gender?.[0] || '?'})`,
-                    s.pattern_name || '-'
+                    isAbsent ? 'ABSENT' : 'Present',
+                    qtyStr
                 ];
 
                 if (cols.length > 0) {
@@ -442,7 +564,7 @@
                 styles: { fontSize: 8, cellPadding: 2 }
             });
 
-            doc.save("Tailoring_Data.pdf");
+            doc.save("Tailoring_Report.pdf");
         }
 
         function downloadExcel() {
@@ -457,14 +579,14 @@
                     "Class": s.class,
                     "Section": s.section,
                     "Gender": s.gender,
-                    "Pattern": s.pattern_name,
+                    "Attendance": s.is_absent === 1 ? 'ABSENT' : 'Present',
+                    "Quantities": s.item_quantities ? Object.entries(s.item_quantities).map(([k, v]) => `${k}:${v}`).join(', ') : '',
                     "Status": s.is_packed ? "Packed" : "Pending"
                 };
 
                 if (cols.length > 0) {
                     cols.forEach(k => row[k] = m[k.toLowerCase()] || '');
                 } else {
-                    // Dump all if no item selected? No, adhering to view.
                     row["Measurements"] = "Select Item to View";
                 }
                 return row;
