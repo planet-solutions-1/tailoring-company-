@@ -279,13 +279,14 @@
             document.getElementById('viewActions').classList.add('hidden');
             document.getElementById('createActions').classList.remove('hidden');
             document.getElementById('creationPanel').classList.remove('hidden');
-            document.getElementById('filterPanel').classList.add('hidden'); // Simplified view for creation
+            document.getElementById('creationPanel').classList.remove('hidden');
+            // document.getElementById('filterPanel').classList.add('hidden'); // UNHIDDEN per user request
 
             // Load Draft Data
             try {
                 const draft = JSON.parse(sessionStorage.getItem('draftPatternData'));
                 if (draft && draft.students) {
-                    allStudents = draft.students; // Only the filtered subset
+                    allStudents = draft.students; // Flat objects from Editor
                     draftMetadata = draft;
                     document.getElementById('metaSchool').value = draft.schoolName || 'Unknown';
                     renderTable();
@@ -348,6 +349,24 @@
                     sel.appendChild(opt);
                 });
             } catch (e) { console.error(e); }
+        }
+
+        // --- HELPER: NORMALIZE DATA ACCESS ---
+        function getStudentProp(s, prop) {
+            // 1. Try Direct Property (DB style)
+            if (s[prop] !== undefined) return s[prop];
+
+            // 2. Try Editor CSV/Excel Mapping
+            if (prop === 'name') return s["Student Name"] || s["Student"] || s["Name"];
+            if (prop === 'class') return s["Class"];
+            if (prop === 'section') return s["Section"];
+            if (prop === 'roll') return s["Roll No"] || s["Admission No"];
+            if (prop === 'gender') return s["Gender"];
+            if (prop === 'school_name') return draftMetadata ? draftMetadata.schoolName : '';
+            if (prop === 'pattern_name') return '';
+            if (prop === 'is_packed') return false;
+
+            return '';
         }
 
         // --- RENDER ---
@@ -413,26 +432,40 @@
             tbody.innerHTML = data.map((s, idx) => {
                 const m = getMeasurementsSafe(s);
                 let measCells = '';
+
                 if (showCols.length > 0) {
-                    measCells = showCols.map(k => `<td class="p-3 text-center font-mono font-bold bg-amber-50/30 text-stone-700 border-b border-stone-100">${m[k.toLowerCase()] || '-'}</td>`).join('');
+                    measCells = showCols.map(k => {
+                        // Access: Try "U1" (exact) then "u1" (lowercase) - robust access
+                        let val = m[k] || m[k.toLowerCase()] || '-';
+                        return `<td class="p-3 text-center font-mono font-bold bg-amber-50/30 text-stone-700 border-b border-stone-100">${val}</td>`;
+                    }).join('');
                 } else {
                     measCells = `<td class="p-3 text-xs text-stone-400 italic border-b border-stone-100">Select Item Type...</td>`;
                 }
 
+                const dName = getStudentProp(s, 'name');
+                const dRoll = getStudentProp(s, 'roll');
+                const dClass = getStudentProp(s, 'class');
+                const dSection = getStudentProp(s, 'section');
+                const dGender = getStudentProp(s, 'gender');
+                const dSchool = getStudentProp(s, 'school_name');
+                const dPattern = getStudentProp(s, 'pattern_name');
+                const dPacked = getStudentProp(s, 'is_packed');
+
                 return `<tr class="hover:bg-blue-50 transition-colors">
                     <td class="p-3 border-b border-r bg-stone-50/50 sticky left-0 font-mono text-xs text-stone-400 font-bold">${idx + 1}</td>
-                    <td class="p-3 border-b border-stone-100 font-bold text-stone-700">${s.school_name || (draftMetadata ? draftMetadata.schoolName : '-')}</td>
+                    <td class="p-3 border-b border-stone-100 font-bold text-stone-700">${dSchool}</td>
                     <td class="p-3 border-b border-stone-100">
-                        <div class="font-bold text-stone-800">${s.name}</div>
-                        <div class="text-[10px] text-stone-500 font-mono">Roll: ${s.roll_no || '-'}</div>
+                        <div class="font-bold text-stone-800">${dName || '<span class="text-red-400">?</span>'}</div>
+                        <div class="text-[10px] text-stone-500 font-mono">Roll: ${dRoll || '-'}</div>
                     </td>
-                    <td class="p-3 border-b border-stone-100 text-sm">${s.class || ''} ${s.section || ''} <span class="text-xs text-stone-400">(${s.gender?.[0] || '?'})</span></td>
+                    <td class="p-3 border-b border-stone-100 text-sm">${dClass} ${dSection || ''} <span class="text-xs text-stone-400">(${dGender?.[0] || '?'})</span></td>
                     <td class="p-3 border-b border-stone-100">
-                        ${s.pattern_name ? `<span class="px-2 py-1 bg-indigo-50 text-indigo-700 rounded text-xs font-bold ring-1 ring-indigo-200">${s.pattern_name}</span>` : '<span class="text-stone-300">-</span>'}
+                        ${dPattern ? `<span class="px-2 py-1 bg-indigo-50 text-indigo-700 rounded text-xs font-bold ring-1 ring-indigo-200">${dPattern}</span>` : '<span class="text-stone-300">-</span>'}
                     </td>
                     ${measCells}
                     <td class="p-3 border-b border-stone-100 text-center">
-                        <span class="px-2 py-1 rounded-full text-[10px] font-bold uppercase ${s.is_packed ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${s.is_packed ? 'Packed' : 'Pending'}</span>
+                        <span class="px-2 py-1 rounded-full text-[10px] font-bold uppercase ${dPacked ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${dPacked ? 'Packed' : 'Pending'}</span>
                     </td>
                 </tr>`;
             }).join('');
@@ -454,8 +487,13 @@
         }
 
         function getMeasurementsSafe(s) {
-            if (typeof s.measurements === 'string') { try { return JSON.parse(s.measurements); } catch (e) { return {}; } }
-            return s.measurements || {};
+            // DB: nested Object string or object
+            if (s.measurements) {
+                if (typeof s.measurements === 'string') { try { return JSON.parse(s.measurements); } catch (e) { return {}; } }
+                return s.measurements;
+            }
+            // Editor: Flat Object, return s itself
+            return s;
         }
 
         // --- CREATE/SAVE LOGIC ---
