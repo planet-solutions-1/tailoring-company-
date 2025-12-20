@@ -173,9 +173,11 @@ if (process.env.RAILWAY_ENVIRONMENT || process.env.NODE_ENV === 'production') {
                     id INT AUTO_INCREMENT PRIMARY KEY,
                     school_id INT NOT NULL,
                     name VARCHAR(255) NOT NULL,
+                    description TEXT,
                     consumption DECIMAL(10,2) DEFAULT 0,
                     cloth_details TEXT,
                     special_req TEXT,
+                    quantities TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     FOREIGN KEY (school_id) REFERENCES schools(id) ON DELETE CASCADE
                 )`
@@ -185,7 +187,7 @@ if (process.env.RAILWAY_ENVIRONMENT || process.env.NODE_ENV === 'production') {
                 await promisePool.execute(sql);
             }
 
-            // MySQL Migration: Attempt to add columns to existing tables
+            // MySQL Migration: Ensure columns exist (Idempotent)
             const newCols = [
                 'student_name VARCHAR(255)', 'student_reg_no VARCHAR(255)', 'pattern_name VARCHAR(255)',
                 'gender VARCHAR(50)', 'issue_type VARCHAR(100)', 'class VARCHAR(50)', 'section VARCHAR(50)', 'house VARCHAR(100)'
@@ -201,6 +203,14 @@ if (process.env.RAILWAY_ENVIRONMENT || process.env.NODE_ENV === 'production') {
             try { await promisePool.execute("ALTER TABLE students ADD COLUMN order_status VARCHAR(50) DEFAULT 'Pending'"); } catch (e) { }
             try { await promisePool.execute("ALTER TABLE students ADD COLUMN pattern_id INT"); } catch (e) { }
             try { await promisePool.execute("ALTER TABLE students ADD COLUMN production_data TEXT"); } catch (e) { }
+
+            // MEASUREMENTS MIGRATION
+            try { await promisePool.execute("ALTER TABLE measurements ADD COLUMN is_absent TINYINT DEFAULT 0"); } catch (e) { }
+            try { await promisePool.execute("ALTER TABLE measurements ADD COLUMN item_quantities TEXT"); } catch (e) { }
+
+            // PATTERNS MIGRATION (Ensure description exists if table was old)
+            try { await promisePool.execute("ALTER TABLE patterns ADD COLUMN description TEXT"); } catch (e) { }
+
 
             console.log("MySQL Tables Initialized.");
 
@@ -295,6 +305,9 @@ function initSqliteDb(database) {
             house TEXT,
             gender TEXT,
             is_active BOOLEAN DEFAULT 1,
+            order_status TEXT DEFAULT 'Pending', 
+            pattern_id INTEGER,
+            production_data TEXT, 
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (school_id) REFERENCES schools(id)
         );
@@ -313,6 +326,8 @@ function initSqliteDb(database) {
             student_id INTEGER NOT NULL,
             data TEXT,
             remarks TEXT,
+            is_absent INTEGER DEFAULT 0,
+            item_quantities TEXT,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (student_id) REFERENCES students(id)
         );
@@ -353,13 +368,38 @@ function initSqliteDb(database) {
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (school_id) REFERENCES schools(id)
         );
+        CREATE TABLE IF NOT EXISTS patterns (
+             id INTEGER PRIMARY KEY AUTOINCREMENT,
+             school_id INTEGER NOT NULL,
+             name TEXT NOT NULL,
+             description TEXT,
+             consumption REAL DEFAULT 0,
+             cloth_details TEXT,
+             special_req TEXT,
+             quantities TEXT,
+             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+             FOREIGN KEY (school_id) REFERENCES schools(id) ON DELETE CASCADE
+        );
     `;
     database.exec(schema, (err) => {
         if (err) console.error(err);
         else {
-            // SQLite Auto-Migration
+            // SQLite Auto-Migration (Columns that might be missing on old DBs)
             database.run("ALTER TABLE schools ADD COLUMN priority TEXT DEFAULT 'Normal'", () => { });
             database.run("ALTER TABLE schools ADD COLUMN status TEXT DEFAULT 'Pending'", () => { });
+
+            // Students
+            database.run("ALTER TABLE students ADD COLUMN order_status TEXT DEFAULT 'Pending'", () => { });
+            database.run("ALTER TABLE students ADD COLUMN pattern_id INTEGER", () => { });
+            database.run("ALTER TABLE students ADD COLUMN production_data TEXT", () => { });
+
+            // Measurements
+            database.run("ALTER TABLE measurements ADD COLUMN is_absent INTEGER DEFAULT 0", () => { });
+            database.run("ALTER TABLE measurements ADD COLUMN item_quantities TEXT", () => { });
+
+            // Patterns
+            database.run("ALTER TABLE patterns ADD COLUMN description TEXT", () => { });
+
 
             // Complaints Migration
             ['student_name', 'student_reg_no', 'pattern_name', 'gender', 'issue_type', 'class', 'section', 'house'].forEach(col => {
@@ -395,3 +435,4 @@ function initSqliteDb(database) {
 }
 
 module.exports = db;
+
