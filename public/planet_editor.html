@@ -2743,8 +2743,9 @@
                 // 3. Sync Students (Production Data Snapshot)
                 await syncToCloud();
 
-                alert(`✅ Upload Successful!\nOrder Record Created (ID: ${patternId}).\n${filtered.length} Students Updated.`);
-                closeExportModal();
+                alert(`✅ Upload Successful!\nOrder Record Created (ID: ${patternId}).\n${filtered.length} Students Updated.\n\nRedirecting to Pattern Dashboard...`);
+                // Redirect immediately to the new Pattern View Dashboard
+                window.location.href = `pattern_view.html?id=${patternId}`;
 
             } catch (e) {
                 alert("Upload Failed: " + e.message);
