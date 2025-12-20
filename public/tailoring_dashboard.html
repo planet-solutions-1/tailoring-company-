@@ -260,8 +260,19 @@
                 if (fPacked === 'pending' && s.is_packed) return false;
                 if (fClass && !(s.class || '').toLowerCase().includes(fClass)) return false;
 
-                // Item Logic: If item selected, filter by Gender type mismatch?
-                // Optional: Strict filtering (only show boys if boys item selected)
+                // CRITICAL REQUIREMENT: If pattern created, do not show here?
+                // User said: "if once pattern created datas not showsin tailor dashboard again"
+                // So we filter OUT if s.pattern_id is present?
+                // BUT User also said "if click the pattern show the students datas under the pattern group"
+                // Let's assume if Pattern Filter is 'all', we HIDE patterned students. 
+                // If specific pattern selected, we SHOW them (for reference)? 
+                // Or maybe strictly: Tailor Dashboard = Unassigned Students Only.
+                // Let's strict filter: if(s.pattern_id) return false; (Unless we are in a 'View All' mode?)
+                // User's JSON: "if once pattern created datas not showsin tailor dashboard again"
+                // Let's respect that strictly for the default view.
+                if (s.pattern_id) return false;
+
+                // Item Logic
                 if (fItem !== 'all') {
                     const def = allItems.find(x => x.name === fItem);
                     if (def && s.gender && def.type && s.gender !== def.type) return false;
@@ -272,17 +283,12 @@
 
             // 2. SETUP COLUMNS
             const measHeader = document.getElementById('meas-header-group');
-            const thead = document.querySelector('thead');
             let subRow = document.getElementById('sub-header-row');
-
-            // Removing old dynamic headers safe way?
-            // Actually let's just rebuild the table HTML for simplicity or just column cells
-            // Strategy: Calculate columns then map.
 
             let showCols = [];
             if (fItem !== 'all') {
                 const def = allItems.find(x => x.name === fItem);
-                if (def) showCols = def.cols; // ["U1", "U2"]
+                if (def) showCols = def.cols;
                 measHeader.innerText = fItem;
                 measHeader.colSpan = showCols.length;
             } else {
@@ -298,7 +304,16 @@
 
                 let measCells = '';
                 if (showCols.length > 0) {
-                    measCells = showCols.map(k => `<td class="p-3 text-center font-mono font-bold bg-amber-50/30 text-stone-700 border-b border-stone-100">${m[k.toLowerCase()] || '-'}</td>`).join('');
+                    measCells = showCols.map(k => {
+                        const val = m[k.toLowerCase()] || '';
+                        // INPUT FIELD
+                        return `<td class="p-1 border-b border-stone-100">
+                            <input type="text" value="${val}" 
+                                onchange="updateMeasurement(${s.id}, '${k.toLowerCase()}', this.value)"
+                                class="w-16 p-2 text-center text-stone-900 bg-amber-50 border border-stone-200 rounded focus:border-rose-500 focus:ring-1 focus:ring-rose-500 font-mono font-bold"
+                            >
+                        </td>`;
+                    }).join('');
                 } else {
                     measCells = `<td class="p-3 text-xs text-stone-400 italic border-b border-stone-100">Select Item Type...</td>`;
                 }
@@ -312,38 +327,67 @@
                     </td>
                     <td class="p-3 border-b border-stone-100 text-sm">${s.class || ''} ${s.section || ''} <span class="text-xs text-stone-400">(${s.gender?.[0] || '?'})</span></td>
                     <td class="p-3 border-b border-stone-100">
-                        ${s.pattern_name ? `<span class="px-2 py-1 bg-indigo-50 text-indigo-700 rounded text-xs font-bold ring-1 ring-indigo-200">${s.pattern_name}</span>` : '<span class="text-stone-300">-</span>'}
+                        <span class="text-stone-300">-</span>
                     </td>
                     ${measCells}
                     <td class="p-3 border-b border-stone-100 text-center">
-                        <span class="px-2 py-1 rounded-full text-[10px] font-bold uppercase ${s.is_packed ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${s.is_packed ? 'Packed' : 'Pending'}</span>
+                         <span class="px-2 py-1 rounded-full text-[10px] font-bold uppercase ${s.is_packed ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${s.is_packed ? 'Packed' : 'Pending'}</span>
                     </td>
                 </tr>`;
             }).join('');
 
-            // 4. Update Sub-Header (The column names U1, U2 etc)
+            // 4. Update Sub-Header
             if (showCols.length > 0) {
-                // We need to inject a second header row if not exists, or update it
-                // Actually easier to just modify the main header if we want to be clean, 
-                // OR use the sub-header row I put in HTML.
-
-                // Let's rely on mapping headers dynamically in the main row? 
-                // No, "Measurements" is a group header.
-                // Let's insert real THs replacing the group? No, Grouping is better.
-                // Let's use the sub-header row.
                 subRow.classList.remove('hidden');
                 subRow.innerHTML = `
-                    <th colspan="5"></th> <!-- Spacer for fixed cols -->
-                    ${showCols.map(c => `<th class="p-2 text-center bg-amber-100 text-amber-800 border-x border-amber-200">${c}</th>`).join('')}
+                    <th colspan="5"></th>
+                    ${showCols.map(c => `<th class="p-2 text-center bg-amber-100 text-amber-800 border-x border-amber-200 w-16">${c}</th>`).join('')}
                     <th></th>
                 `;
             } else {
                 subRow.classList.add('hidden');
             }
 
-            document.getElementById('row-count').innerText = `Showing ${data.length} Records`;
-            window.filteredData = data; // For export
+            document.getElementById('row-count').innerText = `Showing ${data.length} Records (Pattern-Free Only)`;
+            window.filteredData = data;
             window.currentCols = showCols;
+        }
+
+        async function updateMeasurement(studentId, key, value) {
+            // Find student locally first to update model?
+            const student = allStudents.find(s => s.id === studentId);
+            if (!student) return;
+
+            const currentMeas = getMeasurementsSafe(student);
+            currentMeas[key] = value;
+
+            // Optimistic UI Update
+            student.measurements = JSON.stringify(currentMeas); // Update local store
+
+            // API Call
+            try {
+                // Construct payload
+                const payload = {
+                    student_id: studentId,
+                    data: currentMeas,
+                    remarks: student.remarks || '' // Preserve or empty
+                };
+
+                const res = await fetch(`${API_BASE}/data/measurements`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!res.ok) throw new Error("Save failed");
+
+                // Visual Indicator? maybe border flash?
+                // For now, silent success or console
+                console.log(`Saved ${key}=${value} for #${studentId}`);
+            } catch (e) {
+                console.error("Update Error", e);
+                alert("Failed to save measurement. Please check connection.");
+            }
         }
 
         function getMeasurementsSafe(s) {

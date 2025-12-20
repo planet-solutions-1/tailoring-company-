@@ -246,7 +246,16 @@
                         Delete Pattern
                     </button>
                 </div>
-                <div id="createActions" class="hidden">
+                <div id="createActions" class="hidden flex items-center gap-4">
+                    <div class="flex items-center gap-2 bg-purple-50 px-3 py-1 rounded border border-purple-200">
+                        <label class="text-[10px] font-bold text-purple-700 uppercase">Material Calc</label>
+                        <input type="number" id="metaConsumption" placeholder="Unit (m)" step="0.1"
+                            oninput="calculateMaterial()"
+                            class="w-16 border border-purple-300 rounded px-2 py-1 text-xs outline-none focus:border-purple-500 font-bold text-purple-700 bg-white">
+                        <span class="text-xs text-purple-400">x Qty =</span>
+                        <span id="calcTotalMaterial" class="text-sm font-bold text-purple-800">0m</span>
+                    </div>
+
                     <button onclick="savePattern()"
                         class="bg-indigo-600 text-white px-4 py-2 rounded text-sm font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-200 flex items-center gap-2 transition-transform active:scale-95">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -917,12 +926,82 @@
         }
 
 
+
+        // --- MATERIAL CALCULATOR ---
+        function calculateMaterial() {
+            const unit = parseFloat(document.getElementById('metaConsumption').value) || 0;
+            // Get current filtered student count
+            const count = window.filteredData ? window.filteredData.length : (allStudents ? allStudents.length : 0);
+
+            // Or should it be based on "Quantities" of items?
+            // "quantity is given... metirial type quantity it automatically add calculate user input"
+            // Usually Material is per garment.
+            // Let's assume Unit * Count of Students (Garments)
+
+            const total = (unit * count).toFixed(2);
+            document.getElementById('calcTotalMaterial').innerText = `${total}m`;
+        }
+
+
+        // --- DELETE WITH UNDO ---
+        let undoTimeout = null;
+        let deleteToast = null;
+
         async function deletePattern() {
             const patId = document.getElementById('f-pattern').value;
             if (!patId || patId === 'all') return;
 
-            if (!confirm("Are you sure you want to DELETE this pattern?\\nStudents will be unlinked (data preserved) but the Pattern Group will be removed.")) return;
+            if (!confirm("Are you sure you want to DELETE this pattern?")) return;
 
+            // OPTIMISTIC UNDO UI
+            const btn = document.getElementById('btnDeletePattern');
+            const originalText = btn.innerHTML;
+
+            // Show Undo Toast
+            showUndoToast(patId);
+
+            // Hide pattern locally immediately? Or just wait?
+            // User requirement: "undo it 20 seconds".
+            // So we delay the actual call.
+        }
+
+        function showUndoToast(patId) {
+            // Create Toast
+            if (deleteToast) deleteToast.remove();
+
+            deleteToast = document.createElement('div');
+            deleteToast.className = "fixed bottom-10 right-10 bg-stone-900 text-white px-6 py-4 rounded-lg shadow-2xl flex items-center gap-4 z-50 animate-bounce";
+            deleteToast.innerHTML = `
+                <div>
+                    <div class="font-bold text-sm">Pattern Deletion Pending...</div>
+                    <div class="text-xs text-stone-400">Executing in <span id="undo-timer">20</span>s</div>
+                </div>
+                <button onclick="cancelDelete()" class="bg-stone-700 hover:bg-stone-600 px-3 py-1 rounded text-xs font-bold uppercase">Undo</button>
+            `;
+            document.body.appendChild(deleteToast);
+
+            let timeLeft = 20;
+            const timerSpan = document.getElementById('undo-timer');
+
+            undoTimeout = setInterval(async () => {
+                timeLeft--;
+                if (timerSpan) timerSpan.innerText = timeLeft;
+
+                if (timeLeft <= 0) {
+                    clearInterval(undoTimeout);
+                    deleteToast.remove();
+                    await executeDelete(patId);
+                }
+            }, 1000);
+        }
+
+        function cancelDelete() {
+            clearInterval(undoTimeout);
+            if (deleteToast) deleteToast.remove();
+            alert("Deletion Cancelled.");
+        }
+
+        async function executeDelete(patId) {
             try {
                 const res = await fetch(`/api/data/patterns/${patId}`, {
                     method: 'DELETE',
@@ -931,8 +1010,8 @@
 
                 if (!res.ok) throw new Error("Delete failed");
 
-                alert("Pattern Deleted Successfully.");
-                window.location.href = 'pattern_view.html'; // Reset view
+                alert("Pattern Deleted Permanently.");
+                window.location.href = 'pattern_view.html';
             } catch (e) {
                 alert("Error: " + e.message);
             }
