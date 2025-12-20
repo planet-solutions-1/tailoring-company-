@@ -224,9 +224,34 @@
 
         async function fetchData() {
             try {
-                const res = await fetch(`${API_BASE}/data/all_students`, { headers: { 'Authorization': `Bearer ${token}` } });
+                // Determine fetch URL based on User Role (stored in token or session)
+                // For simplicity, we try to get user info from 'sessionStorage' if available,
+                // or we can decode the token. Assuming 'user' object might be saved.
+
+                let user = null;
+                try { user = JSON.parse(sessionStorage.getItem('user')); } catch (e) { }
+
+                let url = `${API_BASE}/data/all_students`; // Default for Company
+
+                if (user && user.role !== 'company' && user.school_id) {
+                    url = `${API_BASE}/data/students/${user.school_id}`;
+                }
+
+                const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+
+                if (res.status === 403) {
+                    // Fallback/Retry logic or just alert
+                    console.error("Access denied to all_students, trying specific school if known...");
+                    // If we are here, it means we might be a tailor who tried all_students. 
+                    // Ideally we catch this earlier.
+                }
+
+                if (!res.ok) throw new Error("Failed to load students");
                 allStudents = await res.json();
-            } catch (e) { console.error(e); }
+            } catch (e) {
+                console.error(e);
+                alert("Error loading data: " + e.message);
+            }
         }
 
         async function fetchPatterns() {
