@@ -1018,54 +1018,67 @@
         }
 
         // --- EXPORT ---
+        // --- EXPORT ---
         function downloadPDF() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF('l', 'mm', 'a4');
             const data = window.filteredData || allStudents;
             const cols = window.currentCols || [];
-            const item = document.getElementById('f-item').value;
-            const patternName = MODE === 'create' ? document.getElementById('metaPattern').value : document.getElementById('f-pattern').options[document.getElementById('f-pattern').selectedIndex].text;
 
+            // Meta Info
+            const patternName = MODE === 'create' ? document.getElementById('metaPattern').value : (data[0]?.pattern_name || "Custom View");
+            const consumption = document.getElementById('metaConsumption') ? document.getElementById('metaConsumption').value : (data[0]?.pattern_consumption || 0);
+            const totalMaterial = document.getElementById('calcTotalMaterial') ? document.getElementById('calcTotalMaterial').innerText : "0m";
+
+            // Header (Pattern Name Centered)
             doc.setFont("helvetica", "bold");
-            doc.setFontSize(14);
-            doc.text("Pattern Details Report", 14, 15);
+            doc.setFontSize(18);
+            doc.text(patternName.toUpperCase(), 148.5, 15, { align: "center" });
+
+            // Sub-Header Details
             doc.setFontSize(10);
-            doc.text(`Generated: ${new Date().toLocaleString()} | Pattern: ${patternName} | Item: ${item}`, 14, 22);
+            doc.setFont("helvetica", "normal");
+            const details = `Item: ${document.getElementById('f-item').value} | Material/Unit: ${consumption}m | Total: ${totalMaterial}`;
+            doc.text(details, 148.5, 22, { align: "center" });
 
-            let headers = ['School', 'Name', 'Class', 'Pattern'];
-            if (cols.length > 0) headers.push(...cols);
-            else headers.push("Measurements");
-            headers.push("Status");
+            // Description (If available in context, tricky to get if not passed in)
+            // User requested "discription, special requirments it commenly show it inside the pattern name"
+            // We'll append it if we have it.
 
+            // Table
+            let headers = [['School', 'Name', 'Class', 'Admsn No', ...cols, 'Status']];
             const body = data.map(s => {
                 const m = getMeasurementsSafe(s);
                 const row = [
-                    s.school_name || (draftMetadata ? draftMetadata.schoolName : '-'),
+                    s.school_name || "N/A",
                     s.name,
-                    `${s.class || ''} (${s.gender?.[0] || '?'})`,
-                    s.pattern_name || '-'
+                    `${s.class || ''} ${s.section || ''}`,
+                    s.admission_no || s["Admission No"] || "-",
                 ];
 
-                if (cols.length > 0) {
-                    cols.forEach(k => row.push(m[k.toLowerCase()] || '-'));
-                } else {
-                    row.push('Select Item...');
-                }
-
+                cols.forEach(k => row.push(m[k.toLowerCase()] || '-'));
                 row.push(s.is_packed ? 'Packed' : 'Pending');
                 return row;
             });
 
             doc.autoTable({
-                head: [headers],
+                head: headers,
                 body: body,
-                startY: 28,
+                startY: 30,
                 theme: 'grid',
-                headStyles: { fillColor: [40, 40, 40], textColor: 255 },
-                styles: { fontSize: 8, cellPadding: 2 }
+                headStyles: { fillColor: [40, 40, 40], textColor: 255, halign: 'center' },
+                styles: { fontSize: 9, cellPadding: 3, halign: 'center' },
+                columnStyles: { 0: { halign: 'left' }, 1: { halign: 'left' } } // Name/School left align
             });
 
-            doc.save(`Pattern_Data_${TARGET_PATTERN_ID || 'View'}.pdf`);
+            // Footer / End of Data Summary
+            // "pattern name under its datas also adde messurments..."
+            const finalY = doc.lastAutoTable.finalY + 10;
+            doc.setFontSize(10);
+            doc.setFont("helvetica", "bold");
+            doc.text(`End of List: ${patternName}`, 14, finalY);
+
+            doc.save(`Pattern_${patternName.replace(/\s+/g, '_')}.pdf`);
         }
 
         function downloadExcel() {

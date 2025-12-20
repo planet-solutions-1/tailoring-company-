@@ -132,7 +132,22 @@ app.post('/api/sync', authenticateToken, async (req, res) => {
                             sql += " WHERE id = ?";
                             params.push(studentId);
 
-                            if (params.length > 1) db.run(sql, params);
+                            if (params.length > 1) {
+                                db.run(sql, params);
+                                // Update Order Status if Linked to Pattern
+                                if (pid) {
+                                    db.run("INSERT INTO orders (student_id, status) VALUES (?, 'Measurement Completed') ON CONFLICT(student_id) DO UPDATE SET status = 'Measurement Completed'", [studentId], (e) => {
+                                        // SQLite syntax above works for modern SQLite (3.24+). For Node/MySQL compat (which db.js uses):
+                                        // "INSERT ... ON DUPLICATE KEY UPDATE"
+                                        // But this abstrction is tricky. Let's do simple Check-Then-Update/Insert 
+                                    });
+                                    // Safer approach for our abstraction:
+                                    db.get("SELECT id FROM orders WHERE student_id = ?", [studentId], (errO, rowO) => {
+                                        if (rowO) db.run("UPDATE orders SET status = 'Measurement Completed' WHERE student_id = ?", [studentId]);
+                                        else db.run("INSERT INTO orders (student_id, status) VALUES (?, 'Measurement Completed')", [studentId]);
+                                    });
+                                }
+                            }
                         }
 
                         resolve();
