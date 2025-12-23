@@ -14,114 +14,117 @@
         href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap"
         rel="stylesheet">
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
         :root {
-            --clay-bg: #E0E5EC;
-            --clay-surface: #E0E5EC;
-            --clay-text: #485460;
-            --clay-primary: #8e44ad;
-            /* Soft Purple/Wisteria */
-            --clay-shadow-light: rgba(255, 255, 255, 0.6);
-            --clay-shadow-dark: rgba(163, 177, 198, 0.6);
+            --primary: #6366f1;
+            /* Indigo 500 */
+            --primary-dark: #4f46e5;
+            --bg-body: #F3F4F6;
+            /* Gray 100 - Clean Base */
+            --bg-card: #FFFFFF;
+            --text-main: #1F2937;
+            --text-muted: #6B7280;
         }
 
         body {
-            font-family: 'Nunito', 'Poppins', sans-serif;
-            background-color: var(--clay-bg);
-            color: var(--clay-text);
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
         }
 
-        /* --- CLAY UTILITIES --- */
-        .clay-card {
-            background-color: var(--clay-surface);
+        /* --- PREMIUM UTILITIES --- */
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+
+        .premium-card {
+            background-color: var(--bg-card);
             border-radius: 24px;
-            box-shadow: 9px 9px 16px var(--clay-shadow-dark),
-                -9px -9px 16px var(--clay-shadow-light);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            transition: all 0.3s ease;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02), 0 0 2px rgba(0, 0, 0, 0.05);
+            /* Very subtle, clean shadow */
+            border: 1px solid rgba(255, 255, 255, 0.8);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
 
-        .clay-inset {
-            background-color: var(--clay-surface);
-            border-radius: 16px;
-            box-shadow: inset 6px 6px 10px var(--clay-shadow-dark),
-                inset -6px -6px 10px var(--clay-shadow-light);
+        .premium-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
         }
 
-        .clay-btn {
-            border-radius: 50px;
-            background: var(--clay-surface);
-            box-shadow: 6px 6px 10px var(--clay-shadow-dark),
-                -6px -6px 10px var(--clay-shadow-light);
-            color: var(--clay-text);
-            font-weight: 700;
+        .premium-shadow {
+            box-shadow: 0 10px 40px -10px rgba(99, 102, 241, 0.2);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
+            color: white;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
             transition: all 0.2s ease;
         }
 
-        .clay-btn:active {
-            box-shadow: inset 4px 4px 8px var(--clay-shadow-dark),
-                inset -4px -4px 8px var(--clay-shadow-light);
-            transform: translateY(2px);
+        .btn-primary:hover {
+            box-shadow: 0 6px 16px rgba(79, 70, 229, 0.4);
+            transform: translateY(-1px);
         }
 
-        .clay-btn:hover {
-            transform: translateY(-2px);
-            color: var(--clay-primary);
+        .btn-primary:active {
+            transform: scale(0.98);
         }
 
-        .clay-primary {
-            background: linear-gradient(145deg, #a55eea, #8e44ad);
-            color: white !important;
-            box-shadow: 5px 5px 10px rgba(142, 68, 173, 0.4),
-                -5px -5px 10px var(--clay-shadow-light);
+        .btn-soft {
+            background: white;
+            border: 1px solid #E5E7EB;
+            color: #374151;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s;
         }
 
-        .clay-primary:active {
-            background: #8e44ad;
-            box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.2);
+        .btn-soft:hover {
+            border-color: #D1D5DB;
+            background: #F9FAFB;
         }
 
-        .clay-input {
-            border: none;
-            background: var(--clay-surface);
-            border-radius: 16px;
-            padding: 12px 20px;
-            box-shadow: inset 5px 5px 9px var(--clay-shadow-dark),
-                inset -5px -5px 9px var(--clay-shadow-light);
-            color: var(--clay-text);
+        .input-premium {
+            background: #F9FAFB;
+            border: 1px solid #E5E7EB;
+            border-radius: 12px;
+            padding: 12px 16px;
+            transition: all 0.2s;
             outline: none;
-            transition: all 0.3s ease;
-            width: 100%;
+            color: #111827;
         }
 
-        .clay-input:focus {
-            box-shadow: inset 2px 2px 5px var(--clay-shadow-dark),
-                inset -2px -2px 5px var(--clay-shadow-light),
-                0 0 0 2px var(--clay-primary);
+        .input-premium:focus {
+            background: white;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
         }
 
-        /* Float Animation */
-        @keyframes float {
-            0% {
-                transform: translateY(0px);
-            }
-
-            50% {
-                transform: translateY(-6px);
-            }
-
-            100% {
-                transform: translateY(0px);
-            }
+        /* Sidebar Active State */
+        .nav-active {
+            background: var(--primary) !important;
+            color: white !important;
+            box-shadow: 0 8px 20px rgba(99, 102, 241, 0.25);
         }
 
-        .animate-float {
-            animation: float 5s ease-in-out infinite;
+        .nav-item {
+            transition: all 0.2s ease;
+            color: #6B7280;
+            font-weight: 600;
+        }
+
+        .nav-item:hover:not(.nav-active) {
+            background: #EFEEFF;
+            color: var(--primary);
         }
 
         /* Scrollbar */
         ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
+            width: 6px;
+            height: 6px;
         }
 
         ::-webkit-scrollbar-track {
@@ -129,26 +132,28 @@
         }
 
         ::-webkit-scrollbar-thumb {
-            background: #cbd5e0;
-            border-radius: 4px;
+            background: #E5E7EB;
+            border-radius: 10px;
         }
 
         ::-webkit-scrollbar-thumb:hover {
-            background: #a4b0be;
+            background: #D1D5DB;
         }
     </style>
 </head>
 
-<body class="h-screen flex flex-col md:flex-row overflow-hidden selection:bg-purple-200 selection:text-purple-900">
+<body class="h-screen flex flex-col md:flex-row overflow-hidden selection:bg-indigo-100 selection:text-indigo-700">
 
     <!-- Mobile Header -->
     <!-- Mobile Header -->
-    <div class="md:hidden p-4 flex justify-between items-center z-50">
-        <h1 class="text-xl font-bold flex items-center gap-2 text-indigo-500">
-            <span class="w-10 h-10 rounded-xl clay-inset flex items-center justify-center font-bold text-2xl">P</span>
+    <div
+        class="md:hidden bg-white/80 backdrop-blur-md border-b border-gray-100 p-4 flex justify-between items-center z-50 sticky top-0">
+        <h1 class="text-xl font-bold flex items-center gap-2 text-gray-800">
+            <span
+                class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-xl shadow-lg shadow-indigo-200">P</span>
             Planet Admin
         </h1>
-        <button onclick="toggleSidebar()" class="clay-btn p-2 rounded-xl text-gray-500">
+        <button onclick="toggleSidebar()" class="p-2 rounded-xl text-gray-500 hover:bg-gray-50">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16">
                 </path>
@@ -158,42 +163,45 @@
 
     <!-- Backdrop -->
     <div id="sidebar-backdrop" onclick="toggleSidebar()"
-        class="fixed inset-0 bg-gray-900/20 backdrop-blur-sm z-40 hidden opacity-0 transition-opacity duration-300 md:hidden">
+        class="fixed inset-0 bg-gray-900/10 backdrop-blur-sm z-40 hidden opacity-0 transition-opacity duration-300 md:hidden">
     </div>
 
     <!-- Sidebar -->
     <aside id="sidebar"
-        class="fixed inset-y-0 left-0 w-72 md:w-64 md:m-6 md:rounded-3xl clay-card transform -translate-x-full md:translate-x-0 transition-transform duration-300 z-50 flex flex-col scale-95 md:scale-100 origin-left">
+        class="fixed inset-y-0 left-0 w-72 bg-white md:bg-white border-r border-gray-100 transform -translate-x-full md:translate-x-0 transition-transform duration-300 z-50 flex flex-col md:w-72">
 
         <!-- Brand -->
-        <div class="p-8 flex items-center gap-3">
-            <div class="w-12 h-12 rounded-2xl clay-primary flex items-center justify-center text-xl font-bold">
+        <div class="p-8 flex items-center gap-4">
+            <div
+                class="w-12 h-12 rounded-2xl bg-indigo-600 text-white flex items-center justify-center text-2xl font-bold shadow-xl shadow-indigo-200">
                 P
             </div>
             <div>
-                <h1 class="text-xl font-extrabold tracking-tight">Planet</h1>
-                <p class="text-xs font-bold uppercase tracking-widest opacity-60">Clay Command</p>
+                <h1 class="text-xl font-bold text-gray-800 tracking-tight">Planet Admin</h1>
+                <p
+                    class="text-[10px] font-bold text-indigo-500 uppercase tracking-widest bg-indigo-50 px-2 py-0.5 rounded-full inline-block mt-1">
+                    Premium Edition</p>
             </div>
         </div>
 
         <!-- User Profile Mini -->
-        <div class="mx-6 p-4 clay-inset flex items-center gap-3 mb-6">
+        <div class="mx-6 p-4 bg-gray-50 rounded-2xl border border-gray-100 flex items-center gap-3 mb-6">
             <div
-                class="w-10 h-10 rounded-full bg-gradient-to-tr from-purple-400 to-indigo-500 text-white flex items-center justify-center font-bold shadow-inner">
+                class="w-10 h-10 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-bold text-lg">
                 A
             </div>
             <div>
-                <p class="text-sm font-bold">Admin User</p>
+                <p class="text-sm font-bold text-gray-800">Admin User</p>
                 <div class="flex items-center gap-1.5">
-                    <span class="w-2 h-2 rounded-full bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.6)]"></span>
-                    <p class="text-[10px] text-green-600 font-bold uppercase tracking-wider">Online</p>
+                    <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                    <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Online</p>
                 </div>
             </div>
         </div>
 
         <nav class="flex-1 px-4 space-y-3 overflow-y-auto py-2">
             <button onclick="switchTab('overview')" id="nav-overview"
-                class="nav-item clay-btn w-full flex items-center gap-4 px-6 py-3 text-sm font-bold text-gray-500 hover:text-indigo-600">
+                class="nav-item w-full flex items-center gap-4 px-6 py-4 rounded-xl text-sm mb-1">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <rect x="3" y="3" width="7" height="7"></rect>
                     <rect x="14" y="3" width="7" height="7"></rect>
@@ -203,7 +211,7 @@
                 Overview
             </button>
             <button onclick="switchTab('data')" id="nav-data"
-                class="nav-item clay-btn w-full flex items-center gap-4 px-6 py-3 text-sm font-bold text-gray-500 hover:text-indigo-600">
+                class="nav-item w-full flex items-center gap-4 px-6 py-4 rounded-xl text-sm mb-1">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path
                         d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z">
@@ -214,7 +222,7 @@
                 Tailoring Data
             </button>
             <button onclick="switchTab('users')" id="nav-users"
-                class="nav-item clay-btn w-full flex items-center gap-4 px-6 py-3 text-sm font-bold text-gray-500 hover:text-indigo-600">
+                class="nav-item w-full flex items-center gap-4 px-6 py-4 rounded-xl text-sm mb-1">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
                     <circle cx="9" cy="7" r="4"></circle>
@@ -224,7 +232,7 @@
                 User Management
             </button>
             <button onclick="switchTab('access')" id="nav-access"
-                class="nav-item clay-btn w-full flex items-center gap-4 px-6 py-3 text-sm font-bold text-gray-500 hover:text-indigo-600">
+                class="nav-item w-full flex items-center gap-4 px-6 py-4 rounded-xl text-sm mb-1">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                     <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
@@ -232,7 +240,7 @@
                 Access Codes
             </button>
             <button onclick="switchTab('schools')" id="nav-schools"
-                class="nav-item clay-btn w-full flex items-center gap-4 px-6 py-3 text-sm font-bold text-gray-500 hover:text-indigo-600">
+                class="nav-item w-full flex items-center gap-4 px-6 py-4 rounded-xl text-sm mb-1">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M3 21h18"></path>
                     <path d="M5 21V7l8-4 8 4v14"></path>
@@ -242,7 +250,7 @@
                 Schools
             </button>
             <button onclick="switchTab('reports')" id="nav-reports"
-                class="nav-item clay-btn w-full flex items-center gap-4 px-6 py-3 text-sm font-bold text-gray-500 hover:text-indigo-600">
+                class="nav-item w-full flex items-center gap-4 px-6 py-4 rounded-xl text-sm mb-1">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                     <polyline points="14 2 14 8 20 8"></polyline>
@@ -253,7 +261,7 @@
                 Reports
             </button>
             <button onclick="switchTab('complaints')" id="nav-complaints"
-                class="nav-item clay-btn w-full flex items-center gap-4 px-6 py-3 text-sm font-bold text-gray-500 hover:text-indigo-600">
+                class="nav-item w-full flex items-center gap-4 px-6 py-4 rounded-xl text-sm mb-1">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path
                         d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z">
@@ -296,11 +304,11 @@
             </div>
             <div class="flex gap-4">
                 <button onclick="if(confirm('Reset DB?')) resetDatabase()"
-                    class="clay-btn px-6 py-3 text-gray-600 text-xs font-bold uppercase tracking-wider hover:text-red-500 transition-colors">
+                    class="btn-soft px-6 py-3 text-gray-500 text-xs font-bold uppercase tracking-wider hover:text-red-500 rounded-xl">
                     Reset DB
                 </button>
                 <button onclick="fixDatabase()"
-                    class="clay-btn clay-primary px-6 py-3 text-white text-xs font-bold uppercase tracking-wider shadow-lg hover:shadow-xl transition-all active:scale-95">
+                    class="btn-primary px-6 py-3 text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-lg hover:shadow-indigo-500/30 transition-all active:scale-95">
                     Repair DB
                 </button>
             </div>
@@ -310,47 +318,86 @@
         <div id="view-overview" class="space-y-8 fade-in">
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 <!-- Stat Card 1 -->
-                <div class="clay-card p-6 flex flex-col justify-between h-32 relative overflow-hidden group">
-                    <div
-                        class="absolute -right-4 -top-4 w-24 h-24 bg-blue-100 rounded-full opacity-50 blur-xl group-hover:bg-blue-200 transition-colors">
+                <div class="premium-card p-6 flex flex-col justify-between h-40 relative overflow-hidden group">
+                    <div class="flex justify-between items-start">
+                        <div
+                            class="w-12 h-12 rounded-full bg-indigo-50 text-indigo-500 flex items-center justify-center text-xl shadow-sm">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0z">
+                                </path>
+                            </svg>
+                        </div>
+                        <span
+                            class="bg-green-100 text-green-600 px-2 py-1 rounded-lg text-[10px] font-bold uppercase">+12%</span>
                     </div>
-                    <p class="text-xs font-bold text-gray-500 uppercase tracking-wider relative z-10">Total Students</p>
-                    <p class="text-4xl font-extrabold text-gray-700 relative z-10" id="stat-students">0</p>
+                    <div>
+                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Students</p>
+                        <p class="text-4xl font-extrabold text-gray-800" id="stat-students">0</p>
+                    </div>
                 </div>
                 <!-- Stat Card 2 -->
-                <div class="clay-card p-6 flex flex-col justify-between h-32 relative overflow-hidden group">
-                    <div
-                        class="absolute -right-4 -top-4 w-24 h-24 bg-purple-100 rounded-full opacity-50 blur-xl group-hover:bg-purple-200 transition-colors">
+                <div class="premium-card p-6 flex flex-col justify-between h-40 relative overflow-hidden group">
+                    <div class="flex justify-between items-start">
+                        <div
+                            class="w-12 h-12 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center text-xl shadow-sm">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <span
+                            class="bg-amber-100 text-amber-600 px-2 py-1 rounded-lg text-[10px] font-bold uppercase">Pending</span>
                     </div>
-                    <p class="text-xs font-bold text-gray-500 uppercase tracking-wider relative z-10">Schools</p>
-                    <p class="text-4xl font-extrabold text-gray-700 relative z-10" id="stat-schools">0</p>
+                    <div>
+                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Orders Pending</p>
+                        <p class="text-4xl font-extrabold text-gray-800" id="stat-pending">0</p>
+                    </div>
                 </div>
                 <!-- Stat Card 3 -->
-                <div class="clay-card p-6 flex flex-col justify-between h-32 relative overflow-hidden group">
-                    <div
-                        class="absolute -right-4 -top-4 w-24 h-24 bg-emerald-100 rounded-full opacity-50 blur-xl group-hover:bg-emerald-200 transition-colors">
+                <div class="premium-card p-6 flex flex-col justify-between h-40 relative overflow-hidden group">
+                    <div class="flex justify-between items-start">
+                        <div
+                            class="w-12 h-12 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center text-xl shadow-sm">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <span
+                            class="bg-emerald-100 text-emerald-600 px-2 py-1 rounded-lg text-[10px] font-bold uppercase">Done</span>
                     </div>
-                    <p class="text-xs font-bold text-emerald-600 uppercase tracking-wider relative z-10">Packed Units
-                    </p>
-                    <p class="text-4xl font-extrabold text-gray-700 relative z-10" id="stat-packed">0</p>
+                    <div>
+                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Packed Units</p>
+                        <p class="text-4xl font-extrabold text-gray-800" id="stat-packed">0</p>
+                    </div>
                 </div>
                 <!-- Stat Card 4 -->
-                <div class="clay-card p-6 flex flex-col justify-between h-32 relative overflow-hidden group">
-                    <div
-                        class="absolute -right-4 -top-4 w-24 h-24 bg-amber-100 rounded-full opacity-50 blur-xl group-hover:bg-amber-200 transition-colors">
+                <div class="premium-card p-6 flex flex-col justify-between h-40 relative overflow-hidden group">
+                    <div class="flex justify-between items-start">
+                        <div
+                            class="w-12 h-12 rounded-full bg-purple-50 text-purple-500 flex items-center justify-center text-xl shadow-sm">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4">
+                                </path>
+                            </svg>
+                        </div>
                     </div>
-                    <p class="text-xs font-bold text-amber-600 uppercase tracking-wider relative z-10">Pending</p>
-                    <p class="text-4xl font-extrabold text-gray-700 relative z-10" id="stat-pending">0</p>
+                    <div>
+                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Schools</p>
+                        <p class="text-4xl font-extrabold text-gray-800" id="stat-schools">0</p>
+                    </div>
                 </div>
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div class="clay-card p-6">
+                <div class="premium-card p-6">
                     <h3 class="text-lg font-bold text-gray-600 mb-6 flex items-center gap-2"><span
                             class="w-2 h-2 rounded-full bg-blue-400"></span> Packing Progress</h3>
                     <div class="flex-1 relative h-64"><canvas id="chart-packing"></canvas></div>
                 </div>
-                <div class="clay-card p-6">
+                <div class="premium-card p-6">
                     <h3 class="text-lg font-bold text-gray-600 mb-6 flex items-center gap-2"><span
                             class="w-2 h-2 rounded-full bg-purple-400"></span> School Enrollment</h3>
                     <div class="flex-1 relative h-64"><canvas id="chart-schools"></canvas></div>
@@ -368,7 +415,7 @@
                 </div>
                 <div class="flex gap-4">
                     <button onclick="downloadPDF()"
-                        class="clay-btn px-4 py-2 text-xs font-bold text-rose-500 uppercase flex items-center gap-2">
+                        class="btn-soft px-4 py-2 text-xs font-bold text-rose-500 uppercase flex items-center gap-2">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2">
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -380,7 +427,7 @@
                         Export PDF
                     </button>
                     <button onclick="downloadExcel()"
-                        class="clay-btn px-4 py-2 text-xs font-bold text-emerald-500 uppercase flex items-center gap-2">
+                        class="btn-soft px-4 py-2 text-xs font-bold text-emerald-500 uppercase flex items-center gap-2">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2">
                             <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
@@ -393,13 +440,13 @@
                 </div>
             </div>
 
-            <div class="clay-card p-6 flex flex-wrap gap-4 items-end sticky top-0 z-20">
+            <div class="premium-card p-6 flex flex-wrap gap-4 items-end sticky top-0 z-20">
                 <!-- Filters Re-styled as Clay Inputs -->
                 <div class="w-full md:w-auto flex-1">
                     <label class="text-[10px] font-bold text-gray-400 uppercase ml-2 mb-1 block">Item Type</label>
                     <div class="relative">
                         <select id="filter-item" onchange="renderGlobalTable()"
-                            class="clay-input appearance-none font-bold text-gray-600 cursor-pointer">
+                            class="input-premium appearance-none font-bold text-gray-600 cursor-pointer">
                             <option value="all">-- Select Item --</option>
                         </select>
                         <div
@@ -414,7 +461,7 @@
 
                 <div class="w-[47%] md:w-auto">
                     <label class="text-[10px] font-bold text-gray-400 uppercase ml-2 mb-1 block">Pattern</label>
-                    <select id="filter-pattern" onchange="renderGlobalTable()" class="clay-input text-sm h-10 py-2">
+                    <select id="filter-pattern" onchange="renderGlobalTable()" class="input-premium text-sm h-10 py-2">
                         <option value="all">All</option>
                     </select>
                 </div>
@@ -422,18 +469,19 @@
                 <div class="w-[47%] md:w-24">
                     <label class="text-[10px] font-bold text-gray-400 uppercase ml-2 mb-1 block">Class</label>
                     <input type="text" id="filter-class" list="list-class" onchange="renderGlobalTable()"
-                        class="clay-input text-sm h-10 py-2" placeholder="All"><datalist id="list-class"></datalist>
+                        class="input-premium text-sm h-10 py-2" placeholder="All"><datalist id="list-class"></datalist>
                 </div>
 
                 <div class="w-[47%] md:w-24">
                     <label class="text-[10px] font-bold text-gray-400 uppercase ml-2 mb-1 block">Sec</label>
                     <input type="text" id="filter-section" list="list-section" onchange="renderGlobalTable()"
-                        class="clay-input text-sm h-10 py-2" placeholder="All"><datalist id="list-section"></datalist>
+                        class="input-premium text-sm h-10 py-2" placeholder="All"><datalist
+                        id="list-section"></datalist>
                 </div>
 
                 <div class="w-[47%] md:w-28">
                     <label class="text-[10px] font-bold text-gray-400 uppercase ml-2 mb-1 block">Gender</label>
-                    <select id="filter-gender" onchange="renderGlobalTable()" class="clay-input text-sm h-10 py-2">
+                    <select id="filter-gender" onchange="renderGlobalTable()" class="input-premium text-sm h-10 py-2">
                         <option value="">All</option>
                         <option value="Male">Male</option>
                         <option value="Female">Female</option>
@@ -442,7 +490,7 @@
 
                 <div class="w-[47%] md:w-28">
                     <label class="text-[10px] font-bold text-gray-400 uppercase ml-2 mb-1 block">Priority</label>
-                    <select id="filter-priority" onchange="renderGlobalTable()" class="clay-input text-sm h-10 py-2">
+                    <select id="filter-priority" onchange="renderGlobalTable()" class="input-premium text-sm h-10 py-2">
                         <option value="all">All</option>
                         <option value="High">High</option>
                         <option value="Normal">Normal</option>
@@ -451,7 +499,7 @@
                 </div>
                 <div class="w-[47%] md:w-28">
                     <label class="text-[10px] font-bold text-gray-400 uppercase ml-2 mb-1 block">Status</label>
-                    <select id="filter-packed" onchange="renderGlobalTable()" class="clay-input text-sm h-10 py-2">
+                    <select id="filter-packed" onchange="renderGlobalTable()" class="input-premium text-sm h-10 py-2">
                         <option value="all">All</option>
                         <option value="packed">Packed</option>
                         <option value="pending">Pending</option>
@@ -461,11 +509,11 @@
                 <div class="w-full md:w-auto md:ml-auto">
                     <label class="text-[10px] font-bold text-gray-400 uppercase ml-2 mb-1 block">Search</label>
                     <input type="text" id="date-search" onkeyup="renderGlobalTable()" placeholder="Name / Roll No..."
-                        class="clay-input text-sm h-10 py-2 w-full md:w-48">
+                        class="input-premium text-sm h-10 py-2 w-full md:w-48">
                 </div>
             </div>
 
-            <div class="clay-card overflow-hidden">
+            <div class="premium-card overflow-hidden">
                 <div class="overflow-x-auto h-[600px]">
                     <table class="w-full text-left border-collapse min-w-[1000px] whitespace-nowrap">
                         <thead
@@ -493,14 +541,14 @@
 
         <!-- 3. USER MANAGEMENT -->
         <div id="view-users" class="hidden fade-in max-w-5xl mx-auto space-y-8">
-            <div class="clay-card p-8 relative">
+            <div class="premium-card p-8 relative">
                 <div class="flex justify-between items-center mb-8 border-b border-gray-100 pb-6">
                     <div>
                         <h3 class="text-2xl font-bold text-gray-700">User Management</h3>
                         <p class="text-sm text-gray-400">Controls who can access the system.</p>
                     </div>
                     <button onclick="openSchoolModal()"
-                        class="clay-btn clay-primary px-6 py-3 text-sm font-bold shadow-lg hover:shadow-xl border-none active:scale-95 transition-transform">
+                        class="btn-soft clay-primary px-6 py-3 text-sm font-bold shadow-lg hover:shadow-xl border-none active:scale-95 transition-transform">
                         Register New School
                     </button>
                 </div>
@@ -510,16 +558,16 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label class="block text-xs font-bold text-gray-400 uppercase mb-2 ml-2">Username</label>
-                            <input type="text" name="username" required class="clay-input">
+                            <input type="text" name="username" required class="input-premium">
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-400 uppercase mb-2 ml-2">Password</label>
-                            <input type="text" name="password" required class="clay-input">
+                            <input type="text" name="password" required class="input-premium">
                         </div>
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-400 uppercase mb-2 ml-2">Role</label>
-                        <select name="role" id="user-role" onchange="toggleSchoolSelect()" class="clay-input">
+                        <select name="role" id="user-role" onchange="toggleSchoolSelect()" class="input-premium">
                             <option value="school">School Admin</option>
                             <option value="tailor">Tailor</option>
                             <option value="packing">Packing Unit</option>
@@ -529,16 +577,16 @@
                     <div id="school-select-wrapper">
                         <label class="block text-xs font-bold text-gray-400 uppercase mb-2 ml-2">Assign To
                             School</label>
-                        <select name="school_id" id="school-select" class="clay-input"></select>
+                        <select name="school_id" id="school-select" class="input-premium"></select>
                     </div>
                     <button type="submit"
-                        class="w-full clay-btn-primary py-4 rounded-xl text-lg font-bold shadow-lg transition-transform active:scale-95">
+                        class="w-full btn-primary py-4 rounded-xl text-lg font-bold shadow-lg transition-transform active:scale-95">
                         Create Account
                     </button>
                 </form>
             </div>
 
-            <div class="clay-card p-8">
+            <div class="premium-card p-8">
                 <h3 class="text-lg font-bold text-gray-600 mb-6">Existing Accounts</h3>
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm min-w-[600px]">
@@ -559,36 +607,36 @@
 
         <!-- 4. ACCESS CODES -->
         <div id="view-access" class="hidden fade-in max-w-5xl mx-auto space-y-8">
-            <div class="clay-card p-8">
+            <div class="premium-card p-8">
                 <h3 class="text-xl font-bold text-gray-700 mb-6">Generate Secure Link</h3>
                 <div class="flex flex-col md:flex-row gap-6 items-end">
                     <div class="w-full md:flex-1">
                         <label class="block text-xs font-bold text-gray-400 uppercase mb-2 ml-2">Target School</label>
-                        <select id="access-school-select" class="clay-input"></select>
+                        <select id="access-school-select" class="input-premium"></select>
                     </div>
                     <div class="w-full md:w-48">
                         <label class="block text-xs font-bold text-gray-400 uppercase mb-2 ml-2">Role Type</label>
-                        <select id="access-type" class="clay-input">
+                        <select id="access-type" class="input-premium">
                             <option value="tailor">Tailor (Measurements)</option>
                             <option value="packing">Packing (Status)</option>
                         </select>
                     </div>
                     <div class="w-full md:w-32">
                         <label class="block text-xs font-bold text-gray-400 uppercase mb-2 ml-2">Expires In</label>
-                        <select id="access-expiry" class="clay-input">
+                        <select id="access-expiry" class="input-premium">
                             <option value="24">24 Hours</option>
                             <option value="48">48 Hours</option>
                             <option value="168">7 Days</option>
                         </select>
                     </div>
                     <button onclick="generateCode()"
-                        class="w-full md:w-auto clay-btn-primary px-8 py-3 rounded-xl font-bold uppercase text-sm shadow-xl transition-transform active:scale-95">
+                        class="w-full md:w-auto btn-primary px-8 py-3 rounded-xl font-bold uppercase text-sm shadow-xl transition-transform active:scale-95">
                         Generate
                     </button>
                 </div>
             </div>
 
-            <div class="clay-card p-8">
+            <div class="premium-card p-8">
                 <h3 class="text-lg font-bold text-gray-600 mb-4">Active & Inactive Codes</h3>
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm min-w-[600px]">
@@ -609,7 +657,7 @@
 
         <!-- 5. SCHOOLS -->
         <div id="view-schools" class="hidden fade-in max-w-5xl mx-auto space-y-8">
-            <div class="clay-card p-8">
+            <div class="premium-card p-8">
                 <div class="mb-6 border-b border-white/50 pb-4">
                     <h3 class="text-2xl font-bold text-gray-700">School Metadata</h3>
                     <p class="text-gray-400 text-sm mt-1">Manage priority and production status for each school.</p>
@@ -634,7 +682,7 @@
         <!-- 6. REPORTS -->
         <div id="view-reports" class="hidden fade-in max-w-4xl mx-auto">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div class="clay-card p-10 text-center hover:scale-105 transition-transform cursor-pointer group"
+                <div class="premium-card p-10 text-center hover:scale-105 transition-transform cursor-pointer group"
                     onclick="downloadPDF()">
                     <div
                         class="w-20 h-20 bg-red-100/50 text-red-500 mx-auto rounded-full flex items-center justify-center mb-6 shadow-sm group-hover:bg-red-100 transition-colors">
@@ -643,7 +691,7 @@
                     <h3 class="font-bold text-xl text-gray-700">Download PDF Report</h3>
                     <p class="text-sm text-gray-400 mt-2">Full system summary formatted for printing.</p>
                 </div>
-                <div class="clay-card p-10 text-center hover:scale-105 transition-transform cursor-pointer group"
+                <div class="premium-card p-10 text-center hover:scale-105 transition-transform cursor-pointer group"
                     onclick="downloadExcel()">
                     <div
                         class="w-20 h-20 bg-green-100/50 text-emerald-500 mx-auto rounded-full flex items-center justify-center mb-6 shadow-sm group-hover:bg-green-100 transition-colors">
@@ -662,18 +710,18 @@
             <div class="grid grid-cols-1 md:grid-cols-6 gap-6">
                 <!-- Basic Counts -->
                 <div class="md:col-span-2 grid grid-cols-3 gap-4">
-                    <div class="clay-card p-4 flex flex-col justify-center items-center text-center">
+                    <div class="premium-card p-4 flex flex-col justify-center items-center text-center">
                         <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Total</p>
                         <p class="text-3xl font-extrabold text-gray-700 mt-1" id="c-stat-total">0</p>
                     </div>
                     <div
-                        class="clay-card p-4 flex flex-col justify-center items-center text-center relative overflow-hidden">
+                        class="premium-card p-4 flex flex-col justify-center items-center text-center relative overflow-hidden">
                         <div class="absolute top-0 left-0 w-1 h-full bg-amber-400"></div>
                         <p class="text-[10px] text-amber-500 font-bold uppercase tracking-widest">Open</p>
                         <p class="text-3xl font-extrabold text-gray-700 mt-1" id="c-stat-open">0</p>
                     </div>
                     <div
-                        class="clay-card p-4 flex flex-col justify-center items-center text-center relative overflow-hidden">
+                        class="premium-card p-4 flex flex-col justify-center items-center text-center relative overflow-hidden">
                         <div class="absolute top-0 left-0 w-1 h-full bg-emerald-400"></div>
                         <p class="text-[10px] text-emerald-500 font-bold uppercase tracking-widest">Done</p>
                         <p class="text-3xl font-extrabold text-gray-700 mt-1" id="c-stat-resolved">0</p>
@@ -681,14 +729,14 @@
                 </div>
 
                 <!-- Insight Cards -->
-                <div class="clay-card p-4 col-span-2 relative overflow-hidden">
+                <div class="premium-card p-4 col-span-2 relative overflow-hidden">
                     <div class="absolute top-0 left-0 w-full h-1 bg-rose-400"></div>
                     <p class="text-[10px] text-rose-500 font-bold uppercase tracking-widest mb-2">Needs Attention (Top
                         Pattern)</p>
                     <h4 class="font-bold text-gray-800 truncate text-lg" id="c-top-pattern">-</h4>
                     <p class="text-xs text-gray-400 font-medium" id="c-top-pattern-count">0 complaints</p>
                 </div>
-                <div class="clay-card p-4 col-span-2 relative overflow-hidden">
+                <div class="premium-card p-4 col-span-2 relative overflow-hidden">
                     <div class="absolute top-0 left-0 w-full h-1 bg-indigo-400"></div>
                     <p class="text-[10px] text-indigo-500 font-bold uppercase tracking-widest mb-2">Common Issue</p>
                     <h4 class="font-bold text-gray-800 truncate text-lg" id="c-top-issue">-</h4>
@@ -698,33 +746,33 @@
 
             <!-- B. Charts & Trends -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 h-96">
-                <div class="clay-card p-6 flex flex-col">
+                <div class="premium-card p-6 flex flex-col">
                     <h3 class="font-bold text-lg text-gray-600 mb-4">Top Defective Patterns</h3>
                     <div class="flex-1 relative"><canvas id="chart-patterns"></canvas></div>
                 </div>
-                <div class="clay-card p-6 flex flex-col">
+                <div class="premium-card p-6 flex flex-col">
                     <h3 class="font-bold text-lg text-gray-600 mb-4">Common Defect Types</h3>
                     <div class="flex-1 relative"><canvas id="chart-issues"></canvas></div>
                 </div>
             </div>
 
             <!-- C. Filters & Controls -->
-            <div class="clay-card p-6 flex flex-col md:flex-row gap-4 items-end">
+            <div class="premium-card p-6 flex flex-col md:flex-row gap-4 items-end">
                 <div class="w-full md:w-auto flex-1">
                     <label class="block text-[10px] font-bold text-gray-400 uppercase mb-2 ml-2">Search School</label>
                     <input type="text" id="c-filter-school" onkeyup="renderComplaintDash()"
-                        placeholder="Type school name..." class="clay-input">
+                        placeholder="Type school name..." class="input-premium">
                 </div>
                 <div class="w-full md:w-48">
                     <label class="block text-[10px] font-bold text-gray-400 uppercase mb-2 ml-2">Filter Pattern</label>
-                    <select id="c-filter-pattern" onchange="renderComplaintDash()" class="clay-input">
+                    <select id="c-filter-pattern" onchange="renderComplaintDash()" class="input-premium">
                         <option value="all">All Patterns</option>
                         <!-- Populated JS -->
                     </select>
                 </div>
                 <div class="w-full md:w-32">
                     <label class="block text-[10px] font-bold text-gray-400 uppercase mb-2 ml-2">Gender</label>
-                    <select id="c-filter-gender" onchange="renderComplaintDash()" class="clay-input">
+                    <select id="c-filter-gender" onchange="renderComplaintDash()" class="input-premium">
                         <option value="all">All</option>
                         <option value="Male">Boys</option>
                         <option value="Female">Girls</option>
@@ -732,7 +780,7 @@
                 </div>
                 <div class="flex gap-4">
                     <button onclick="downloadPDF()"
-                        class="clay-btn px-4 py-3 text-xs font-bold uppercase text-rose-500 flex items-center gap-2">
+                        class="btn-soft px-4 py-3 text-xs font-bold uppercase text-rose-500 flex items-center gap-2">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2">
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -744,7 +792,7 @@
                         PDF
                     </button>
                     <button onclick="downloadExcel()"
-                        class="clay-btn px-4 py-3 text-xs font-bold uppercase text-emerald-500 flex items-center gap-2">
+                        class="btn-soft px-4 py-3 text-xs font-bold uppercase text-emerald-500 flex items-center gap-2">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2">
                             <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
@@ -774,7 +822,7 @@
         <dialog id="ticketModal" class="bg-transparent z-50">
             <div class="fixed inset-0 bg-gray-500/30 backdrop-blur-sm flex items-center justify-center p-4">
                 <div
-                    class="clay-card w-full max-w-5xl h-[85vh] flex flex-col animate-in zoom-in-95 duration-200 outline-none">
+                    class="premium-card w-full max-w-5xl h-[85vh] flex flex-col animate-in zoom-in-95 duration-200 outline-none">
                     <!-- Header -->
                     <div class="p-6 border-b border-white/50 flex justify-between items-center rounded-t-2xl">
                         <div>
@@ -783,7 +831,7 @@
                                 id="tm-school-stats">5 Open Tickets</p>
                         </div>
                         <button onclick="document.getElementById('ticketModal').close()"
-                            class="w-10 h-10 rounded-full clay-btn flex items-center justify-center text-gray-500 hover:text-red-500">
+                            class="w-10 h-10 rounded-full btn-soft flex items-center justify-center text-gray-500 hover:text-red-500">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                 stroke-width="2">
                                 <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -806,27 +854,27 @@
         <!-- SCHOOL REGISTRATION MODAL -->
         <div id="school-modal"
             class="fixed inset-0 bg-gray-500/30 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
-            <div class="clay-card w-full max-w-md p-8 transform transition-all scale-100">
+            <div class="premium-card w-full max-w-md p-8 transform transition-all scale-100">
                 <h3 class="text-xl font-bold mb-6 border-b border-white/50 pb-4 text-gray-700">Register New School</h3>
                 <form onsubmit="registerSchool(event)" class="space-y-6">
                     <div>
                         <label class="block text-xs font-bold text-gray-400 uppercase mb-2 ml-2">School Name</label>
                         <input type="text" name="name" required placeholder="e.g. Galaxy High School"
-                            class="clay-input">
+                            class="input-premium">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-400 uppercase mb-2 ml-2">Admin Username</label>
-                        <input type="text" name="username" required placeholder="admin_galaxy" class="clay-input">
+                        <input type="text" name="username" required placeholder="admin_galaxy" class="input-premium">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-400 uppercase mb-2 ml-2">Password</label>
-                        <input type="password" name="password" required class="clay-input">
+                        <input type="password" name="password" required class="input-premium">
                     </div>
                     <div class="flex justify-end gap-4 mt-8">
                         <button type="button" onclick="document.getElementById('school-modal').classList.add('hidden')"
                             class="px-6 py-2 text-sm font-bold text-gray-500 hover:text-gray-700">CANCEL</button>
                         <button type="submit"
-                            class="clay-btn-primary px-6 py-2 text-sm font-bold rounded-lg shadow-lg">REGISTER
+                            class="btn-primary px-6 py-2 text-sm font-bold rounded-lg shadow-lg">REGISTER
                             SCHOOL</button>
                     </div>
                 </form>
@@ -850,7 +898,7 @@
 
             async function fetchUsers() { try { const r = await fetch(`${API_BASE}/data/users`, { headers: { 'Authorization': `Bearer ${token}` } }); const u = await r.json(); if (!Array.isArray(u)) return; document.getElementById('user-list-body').innerHTML = u.map(x => `<tr class="hover:bg-gray-50/50 group border-b border-gray-50"><td class="p-4 font-bold text-gray-700">${x.username}</td><td class="p-4"><span class="px-3 py-1 rounded-full text-xs bg-gray-100/80 uppercase font-bold text-gray-500 shadow-inner">${x.role}</span></td><td class="p-4 text-gray-500">${x.school_name || '-'}</td><td class="p-4 text-center"><span class="px-3 py-1 rounded-full text-xs font-bold shadow-sm ${x.is_active !== false ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}">${x.is_active !== false ? 'Active' : 'Disabled'}</span></td><td class="p-4 text-right text-xs"><button onclick="toggleUserStatus(${x.id},${!(x.is_active !== false)},'${x.username}')" class="opacity-0 group-hover:opacity-100 transition-opacity px-4 py-2 rounded-lg font-bold shadow-sm ${x.is_active !== false ? 'text-red-500 bg-red-50 hover:bg-red-100' : 'text-green-500 bg-green-50 hover:bg-green-100'}">${x.is_active !== false ? 'Disable' : 'Enable'}</button></td></tr>`).join(''); } catch (e) { console.error(e) } }
             async function fetchAccessCodes() { try { const r = await fetch(`${API_BASE}/data/access_codes`, { headers: { 'Authorization': `Bearer ${token}` } }); const c = await r.json(); if (Array.isArray(c)) document.getElementById('access-code-list').innerHTML = c.map(x => `<tr class="border-b border-gray-50 ${x.is_active ? '' : 'opacity-40'}"><td class="py-4 font-bold text-gray-600">${x.school_name}</td><td class="py-4 font-mono text-rose-500 font-bold tracking-wider">${x.code}</td><td class="py-4 capitalize text-gray-500 font-medium">${x.type}</td><td class="py-4 text-center"><span class="${x.is_active ? 'text-green-500' : 'text-red-400 animate-pulse'} font-extrabold text-xs uppercase tracking-wider">${x.is_active ? 'Active' : 'Revoked'}</span></td><td class="py-4 text-right space-x-2">${x.is_active ? `<button onclick="toggleCode(${x.id},false)" class="text-red-500 hover:bg-red-50 px-3 py-1 rounded-lg text-xs font-bold transition-colors">REVOKE</button>` : `<button onclick="toggleCode(${x.id},true)" class="text-green-500 hover:bg-green-50 px-3 py-1 rounded-lg text-xs font-bold transition-colors">ACTIVATE</button>`}</td></tr>`).join(''); } catch (e) { console.error(e) } }
-            async function fetchSchoolsManage() { try { const r = await fetch(`${API_BASE}/data/schools`, { headers: { 'Authorization': `Bearer ${token}` } }); const d = await r.json(); document.getElementById('school-list-body').innerHTML = Array.isArray(d) ? d.map(s => `<tr class="hover:bg-gray-50/50 group border-b border-gray-50"><td class="p-4 font-bold text-gray-700">${s.name}</td><td class="p-4"><select onchange="updateSchoolMeta(${s.id},'priority',this.value)" class="clay-input h-8 py-1 px-2 text-xs font-bold uppercase ${s.priority === 'High' ? 'text-rose-500' : 'text-gray-500'}"><option value="Normal" ${s.priority === 'Normal' ? 'selected' : ''}>Normal Priority</option><option value="High" ${s.priority === 'High' ? 'selected' : ''}>High Priority</option><option value="Low" ${s.priority === 'Low' ? 'selected' : ''}>Low Priority</option></select></td><td class="p-4"><select onchange="updateSchoolMeta(${s.id},'status',this.value)" class="clay-input h-8 py-1 px-2 text-xs font-bold uppercase w-full"><option value="Pending" ${!s.status || s.status === 'Pending' ? 'selected' : ''}>Pending</option><option value="Measurements" ${s.status === 'Measurements' ? 'selected' : ''}>Measurements</option><option value="Production" ${s.status === 'Production' ? 'selected' : ''}>Production</option><option value="Delivered" ${s.status === 'Delivered' ? 'selected' : ''}>Delivered</option></select></td><td class="p-4 text-right"><button onclick="viewSchoolStudents('${s.name}')" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold px-4 py-2 rounded-lg transition-colors shadow-sm">VIEW STUDENTS</button></td></tr>`).join('') : ''; } catch (e) { console.error(e) } }
+            async function fetchSchoolsManage() { try { const r = await fetch(`${API_BASE}/data/schools`, { headers: { 'Authorization': `Bearer ${token}` } }); const d = await r.json(); document.getElementById('school-list-body').innerHTML = Array.isArray(d) ? d.map(s => `<tr class="hover:bg-gray-50/50 group border-b border-gray-50"><td class="p-4 font-bold text-gray-700">${s.name}</td><td class="p-4"><select onchange="updateSchoolMeta(${s.id},'priority',this.value)" class="input-premium h-8 py-1 px-2 text-xs font-bold uppercase ${s.priority === 'High' ? 'text-rose-500' : 'text-gray-500'}"><option value="Normal" ${s.priority === 'Normal' ? 'selected' : ''}>Normal Priority</option><option value="High" ${s.priority === 'High' ? 'selected' : ''}>High Priority</option><option value="Low" ${s.priority === 'Low' ? 'selected' : ''}>Low Priority</option></select></td><td class="p-4"><select onchange="updateSchoolMeta(${s.id},'status',this.value)" class="input-premium h-8 py-1 px-2 text-xs font-bold uppercase w-full"><option value="Pending" ${!s.status || s.status === 'Pending' ? 'selected' : ''}>Pending</option><option value="Measurements" ${s.status === 'Measurements' ? 'selected' : ''}>Measurements</option><option value="Production" ${s.status === 'Production' ? 'selected' : ''}>Production</option><option value="Delivered" ${s.status === 'Delivered' ? 'selected' : ''}>Delivered</option></select></td><td class="p-4 text-right"><button onclick="viewSchoolStudents('${s.name}')" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold px-4 py-2 rounded-lg transition-colors shadow-sm">VIEW STUDENTS</button></td></tr>`).join('') : ''; } catch (e) { console.error(e) } }
 
             async function updateSchoolMeta(id, f, v) { await fetch(`${API_BASE}/data/schools/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ [f]: v }) }); }
             async function viewSchoolStudents(n) { switchTab('data'); await fetchAllStudents(); document.getElementById('date-search').value = n; renderGlobalTable(); }
@@ -1139,7 +1187,7 @@
 
                 Object.values(schools).sort((a, b) => b.open - a.open).forEach(s => {
                     const div = document.createElement('div');
-                    div.className = "clay-card p-6 rounded-xl hover:shadow-xl transition-all cursor-pointer border hover:border-rose-300 relative group overflow-hidden";
+                    div.className = "premium-card p-6 rounded-xl hover:shadow-xl transition-all cursor-pointer border hover:border-rose-300 relative group overflow-hidden";
                     div.onclick = () => openSchoolComplaints(s);
 
                     div.innerHTML = `
@@ -1254,7 +1302,7 @@
                     try { images = JSON.parse(c.image_url || '[]'); } catch (e) { if (c.image_url) images = [c.image_url]; }
 
                     return `
-                    <div class="clay-card p-6 mb-4 animate-in slide-in-from-bottom-2 duration-300">
+                    <div class="premium-card p-6 mb-4 animate-in slide-in-from-bottom-2 duration-300">
                          <div class="flex justify-between items-start mb-4">
                              <div>
                                  <span class="text-[10px] bg-gray-100 text-gray-400 px-2 py-1 rounded uppercase font-bold tracking-wider">${new Date(c.created_at).toLocaleDateString()}</span>
@@ -1262,7 +1310,7 @@
                                  <div class="text-xs text-gray-400 font-medium">${c.class || ''} ${c.section || ''} ${c.house ? '• ' + c.house : ''} ${c.gender ? '• ' + c.gender : ''}</div>
                              </div>
                              <div class="text-right">
-                                 <select onchange="updateTicketStatus(${c.id}, this.value)" class="clay-input text-[10px] h-8 py-1 font-bold uppercase ${isResolved ? 'text-emerald-500' : 'text-rose-500'}">
+                                 <select onchange="updateTicketStatus(${c.id}, this.value)" class="input-premium text-[10px] h-8 py-1 font-bold uppercase ${isResolved ? 'text-emerald-500' : 'text-rose-500'}">
                                      <option value="Open" ${!isResolved ? 'selected' : ''}>Open</option>
                                      <option value="Resolved" ${isResolved ? 'selected' : ''}>Resolved</option>
                                  </select>
@@ -1435,16 +1483,16 @@
         <!-- REPLY MODAL -->
         <div id="reply-modal"
             class="fixed inset-0 bg-gray-500/30 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
-            <div class="clay-card w-full max-w-lg p-8">
+            <div class="premium-card w-full max-w-lg p-8">
                 <h3 class="text-xl font-bold text-gray-700 mb-2">Reply to Complaint</h3>
                 <p class="text-xs text-gray-400 mb-6 font-medium" id="reply-school-name">School Name</p>
-                <textarea id="reply-text" rows="4" class="clay-input w-full p-4 text-sm"
+                <textarea id="reply-text" rows="4" class="input-premium w-full p-4 text-sm"
                     placeholder="Write your response here..."></textarea>
                 <div class="flex justify-end gap-4 mt-6">
                     <button onclick="closeReplyModal()"
                         class="px-4 py-2 text-xs font-bold text-gray-500 hover:text-gray-700 uppercase tracking-wider">CANCEL</button>
                     <button onclick="submitReply()"
-                        class="clay-btn-primary px-6 py-3 text-xs font-bold rounded-lg shadow-lg uppercase tracking-wider">SEND
+                        class="btn-primary px-6 py-3 text-xs font-bold rounded-lg shadow-lg uppercase tracking-wider">SEND
                         REPLY</button>
                 </div>
             </div>
