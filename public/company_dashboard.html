@@ -14,47 +14,114 @@
         href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap"
         rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+        :root {
+            --clay-bg: #E0E5EC;
+            --clay-surface: #E0E5EC;
+            --clay-text: #485460;
+            --clay-primary: #8e44ad;
+            /* Soft Purple/Wisteria */
+            --clay-shadow-light: rgba(255, 255, 255, 0.6);
+            --clay-shadow-dark: rgba(163, 177, 198, 0.6);
+        }
 
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: #F9FAFB;
-            /* Gray 50 */
-            color: #111827;
-            /* Gray 900 */
+            font-family: 'Nunito', 'Poppins', sans-serif;
+            background-color: var(--clay-bg);
+            color: var(--clay-text);
         }
 
-        h1,
-        h2,
-        h3,
-        h4,
-        h5,
-        h6 {
-            font-family: 'Poppins', sans-serif;
+        /* --- CLAY UTILITIES --- */
+        .clay-card {
+            background-color: var(--clay-surface);
+            border-radius: 24px;
+            box-shadow: 9px 9px 16px var(--clay-shadow-dark),
+                -9px -9px 16px var(--clay-shadow-light);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
         }
 
-        /* Utility Transitions */
-        .fade-in {
-            animation: fadeIn 0.3s ease-in-out;
+        .clay-inset {
+            background-color: var(--clay-surface);
+            border-radius: 16px;
+            box-shadow: inset 6px 6px 10px var(--clay-shadow-dark),
+                inset -6px -6px 10px var(--clay-shadow-light);
         }
 
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(5px);
+        .clay-btn {
+            border-radius: 50px;
+            background: var(--clay-surface);
+            box-shadow: 6px 6px 10px var(--clay-shadow-dark),
+                -6px -6px 10px var(--clay-shadow-light);
+            color: var(--clay-text);
+            font-weight: 700;
+            transition: all 0.2s ease;
+        }
+
+        .clay-btn:active {
+            box-shadow: inset 4px 4px 8px var(--clay-shadow-dark),
+                inset -4px -4px 8px var(--clay-shadow-light);
+            transform: translateY(2px);
+        }
+
+        .clay-btn:hover {
+            transform: translateY(-2px);
+            color: var(--clay-primary);
+        }
+
+        .clay-primary {
+            background: linear-gradient(145deg, #a55eea, #8e44ad);
+            color: white !important;
+            box-shadow: 5px 5px 10px rgba(142, 68, 173, 0.4),
+                -5px -5px 10px var(--clay-shadow-light);
+        }
+
+        .clay-primary:active {
+            background: #8e44ad;
+            box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        .clay-input {
+            border: none;
+            background: var(--clay-surface);
+            border-radius: 16px;
+            padding: 12px 20px;
+            box-shadow: inset 5px 5px 9px var(--clay-shadow-dark),
+                inset -5px -5px 9px var(--clay-shadow-light);
+            color: var(--clay-text);
+            outline: none;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .clay-input:focus {
+            box-shadow: inset 2px 2px 5px var(--clay-shadow-dark),
+                inset -2px -2px 5px var(--clay-shadow-light),
+                0 0 0 2px var(--clay-primary);
+        }
+
+        /* Float Animation */
+        @keyframes float {
+            0% {
+                transform: translateY(0px);
             }
 
-            to {
-                opacity: 1;
-                transform: translateY(0);
+            50% {
+                transform: translateY(-6px);
             }
+
+            100% {
+                transform: translateY(0px);
+            }
+        }
+
+        .animate-float {
+            animation: float 5s ease-in-out infinite;
         }
 
         /* Scrollbar */
         ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
+            width: 8px;
+            height: 8px;
         }
 
         ::-webkit-scrollbar-track {
@@ -62,26 +129,26 @@
         }
 
         ::-webkit-scrollbar-thumb {
-            background: #E5E7EB;
-            border-radius: 3px;
+            background: #cbd5e0;
+            border-radius: 4px;
         }
 
         ::-webkit-scrollbar-thumb:hover {
-            background: #D1D5DB;
+            background: #a4b0be;
         }
     </style>
 </head>
 
-<body
-    class="bg-gray-50 text-gray-900 h-screen flex flex-col md:flex-row overflow-hidden selection:bg-gray-200 selection:text-gray-900">
+<body class="h-screen flex flex-col md:flex-row overflow-hidden selection:bg-purple-200 selection:text-purple-900">
 
     <!-- Mobile Header -->
-    <div class="md:hidden bg-white border-b border-gray-200 p-4 flex justify-between items-center z-50">
-        <h1 class="text-xl font-bold text-gray-900 flex items-center gap-2">
-            <span class="w-8 h-8 rounded-lg bg-gray-900 text-white flex items-center justify-center font-bold">P</span>
+    <!-- Mobile Header -->
+    <div class="md:hidden p-4 flex justify-between items-center z-50">
+        <h1 class="text-xl font-bold flex items-center gap-2 text-indigo-500">
+            <span class="w-10 h-10 rounded-xl clay-inset flex items-center justify-center font-bold text-2xl">P</span>
             Planet Admin
         </h1>
-        <button onclick="toggleSidebar()" class="p-2 text-gray-500 hover:bg-gray-100 rounded-lg">
+        <button onclick="toggleSidebar()" class="clay-btn p-2 rounded-xl text-gray-500">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16">
                 </path>
@@ -96,37 +163,37 @@
 
     <!-- Sidebar -->
     <aside id="sidebar"
-        class="fixed inset-y-0 left-0 w-72 bg-white border-r border-gray-200 transform -translate-x-full md:translate-x-0 transition-transform duration-300 z-50 flex flex-col">
+        class="fixed inset-y-0 left-0 w-72 md:w-64 md:m-6 md:rounded-3xl clay-card transform -translate-x-full md:translate-x-0 transition-transform duration-300 z-50 flex flex-col scale-95 md:scale-100 origin-left">
 
         <!-- Brand -->
-        <div class="p-6 border-b border-gray-100 flex items-center gap-3">
-            <div
-                class="w-10 h-10 rounded-xl bg-gray-900 text-white flex items-center justify-center text-xl font-bold shadow-md">
+        <div class="p-8 flex items-center gap-3">
+            <div class="w-12 h-12 rounded-2xl clay-primary flex items-center justify-center text-xl font-bold">
                 P
             </div>
             <div>
-                <h1 class="text-lg font-bold text-gray-900 tracking-tight">Planet Solutions</h1>
-                <p class="text-xs text-gray-500 font-medium">Administration</p>
+                <h1 class="text-xl font-extrabold tracking-tight">Planet</h1>
+                <p class="text-xs font-bold uppercase tracking-widest opacity-60">Clay Command</p>
             </div>
         </div>
 
         <!-- User Profile Mini -->
-        <div class="p-4 bg-gray-50 border-b border-gray-100 flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold">
+        <div class="mx-6 p-4 clay-inset flex items-center gap-3 mb-6">
+            <div
+                class="w-10 h-10 rounded-full bg-gradient-to-tr from-purple-400 to-indigo-500 text-white flex items-center justify-center font-bold shadow-inner">
                 A
             </div>
             <div>
-                <p class="text-sm font-bold text-gray-900">Admin User</p>
+                <p class="text-sm font-bold">Admin User</p>
                 <div class="flex items-center gap-1.5">
-                    <span class="w-2 h-2 rounded-full bg-green-500"></span>
-                    <p class="text-xs text-green-600 font-medium font-mono uppercase">Online</p>
+                    <span class="w-2 h-2 rounded-full bg-green-400 shadow-[0_0_8px_rgba(74,222,128,0.6)]"></span>
+                    <p class="text-[10px] text-green-600 font-bold uppercase tracking-wider">Online</p>
                 </div>
             </div>
         </div>
 
         <nav class="flex-1 px-4 space-y-3 overflow-y-auto py-2">
             <button onclick="switchTab('overview')" id="nav-overview"
-                class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors">
+                class="nav-item clay-btn w-full flex items-center gap-4 px-6 py-3 text-sm font-bold text-gray-500 hover:text-indigo-600">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <rect x="3" y="3" width="7" height="7"></rect>
                     <rect x="14" y="3" width="7" height="7"></rect>
@@ -136,7 +203,7 @@
                 Overview
             </button>
             <button onclick="switchTab('data')" id="nav-data"
-                class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors">
+                class="nav-item clay-btn w-full flex items-center gap-4 px-6 py-3 text-sm font-bold text-gray-500 hover:text-indigo-600">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path
                         d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z">
@@ -147,7 +214,7 @@
                 Tailoring Data
             </button>
             <button onclick="switchTab('users')" id="nav-users"
-                class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors">
+                class="nav-item clay-btn w-full flex items-center gap-4 px-6 py-3 text-sm font-bold text-gray-500 hover:text-indigo-600">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
                     <circle cx="9" cy="7" r="4"></circle>
@@ -157,7 +224,7 @@
                 User Management
             </button>
             <button onclick="switchTab('access')" id="nav-access"
-                class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors">
+                class="nav-item clay-btn w-full flex items-center gap-4 px-6 py-3 text-sm font-bold text-gray-500 hover:text-indigo-600">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                     <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
@@ -165,7 +232,7 @@
                 Access Codes
             </button>
             <button onclick="switchTab('schools')" id="nav-schools"
-                class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors">
+                class="nav-item clay-btn w-full flex items-center gap-4 px-6 py-3 text-sm font-bold text-gray-500 hover:text-indigo-600">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M3 21h18"></path>
                     <path d="M5 21V7l8-4 8 4v14"></path>
@@ -175,7 +242,7 @@
                 Schools
             </button>
             <button onclick="switchTab('reports')" id="nav-reports"
-                class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors">
+                class="nav-item clay-btn w-full flex items-center gap-4 px-6 py-3 text-sm font-bold text-gray-500 hover:text-indigo-600">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                     <polyline points="14 2 14 8 20 8"></polyline>
@@ -186,7 +253,7 @@
                 Reports
             </button>
             <button onclick="switchTab('complaints')" id="nav-complaints"
-                class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors">
+                class="nav-item clay-btn w-full flex items-center gap-4 px-6 py-3 text-sm font-bold text-gray-500 hover:text-indigo-600">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path
                         d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z">
@@ -198,7 +265,7 @@
             <div class="h-px bg-gray-300/50 mx-4 my-2"></div>
 
             <button onclick="window.open('pattern_view.html', '_blank')"
-                class="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 font-medium shadow-sm transition-colors w-full flex items-center gap-4 px-6 py-3 text-sm text-indigo-400">
+                class="clay-btn w-full flex items-center gap-4 px-6 py-3 text-sm text-indigo-400">
                 <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <rect x="3" y="3" width="7" height="7"></rect>
                     <rect x="14" y="3" width="7" height="7"></rect>
@@ -211,26 +278,29 @@
         </nav>
         <div class="p-6">
             <button onclick="logout()"
-                class="w-full py-2.5 rounded-lg border border-gray-200 text-xs font-bold text-gray-500 hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-colors uppercase tracking-wider">Sign
-                Out</button>
+                class="w-full clay-btn py-3 text-xs font-extrabold text-gray-500 hover:text-red-500 uppercase tracking-wider">
+                Sign Out
+            </button>
         </div>
     </aside>
 
     <div class="flex-1 flex flex-col h-screen overflow-hidden relative">
         <!-- Header -->
-        <header class="bg-white border-b border-gray-200 px-8 py-5 flex justify-between items-center z-30">
+        <!-- Header -->
+        <header class="px-8 py-6 flex justify-between items-center z-30">
             <div>
-                <h2 id="page-title" class="text-2xl font-bold text-gray-900 tracking-tight">System Overview</h2>
-                <p id="page-subtitle" class="text-sm text-gray-500 mt-1">Manage Planet Solutions tailors & operations
-                </p>
+                <h2 id="page-title" class="text-3xl font-extrabold text-gray-700 tracking-tight animate-float"
+                    style="animation-duration: 6s;">System Overview</h2>
+                <p id="page-subtitle" class="text-sm font-bold text-gray-400 mt-1 uppercase tracking-wide">Manage Planet
+                    Solutions tailors & operations</p>
             </div>
-            <div class="flex gap-3">
+            <div class="flex gap-4">
                 <button onclick="if(confirm('Reset DB?')) resetDatabase()"
-                    class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-600 text-sm font-bold hover:bg-gray-50 shadow-sm transition-colors">
+                    class="clay-btn px-6 py-3 text-gray-600 text-xs font-bold uppercase tracking-wider hover:text-red-500 transition-colors">
                     Reset DB
                 </button>
                 <button onclick="fixDatabase()"
-                    class="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-bold shadow-sm hover:bg-gray-800 transition-colors">
+                    class="clay-btn clay-primary px-6 py-3 text-white text-xs font-bold uppercase tracking-wider shadow-lg hover:shadow-xl transition-all active:scale-95">
                     Repair DB
                 </button>
             </div>
@@ -240,8 +310,7 @@
         <div id="view-overview" class="space-y-8 fade-in">
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 <!-- Stat Card 1 -->
-                <div
-                    class="bg-white border border-gray-200 shadow-sm rounded-xl p-6 flex flex-col justify-between h-32 relative overflow-hidden group">
+                <div class="clay-card p-6 flex flex-col justify-between h-32 relative overflow-hidden group">
                     <div
                         class="absolute -right-4 -top-4 w-24 h-24 bg-blue-100 rounded-full opacity-50 blur-xl group-hover:bg-blue-200 transition-colors">
                     </div>
@@ -249,8 +318,7 @@
                     <p class="text-4xl font-extrabold text-gray-700 relative z-10" id="stat-students">0</p>
                 </div>
                 <!-- Stat Card 2 -->
-                <div
-                    class="bg-white border border-gray-200 shadow-sm rounded-xl p-6 flex flex-col justify-between h-32 relative overflow-hidden group">
+                <div class="clay-card p-6 flex flex-col justify-between h-32 relative overflow-hidden group">
                     <div
                         class="absolute -right-4 -top-4 w-24 h-24 bg-purple-100 rounded-full opacity-50 blur-xl group-hover:bg-purple-200 transition-colors">
                     </div>
@@ -258,8 +326,7 @@
                     <p class="text-4xl font-extrabold text-gray-700 relative z-10" id="stat-schools">0</p>
                 </div>
                 <!-- Stat Card 3 -->
-                <div
-                    class="bg-white border border-gray-200 shadow-sm rounded-xl p-6 flex flex-col justify-between h-32 relative overflow-hidden group">
+                <div class="clay-card p-6 flex flex-col justify-between h-32 relative overflow-hidden group">
                     <div
                         class="absolute -right-4 -top-4 w-24 h-24 bg-emerald-100 rounded-full opacity-50 blur-xl group-hover:bg-emerald-200 transition-colors">
                     </div>
@@ -268,8 +335,7 @@
                     <p class="text-4xl font-extrabold text-gray-700 relative z-10" id="stat-packed">0</p>
                 </div>
                 <!-- Stat Card 4 -->
-                <div
-                    class="bg-white border border-gray-200 shadow-sm rounded-xl p-6 flex flex-col justify-between h-32 relative overflow-hidden group">
+                <div class="clay-card p-6 flex flex-col justify-between h-32 relative overflow-hidden group">
                     <div
                         class="absolute -right-4 -top-4 w-24 h-24 bg-amber-100 rounded-full opacity-50 blur-xl group-hover:bg-amber-200 transition-colors">
                     </div>
@@ -279,12 +345,12 @@
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div class="bg-white border border-gray-200 shadow-sm rounded-xl p-6">
+                <div class="clay-card p-6">
                     <h3 class="text-lg font-bold text-gray-600 mb-6 flex items-center gap-2"><span
                             class="w-2 h-2 rounded-full bg-blue-400"></span> Packing Progress</h3>
                     <div class="flex-1 relative h-64"><canvas id="chart-packing"></canvas></div>
                 </div>
-                <div class="bg-white border border-gray-200 shadow-sm rounded-xl p-6">
+                <div class="clay-card p-6">
                     <h3 class="text-lg font-bold text-gray-600 mb-6 flex items-center gap-2"><span
                             class="w-2 h-2 rounded-full bg-purple-400"></span> School Enrollment</h3>
                     <div class="flex-1 relative h-64"><canvas id="chart-schools"></canvas></div>
@@ -302,7 +368,7 @@
                 </div>
                 <div class="flex gap-4">
                     <button onclick="downloadPDF()"
-                        class="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 font-medium shadow-sm transition-colors px-4 py-2 text-xs font-bold text-rose-500 uppercase flex items-center gap-2">
+                        class="clay-btn px-4 py-2 text-xs font-bold text-rose-500 uppercase flex items-center gap-2">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2">
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -314,7 +380,7 @@
                         Export PDF
                     </button>
                     <button onclick="downloadExcel()"
-                        class="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 font-medium shadow-sm transition-colors px-4 py-2 text-xs font-bold text-emerald-500 uppercase flex items-center gap-2">
+                        class="clay-btn px-4 py-2 text-xs font-bold text-emerald-500 uppercase flex items-center gap-2">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2">
                             <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
@@ -327,14 +393,13 @@
                 </div>
             </div>
 
-            <div
-                class="bg-white border border-gray-200 shadow-sm rounded-xl p-6 flex flex-wrap gap-4 items-end sticky top-0 z-20">
+            <div class="clay-card p-6 flex flex-wrap gap-4 items-end sticky top-0 z-20">
                 <!-- Filters Re-styled as Clay Inputs -->
                 <div class="w-full md:w-auto flex-1">
                     <label class="text-[10px] font-bold text-gray-400 uppercase ml-2 mb-1 block">Item Type</label>
                     <div class="relative">
                         <select id="filter-item" onchange="renderGlobalTable()"
-                            class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all appearance-none font-bold text-gray-600 cursor-pointer">
+                            class="clay-input appearance-none font-bold text-gray-600 cursor-pointer">
                             <option value="all">-- Select Item --</option>
                         </select>
                         <div
@@ -349,8 +414,7 @@
 
                 <div class="w-[47%] md:w-auto">
                     <label class="text-[10px] font-bold text-gray-400 uppercase ml-2 mb-1 block">Pattern</label>
-                    <select id="filter-pattern" onchange="renderGlobalTable()"
-                        class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all text-sm h-10 py-2">
+                    <select id="filter-pattern" onchange="renderGlobalTable()" class="clay-input text-sm h-10 py-2">
                         <option value="all">All</option>
                     </select>
                 </div>
@@ -358,21 +422,18 @@
                 <div class="w-[47%] md:w-24">
                     <label class="text-[10px] font-bold text-gray-400 uppercase ml-2 mb-1 block">Class</label>
                     <input type="text" id="filter-class" list="list-class" onchange="renderGlobalTable()"
-                        class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all text-sm h-10 py-2"
-                        placeholder="All"><datalist id="list-class"></datalist>
+                        class="clay-input text-sm h-10 py-2" placeholder="All"><datalist id="list-class"></datalist>
                 </div>
 
                 <div class="w-[47%] md:w-24">
                     <label class="text-[10px] font-bold text-gray-400 uppercase ml-2 mb-1 block">Sec</label>
                     <input type="text" id="filter-section" list="list-section" onchange="renderGlobalTable()"
-                        class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all text-sm h-10 py-2"
-                        placeholder="All"><datalist id="list-section"></datalist>
+                        class="clay-input text-sm h-10 py-2" placeholder="All"><datalist id="list-section"></datalist>
                 </div>
 
                 <div class="w-[47%] md:w-28">
                     <label class="text-[10px] font-bold text-gray-400 uppercase ml-2 mb-1 block">Gender</label>
-                    <select id="filter-gender" onchange="renderGlobalTable()"
-                        class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all text-sm h-10 py-2">
+                    <select id="filter-gender" onchange="renderGlobalTable()" class="clay-input text-sm h-10 py-2">
                         <option value="">All</option>
                         <option value="Male">Male</option>
                         <option value="Female">Female</option>
@@ -381,8 +442,7 @@
 
                 <div class="w-[47%] md:w-28">
                     <label class="text-[10px] font-bold text-gray-400 uppercase ml-2 mb-1 block">Priority</label>
-                    <select id="filter-priority" onchange="renderGlobalTable()"
-                        class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all text-sm h-10 py-2">
+                    <select id="filter-priority" onchange="renderGlobalTable()" class="clay-input text-sm h-10 py-2">
                         <option value="all">All</option>
                         <option value="High">High</option>
                         <option value="Normal">Normal</option>
@@ -391,8 +451,7 @@
                 </div>
                 <div class="w-[47%] md:w-28">
                     <label class="text-[10px] font-bold text-gray-400 uppercase ml-2 mb-1 block">Status</label>
-                    <select id="filter-packed" onchange="renderGlobalTable()"
-                        class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all text-sm h-10 py-2">
+                    <select id="filter-packed" onchange="renderGlobalTable()" class="clay-input text-sm h-10 py-2">
                         <option value="all">All</option>
                         <option value="packed">Packed</option>
                         <option value="pending">Pending</option>
@@ -402,11 +461,11 @@
                 <div class="w-full md:w-auto md:ml-auto">
                     <label class="text-[10px] font-bold text-gray-400 uppercase ml-2 mb-1 block">Search</label>
                     <input type="text" id="date-search" onkeyup="renderGlobalTable()" placeholder="Name / Roll No..."
-                        class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all text-sm h-10 py-2 w-full md:w-48">
+                        class="clay-input text-sm h-10 py-2 w-full md:w-48">
                 </div>
             </div>
 
-            <div class="bg-white border border-gray-200 shadow-sm rounded-xl overflow-hidden">
+            <div class="clay-card overflow-hidden">
                 <div class="overflow-x-auto h-[600px]">
                     <table class="w-full text-left border-collapse min-w-[1000px] whitespace-nowrap">
                         <thead
@@ -434,14 +493,14 @@
 
         <!-- 3. USER MANAGEMENT -->
         <div id="view-users" class="hidden fade-in max-w-5xl mx-auto space-y-8">
-            <div class="bg-white border border-gray-200 shadow-sm rounded-xl p-8 relative">
+            <div class="clay-card p-8 relative">
                 <div class="flex justify-between items-center mb-8 border-b border-gray-100 pb-6">
                     <div>
                         <h3 class="text-2xl font-bold text-gray-700">User Management</h3>
                         <p class="text-sm text-gray-400">Controls who can access the system.</p>
                     </div>
                     <button onclick="openSchoolModal()"
-                        class="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 font-medium shadow-sm transition-colors px-6 py-3 text-sm font-bold bg-gray-800 text-white shadow-lg hover:bg-gray-900 border-none">
+                        class="clay-btn clay-primary px-6 py-3 text-sm font-bold shadow-lg hover:shadow-xl border-none active:scale-95 transition-transform">
                         Register New School
                     </button>
                 </div>
@@ -451,19 +510,16 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label class="block text-xs font-bold text-gray-400 uppercase mb-2 ml-2">Username</label>
-                            <input type="text" name="username" required
-                                class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all">
+                            <input type="text" name="username" required class="clay-input">
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-400 uppercase mb-2 ml-2">Password</label>
-                            <input type="text" name="password" required
-                                class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all">
+                            <input type="text" name="password" required class="clay-input">
                         </div>
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-400 uppercase mb-2 ml-2">Role</label>
-                        <select name="role" id="user-role" onchange="toggleSchoolSelect()"
-                            class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all">
+                        <select name="role" id="user-role" onchange="toggleSchoolSelect()" class="clay-input">
                             <option value="school">School Admin</option>
                             <option value="tailor">Tailor</option>
                             <option value="packing">Packing Unit</option>
@@ -473,17 +529,16 @@
                     <div id="school-select-wrapper">
                         <label class="block text-xs font-bold text-gray-400 uppercase mb-2 ml-2">Assign To
                             School</label>
-                        <select name="school_id" id="school-select"
-                            class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all"></select>
+                        <select name="school_id" id="school-select" class="clay-input"></select>
                     </div>
                     <button type="submit"
-                        class="w-full px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 font-medium shadow-sm transition-colors-primary py-4 rounded-xl text-lg font-bold shadow-lg transition-transform active:scale-95">
+                        class="w-full clay-btn-primary py-4 rounded-xl text-lg font-bold shadow-lg transition-transform active:scale-95">
                         Create Account
                     </button>
                 </form>
             </div>
 
-            <div class="bg-white border border-gray-200 shadow-sm rounded-xl p-8">
+            <div class="clay-card p-8">
                 <h3 class="text-lg font-bold text-gray-600 mb-6">Existing Accounts</h3>
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm min-w-[600px]">
@@ -504,44 +559,41 @@
 
         <!-- 4. ACCESS CODES -->
         <div id="view-access" class="hidden fade-in max-w-5xl mx-auto space-y-8">
-            <div class="bg-white border border-gray-200 shadow-sm rounded-xl p-8">
+            <div class="clay-card p-8">
                 <h3 class="text-xl font-bold text-gray-700 mb-6">Generate Secure Link</h3>
                 <div class="flex flex-col md:flex-row gap-6 items-end">
                     <div class="w-full md:flex-1">
                         <label class="block text-xs font-bold text-gray-400 uppercase mb-2 ml-2">Target School</label>
-                        <select id="access-school-select"
-                            class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all"></select>
+                        <select id="access-school-select" class="clay-input"></select>
                     </div>
                     <div class="w-full md:w-48">
                         <label class="block text-xs font-bold text-gray-400 uppercase mb-2 ml-2">Role Type</label>
-                        <select id="access-type"
-                            class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all">
+                        <select id="access-type" class="clay-input">
                             <option value="tailor">Tailor (Measurements)</option>
                             <option value="packing">Packing (Status)</option>
                         </select>
                     </div>
                     <div class="w-full md:w-32">
                         <label class="block text-xs font-bold text-gray-400 uppercase mb-2 ml-2">Expires In</label>
-                        <select id="access-expiry"
-                            class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all">
+                        <select id="access-expiry" class="clay-input">
                             <option value="24">24 Hours</option>
                             <option value="48">48 Hours</option>
                             <option value="168">7 Days</option>
                         </select>
                     </div>
                     <button onclick="generateCode()"
-                        class="w-full md:w-auto px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 font-medium shadow-sm transition-colors-primary px-8 py-3 rounded-xl font-bold uppercase text-sm shadow-xl transition-transform active:scale-95">
+                        class="w-full md:w-auto clay-btn-primary px-8 py-3 rounded-xl font-bold uppercase text-sm shadow-xl transition-transform active:scale-95">
                         Generate
                     </button>
                 </div>
             </div>
 
-            <div class="bg-white border border-gray-200 shadow-sm rounded-xl p-8">
+            <div class="clay-card p-8">
                 <h3 class="text-lg font-bold text-gray-600 mb-4">Active & Inactive Codes</h3>
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm min-w-[600px]">
                         <thead>
-                            <tr class="border-b border-gray-100 text-gray-400 font-bold uppercase text-xs">
+                            <tr class="border-b border-white/50 text-gray-400 font-bold uppercase text-xs">
                                 <th class="text-left pb-3">School</th>
                                 <th class="text-left pb-3">Code</th>
                                 <th class="text-left pb-3">Type</th>
@@ -557,8 +609,8 @@
 
         <!-- 5. SCHOOLS -->
         <div id="view-schools" class="hidden fade-in max-w-5xl mx-auto space-y-8">
-            <div class="bg-white border border-gray-200 shadow-sm rounded-xl p-8">
-                <div class="mb-6 border-b border-gray-100 pb-4">
+            <div class="clay-card p-8">
+                <div class="mb-6 border-b border-white/50 pb-4">
                     <h3 class="text-2xl font-bold text-gray-700">School Metadata</h3>
                     <p class="text-gray-400 text-sm mt-1">Manage priority and production status for each school.</p>
                 </div>
@@ -582,7 +634,7 @@
         <!-- 6. REPORTS -->
         <div id="view-reports" class="hidden fade-in max-w-4xl mx-auto">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div class="bg-white border border-gray-200 shadow-sm rounded-xl p-10 text-center hover:scale-105 transition-transform cursor-pointer group"
+                <div class="clay-card p-10 text-center hover:scale-105 transition-transform cursor-pointer group"
                     onclick="downloadPDF()">
                     <div
                         class="w-20 h-20 bg-red-100/50 text-red-500 mx-auto rounded-full flex items-center justify-center mb-6 shadow-sm group-hover:bg-red-100 transition-colors">
@@ -591,7 +643,7 @@
                     <h3 class="font-bold text-xl text-gray-700">Download PDF Report</h3>
                     <p class="text-sm text-gray-400 mt-2">Full system summary formatted for printing.</p>
                 </div>
-                <div class="bg-white border border-gray-200 shadow-sm rounded-xl p-10 text-center hover:scale-105 transition-transform cursor-pointer group"
+                <div class="clay-card p-10 text-center hover:scale-105 transition-transform cursor-pointer group"
                     onclick="downloadExcel()">
                     <div
                         class="w-20 h-20 bg-green-100/50 text-emerald-500 mx-auto rounded-full flex items-center justify-center mb-6 shadow-sm group-hover:bg-green-100 transition-colors">
@@ -610,19 +662,18 @@
             <div class="grid grid-cols-1 md:grid-cols-6 gap-6">
                 <!-- Basic Counts -->
                 <div class="md:col-span-2 grid grid-cols-3 gap-4">
-                    <div
-                        class="bg-white border border-gray-200 shadow-sm rounded-xl p-4 flex flex-col justify-center items-center text-center">
+                    <div class="clay-card p-4 flex flex-col justify-center items-center text-center">
                         <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Total</p>
                         <p class="text-3xl font-extrabold text-gray-700 mt-1" id="c-stat-total">0</p>
                     </div>
                     <div
-                        class="bg-white border border-gray-200 shadow-sm rounded-xl p-4 flex flex-col justify-center items-center text-center relative overflow-hidden">
+                        class="clay-card p-4 flex flex-col justify-center items-center text-center relative overflow-hidden">
                         <div class="absolute top-0 left-0 w-1 h-full bg-amber-400"></div>
                         <p class="text-[10px] text-amber-500 font-bold uppercase tracking-widest">Open</p>
                         <p class="text-3xl font-extrabold text-gray-700 mt-1" id="c-stat-open">0</p>
                     </div>
                     <div
-                        class="bg-white border border-gray-200 shadow-sm rounded-xl p-4 flex flex-col justify-center items-center text-center relative overflow-hidden">
+                        class="clay-card p-4 flex flex-col justify-center items-center text-center relative overflow-hidden">
                         <div class="absolute top-0 left-0 w-1 h-full bg-emerald-400"></div>
                         <p class="text-[10px] text-emerald-500 font-bold uppercase tracking-widest">Done</p>
                         <p class="text-3xl font-extrabold text-gray-700 mt-1" id="c-stat-resolved">0</p>
@@ -630,16 +681,14 @@
                 </div>
 
                 <!-- Insight Cards -->
-                <div
-                    class="bg-white border border-gray-200 shadow-sm rounded-xl p-4 col-span-2 relative overflow-hidden">
+                <div class="clay-card p-4 col-span-2 relative overflow-hidden">
                     <div class="absolute top-0 left-0 w-full h-1 bg-rose-400"></div>
                     <p class="text-[10px] text-rose-500 font-bold uppercase tracking-widest mb-2">Needs Attention (Top
                         Pattern)</p>
                     <h4 class="font-bold text-gray-800 truncate text-lg" id="c-top-pattern">-</h4>
                     <p class="text-xs text-gray-400 font-medium" id="c-top-pattern-count">0 complaints</p>
                 </div>
-                <div
-                    class="bg-white border border-gray-200 shadow-sm rounded-xl p-4 col-span-2 relative overflow-hidden">
+                <div class="clay-card p-4 col-span-2 relative overflow-hidden">
                     <div class="absolute top-0 left-0 w-full h-1 bg-indigo-400"></div>
                     <p class="text-[10px] text-indigo-500 font-bold uppercase tracking-widest mb-2">Common Issue</p>
                     <h4 class="font-bold text-gray-800 truncate text-lg" id="c-top-issue">-</h4>
@@ -649,37 +698,33 @@
 
             <!-- B. Charts & Trends -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 h-96">
-                <div class="bg-white border border-gray-200 shadow-sm rounded-xl p-6 flex flex-col">
+                <div class="clay-card p-6 flex flex-col">
                     <h3 class="font-bold text-lg text-gray-600 mb-4">Top Defective Patterns</h3>
                     <div class="flex-1 relative"><canvas id="chart-patterns"></canvas></div>
                 </div>
-                <div class="bg-white border border-gray-200 shadow-sm rounded-xl p-6 flex flex-col">
+                <div class="clay-card p-6 flex flex-col">
                     <h3 class="font-bold text-lg text-gray-600 mb-4">Common Defect Types</h3>
                     <div class="flex-1 relative"><canvas id="chart-issues"></canvas></div>
                 </div>
             </div>
 
             <!-- C. Filters & Controls -->
-            <div
-                class="bg-white border border-gray-200 shadow-sm rounded-xl p-6 flex flex-col md:flex-row gap-4 items-end">
+            <div class="clay-card p-6 flex flex-col md:flex-row gap-4 items-end">
                 <div class="w-full md:w-auto flex-1">
                     <label class="block text-[10px] font-bold text-gray-400 uppercase mb-2 ml-2">Search School</label>
                     <input type="text" id="c-filter-school" onkeyup="renderComplaintDash()"
-                        placeholder="Type school name..."
-                        class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all">
+                        placeholder="Type school name..." class="clay-input">
                 </div>
                 <div class="w-full md:w-48">
                     <label class="block text-[10px] font-bold text-gray-400 uppercase mb-2 ml-2">Filter Pattern</label>
-                    <select id="c-filter-pattern" onchange="renderComplaintDash()"
-                        class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all">
+                    <select id="c-filter-pattern" onchange="renderComplaintDash()" class="clay-input">
                         <option value="all">All Patterns</option>
                         <!-- Populated JS -->
                     </select>
                 </div>
                 <div class="w-full md:w-32">
                     <label class="block text-[10px] font-bold text-gray-400 uppercase mb-2 ml-2">Gender</label>
-                    <select id="c-filter-gender" onchange="renderComplaintDash()"
-                        class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all">
+                    <select id="c-filter-gender" onchange="renderComplaintDash()" class="clay-input">
                         <option value="all">All</option>
                         <option value="Male">Boys</option>
                         <option value="Female">Girls</option>
@@ -687,7 +732,7 @@
                 </div>
                 <div class="flex gap-4">
                     <button onclick="downloadPDF()"
-                        class="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 font-medium shadow-sm transition-colors px-4 py-3 text-xs font-bold uppercase text-rose-500 flex items-center gap-2">
+                        class="clay-btn px-4 py-3 text-xs font-bold uppercase text-rose-500 flex items-center gap-2">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2">
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -699,7 +744,7 @@
                         PDF
                     </button>
                     <button onclick="downloadExcel()"
-                        class="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 font-medium shadow-sm transition-colors px-4 py-3 text-xs font-bold uppercase text-emerald-500 flex items-center gap-2">
+                        class="clay-btn px-4 py-3 text-xs font-bold uppercase text-emerald-500 flex items-center gap-2">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2">
                             <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
@@ -729,16 +774,16 @@
         <dialog id="ticketModal" class="bg-transparent z-50">
             <div class="fixed inset-0 bg-gray-500/30 backdrop-blur-sm flex items-center justify-center p-4">
                 <div
-                    class="bg-white border border-gray-200 shadow-sm rounded-xl w-full max-w-5xl h-[85vh] flex flex-col animate-in zoom-in-95 duration-200 outline-none">
+                    class="clay-card w-full max-w-5xl h-[85vh] flex flex-col animate-in zoom-in-95 duration-200 outline-none">
                     <!-- Header -->
-                    <div class="p-6 border-b border-gray-100 flex justify-between items-center rounded-t-2xl">
+                    <div class="p-6 border-b border-white/50 flex justify-between items-center rounded-t-2xl">
                         <div>
                             <h3 class="text-2xl font-bold text-gray-800" id="tm-school-name">School Name</h3>
                             <p class="text-xs text-gray-400 uppercase tracking-wider font-bold mt-1"
                                 id="tm-school-stats">5 Open Tickets</p>
                         </div>
                         <button onclick="document.getElementById('ticketModal').close()"
-                            class="w-10 h-10 rounded-full px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 font-medium shadow-sm transition-colors flex items-center justify-center text-gray-500 hover:text-red-500">
+                            class="w-10 h-10 rounded-full clay-btn flex items-center justify-center text-gray-500 hover:text-red-500">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                 stroke-width="2">
                                 <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -761,30 +806,27 @@
         <!-- SCHOOL REGISTRATION MODAL -->
         <div id="school-modal"
             class="fixed inset-0 bg-gray-500/30 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
-            <div
-                class="bg-white border border-gray-200 shadow-sm rounded-xl w-full max-w-md p-8 transform transition-all scale-100">
-                <h3 class="text-xl font-bold mb-6 border-b border-gray-100 pb-4 text-gray-700">Register New School</h3>
+            <div class="clay-card w-full max-w-md p-8 transform transition-all scale-100">
+                <h3 class="text-xl font-bold mb-6 border-b border-white/50 pb-4 text-gray-700">Register New School</h3>
                 <form onsubmit="registerSchool(event)" class="space-y-6">
                     <div>
                         <label class="block text-xs font-bold text-gray-400 uppercase mb-2 ml-2">School Name</label>
                         <input type="text" name="name" required placeholder="e.g. Galaxy High School"
-                            class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all">
+                            class="clay-input">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-400 uppercase mb-2 ml-2">Admin Username</label>
-                        <input type="text" name="username" required placeholder="admin_galaxy"
-                            class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all">
+                        <input type="text" name="username" required placeholder="admin_galaxy" class="clay-input">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-400 uppercase mb-2 ml-2">Password</label>
-                        <input type="password" name="password" required
-                            class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all">
+                        <input type="password" name="password" required class="clay-input">
                     </div>
                     <div class="flex justify-end gap-4 mt-8">
                         <button type="button" onclick="document.getElementById('school-modal').classList.add('hidden')"
                             class="px-6 py-2 text-sm font-bold text-gray-500 hover:text-gray-700">CANCEL</button>
                         <button type="submit"
-                            class="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 font-medium shadow-sm transition-colors-primary px-6 py-2 text-sm font-bold rounded-lg shadow-lg">REGISTER
+                            class="clay-btn-primary px-6 py-2 text-sm font-bold rounded-lg shadow-lg">REGISTER
                             SCHOOL</button>
                     </div>
                 </form>
@@ -808,7 +850,7 @@
 
             async function fetchUsers() { try { const r = await fetch(`${API_BASE}/data/users`, { headers: { 'Authorization': `Bearer ${token}` } }); const u = await r.json(); if (!Array.isArray(u)) return; document.getElementById('user-list-body').innerHTML = u.map(x => `<tr class="hover:bg-gray-50/50 group border-b border-gray-50"><td class="p-4 font-bold text-gray-700">${x.username}</td><td class="p-4"><span class="px-3 py-1 rounded-full text-xs bg-gray-100/80 uppercase font-bold text-gray-500 shadow-inner">${x.role}</span></td><td class="p-4 text-gray-500">${x.school_name || '-'}</td><td class="p-4 text-center"><span class="px-3 py-1 rounded-full text-xs font-bold shadow-sm ${x.is_active !== false ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}">${x.is_active !== false ? 'Active' : 'Disabled'}</span></td><td class="p-4 text-right text-xs"><button onclick="toggleUserStatus(${x.id},${!(x.is_active !== false)},'${x.username}')" class="opacity-0 group-hover:opacity-100 transition-opacity px-4 py-2 rounded-lg font-bold shadow-sm ${x.is_active !== false ? 'text-red-500 bg-red-50 hover:bg-red-100' : 'text-green-500 bg-green-50 hover:bg-green-100'}">${x.is_active !== false ? 'Disable' : 'Enable'}</button></td></tr>`).join(''); } catch (e) { console.error(e) } }
             async function fetchAccessCodes() { try { const r = await fetch(`${API_BASE}/data/access_codes`, { headers: { 'Authorization': `Bearer ${token}` } }); const c = await r.json(); if (Array.isArray(c)) document.getElementById('access-code-list').innerHTML = c.map(x => `<tr class="border-b border-gray-50 ${x.is_active ? '' : 'opacity-40'}"><td class="py-4 font-bold text-gray-600">${x.school_name}</td><td class="py-4 font-mono text-rose-500 font-bold tracking-wider">${x.code}</td><td class="py-4 capitalize text-gray-500 font-medium">${x.type}</td><td class="py-4 text-center"><span class="${x.is_active ? 'text-green-500' : 'text-red-400 animate-pulse'} font-extrabold text-xs uppercase tracking-wider">${x.is_active ? 'Active' : 'Revoked'}</span></td><td class="py-4 text-right space-x-2">${x.is_active ? `<button onclick="toggleCode(${x.id},false)" class="text-red-500 hover:bg-red-50 px-3 py-1 rounded-lg text-xs font-bold transition-colors">REVOKE</button>` : `<button onclick="toggleCode(${x.id},true)" class="text-green-500 hover:bg-green-50 px-3 py-1 rounded-lg text-xs font-bold transition-colors">ACTIVATE</button>`}</td></tr>`).join(''); } catch (e) { console.error(e) } }
-            async function fetchSchoolsManage() { try { const r = await fetch(`${API_BASE}/data/schools`, { headers: { 'Authorization': `Bearer ${token}` } }); const d = await r.json(); document.getElementById('school-list-body').innerHTML = Array.isArray(d) ? d.map(s => `<tr class="hover:bg-gray-50/50 group border-b border-gray-50"><td class="p-4 font-bold text-gray-700">${s.name}</td><td class="p-4"><select onchange="updateSchoolMeta(${s.id},'priority',this.value)" class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all h-8 py-1 px-2 text-xs font-bold uppercase ${s.priority === 'High' ? 'text-rose-500' : 'text-gray-500'}"><option value="Normal" ${s.priority === 'Normal' ? 'selected' : ''}>Normal Priority</option><option value="High" ${s.priority === 'High' ? 'selected' : ''}>High Priority</option><option value="Low" ${s.priority === 'Low' ? 'selected' : ''}>Low Priority</option></select></td><td class="p-4"><select onchange="updateSchoolMeta(${s.id},'status',this.value)" class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all h-8 py-1 px-2 text-xs font-bold uppercase w-full"><option value="Pending" ${!s.status || s.status === 'Pending' ? 'selected' : ''}>Pending</option><option value="Measurements" ${s.status === 'Measurements' ? 'selected' : ''}>Measurements</option><option value="Production" ${s.status === 'Production' ? 'selected' : ''}>Production</option><option value="Delivered" ${s.status === 'Delivered' ? 'selected' : ''}>Delivered</option></select></td><td class="p-4 text-right"><button onclick="viewSchoolStudents('${s.name}')" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold px-4 py-2 rounded-lg transition-colors shadow-sm">VIEW STUDENTS</button></td></tr>`).join('') : ''; } catch (e) { console.error(e) } }
+            async function fetchSchoolsManage() { try { const r = await fetch(`${API_BASE}/data/schools`, { headers: { 'Authorization': `Bearer ${token}` } }); const d = await r.json(); document.getElementById('school-list-body').innerHTML = Array.isArray(d) ? d.map(s => `<tr class="hover:bg-gray-50/50 group border-b border-gray-50"><td class="p-4 font-bold text-gray-700">${s.name}</td><td class="p-4"><select onchange="updateSchoolMeta(${s.id},'priority',this.value)" class="clay-input h-8 py-1 px-2 text-xs font-bold uppercase ${s.priority === 'High' ? 'text-rose-500' : 'text-gray-500'}"><option value="Normal" ${s.priority === 'Normal' ? 'selected' : ''}>Normal Priority</option><option value="High" ${s.priority === 'High' ? 'selected' : ''}>High Priority</option><option value="Low" ${s.priority === 'Low' ? 'selected' : ''}>Low Priority</option></select></td><td class="p-4"><select onchange="updateSchoolMeta(${s.id},'status',this.value)" class="clay-input h-8 py-1 px-2 text-xs font-bold uppercase w-full"><option value="Pending" ${!s.status || s.status === 'Pending' ? 'selected' : ''}>Pending</option><option value="Measurements" ${s.status === 'Measurements' ? 'selected' : ''}>Measurements</option><option value="Production" ${s.status === 'Production' ? 'selected' : ''}>Production</option><option value="Delivered" ${s.status === 'Delivered' ? 'selected' : ''}>Delivered</option></select></td><td class="p-4 text-right"><button onclick="viewSchoolStudents('${s.name}')" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold px-4 py-2 rounded-lg transition-colors shadow-sm">VIEW STUDENTS</button></td></tr>`).join('') : ''; } catch (e) { console.error(e) } }
 
             async function updateSchoolMeta(id, f, v) { await fetch(`${API_BASE}/data/schools/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ [f]: v }) }); }
             async function viewSchoolStudents(n) { switchTab('data'); await fetchAllStudents(); document.getElementById('date-search').value = n; renderGlobalTable(); }
@@ -866,8 +908,8 @@
                 if (showCols.length > 0) {
                     subRow.classList.remove('hidden');
                     subRow.innerHTML = `
-                    <th colspan="4" class="bg-gray-100/30 border-r border-gray-200"></th>
-                    ${showCols.map(c => `<th class="p-2 text-center border-x border-gray-200 text-amber-600 bg-amber-50/50 text-xs font-bold">${c}</th>`).join('')}
+                    <th colspan="4" class="bg-gray-100/30 border-r border-white/60"></th>
+                    ${showCols.map(c => `<th class="p-2 text-center border-x border-white/60 text-amber-600 bg-amber-50/50 text-xs font-bold">${c}</th>`).join('')}
                     <th></th>
                 `;
                 } else {
@@ -886,23 +928,23 @@
                     }
 
                     return `<tr class="hover:bg-blue-50/30 transition-colors group">
-                    <td class="p-4 border-b border-gray-100 sticky left-0 bg-white/50 backdrop-blur-sm z-10">
+                    <td class="p-4 border-b border-white/50 sticky left-0 bg-white/50 backdrop-blur-sm z-10">
                         <div class="font-bold text-gray-700">${s.school_name}</div>
                         <div class="text-[10px] text-gray-400 font-bold uppercase">${s.school_priority || 'Normal'}</div>
                     </td>
-                    <td class="p-4 border-b border-gray-100">
+                    <td class="p-4 border-b border-white/50">
                         <div class="font-bold text-gray-700">${s.name}</div>
                         <div class="text-xs text-gray-400 font-medium">Roll: ${s.roll_no || '-'}</div>
                     </td>
-                    <td class="p-4 border-b border-gray-100">
+                    <td class="p-4 border-b border-white/50">
                         <div class="text-sm font-medium text-gray-600">Class ${s.class || '-'} ${s.section || ''}</div>
                         <div class="text-xs text-gray-400">${s.house || ''} ${s.gender ? '• ' + s.gender : ''}</div>
                     </td>
-                    <td class="p-4 border-b border-gray-100 text-xs font-mono text-gray-500">
+                    <td class="p-4 border-b border-white/50 text-xs font-mono text-gray-500">
                         ${s.pattern_name ? `<span class="bg-indigo-50 text-indigo-500 px-3 py-1 rounded-full font-bold shadow-sm text-[10px] uppercase tracking-wider">${s.pattern_name}</span>` : '-'}
                     </td>
                     ${measCells}
-                    <td class="p-4 border-b border-gray-100 text-center">
+                    <td class="p-4 border-b border-white/50 text-center">
                         <span class="px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wide shadow-sm ${s.is_packed ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'}">${s.is_packed ? 'PACKED' : 'PENDING'}</span>
                     </td>
                 </tr>`;
@@ -919,9 +961,9 @@
             function renderCharts() {
                 const p = globalStudents.filter(s => s.is_packed).length, pe = globalStudents.length - p;
                 // Destroy exists?
-                new Chart(document.getElementById('chart-packing'), { type: 'doughnut', data: { labels: ['Packed', 'Pending'], datasets: [{ data: [p, pe], backgroundColor: ['#10b981', '#f59e0b'], borderWidth: 0 }] }, options: { maintainAspectRatio: false } });
+                new Chart(document.getElementById('chart-packing'), { type: 'doughnut', data: { labels: ['Packed', 'Pending'], datasets: [{ data: [p, pe], backgroundColor: ['#A8E6CF', '#FFD3B6'], borderWidth: 0 }] }, options: { maintainAspectRatio: false } });
                 const sc = {}; globalStudents.forEach(s => { sc[s.school_name] = (sc[s.school_name] || 0) + 1 });
-                new Chart(document.getElementById('chart-schools'), { type: 'bar', data: { labels: Object.keys(sc), datasets: [{ label: 'Student Count', data: Object.values(sc), backgroundColor: '#1c1917', borderRadius: 4 }] }, options: { maintainAspectRatio: false, scales: { y: { beginAtZero: true } } } });
+                new Chart(document.getElementById('chart-schools'), { type: 'bar', data: { labels: Object.keys(sc), datasets: [{ label: 'Student Count', data: Object.values(sc), backgroundColor: '#AA96DA', borderRadius: 4 }] }, options: { maintainAspectRatio: false, scales: { y: { beginAtZero: true } } } });
             }
 
             async function createUser(e) { e.preventDefault(); try { const r = await fetch(`${API_BASE}/data/users/create`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify(Object.fromEntries(new FormData(e.target).entries())) }); if (r.ok) { alert("User Created!"); e.target.reset(); fetchUsers(); } else alert((await r.json()).error); } catch (e) { alert(e.message); } }
@@ -1097,7 +1139,7 @@
 
                 Object.values(schools).sort((a, b) => b.open - a.open).forEach(s => {
                     const div = document.createElement('div');
-                    div.className = "bg-white border border-gray-200 shadow-sm rounded-xl p-6 rounded-xl hover:shadow-xl transition-all cursor-pointer border hover:border-rose-300 relative group overflow-hidden";
+                    div.className = "clay-card p-6 rounded-xl hover:shadow-xl transition-all cursor-pointer border hover:border-rose-300 relative group overflow-hidden";
                     div.onclick = () => openSchoolComplaints(s);
 
                     div.innerHTML = `
@@ -1212,7 +1254,7 @@
                     try { images = JSON.parse(c.image_url || '[]'); } catch (e) { if (c.image_url) images = [c.image_url]; }
 
                     return `
-                    <div class="bg-white border border-gray-200 shadow-sm rounded-xl p-6 mb-4 animate-in slide-in-from-bottom-2 duration-300">
+                    <div class="clay-card p-6 mb-4 animate-in slide-in-from-bottom-2 duration-300">
                          <div class="flex justify-between items-start mb-4">
                              <div>
                                  <span class="text-[10px] bg-gray-100 text-gray-400 px-2 py-1 rounded uppercase font-bold tracking-wider">${new Date(c.created_at).toLocaleDateString()}</span>
@@ -1220,7 +1262,7 @@
                                  <div class="text-xs text-gray-400 font-medium">${c.class || ''} ${c.section || ''} ${c.house ? '• ' + c.house : ''} ${c.gender ? '• ' + c.gender : ''}</div>
                              </div>
                              <div class="text-right">
-                                 <select onchange="updateTicketStatus(${c.id}, this.value)" class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all text-[10px] h-8 py-1 font-bold uppercase ${isResolved ? 'text-emerald-500' : 'text-rose-500'}">
+                                 <select onchange="updateTicketStatus(${c.id}, this.value)" class="clay-input text-[10px] h-8 py-1 font-bold uppercase ${isResolved ? 'text-emerald-500' : 'text-rose-500'}">
                                      <option value="Open" ${!isResolved ? 'selected' : ''}>Open</option>
                                      <option value="Resolved" ${isResolved ? 'selected' : ''}>Resolved</option>
                                  </select>
@@ -1228,7 +1270,7 @@
                          </div>
                          
                          <!-- Issue Specs -->
-                         <div class="bg-gray-50/50 p-4 rounded-xl border border-gray-100 mb-4 text-xs">
+                         <div class="bg-gray-50/50 p-4 rounded-xl border border-white/50 mb-4 text-xs">
                              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                   <div>
                                      <span class="block font-bold text-gray-400 uppercase text-[10px] mb-1">Patterns</span>
@@ -1247,7 +1289,7 @@
                          ${images.length > 0 ? `<div class="flex gap-2 overflow-x-auto pb-2">${images.map(u => `<img src="${u}" onclick="window.open('${u}')" class="h-16 w-16 rounded-lg object-cover shadow-sm cursor-pointer hover:shadow-md transition-shadow">`).join('')}</div>` : ''}
     
                          <!-- Actions -->
-                         <div class="border-t border-gray-100 pt-4 mt-2">
+                         <div class="border-t border-white/50 pt-4 mt-2">
                              ${c.reply ? `<div class="p-3 bg-blue-50/50 rounded-lg border border-blue-100"><p class="text-xs text-blue-800 font-medium"><span class="font-bold uppercase text-[10px] mr-2">Admin Reply:</span> ${c.reply}</p></div>` : `<button onclick="openReplyModal(${c.id}, '${c.school_name}')" class="text-xs font-bold text-rose-500 hover:text-rose-600 uppercase tracking-wider flex items-center gap-1">Reply to School</button>`}
                              
                          </div>
@@ -1393,17 +1435,16 @@
         <!-- REPLY MODAL -->
         <div id="reply-modal"
             class="fixed inset-0 bg-gray-500/30 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
-            <div class="bg-white border border-gray-200 shadow-sm rounded-xl w-full max-w-lg p-8">
+            <div class="clay-card w-full max-w-lg p-8">
                 <h3 class="text-xl font-bold text-gray-700 mb-2">Reply to Complaint</h3>
                 <p class="text-xs text-gray-400 mb-6 font-medium" id="reply-school-name">School Name</p>
-                <textarea id="reply-text" rows="4"
-                    class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all w-full p-4 text-sm"
+                <textarea id="reply-text" rows="4" class="clay-input w-full p-4 text-sm"
                     placeholder="Write your response here..."></textarea>
                 <div class="flex justify-end gap-4 mt-6">
                     <button onclick="closeReplyModal()"
                         class="px-4 py-2 text-xs font-bold text-gray-500 hover:text-gray-700 uppercase tracking-wider">CANCEL</button>
                     <button onclick="submitReply()"
-                        class="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 font-medium shadow-sm transition-colors-primary px-6 py-3 text-xs font-bold rounded-lg shadow-lg uppercase tracking-wider">SEND
+                        class="clay-btn-primary px-6 py-3 text-xs font-bold rounded-lg shadow-lg uppercase tracking-wider">SEND
                         REPLY</button>
                 </div>
             </div>
