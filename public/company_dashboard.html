@@ -333,8 +333,9 @@
         <!-- 1. OVERVIEW -->
         <div id="view-overview" class="space-y-8 fade-in">
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                <!-- Stat Card 1 -->
-                <div class="clay-card p-6 flex flex-col justify-between h-40 relative overflow-hidden group">
+                <!-- Stat Card 1: Total Students -->
+                <div
+                    class="clay-card p-6 flex flex-col justify-between h-40 relative overflow-hidden group bg-gradient-to-br from-white to-blue-50/50">
                     <div class="flex justify-between items-start">
                         <div
                             class="w-12 h-12 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center text-xl shadow-sm">
@@ -345,15 +346,17 @@
                             </svg>
                         </div>
                         <span
-                            class="bg-green-100 text-green-600 px-2 py-1 rounded-lg text-[10px] font-bold uppercase">+12%</span>
+                            class="bg-emerald-400 text-white px-3 py-1 rounded-full text-[10px] font-bold uppercase shadow-md">+12%</span>
                     </div>
                     <div>
                         <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Students</p>
                         <p class="text-4xl font-extrabold text-gray-800" id="stat-students">0</p>
                     </div>
                 </div>
-                <!-- Stat Card 2 -->
-                <div class="clay-card p-6 flex flex-col justify-between h-40 relative overflow-hidden group">
+
+                <!-- Stat Card 2: Orders Pending -->
+                <div
+                    class="clay-card p-6 flex flex-col justify-between h-40 relative overflow-hidden group bg-gradient-to-br from-white to-orange-50/50">
                     <div class="flex justify-between items-start">
                         <div
                             class="w-12 h-12 rounded-full bg-orange-50 text-orange-500 flex items-center justify-center text-xl shadow-sm">
@@ -363,15 +366,17 @@
                             </svg>
                         </div>
                         <span
-                            class="bg-orange-100 text-orange-600 px-2 py-1 rounded-lg text-[10px] font-bold uppercase">Pending</span>
+                            class="bg-orange-400 text-white px-3 py-1 rounded-full text-[10px] font-bold uppercase shadow-md">Pending</span>
                     </div>
                     <div>
                         <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Orders Pending</p>
                         <p class="text-4xl font-extrabold text-gray-800" id="stat-pending">0</p>
                     </div>
                 </div>
-                <!-- Stat Card 3 -->
-                <div class="clay-card p-6 flex flex-col justify-between h-40 relative overflow-hidden group">
+
+                <!-- Stat Card 3: Completed (Packed) -->
+                <div
+                    class="clay-card p-6 flex flex-col justify-between h-40 relative overflow-hidden group bg-gradient-to-br from-white to-emerald-50/50">
                     <div class="flex justify-between items-start">
                         <div
                             class="w-12 h-12 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center text-xl shadow-sm">
@@ -380,16 +385,17 @@
                                     d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                             </svg>
                         </div>
-                        <span
-                            class="bg-emerald-100 text-emerald-600 px-2 py-1 rounded-lg text-[10px] font-bold uppercase">Done</span>
+                        <!-- Badge removed to match screenshot emptiness, or add 'Done' if desired? Screenshot shows nothing. -->
                     </div>
                     <div>
-                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Packed Units</p>
+                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Completed</p>
                         <p class="text-4xl font-extrabold text-gray-800" id="stat-packed">0</p>
                     </div>
                 </div>
-                <!-- Stat Card 4 -->
-                <div class="clay-card p-6 flex flex-col justify-between h-40 relative overflow-hidden group">
+
+                <!-- Stat Card 4: Total Schools -->
+                <div
+                    class="clay-card p-6 flex flex-col justify-between h-40 relative overflow-hidden group bg-gradient-to-br from-white to-rose-50/50">
                     <div class="flex justify-between items-start">
                         <div
                             class="w-12 h-12 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center text-xl shadow-sm">
