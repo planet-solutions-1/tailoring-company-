@@ -14,100 +14,47 @@
         href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap"
         rel="stylesheet">
     <style>
-        :root {
-            --clay-bg: #E0E5EC;
-            --clay-surface: #E0E5EC;
-            --clay-text: #4A5568;
-            --clay-primary: #6C63FF;
-            /* Soft Purple */
-            --shadow-light: #ffffff;
-            --shadow-dark: #a3b1c6;
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 
         body {
+            font-family: 'Inter', sans-serif;
+            background-color: #F9FAFB;
+            /* Gray 50 */
+            color: #111827;
+            /* Gray 900 */
+        }
+
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
             font-family: 'Poppins', sans-serif;
-            background-color: var(--clay-bg);
-            color: var(--clay-text);
-            overflow: hidden;
-            /* For dashboard */
         }
 
-        /* Clay Utilities */
-        .clay-card {
-            background-color: var(--clay-surface);
-            border-radius: 20px;
-            box-shadow: 9px 9px 16px rgba(163, 177, 198, 0.6),
-                -9px -9px 16px rgba(255, 255, 255, 0.5);
-            border: 1px solid rgba(255, 255, 255, 0.2);
+        /* Utility Transitions */
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out;
         }
 
-        .clay-card-inner {
-            /* For pressed look or highlighted areas */
-            border-radius: 15px;
-            box-shadow: inset 6px 6px 10px 0 rgba(163, 177, 198, 0.7),
-                inset -6px -6px 10px 0 rgba(255, 255, 255, 0.8);
-            background-color: var(--clay-surface);
-        }
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(5px);
+            }
 
-        .clay-sidebar {
-            background-color: var(--clay-surface);
-            box-shadow: 12px 12px 24px rgba(163, 177, 198, 0.6),
-                -12px -12px 24px rgba(255, 255, 255, 0.5);
-        }
-
-        .clay-btn {
-            border-radius: 50px;
-            background: var(--clay-surface);
-            box-shadow: 6px 6px 10px 0 rgba(163, 177, 198, 0.6),
-                -6px -6px 10px 0 rgba(255, 255, 255, 0.5);
-            transition: all 0.2s ease;
-            color: #555;
-            font-weight: 600;
-        }
-
-        .clay-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 8px 8px 14px 0 rgba(163, 177, 198, 0.7),
-                -8px -8px 14px 0 rgba(255, 255, 255, 0.6);
-            color: var(--clay-primary);
-        }
-
-        .clay-btn:active,
-        .clay-btn.active {
-            box-shadow: inset 4px 4px 8px 0 rgba(163, 177, 198, 0.7),
-                inset -4px -4px 8px 0 rgba(255, 255, 255, 0.8);
-            transform: translateY(0);
-            color: var(--clay-primary);
-        }
-
-        .clay-btn-primary {
-            background: var(--clay-primary);
-            color: white !important;
-            box-shadow: 6px 6px 10px 0 rgba(108, 99, 255, 0.4),
-                -6px -6px 10px 0 rgba(255, 255, 255, 0.5);
-        }
-
-        .clay-btn-primary:active {
-            box-shadow: inset 3px 3px 6px 0 rgba(0, 0, 0, 0.2);
-        }
-
-        .clay-input {
-            width: 100%;
-            border: none;
-            outline: none;
-            background: transparent;
-            border-radius: 12px;
-            padding: 12px 16px;
-            box-shadow: inset 4px 4px 8px rgba(163, 177, 198, 0.6),
-                inset -4px -4px 8px rgba(255, 255, 255, 0.8);
-            color: var(--clay-text);
-            font-family: 'Nunito', sans-serif;
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         /* Scrollbar */
         ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
+            width: 6px;
+            height: 6px;
         }
 
         ::-webkit-scrollbar-track {
@@ -115,94 +62,72 @@
         }
 
         ::-webkit-scrollbar-thumb {
-            background: #cbd5e0;
-            border-radius: 4px;
+            background: #E5E7EB;
+            border-radius: 3px;
         }
 
         ::-webkit-scrollbar-thumb:hover {
-            background: #a0aec0;
-        }
-
-        /* Floating Animation */
-        @keyframes float {
-            0% {
-                transform: translateY(0px);
-            }
-
-            50% {
-                transform: translateY(-5px);
-            }
-
-            100% {
-                transform: translateY(0px);
-            }
-        }
-
-        .animate-float {
-            animation: float 6s ease-in-out infinite;
-        }
-
-        /* Font overrides */
-        h1,
-        h2,
-        h3,
-        h4,
-        th {
-            font-family: 'Nunito', sans-serif;
-            font-weight: 800;
-            color: #2D3748;
+            background: #D1D5DB;
         }
     </style>
 </head>
 
-<body class="h-screen flex flex-col md:flex-row overflow-hidden text-slate-600">
+<body
+    class="bg-gray-50 text-gray-900 h-screen flex flex-col md:flex-row overflow-hidden selection:bg-gray-200 selection:text-gray-900">
 
     <!-- Mobile Header -->
-    <div class="md:hidden clay-card m-2 p-4 flex justify-between items-center z-50 rounded-2xl">
-        <h1 class="text-xl font-bold flex items-center gap-2 text-indigo-500">
-            <span class="text-3xl">🟣</span> Planet
+    <div class="md:hidden bg-white border-b border-gray-200 p-4 flex justify-between items-center z-50">
+        <h1 class="text-xl font-bold text-gray-900 flex items-center gap-2">
+            <span class="w-8 h-8 rounded-lg bg-gray-900 text-white flex items-center justify-center font-bold">P</span>
+            Planet Admin
         </h1>
-        <button onclick="toggleSidebar()" class="clay-btn p-2 rounded-full">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                stroke-linecap="round" stroke-linejoin="round" class="text-gray-500">
-                <line x1="3" y1="12" x2="21" y2="12"></line>
-                <line x1="3" y1="6" x2="21" y2="6"></line>
-                <line x1="3" y1="18" x2="21" y2="18"></line>
+        <button onclick="toggleSidebar()" class="p-2 text-gray-500 hover:bg-gray-100 rounded-lg">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16">
+                </path>
             </svg>
         </button>
     </div>
 
     <!-- Backdrop -->
     <div id="sidebar-backdrop" onclick="toggleSidebar()"
-        class="fixed inset-0 bg-black/20 z-30 hidden md:hidden backdrop-blur-sm opacity-0 transition-opacity duration-300">
+        class="fixed inset-0 bg-gray-900/20 backdrop-blur-sm z-40 hidden opacity-0 transition-opacity duration-300 md:hidden">
     </div>
 
-    <!-- Floating Sidebar -->
+    <!-- Sidebar -->
     <aside id="sidebar"
-        class="fixed inset-y-4 left-4 z-40 w-64 clay-sidebar rounded-3xl text-gray-500 flex flex-col transition-transform duration-300 transform -translate-x-[120%] md:translate-x-0 md:relative md:inset-auto md:m-6 md:mr-0">
+        class="fixed inset-y-0 left-0 w-72 bg-white border-r border-gray-200 transform -translate-x-full md:translate-x-0 transition-transform duration-300 z-50 flex flex-col">
 
-        <div class="p-8 pb-4">
-            <h1 class="text-2xl font-bold flex items-center gap-2 text-gray-700 tracking-wide">
-                <span class="text-3xl animate-float inline-block">🟣</span> Planet
-            </h1>
-            <p class="text-xs text-gray-400 mt-2 font-medium tracking-wider uppercase ml-1">Clay Command v5.2</p>
+        <!-- Brand -->
+        <div class="p-6 border-b border-gray-100 flex items-center gap-3">
+            <div
+                class="w-10 h-10 rounded-xl bg-gray-900 text-white flex items-center justify-center text-xl font-bold shadow-md">
+                P
+            </div>
+            <div>
+                <h1 class="text-lg font-bold text-gray-900 tracking-tight">Planet Solutions</h1>
+                <p class="text-xs text-gray-500 font-medium">Administration</p>
+            </div>
         </div>
 
         <!-- User Profile Mini -->
-        <div class="mx-6 p-4 clay-card-inner flex items-center gap-3 mb-4">
-            <div
-                class="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-300 to-purple-300 shadow-inner flex items-center justify-center text-white font-bold text-lg">
-                A</div>
+        <div class="p-4 bg-gray-50 border-b border-gray-100 flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold">
+                A
+            </div>
             <div>
-                <p class="text-sm font-bold text-gray-700">Admin</p>
-                <p class="text-[10px] text-green-500 font-bold uppercase tracking-wider">● Online</p>
+                <p class="text-sm font-bold text-gray-900">Admin User</p>
+                <div class="flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                    <p class="text-xs text-green-600 font-medium font-mono uppercase">Online</p>
+                </div>
             </div>
         </div>
 
         <nav class="flex-1 px-4 space-y-3 overflow-y-auto py-2">
             <button onclick="switchTab('overview')" id="nav-overview"
-                class="clay-btn w-full flex items-center gap-4 px-6 py-3 text-sm active">
-                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <rect x="3" y="3" width="7" height="7"></rect>
                     <rect x="14" y="3" width="7" height="7"></rect>
                     <rect x="14" y="14" width="7" height="7"></rect>
@@ -211,8 +136,8 @@
                 Overview
             </button>
             <button onclick="switchTab('data')" id="nav-data"
-                class="clay-btn w-full flex items-center gap-4 px-6 py-3 text-sm">
-                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path
                         d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z">
                     </path>
@@ -222,46 +147,50 @@
                 Tailoring Data
             </button>
             <button onclick="switchTab('users')" id="nav-users"
-                class="clay-btn w-full flex items-center gap-4 px-6 py-3 text-sm">
-                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                    <circle cx="9" cy="7" r="4" />
-                    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                 </svg>
-                Users
+                User Management
             </button>
             <button onclick="switchTab('access')" id="nav-access"
-                class="clay-btn w-full flex items-center gap-4 px-6 py-3 text-sm">
-                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                 </svg>
                 Access Codes
             </button>
-            <button onclick="switchTab('reports')" id="nav-reports"
-                class="clay-btn w-full flex items-center gap-4 px-6 py-3 text-sm">
-                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                    <polyline points="14 2 14 8 20 8" />
-                    <line x1="16" y1="13" x2="8" y2="13" />
-                    <line x1="16" y1="17" x2="8" y2="17" />
-                    <polyline points="10 9 9 9 8 9" />
-                </svg>
-                Reports
-            </button>
             <button onclick="switchTab('schools')" id="nav-schools"
-                class="clay-btn w-full flex items-center gap-4 px-6 py-3 text-sm">
-                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path d="M3 21h18M5 21V7l8-4 8 4v14M8 21v-9a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v9" />
+                class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 21h18"></path>
+                    <path d="M5 21V7l8-4 8 4v14"></path>
+                    <path d="M13 10V7"></path>
+                    <path d="M17 14v-2"></path>
                 </svg>
                 Schools
             </button>
+            <button onclick="switchTab('reports')" id="nav-reports"
+                class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                    <polyline points="10 9 9 9 8 9"></polyline>
+                </svg>
+                Reports
+            </button>
             <button onclick="switchTab('complaints')" id="nav-complaints"
-                class="clay-btn w-full flex items-center gap-4 px-6 py-3 text-sm">
-                <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                class="nav-item w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-colors">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path
-                        d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+                        d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z">
+                    </path>
                 </svg>
                 Complaints
             </button>
@@ -269,7 +198,7 @@
             <div class="h-px bg-gray-300/50 mx-4 my-2"></div>
 
             <button onclick="window.open('pattern_view.html', '_blank')"
-                class="clay-btn w-full flex items-center gap-4 px-6 py-3 text-sm text-indigo-400">
+                class="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 font-medium shadow-sm transition-colors w-full flex items-center gap-4 px-6 py-3 text-sm text-indigo-400">
                 <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <rect x="3" y="3" width="7" height="7"></rect>
                     <rect x="14" y="3" width="7" height="7"></rect>
@@ -282,24 +211,28 @@
         </nav>
         <div class="p-6">
             <button onclick="logout()"
-                class="w-full clay-btn py-3 text-xs uppercase tracking-wider text-red-400 hover:text-red-500 font-bold">Sign
+                class="w-full py-2.5 rounded-lg border border-gray-200 text-xs font-bold text-gray-500 hover:bg-red-50 hover:text-red-500 hover:border-red-200 transition-colors uppercase tracking-wider">Sign
                 Out</button>
         </div>
     </aside>
 
-    <main class="flex-1 overflow-y-auto p-4 md:p-8 relative">
+    <div class="flex-1 flex flex-col h-screen overflow-hidden relative">
         <!-- Header -->
-        <header class="flex flex-col md:flex-row justify-between md:items-center gap-4 mb-8">
-            <div class="animate-float" style="animation-duration: 4s;">
-                <h2 id="page-title" class="text-3xl font-extrabold text-gray-700">System Overview</h2>
-                <p id="page-subtitle" class="text-gray-400 mt-2 text-sm font-medium">Welcome back to your clay command
-                    center.</p>
+        <header class="bg-white border-b border-gray-200 px-8 py-5 flex justify-between items-center z-30">
+            <div>
+                <h2 id="page-title" class="text-2xl font-bold text-gray-900 tracking-tight">System Overview</h2>
+                <p id="page-subtitle" class="text-sm text-gray-500 mt-1">Manage Planet Solutions tailors & operations
+                </p>
             </div>
-            <div class="flex gap-4">
-                <button onclick="resetDatabase()"
-                    class="clay-btn px-6 py-2 text-xs text-red-400 font-bold hover:text-red-500">Reset DB</button>
+            <div class="flex gap-3">
+                <button onclick="if(confirm('Reset DB?')) resetDatabase()"
+                    class="px-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-600 text-sm font-bold hover:bg-gray-50 shadow-sm transition-colors">
+                    Reset DB
+                </button>
                 <button onclick="fixDatabase()"
-                    class="clay-btn px-6 py-2 text-xs text-blue-400 font-bold hover:text-blue-500">Repair DB</button>
+                    class="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-bold shadow-sm hover:bg-gray-800 transition-colors">
+                    Repair DB
+                </button>
             </div>
         </header>
 
@@ -307,7 +240,8 @@
         <div id="view-overview" class="space-y-8 fade-in">
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 <!-- Stat Card 1 -->
-                <div class="clay-card p-6 flex flex-col justify-between h-32 relative overflow-hidden group">
+                <div
+                    class="bg-white border border-gray-200 shadow-sm rounded-xl p-6 flex flex-col justify-between h-32 relative overflow-hidden group">
                     <div
                         class="absolute -right-4 -top-4 w-24 h-24 bg-blue-100 rounded-full opacity-50 blur-xl group-hover:bg-blue-200 transition-colors">
                     </div>
@@ -315,7 +249,8 @@
                     <p class="text-4xl font-extrabold text-gray-700 relative z-10" id="stat-students">0</p>
                 </div>
                 <!-- Stat Card 2 -->
-                <div class="clay-card p-6 flex flex-col justify-between h-32 relative overflow-hidden group">
+                <div
+                    class="bg-white border border-gray-200 shadow-sm rounded-xl p-6 flex flex-col justify-between h-32 relative overflow-hidden group">
                     <div
                         class="absolute -right-4 -top-4 w-24 h-24 bg-purple-100 rounded-full opacity-50 blur-xl group-hover:bg-purple-200 transition-colors">
                     </div>
@@ -323,7 +258,8 @@
                     <p class="text-4xl font-extrabold text-gray-700 relative z-10" id="stat-schools">0</p>
                 </div>
                 <!-- Stat Card 3 -->
-                <div class="clay-card p-6 flex flex-col justify-between h-32 relative overflow-hidden group">
+                <div
+                    class="bg-white border border-gray-200 shadow-sm rounded-xl p-6 flex flex-col justify-between h-32 relative overflow-hidden group">
                     <div
                         class="absolute -right-4 -top-4 w-24 h-24 bg-emerald-100 rounded-full opacity-50 blur-xl group-hover:bg-emerald-200 transition-colors">
                     </div>
@@ -332,7 +268,8 @@
                     <p class="text-4xl font-extrabold text-gray-700 relative z-10" id="stat-packed">0</p>
                 </div>
                 <!-- Stat Card 4 -->
-                <div class="clay-card p-6 flex flex-col justify-between h-32 relative overflow-hidden group">
+                <div
+                    class="bg-white border border-gray-200 shadow-sm rounded-xl p-6 flex flex-col justify-between h-32 relative overflow-hidden group">
                     <div
                         class="absolute -right-4 -top-4 w-24 h-24 bg-amber-100 rounded-full opacity-50 blur-xl group-hover:bg-amber-200 transition-colors">
                     </div>
@@ -342,12 +279,12 @@
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div class="clay-card p-6">
+                <div class="bg-white border border-gray-200 shadow-sm rounded-xl p-6">
                     <h3 class="text-lg font-bold text-gray-600 mb-6 flex items-center gap-2"><span
                             class="w-2 h-2 rounded-full bg-blue-400"></span> Packing Progress</h3>
                     <div class="flex-1 relative h-64"><canvas id="chart-packing"></canvas></div>
                 </div>
-                <div class="clay-card p-6">
+                <div class="bg-white border border-gray-200 shadow-sm rounded-xl p-6">
                     <h3 class="text-lg font-bold text-gray-600 mb-6 flex items-center gap-2"><span
                             class="w-2 h-2 rounded-full bg-purple-400"></span> School Enrollment</h3>
                     <div class="flex-1 relative h-64"><canvas id="chart-schools"></canvas></div>
@@ -365,7 +302,7 @@
                 </div>
                 <div class="flex gap-4">
                     <button onclick="downloadPDF()"
-                        class="clay-btn px-4 py-2 text-xs font-bold text-rose-500 uppercase flex items-center gap-2">
+                        class="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 font-medium shadow-sm transition-colors px-4 py-2 text-xs font-bold text-rose-500 uppercase flex items-center gap-2">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2">
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -377,7 +314,7 @@
                         Export PDF
                     </button>
                     <button onclick="downloadExcel()"
-                        class="clay-btn px-4 py-2 text-xs font-bold text-emerald-500 uppercase flex items-center gap-2">
+                        class="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 font-medium shadow-sm transition-colors px-4 py-2 text-xs font-bold text-emerald-500 uppercase flex items-center gap-2">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2">
                             <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
@@ -390,13 +327,14 @@
                 </div>
             </div>
 
-            <div class="clay-card p-6 flex flex-wrap gap-4 items-end sticky top-0 z-20">
+            <div
+                class="bg-white border border-gray-200 shadow-sm rounded-xl p-6 flex flex-wrap gap-4 items-end sticky top-0 z-20">
                 <!-- Filters Re-styled as Clay Inputs -->
                 <div class="w-full md:w-auto flex-1">
                     <label class="text-[10px] font-bold text-gray-400 uppercase ml-2 mb-1 block">Item Type</label>
                     <div class="relative">
                         <select id="filter-item" onchange="renderGlobalTable()"
-                            class="clay-input appearance-none font-bold text-gray-600 cursor-pointer">
+                            class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all appearance-none font-bold text-gray-600 cursor-pointer">
                             <option value="all">-- Select Item --</option>
                         </select>
                         <div
@@ -411,7 +349,8 @@
 
                 <div class="w-[47%] md:w-auto">
                     <label class="text-[10px] font-bold text-gray-400 uppercase ml-2 mb-1 block">Pattern</label>
-                    <select id="filter-pattern" onchange="renderGlobalTable()" class="clay-input text-sm h-10 py-2">
+                    <select id="filter-pattern" onchange="renderGlobalTable()"
+                        class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all text-sm h-10 py-2">
                         <option value="all">All</option>
                     </select>
                 </div>
@@ -419,18 +358,21 @@
                 <div class="w-[47%] md:w-24">
                     <label class="text-[10px] font-bold text-gray-400 uppercase ml-2 mb-1 block">Class</label>
                     <input type="text" id="filter-class" list="list-class" onchange="renderGlobalTable()"
-                        class="clay-input text-sm h-10 py-2" placeholder="All"><datalist id="list-class"></datalist>
+                        class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all text-sm h-10 py-2"
+                        placeholder="All"><datalist id="list-class"></datalist>
                 </div>
 
                 <div class="w-[47%] md:w-24">
                     <label class="text-[10px] font-bold text-gray-400 uppercase ml-2 mb-1 block">Sec</label>
                     <input type="text" id="filter-section" list="list-section" onchange="renderGlobalTable()"
-                        class="clay-input text-sm h-10 py-2" placeholder="All"><datalist id="list-section"></datalist>
+                        class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all text-sm h-10 py-2"
+                        placeholder="All"><datalist id="list-section"></datalist>
                 </div>
 
                 <div class="w-[47%] md:w-28">
                     <label class="text-[10px] font-bold text-gray-400 uppercase ml-2 mb-1 block">Gender</label>
-                    <select id="filter-gender" onchange="renderGlobalTable()" class="clay-input text-sm h-10 py-2">
+                    <select id="filter-gender" onchange="renderGlobalTable()"
+                        class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all text-sm h-10 py-2">
                         <option value="">All</option>
                         <option value="Male">Male</option>
                         <option value="Female">Female</option>
@@ -439,7 +381,8 @@
 
                 <div class="w-[47%] md:w-28">
                     <label class="text-[10px] font-bold text-gray-400 uppercase ml-2 mb-1 block">Priority</label>
-                    <select id="filter-priority" onchange="renderGlobalTable()" class="clay-input text-sm h-10 py-2">
+                    <select id="filter-priority" onchange="renderGlobalTable()"
+                        class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all text-sm h-10 py-2">
                         <option value="all">All</option>
                         <option value="High">High</option>
                         <option value="Normal">Normal</option>
@@ -448,7 +391,8 @@
                 </div>
                 <div class="w-[47%] md:w-28">
                     <label class="text-[10px] font-bold text-gray-400 uppercase ml-2 mb-1 block">Status</label>
-                    <select id="filter-packed" onchange="renderGlobalTable()" class="clay-input text-sm h-10 py-2">
+                    <select id="filter-packed" onchange="renderGlobalTable()"
+                        class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all text-sm h-10 py-2">
                         <option value="all">All</option>
                         <option value="packed">Packed</option>
                         <option value="pending">Pending</option>
@@ -458,11 +402,11 @@
                 <div class="w-full md:w-auto md:ml-auto">
                     <label class="text-[10px] font-bold text-gray-400 uppercase ml-2 mb-1 block">Search</label>
                     <input type="text" id="date-search" onkeyup="renderGlobalTable()" placeholder="Name / Roll No..."
-                        class="clay-input text-sm h-10 py-2 w-full md:w-48">
+                        class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all text-sm h-10 py-2 w-full md:w-48">
                 </div>
             </div>
 
-            <div class="clay-card overflow-hidden">
+            <div class="bg-white border border-gray-200 shadow-sm rounded-xl overflow-hidden">
                 <div class="overflow-x-auto h-[600px]">
                     <table class="w-full text-left border-collapse min-w-[1000px] whitespace-nowrap">
                         <thead
@@ -490,14 +434,14 @@
 
         <!-- 3. USER MANAGEMENT -->
         <div id="view-users" class="hidden fade-in max-w-5xl mx-auto space-y-8">
-            <div class="clay-card p-8 relative">
+            <div class="bg-white border border-gray-200 shadow-sm rounded-xl p-8 relative">
                 <div class="flex justify-between items-center mb-8 border-b border-gray-100 pb-6">
                     <div>
                         <h3 class="text-2xl font-bold text-gray-700">User Management</h3>
                         <p class="text-sm text-gray-400">Controls who can access the system.</p>
                     </div>
                     <button onclick="openSchoolModal()"
-                        class="clay-btn px-6 py-3 text-sm font-bold bg-gray-800 text-white shadow-lg hover:bg-gray-900 border-none">
+                        class="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 font-medium shadow-sm transition-colors px-6 py-3 text-sm font-bold bg-gray-800 text-white shadow-lg hover:bg-gray-900 border-none">
                         Register New School
                     </button>
                 </div>
@@ -507,16 +451,19 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label class="block text-xs font-bold text-gray-400 uppercase mb-2 ml-2">Username</label>
-                            <input type="text" name="username" required class="clay-input">
+                            <input type="text" name="username" required
+                                class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all">
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-gray-400 uppercase mb-2 ml-2">Password</label>
-                            <input type="text" name="password" required class="clay-input">
+                            <input type="text" name="password" required
+                                class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all">
                         </div>
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-400 uppercase mb-2 ml-2">Role</label>
-                        <select name="role" id="user-role" onchange="toggleSchoolSelect()" class="clay-input">
+                        <select name="role" id="user-role" onchange="toggleSchoolSelect()"
+                            class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all">
                             <option value="school">School Admin</option>
                             <option value="tailor">Tailor</option>
                             <option value="packing">Packing Unit</option>
@@ -526,16 +473,17 @@
                     <div id="school-select-wrapper">
                         <label class="block text-xs font-bold text-gray-400 uppercase mb-2 ml-2">Assign To
                             School</label>
-                        <select name="school_id" id="school-select" class="clay-input"></select>
+                        <select name="school_id" id="school-select"
+                            class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all"></select>
                     </div>
                     <button type="submit"
-                        class="w-full clay-btn-primary py-4 rounded-xl text-lg font-bold shadow-lg transition-transform active:scale-95">
+                        class="w-full px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 font-medium shadow-sm transition-colors-primary py-4 rounded-xl text-lg font-bold shadow-lg transition-transform active:scale-95">
                         Create Account
                     </button>
                 </form>
             </div>
 
-            <div class="clay-card p-8">
+            <div class="bg-white border border-gray-200 shadow-sm rounded-xl p-8">
                 <h3 class="text-lg font-bold text-gray-600 mb-6">Existing Accounts</h3>
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm min-w-[600px]">
@@ -556,36 +504,39 @@
 
         <!-- 4. ACCESS CODES -->
         <div id="view-access" class="hidden fade-in max-w-5xl mx-auto space-y-8">
-            <div class="clay-card p-8">
+            <div class="bg-white border border-gray-200 shadow-sm rounded-xl p-8">
                 <h3 class="text-xl font-bold text-gray-700 mb-6">Generate Secure Link</h3>
                 <div class="flex flex-col md:flex-row gap-6 items-end">
                     <div class="w-full md:flex-1">
                         <label class="block text-xs font-bold text-gray-400 uppercase mb-2 ml-2">Target School</label>
-                        <select id="access-school-select" class="clay-input"></select>
+                        <select id="access-school-select"
+                            class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all"></select>
                     </div>
                     <div class="w-full md:w-48">
                         <label class="block text-xs font-bold text-gray-400 uppercase mb-2 ml-2">Role Type</label>
-                        <select id="access-type" class="clay-input">
+                        <select id="access-type"
+                            class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all">
                             <option value="tailor">Tailor (Measurements)</option>
                             <option value="packing">Packing (Status)</option>
                         </select>
                     </div>
                     <div class="w-full md:w-32">
                         <label class="block text-xs font-bold text-gray-400 uppercase mb-2 ml-2">Expires In</label>
-                        <select id="access-expiry" class="clay-input">
+                        <select id="access-expiry"
+                            class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all">
                             <option value="24">24 Hours</option>
                             <option value="48">48 Hours</option>
                             <option value="168">7 Days</option>
                         </select>
                     </div>
                     <button onclick="generateCode()"
-                        class="w-full md:w-auto clay-btn-primary px-8 py-3 rounded-xl font-bold uppercase text-sm shadow-xl transition-transform active:scale-95">
+                        class="w-full md:w-auto px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 font-medium shadow-sm transition-colors-primary px-8 py-3 rounded-xl font-bold uppercase text-sm shadow-xl transition-transform active:scale-95">
                         Generate
                     </button>
                 </div>
             </div>
 
-            <div class="clay-card p-8">
+            <div class="bg-white border border-gray-200 shadow-sm rounded-xl p-8">
                 <h3 class="text-lg font-bold text-gray-600 mb-4">Active & Inactive Codes</h3>
                 <div class="overflow-x-auto">
                     <table class="w-full text-sm min-w-[600px]">
@@ -606,7 +557,7 @@
 
         <!-- 5. SCHOOLS -->
         <div id="view-schools" class="hidden fade-in max-w-5xl mx-auto space-y-8">
-            <div class="clay-card p-8">
+            <div class="bg-white border border-gray-200 shadow-sm rounded-xl p-8">
                 <div class="mb-6 border-b border-gray-100 pb-4">
                     <h3 class="text-2xl font-bold text-gray-700">School Metadata</h3>
                     <p class="text-gray-400 text-sm mt-1">Manage priority and production status for each school.</p>
@@ -631,7 +582,7 @@
         <!-- 6. REPORTS -->
         <div id="view-reports" class="hidden fade-in max-w-4xl mx-auto">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div class="clay-card p-10 text-center hover:scale-105 transition-transform cursor-pointer group"
+                <div class="bg-white border border-gray-200 shadow-sm rounded-xl p-10 text-center hover:scale-105 transition-transform cursor-pointer group"
                     onclick="downloadPDF()">
                     <div
                         class="w-20 h-20 bg-red-100/50 text-red-500 mx-auto rounded-full flex items-center justify-center mb-6 shadow-sm group-hover:bg-red-100 transition-colors">
@@ -640,7 +591,7 @@
                     <h3 class="font-bold text-xl text-gray-700">Download PDF Report</h3>
                     <p class="text-sm text-gray-400 mt-2">Full system summary formatted for printing.</p>
                 </div>
-                <div class="clay-card p-10 text-center hover:scale-105 transition-transform cursor-pointer group"
+                <div class="bg-white border border-gray-200 shadow-sm rounded-xl p-10 text-center hover:scale-105 transition-transform cursor-pointer group"
                     onclick="downloadExcel()">
                     <div
                         class="w-20 h-20 bg-green-100/50 text-emerald-500 mx-auto rounded-full flex items-center justify-center mb-6 shadow-sm group-hover:bg-green-100 transition-colors">
@@ -659,18 +610,19 @@
             <div class="grid grid-cols-1 md:grid-cols-6 gap-6">
                 <!-- Basic Counts -->
                 <div class="md:col-span-2 grid grid-cols-3 gap-4">
-                    <div class="clay-card p-4 flex flex-col justify-center items-center text-center">
+                    <div
+                        class="bg-white border border-gray-200 shadow-sm rounded-xl p-4 flex flex-col justify-center items-center text-center">
                         <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Total</p>
                         <p class="text-3xl font-extrabold text-gray-700 mt-1" id="c-stat-total">0</p>
                     </div>
                     <div
-                        class="clay-card p-4 flex flex-col justify-center items-center text-center relative overflow-hidden">
+                        class="bg-white border border-gray-200 shadow-sm rounded-xl p-4 flex flex-col justify-center items-center text-center relative overflow-hidden">
                         <div class="absolute top-0 left-0 w-1 h-full bg-amber-400"></div>
                         <p class="text-[10px] text-amber-500 font-bold uppercase tracking-widest">Open</p>
                         <p class="text-3xl font-extrabold text-gray-700 mt-1" id="c-stat-open">0</p>
                     </div>
                     <div
-                        class="clay-card p-4 flex flex-col justify-center items-center text-center relative overflow-hidden">
+                        class="bg-white border border-gray-200 shadow-sm rounded-xl p-4 flex flex-col justify-center items-center text-center relative overflow-hidden">
                         <div class="absolute top-0 left-0 w-1 h-full bg-emerald-400"></div>
                         <p class="text-[10px] text-emerald-500 font-bold uppercase tracking-widest">Done</p>
                         <p class="text-3xl font-extrabold text-gray-700 mt-1" id="c-stat-resolved">0</p>
@@ -678,14 +630,16 @@
                 </div>
 
                 <!-- Insight Cards -->
-                <div class="clay-card p-4 col-span-2 relative overflow-hidden">
+                <div
+                    class="bg-white border border-gray-200 shadow-sm rounded-xl p-4 col-span-2 relative overflow-hidden">
                     <div class="absolute top-0 left-0 w-full h-1 bg-rose-400"></div>
                     <p class="text-[10px] text-rose-500 font-bold uppercase tracking-widest mb-2">Needs Attention (Top
                         Pattern)</p>
                     <h4 class="font-bold text-gray-800 truncate text-lg" id="c-top-pattern">-</h4>
                     <p class="text-xs text-gray-400 font-medium" id="c-top-pattern-count">0 complaints</p>
                 </div>
-                <div class="clay-card p-4 col-span-2 relative overflow-hidden">
+                <div
+                    class="bg-white border border-gray-200 shadow-sm rounded-xl p-4 col-span-2 relative overflow-hidden">
                     <div class="absolute top-0 left-0 w-full h-1 bg-indigo-400"></div>
                     <p class="text-[10px] text-indigo-500 font-bold uppercase tracking-widest mb-2">Common Issue</p>
                     <h4 class="font-bold text-gray-800 truncate text-lg" id="c-top-issue">-</h4>
@@ -695,33 +649,37 @@
 
             <!-- B. Charts & Trends -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 h-96">
-                <div class="clay-card p-6 flex flex-col">
+                <div class="bg-white border border-gray-200 shadow-sm rounded-xl p-6 flex flex-col">
                     <h3 class="font-bold text-lg text-gray-600 mb-4">Top Defective Patterns</h3>
                     <div class="flex-1 relative"><canvas id="chart-patterns"></canvas></div>
                 </div>
-                <div class="clay-card p-6 flex flex-col">
+                <div class="bg-white border border-gray-200 shadow-sm rounded-xl p-6 flex flex-col">
                     <h3 class="font-bold text-lg text-gray-600 mb-4">Common Defect Types</h3>
                     <div class="flex-1 relative"><canvas id="chart-issues"></canvas></div>
                 </div>
             </div>
 
             <!-- C. Filters & Controls -->
-            <div class="clay-card p-6 flex flex-col md:flex-row gap-4 items-end">
+            <div
+                class="bg-white border border-gray-200 shadow-sm rounded-xl p-6 flex flex-col md:flex-row gap-4 items-end">
                 <div class="w-full md:w-auto flex-1">
                     <label class="block text-[10px] font-bold text-gray-400 uppercase mb-2 ml-2">Search School</label>
                     <input type="text" id="c-filter-school" onkeyup="renderComplaintDash()"
-                        placeholder="Type school name..." class="clay-input">
+                        placeholder="Type school name..."
+                        class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all">
                 </div>
                 <div class="w-full md:w-48">
                     <label class="block text-[10px] font-bold text-gray-400 uppercase mb-2 ml-2">Filter Pattern</label>
-                    <select id="c-filter-pattern" onchange="renderComplaintDash()" class="clay-input">
+                    <select id="c-filter-pattern" onchange="renderComplaintDash()"
+                        class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all">
                         <option value="all">All Patterns</option>
                         <!-- Populated JS -->
                     </select>
                 </div>
                 <div class="w-full md:w-32">
                     <label class="block text-[10px] font-bold text-gray-400 uppercase mb-2 ml-2">Gender</label>
-                    <select id="c-filter-gender" onchange="renderComplaintDash()" class="clay-input">
+                    <select id="c-filter-gender" onchange="renderComplaintDash()"
+                        class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all">
                         <option value="all">All</option>
                         <option value="Male">Boys</option>
                         <option value="Female">Girls</option>
@@ -729,7 +687,7 @@
                 </div>
                 <div class="flex gap-4">
                     <button onclick="downloadPDF()"
-                        class="clay-btn px-4 py-3 text-xs font-bold uppercase text-rose-500 flex items-center gap-2">
+                        class="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 font-medium shadow-sm transition-colors px-4 py-3 text-xs font-bold uppercase text-rose-500 flex items-center gap-2">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2">
                             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -741,7 +699,7 @@
                         PDF
                     </button>
                     <button onclick="downloadExcel()"
-                        class="clay-btn px-4 py-3 text-xs font-bold uppercase text-emerald-500 flex items-center gap-2">
+                        class="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 font-medium shadow-sm transition-colors px-4 py-3 text-xs font-bold uppercase text-emerald-500 flex items-center gap-2">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2">
                             <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
@@ -771,7 +729,7 @@
         <dialog id="ticketModal" class="bg-transparent z-50">
             <div class="fixed inset-0 bg-gray-500/30 backdrop-blur-sm flex items-center justify-center p-4">
                 <div
-                    class="clay-card w-full max-w-5xl h-[85vh] flex flex-col animate-in zoom-in-95 duration-200 outline-none">
+                    class="bg-white border border-gray-200 shadow-sm rounded-xl w-full max-w-5xl h-[85vh] flex flex-col animate-in zoom-in-95 duration-200 outline-none">
                     <!-- Header -->
                     <div class="p-6 border-b border-gray-100 flex justify-between items-center rounded-t-2xl">
                         <div>
@@ -780,7 +738,7 @@
                                 id="tm-school-stats">5 Open Tickets</p>
                         </div>
                         <button onclick="document.getElementById('ticketModal').close()"
-                            class="w-10 h-10 rounded-full clay-btn flex items-center justify-center text-gray-500 hover:text-red-500">
+                            class="w-10 h-10 rounded-full px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 font-medium shadow-sm transition-colors flex items-center justify-center text-gray-500 hover:text-red-500">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                 stroke-width="2">
                                 <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -798,132 +756,136 @@
             </div>
         </dialog>
 
-    </main>
+        </main>
 
-    <!-- SCHOOL REGISTRATION MODAL -->
-    <div id="school-modal"
-        class="fixed inset-0 bg-gray-500/30 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
-        <div class="clay-card w-full max-w-md p-8 transform transition-all scale-100">
-            <h3 class="text-xl font-bold mb-6 border-b border-gray-100 pb-4 text-gray-700">Register New School</h3>
-            <form onsubmit="registerSchool(event)" class="space-y-6">
-                <div>
-                    <label class="block text-xs font-bold text-gray-400 uppercase mb-2 ml-2">School Name</label>
-                    <input type="text" name="name" required placeholder="e.g. Galaxy High School" class="clay-input">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-400 uppercase mb-2 ml-2">Admin Username</label>
-                    <input type="text" name="username" required placeholder="admin_galaxy" class="clay-input">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-400 uppercase mb-2 ml-2">Password</label>
-                    <input type="password" name="password" required class="clay-input">
-                </div>
-                <div class="flex justify-end gap-4 mt-8">
-                    <button type="button" onclick="document.getElementById('school-modal').classList.add('hidden')"
-                        class="px-6 py-2 text-sm font-bold text-gray-500 hover:text-gray-700">CANCEL</button>
-                    <button type="submit"
-                        class="clay-btn-primary px-6 py-2 text-sm font-bold rounded-lg shadow-lg">REGISTER
-                        SCHOOL</button>
-                </div>
-            </form>
+        <!-- SCHOOL REGISTRATION MODAL -->
+        <div id="school-modal"
+            class="fixed inset-0 bg-gray-500/30 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+            <div
+                class="bg-white border border-gray-200 shadow-sm rounded-xl w-full max-w-md p-8 transform transition-all scale-100">
+                <h3 class="text-xl font-bold mb-6 border-b border-gray-100 pb-4 text-gray-700">Register New School</h3>
+                <form onsubmit="registerSchool(event)" class="space-y-6">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 uppercase mb-2 ml-2">School Name</label>
+                        <input type="text" name="name" required placeholder="e.g. Galaxy High School"
+                            class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 uppercase mb-2 ml-2">Admin Username</label>
+                        <input type="text" name="username" required placeholder="admin_galaxy"
+                            class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 uppercase mb-2 ml-2">Password</label>
+                        <input type="password" name="password" required
+                            class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all">
+                    </div>
+                    <div class="flex justify-end gap-4 mt-8">
+                        <button type="button" onclick="document.getElementById('school-modal').classList.add('hidden')"
+                            class="px-6 py-2 text-sm font-bold text-gray-500 hover:text-gray-700">CANCEL</button>
+                        <button type="submit"
+                            class="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 font-medium shadow-sm transition-colors-primary px-6 py-2 text-sm font-bold rounded-lg shadow-lg">REGISTER
+                            SCHOOL</button>
+                    </div>
+                </form>
+            </div>
         </div>
-    </div>
 
-    <!-- LOGIC -->
-    <script>
-        const API_BASE = '/api'; const token = sessionStorage.getItem('token'); if (!token) window.location.href = 'login.html';
-        let globalStudents = [], globalSchools = [], globalPatterns = [], dynamicFilters = {}, sidebarOpen = false;
-        function toggleSidebar() { sidebarOpen = !sidebarOpen; const s = document.getElementById('sidebar'), b = document.getElementById('sidebar-backdrop'); if (sidebarOpen) { s.classList.remove('-translate-x-[120%]'); b.classList.remove('hidden'); setTimeout(() => b.classList.remove('opacity-0'), 10); } else { s.classList.add('-translate-x-[120%]'); b.classList.add('opacity-0'); setTimeout(() => b.classList.add('hidden'), 300); } }
-        const boysItems = [{ name: "BOYS - FORMAL SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Male" }, { name: "BOYS - TRACK T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Male" }, { name: "BOYS - UNIFORM T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Male" }, { name: "BOYS - JERKIN", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Male" }, { name: "BOYS - PULLOVER", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Male" }, { name: "BOYS - FORMAL PANT", cols: ["L1", "L2"], type: "Male" }, { name: "BOYS - TRACK PANT", cols: ["L1", "L2"], type: "Male" }, { name: "BOYS - FORMAL SHORTS", cols: ["L3", "L2"], type: "Male" }, { name: "BOYS - TRACK SHORTS", cols: ["L3", "L2"], type: "Male" }, { name: "BOYS - PANT SPECIAL CASE", cols: ["L1", "L2", "L6", "L7"], type: "Male" }];
-        const girlsItems = [{ name: "GIRLS - FORMAL SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Female" }, { name: "GIRLS - TRACK T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Female" }, { name: "GIRLS - UNIFORM T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Female" }, { name: "GIRLS - JERKIN", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Female" }, { name: "GIRLS - FULL SLEEVE SHIRT", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Female" }, { name: "GIRLS - PULLOVER", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Female" }, { name: "GIRLS - KURTHA SHIRT", cols: ["U7", "U2", "U3", "U4", "U6"], type: "Female" }, { name: "GIRLS - SPECIAL FROCKS", cols: ["U7", "U2", "U3", "U4", "U6"], type: "Female" }, { name: "GIRLS - FORMAL PANT", cols: ["L1", "L2"], type: "Female" }, { name: "GIRLS - TRACK PANT", cols: ["L1", "L2"], type: "Female" }, { name: "GIRLS - TRACK SHORTS", cols: ["L3", "L2"], type: "Female" }, { name: "GIRLS - PINOFORE", cols: ["L4", "L2"], type: "Female" }, { name: "GIRLS - SKIRT", cols: ["L5", "L2"], type: "Female" }, { name: "GIRLS - PANT SPECIAL CASE", cols: ["L1", "L2", "L6", "L7"], type: "Female" }];
-        const allItems = [...boysItems, ...girlsItems];
-        async function init() { await Promise.all([fetchStats(), fetchAllStudents(), fetchSchoolsForSelect(), fetchGlobalPatterns()]); renderGlobalTable(); renderCharts(); populateDynamicFilters(); }
-        function switchTab(id) { document.querySelectorAll('main > div[id^="view-"]').forEach(d => d.classList.add('hidden')); document.getElementById(`view-${id}`).classList.remove('hidden'); document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active')); document.getElementById(`nav-${id}`).classList.add('active'); if (window.innerWidth < 768 && sidebarOpen) toggleSidebar(); if (id === 'access') fetchAccessCodes(); if (id === 'users') fetchUsers(); if (id === 'complaints') fetchComplaints(); if (id === 'schools') fetchSchoolsManage(); }
-        async function fetchStats() { try { const r = await fetch(`${API_BASE}/data/stats`, { headers: { 'Authorization': `Bearer ${token}` } }); const d = await r.json(); document.getElementById('stat-students').innerText = d.students || 0; document.getElementById('stat-schools').innerText = d.schools || 0; document.getElementById('stat-packed').innerText = d.packed || 0; document.getElementById('stat-pending').innerText = d.pending || 0; } catch (e) { console.error("Stats Error", e) } }
-        async function fetchAllStudents() { try { const r = await fetch(`${API_BASE}/data/all_students`, { headers: { 'Authorization': `Bearer ${token}` } }); const d = await r.json(); globalStudents = Array.isArray(d) ? d : []; } catch (e) { console.error("Student Fetch Error", e); globalStudents = []; } }
-        async function fetchGlobalPatterns() { try { const r = await fetch(`${API_BASE}/data/patterns/all`, { headers: { 'Authorization': `Bearer ${token}` } }); const d = await r.json(); globalPatterns = Array.isArray(d) ? d : []; document.getElementById('filter-pattern').innerHTML = '<option value="all">All Patterns</option>' + globalPatterns.map(p => `<option value="${p.id}">${p.name} (${p.school_name})</option>`).join(''); } catch (e) { console.error("Patterns Error", e); globalPatterns = []; } }
-        async function fetchSchoolsForSelect() { try { const r = await fetch(`${API_BASE}/data/schools`, { headers: { 'Authorization': `Bearer ${token}` } }); const d = await r.json(); globalSchools = Array.isArray(d) ? d : []; if (globalSchools.length > 0) { const o = globalSchools.map(s => `<option value="${s.id}">${s.name}</option>`).join(''); document.getElementById('school-select').innerHTML = o; document.getElementById('access-school-select').innerHTML = o; } } catch (e) { console.error("Schools Error", e); globalSchools = []; } }
+        <!-- LOGIC -->
+        <script>
+            const API_BASE = '/api'; const token = sessionStorage.getItem('token'); if (!token) window.location.href = 'login.html';
+            let globalStudents = [], globalSchools = [], globalPatterns = [], dynamicFilters = {}, sidebarOpen = false;
+            function toggleSidebar() { sidebarOpen = !sidebarOpen; const s = document.getElementById('sidebar'), b = document.getElementById('sidebar-backdrop'); if (sidebarOpen) { s.classList.remove('-translate-x-[120%]'); b.classList.remove('hidden'); setTimeout(() => b.classList.remove('opacity-0'), 10); } else { s.classList.add('-translate-x-[120%]'); b.classList.add('opacity-0'); setTimeout(() => b.classList.add('hidden'), 300); } }
+            const boysItems = [{ name: "BOYS - FORMAL SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Male" }, { name: "BOYS - TRACK T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Male" }, { name: "BOYS - UNIFORM T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Male" }, { name: "BOYS - JERKIN", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Male" }, { name: "BOYS - PULLOVER", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Male" }, { name: "BOYS - FORMAL PANT", cols: ["L1", "L2"], type: "Male" }, { name: "BOYS - TRACK PANT", cols: ["L1", "L2"], type: "Male" }, { name: "BOYS - FORMAL SHORTS", cols: ["L3", "L2"], type: "Male" }, { name: "BOYS - TRACK SHORTS", cols: ["L3", "L2"], type: "Male" }, { name: "BOYS - PANT SPECIAL CASE", cols: ["L1", "L2", "L6", "L7"], type: "Male" }];
+            const girlsItems = [{ name: "GIRLS - FORMAL SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Female" }, { name: "GIRLS - TRACK T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Female" }, { name: "GIRLS - UNIFORM T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Female" }, { name: "GIRLS - JERKIN", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Female" }, { name: "GIRLS - FULL SLEEVE SHIRT", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Female" }, { name: "GIRLS - PULLOVER", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Female" }, { name: "GIRLS - KURTHA SHIRT", cols: ["U7", "U2", "U3", "U4", "U6"], type: "Female" }, { name: "GIRLS - SPECIAL FROCKS", cols: ["U7", "U2", "U3", "U4", "U6"], type: "Female" }, { name: "GIRLS - FORMAL PANT", cols: ["L1", "L2"], type: "Female" }, { name: "GIRLS - TRACK PANT", cols: ["L1", "L2"], type: "Female" }, { name: "GIRLS - TRACK SHORTS", cols: ["L3", "L2"], type: "Female" }, { name: "GIRLS - PINOFORE", cols: ["L4", "L2"], type: "Female" }, { name: "GIRLS - SKIRT", cols: ["L5", "L2"], type: "Female" }, { name: "GIRLS - PANT SPECIAL CASE", cols: ["L1", "L2", "L6", "L7"], type: "Female" }];
+            const allItems = [...boysItems, ...girlsItems];
+            async function init() { await Promise.all([fetchStats(), fetchAllStudents(), fetchSchoolsForSelect(), fetchGlobalPatterns()]); renderGlobalTable(); renderCharts(); populateDynamicFilters(); }
+            function switchTab(id) { document.querySelectorAll('main > div[id^="view-"]').forEach(d => d.classList.add('hidden')); document.getElementById(`view-${id}`).classList.remove('hidden'); document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active')); document.getElementById(`nav-${id}`).classList.add('active'); if (window.innerWidth < 768 && sidebarOpen) toggleSidebar(); if (id === 'access') fetchAccessCodes(); if (id === 'users') fetchUsers(); if (id === 'complaints') fetchComplaints(); if (id === 'schools') fetchSchoolsManage(); }
+            async function fetchStats() { try { const r = await fetch(`${API_BASE}/data/stats`, { headers: { 'Authorization': `Bearer ${token}` } }); const d = await r.json(); document.getElementById('stat-students').innerText = d.students || 0; document.getElementById('stat-schools').innerText = d.schools || 0; document.getElementById('stat-packed').innerText = d.packed || 0; document.getElementById('stat-pending').innerText = d.pending || 0; } catch (e) { console.error("Stats Error", e) } }
+            async function fetchAllStudents() { try { const r = await fetch(`${API_BASE}/data/all_students`, { headers: { 'Authorization': `Bearer ${token}` } }); const d = await r.json(); globalStudents = Array.isArray(d) ? d : []; } catch (e) { console.error("Student Fetch Error", e); globalStudents = []; } }
+            async function fetchGlobalPatterns() { try { const r = await fetch(`${API_BASE}/data/patterns/all`, { headers: { 'Authorization': `Bearer ${token}` } }); const d = await r.json(); globalPatterns = Array.isArray(d) ? d : []; document.getElementById('filter-pattern').innerHTML = '<option value="all">All Patterns</option>' + globalPatterns.map(p => `<option value="${p.id}">${p.name} (${p.school_name})</option>`).join(''); } catch (e) { console.error("Patterns Error", e); globalPatterns = []; } }
+            async function fetchSchoolsForSelect() { try { const r = await fetch(`${API_BASE}/data/schools`, { headers: { 'Authorization': `Bearer ${token}` } }); const d = await r.json(); globalSchools = Array.isArray(d) ? d : []; if (globalSchools.length > 0) { const o = globalSchools.map(s => `<option value="${s.id}">${s.name}</option>`).join(''); document.getElementById('school-select').innerHTML = o; document.getElementById('access-school-select').innerHTML = o; } } catch (e) { console.error("Schools Error", e); globalSchools = []; } }
 
-        async function fetchUsers() { try { const r = await fetch(`${API_BASE}/data/users`, { headers: { 'Authorization': `Bearer ${token}` } }); const u = await r.json(); if (!Array.isArray(u)) return; document.getElementById('user-list-body').innerHTML = u.map(x => `<tr class="hover:bg-gray-50/50 group border-b border-gray-50"><td class="p-4 font-bold text-gray-700">${x.username}</td><td class="p-4"><span class="px-3 py-1 rounded-full text-xs bg-gray-100/80 uppercase font-bold text-gray-500 shadow-inner">${x.role}</span></td><td class="p-4 text-gray-500">${x.school_name || '-'}</td><td class="p-4 text-center"><span class="px-3 py-1 rounded-full text-xs font-bold shadow-sm ${x.is_active !== false ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}">${x.is_active !== false ? 'Active' : 'Disabled'}</span></td><td class="p-4 text-right text-xs"><button onclick="toggleUserStatus(${x.id},${!(x.is_active !== false)},'${x.username}')" class="opacity-0 group-hover:opacity-100 transition-opacity px-4 py-2 rounded-lg font-bold shadow-sm ${x.is_active !== false ? 'text-red-500 bg-red-50 hover:bg-red-100' : 'text-green-500 bg-green-50 hover:bg-green-100'}">${x.is_active !== false ? 'Disable' : 'Enable'}</button></td></tr>`).join(''); } catch (e) { console.error(e) } }
-        async function fetchAccessCodes() { try { const r = await fetch(`${API_BASE}/data/access_codes`, { headers: { 'Authorization': `Bearer ${token}` } }); const c = await r.json(); if (Array.isArray(c)) document.getElementById('access-code-list').innerHTML = c.map(x => `<tr class="border-b border-gray-50 ${x.is_active ? '' : 'opacity-40'}"><td class="py-4 font-bold text-gray-600">${x.school_name}</td><td class="py-4 font-mono text-rose-500 font-bold tracking-wider">${x.code}</td><td class="py-4 capitalize text-gray-500 font-medium">${x.type}</td><td class="py-4 text-center"><span class="${x.is_active ? 'text-green-500' : 'text-red-400 animate-pulse'} font-extrabold text-xs uppercase tracking-wider">${x.is_active ? 'Active' : 'Revoked'}</span></td><td class="py-4 text-right space-x-2">${x.is_active ? `<button onclick="toggleCode(${x.id},false)" class="text-red-500 hover:bg-red-50 px-3 py-1 rounded-lg text-xs font-bold transition-colors">REVOKE</button>` : `<button onclick="toggleCode(${x.id},true)" class="text-green-500 hover:bg-green-50 px-3 py-1 rounded-lg text-xs font-bold transition-colors">ACTIVATE</button>`}</td></tr>`).join(''); } catch (e) { console.error(e) } }
-        async function fetchSchoolsManage() { try { const r = await fetch(`${API_BASE}/data/schools`, { headers: { 'Authorization': `Bearer ${token}` } }); const d = await r.json(); document.getElementById('school-list-body').innerHTML = Array.isArray(d) ? d.map(s => `<tr class="hover:bg-gray-50/50 group border-b border-gray-50"><td class="p-4 font-bold text-gray-700">${s.name}</td><td class="p-4"><select onchange="updateSchoolMeta(${s.id},'priority',this.value)" class="clay-input h-8 py-1 px-2 text-xs font-bold uppercase ${s.priority === 'High' ? 'text-rose-500' : 'text-gray-500'}"><option value="Normal" ${s.priority === 'Normal' ? 'selected' : ''}>Normal Priority</option><option value="High" ${s.priority === 'High' ? 'selected' : ''}>High Priority</option><option value="Low" ${s.priority === 'Low' ? 'selected' : ''}>Low Priority</option></select></td><td class="p-4"><select onchange="updateSchoolMeta(${s.id},'status',this.value)" class="clay-input h-8 py-1 px-2 text-xs font-bold uppercase w-full"><option value="Pending" ${!s.status || s.status === 'Pending' ? 'selected' : ''}>Pending</option><option value="Measurements" ${s.status === 'Measurements' ? 'selected' : ''}>Measurements</option><option value="Production" ${s.status === 'Production' ? 'selected' : ''}>Production</option><option value="Delivered" ${s.status === 'Delivered' ? 'selected' : ''}>Delivered</option></select></td><td class="p-4 text-right"><button onclick="viewSchoolStudents('${s.name}')" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold px-4 py-2 rounded-lg transition-colors shadow-sm">VIEW STUDENTS</button></td></tr>`).join('') : ''; } catch (e) { console.error(e) } }
+            async function fetchUsers() { try { const r = await fetch(`${API_BASE}/data/users`, { headers: { 'Authorization': `Bearer ${token}` } }); const u = await r.json(); if (!Array.isArray(u)) return; document.getElementById('user-list-body').innerHTML = u.map(x => `<tr class="hover:bg-gray-50/50 group border-b border-gray-50"><td class="p-4 font-bold text-gray-700">${x.username}</td><td class="p-4"><span class="px-3 py-1 rounded-full text-xs bg-gray-100/80 uppercase font-bold text-gray-500 shadow-inner">${x.role}</span></td><td class="p-4 text-gray-500">${x.school_name || '-'}</td><td class="p-4 text-center"><span class="px-3 py-1 rounded-full text-xs font-bold shadow-sm ${x.is_active !== false ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}">${x.is_active !== false ? 'Active' : 'Disabled'}</span></td><td class="p-4 text-right text-xs"><button onclick="toggleUserStatus(${x.id},${!(x.is_active !== false)},'${x.username}')" class="opacity-0 group-hover:opacity-100 transition-opacity px-4 py-2 rounded-lg font-bold shadow-sm ${x.is_active !== false ? 'text-red-500 bg-red-50 hover:bg-red-100' : 'text-green-500 bg-green-50 hover:bg-green-100'}">${x.is_active !== false ? 'Disable' : 'Enable'}</button></td></tr>`).join(''); } catch (e) { console.error(e) } }
+            async function fetchAccessCodes() { try { const r = await fetch(`${API_BASE}/data/access_codes`, { headers: { 'Authorization': `Bearer ${token}` } }); const c = await r.json(); if (Array.isArray(c)) document.getElementById('access-code-list').innerHTML = c.map(x => `<tr class="border-b border-gray-50 ${x.is_active ? '' : 'opacity-40'}"><td class="py-4 font-bold text-gray-600">${x.school_name}</td><td class="py-4 font-mono text-rose-500 font-bold tracking-wider">${x.code}</td><td class="py-4 capitalize text-gray-500 font-medium">${x.type}</td><td class="py-4 text-center"><span class="${x.is_active ? 'text-green-500' : 'text-red-400 animate-pulse'} font-extrabold text-xs uppercase tracking-wider">${x.is_active ? 'Active' : 'Revoked'}</span></td><td class="py-4 text-right space-x-2">${x.is_active ? `<button onclick="toggleCode(${x.id},false)" class="text-red-500 hover:bg-red-50 px-3 py-1 rounded-lg text-xs font-bold transition-colors">REVOKE</button>` : `<button onclick="toggleCode(${x.id},true)" class="text-green-500 hover:bg-green-50 px-3 py-1 rounded-lg text-xs font-bold transition-colors">ACTIVATE</button>`}</td></tr>`).join(''); } catch (e) { console.error(e) } }
+            async function fetchSchoolsManage() { try { const r = await fetch(`${API_BASE}/data/schools`, { headers: { 'Authorization': `Bearer ${token}` } }); const d = await r.json(); document.getElementById('school-list-body').innerHTML = Array.isArray(d) ? d.map(s => `<tr class="hover:bg-gray-50/50 group border-b border-gray-50"><td class="p-4 font-bold text-gray-700">${s.name}</td><td class="p-4"><select onchange="updateSchoolMeta(${s.id},'priority',this.value)" class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all h-8 py-1 px-2 text-xs font-bold uppercase ${s.priority === 'High' ? 'text-rose-500' : 'text-gray-500'}"><option value="Normal" ${s.priority === 'Normal' ? 'selected' : ''}>Normal Priority</option><option value="High" ${s.priority === 'High' ? 'selected' : ''}>High Priority</option><option value="Low" ${s.priority === 'Low' ? 'selected' : ''}>Low Priority</option></select></td><td class="p-4"><select onchange="updateSchoolMeta(${s.id},'status',this.value)" class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all h-8 py-1 px-2 text-xs font-bold uppercase w-full"><option value="Pending" ${!s.status || s.status === 'Pending' ? 'selected' : ''}>Pending</option><option value="Measurements" ${s.status === 'Measurements' ? 'selected' : ''}>Measurements</option><option value="Production" ${s.status === 'Production' ? 'selected' : ''}>Production</option><option value="Delivered" ${s.status === 'Delivered' ? 'selected' : ''}>Delivered</option></select></td><td class="p-4 text-right"><button onclick="viewSchoolStudents('${s.name}')" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold px-4 py-2 rounded-lg transition-colors shadow-sm">VIEW STUDENTS</button></td></tr>`).join('') : ''; } catch (e) { console.error(e) } }
 
-        async function updateSchoolMeta(id, f, v) { await fetch(`${API_BASE}/data/schools/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ [f]: v }) }); }
-        async function viewSchoolStudents(n) { switchTab('data'); await fetchAllStudents(); document.getElementById('date-search').value = n; renderGlobalTable(); }
-        function populateDynamicFilters() { const c = [...new Set(globalStudents.map(s => s.class).filter(Boolean))].sort(), se = [...new Set(globalStudents.map(s => s.section).filter(Boolean))].sort(), h = [...new Set(globalStudents.map(s => s.house).filter(Boolean))].sort(); document.getElementById('list-class').innerHTML = c.map(x => `<option value="${x}">`).join(''); document.getElementById('list-section').innerHTML = se.map(x => `<option value="${x}">`).join(''); document.getElementById('list-house').innerHTML = h.map(x => `<option value="${x}">`).join(''); document.getElementById('filter-item').innerHTML = '<option value="all">-- Select Item --</option>' + allItems.map(i => `<option value="${i.name}">${i.name}</option>`).join(''); }
-        // REMOVED handleItemFilter - now handled in renderGlobalTable directly
-        function advancedMatch(r, f) { if (!f || f === 'all') return true; if (r == null || r === "") return false; const rv = String(r).trim().toUpperCase(), fv = f.toUpperCase(); if (fv.includes(',')) return fv.split(',').map(p => p.trim()).includes(rv); if (fv.includes('-')) { const p = fv.split('-').map(x => x.trim()); if (p.length === 2) { const [mn, mx] = p; if (!isNaN(mn) && !isNaN(mx)) { const n = parseFloat(r); return !isNaN(n) && n >= parseFloat(mn) && n <= parseFloat(mx) } if (mn.length === 1 && mx.length === 1 && rv.length === 1) return rv >= mn && rv <= mx } } return rv === fv; }
+            async function updateSchoolMeta(id, f, v) { await fetch(`${API_BASE}/data/schools/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ [f]: v }) }); }
+            async function viewSchoolStudents(n) { switchTab('data'); await fetchAllStudents(); document.getElementById('date-search').value = n; renderGlobalTable(); }
+            function populateDynamicFilters() { const c = [...new Set(globalStudents.map(s => s.class).filter(Boolean))].sort(), se = [...new Set(globalStudents.map(s => s.section).filter(Boolean))].sort(), h = [...new Set(globalStudents.map(s => s.house).filter(Boolean))].sort(); document.getElementById('list-class').innerHTML = c.map(x => `<option value="${x}">`).join(''); document.getElementById('list-section').innerHTML = se.map(x => `<option value="${x}">`).join(''); document.getElementById('list-house').innerHTML = h.map(x => `<option value="${x}">`).join(''); document.getElementById('filter-item').innerHTML = '<option value="all">-- Select Item --</option>' + allItems.map(i => `<option value="${i.name}">${i.name}</option>`).join(''); }
+            // REMOVED handleItemFilter - now handled in renderGlobalTable directly
+            function advancedMatch(r, f) { if (!f || f === 'all') return true; if (r == null || r === "") return false; const rv = String(r).trim().toUpperCase(), fv = f.toUpperCase(); if (fv.includes(',')) return fv.split(',').map(p => p.trim()).includes(rv); if (fv.includes('-')) { const p = fv.split('-').map(x => x.trim()); if (p.length === 2) { const [mn, mx] = p; if (!isNaN(mn) && !isNaN(mx)) { const n = parseFloat(r); return !isNaN(n) && n >= parseFloat(mn) && n <= parseFloat(mx) } if (mn.length === 1 && mx.length === 1 && rv.length === 1) return rv >= mn && rv <= mx } } return rv === fv; }
 
-        function getMeasurementsSafe(s) {
-            if (typeof s.measurements === 'string') { try { return JSON.parse(s.measurements); } catch (e) { return {}; } }
-            return s.measurements || {};
-        }
-
-        function renderGlobalTable() {
-            const pr = document.getElementById('filter-priority').value, pa = document.getElementById('filter-packed').value, cl = document.getElementById('filter-class').value, sc = document.getElementById('filter-section').value, ho = document.getElementById('filter-house').value, ge = document.getElementById('filter-gender').value, pt = document.getElementById('filter-pattern').value, it = document.getElementById('filter-item').value, se = document.getElementById('date-search').value.toLowerCase();
-
-            // 1. Filter
-            const f = globalStudents.filter(s => {
-                const m = getMeasurementsSafe(s);
-                if (pr !== 'all' && s.school_priority !== pr) return false;
-                if (pa === 'packed' && !s.is_packed) return false;
-                if (pa === 'pending' && s.is_packed) return false;
-                if (!advancedMatch(s.class, cl)) return false;
-                if (!advancedMatch(s.section, sc)) return false;
-                if (!advancedMatch(s.house, ho)) return false;
-                if (ge && s.gender !== ge) return false;
-                if (pt !== 'all' && s.pattern_id != pt) return false;
-                if (se && !(s.name || '').toLowerCase().includes(se) && !(s.roll_no || '').toLowerCase().includes(se) && !(s.school_name || '').toLowerCase().includes(se)) return false;
-                if (it !== 'all') {
-                    const i = allItems.find(x => x.name === it);
-                    if (i) {
-                        if ((i.type === 'Male' && s.gender === 'Female') || (i.type === 'Female' && s.gender === 'Male')) return false;
-                    }
-                }
-                return true;
-            });
-
-            // 2. Setup Columns for Measurement
-            let showCols = [];
-            const measHeader = document.getElementById('th-measurements');
-            const subRow = document.getElementById('th-sub-row');
-
-            if (it !== 'all') {
-                const def = allItems.find(x => x.name === it);
-                if (def) {
-                    showCols = def.cols;
-                    measHeader.innerText = def.name;
-                    measHeader.colSpan = showCols.length;
-                }
-            } else {
-                measHeader.innerText = "Measurements (Select Item)";
-                measHeader.colSpan = 1;
+            function getMeasurementsSafe(s) {
+                if (typeof s.measurements === 'string') { try { return JSON.parse(s.measurements); } catch (e) { return {}; } }
+                return s.measurements || {};
             }
 
-            // 3. Render sub-headers
-            if (showCols.length > 0) {
-                subRow.classList.remove('hidden');
-                subRow.innerHTML = `
+            function renderGlobalTable() {
+                const pr = document.getElementById('filter-priority').value, pa = document.getElementById('filter-packed').value, cl = document.getElementById('filter-class').value, sc = document.getElementById('filter-section').value, ho = document.getElementById('filter-house').value, ge = document.getElementById('filter-gender').value, pt = document.getElementById('filter-pattern').value, it = document.getElementById('filter-item').value, se = document.getElementById('date-search').value.toLowerCase();
+
+                // 1. Filter
+                const f = globalStudents.filter(s => {
+                    const m = getMeasurementsSafe(s);
+                    if (pr !== 'all' && s.school_priority !== pr) return false;
+                    if (pa === 'packed' && !s.is_packed) return false;
+                    if (pa === 'pending' && s.is_packed) return false;
+                    if (!advancedMatch(s.class, cl)) return false;
+                    if (!advancedMatch(s.section, sc)) return false;
+                    if (!advancedMatch(s.house, ho)) return false;
+                    if (ge && s.gender !== ge) return false;
+                    if (pt !== 'all' && s.pattern_id != pt) return false;
+                    if (se && !(s.name || '').toLowerCase().includes(se) && !(s.roll_no || '').toLowerCase().includes(se) && !(s.school_name || '').toLowerCase().includes(se)) return false;
+                    if (it !== 'all') {
+                        const i = allItems.find(x => x.name === it);
+                        if (i) {
+                            if ((i.type === 'Male' && s.gender === 'Female') || (i.type === 'Female' && s.gender === 'Male')) return false;
+                        }
+                    }
+                    return true;
+                });
+
+                // 2. Setup Columns for Measurement
+                let showCols = [];
+                const measHeader = document.getElementById('th-measurements');
+                const subRow = document.getElementById('th-sub-row');
+
+                if (it !== 'all') {
+                    const def = allItems.find(x => x.name === it);
+                    if (def) {
+                        showCols = def.cols;
+                        measHeader.innerText = def.name;
+                        measHeader.colSpan = showCols.length;
+                    }
+                } else {
+                    measHeader.innerText = "Measurements (Select Item)";
+                    measHeader.colSpan = 1;
+                }
+
+                // 3. Render sub-headers
+                if (showCols.length > 0) {
+                    subRow.classList.remove('hidden');
+                    subRow.innerHTML = `
                     <th colspan="4" class="bg-gray-100/30 border-r border-gray-200"></th>
                     ${showCols.map(c => `<th class="p-2 text-center border-x border-gray-200 text-amber-600 bg-amber-50/50 text-xs font-bold">${c}</th>`).join('')}
                     <th></th>
                 `;
-            } else {
-                subRow.classList.add('hidden');
-            }
-
-            // 4. Render Body
-            document.getElementById('record-count').innerText = `Showing ${f.length} records`;
-            document.getElementById('global-table-body').innerHTML = f.map(s => {
-                const m = getMeasurementsSafe(s);
-                let measCells = '';
-                if (showCols.length > 0) {
-                    measCells = showCols.map(k => `<td class="p-4 text-center border-b border-stone-100 font-mono font-bold text-stone-700 bg-amber-50/20">${m[k.toLowerCase()] || '-'}</td>`).join('');
                 } else {
-                    measCells = `<td class="p-4 border-b border-stone-100 text-xs italic text-stone-400">Select Item...</td>`;
+                    subRow.classList.add('hidden');
                 }
 
-                return `<tr class="hover:bg-blue-50/30 transition-colors group">
+                // 4. Render Body
+                document.getElementById('record-count').innerText = `Showing ${f.length} records`;
+                document.getElementById('global-table-body').innerHTML = f.map(s => {
+                    const m = getMeasurementsSafe(s);
+                    let measCells = '';
+                    if (showCols.length > 0) {
+                        measCells = showCols.map(k => `<td class="p-4 text-center border-b border-stone-100 font-mono font-bold text-stone-700 bg-amber-50/20">${m[k.toLowerCase()] || '-'}</td>`).join('');
+                    } else {
+                        measCells = `<td class="p-4 border-b border-stone-100 text-xs italic text-stone-400">Select Item...</td>`;
+                    }
+
+                    return `<tr class="hover:bg-blue-50/30 transition-colors group">
                     <td class="p-4 border-b border-gray-100 sticky left-0 bg-white/50 backdrop-blur-sm z-10">
                         <div class="font-bold text-gray-700">${s.school_name}</div>
                         <div class="text-[10px] text-gray-400 font-bold uppercase">${s.school_priority || 'Normal'}</div>
@@ -944,201 +906,201 @@
                         <span class="px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wide shadow-sm ${s.is_packed ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'}">${s.is_packed ? 'PACKED' : 'PENDING'}</span>
                     </td>
                 </tr>`;
-            }).join('');
+                }).join('');
 
-            // Store filtered data & cols for export
-            window.filteredDataForExport = f;
-            window.currentCols = showCols;
-        }
-
-        // Removed renderMeasurements Helper as it's now inline
-        function dummy() { }
-
-        function renderCharts() {
-            const p = globalStudents.filter(s => s.is_packed).length, pe = globalStudents.length - p;
-            // Destroy exists?
-            new Chart(document.getElementById('chart-packing'), { type: 'doughnut', data: { labels: ['Packed', 'Pending'], datasets: [{ data: [p, pe], backgroundColor: ['#10b981', '#f59e0b'], borderWidth: 0 }] }, options: { maintainAspectRatio: false } });
-            const sc = {}; globalStudents.forEach(s => { sc[s.school_name] = (sc[s.school_name] || 0) + 1 });
-            new Chart(document.getElementById('chart-schools'), { type: 'bar', data: { labels: Object.keys(sc), datasets: [{ label: 'Student Count', data: Object.values(sc), backgroundColor: '#1c1917', borderRadius: 4 }] }, options: { maintainAspectRatio: false, scales: { y: { beginAtZero: true } } } });
-        }
-
-        async function createUser(e) { e.preventDefault(); try { const r = await fetch(`${API_BASE}/data/users/create`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify(Object.fromEntries(new FormData(e.target).entries())) }); if (r.ok) { alert("User Created!"); e.target.reset(); fetchUsers(); } else alert((await r.json()).error); } catch (e) { alert(e.message); } }
-        async function generateCode() { const sid = document.getElementById('access-school-select').value, type = document.getElementById('access-type').value, hrs = document.getElementById('access-expiry').value; try { const r = await fetch(`${API_BASE}/data/access_codes`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ school_id: sid, type, expires_in_hours: parseFloat(hrs) }) }); if (r.ok) { alert(`Code Created: ${(await r.json()).code}`); fetchAccessCodes(); } else alert((await r.json()).error); } catch (e) { alert(e.message); } }
-        async function toggleCode(id, a) { if (!confirm(a ? "Activate?" : "Revoke?")) return; await fetch(`${API_BASE}/data/access_codes/${id}/toggle`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ is_active: a }) }); fetchAccessCodes(); }
-        async function toggleUserStatus(id, a, n) { if (confirm(a ? "Enable?" : "Disable?")) await fetch(`${API_BASE}/data/users/${id}/toggle`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ is_active: a }) }); fetchUsers(); }
-        async function registerSchool(e) { e.preventDefault(); try { const r = await fetch(`${API_BASE}/data/schools`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify(Object.fromEntries(new FormData(e.target).entries())) }); if (r.ok) { alert("School Registered!"); document.getElementById('school-modal').classList.add('hidden'); e.target.reset(); fetchSchoolsForSelect(); fetchUsers(); } else alert((await r.json()).error); } catch (e) { alert("Failed"); } }
-        function openSchoolModal() { document.getElementById('school-modal').classList.remove('hidden'); }
-        function toggleSchoolSelect() { const r = document.getElementById('user-role').value, s = document.getElementById('school-select-wrapper'); if (r === 'company') s.classList.add('hidden'); else s.classList.remove('hidden'); }
-        async function fixDatabase() { if (confirm("Maintain DB?")) { await fetch(`${API_BASE}/data/migrate`, { method: 'POST' }); location.reload(); } }
-        function logout() { sessionStorage.clear(); window.location.href = 'login.html'; }
-
-        // CLIENT SIDE EXPORTS (Filtered)
-        function downloadPDF() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            const data = window.filteredDataForExport || globalStudents;
-            const cols = window.currentCols || [];
-
-            doc.text("Tailoring Data Report", 14, 15);
-            doc.setFontSize(10);
-            doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 22);
-
-            let head = [['School', 'Name', 'Class', 'Gender', 'Pattern']];
-
-            if (cols.length > 0) head[0].push(...cols);
-            else head[0].push("Measurements");
-
-            head[0].push('Packed');
-
-            const body = data.map(s => {
-                const m = getMeasurementsSafe(s);
-                const row = [
-                    s.school_name,
-                    s.name,
-                    `${s.class || ''} ${s.section || ''}`,
-                    s.gender || '-',
-                    s.pattern_name || '-'
-                ];
-
-                if (cols.length > 0) {
-                    cols.forEach(k => row.push(m[k.toLowerCase()] || '-'));
-                } else {
-                    row.push("Select Item to View Details");
-                }
-
-                row.push(s.is_packed ? 'Yes' : 'No');
-                return row;
-            });
-
-            doc.autoTable({
-                head: head,
-                body: body,
-                startY: 25,
-                styles: { fontSize: 8 },
-                headStyles: { fillColor: [244, 63, 94] }
-            });
-
-            doc.save("Global_Report.pdf");
-        }
-
-        function downloadExcel() {
-            const data = window.filteredDataForExport || globalStudents;
-            const cols = window.currentCols || [];
-
-            const exportData = data.map(s => {
-                const m = getMeasurementsSafe(s);
-                const base = {
-                    "School": s.school_name,
-                    "Student Name": s.name,
-                    "Admission No": s.admission_no,
-                    "Class": s.class,
-                    "Section": s.section,
-                    "House": s.house,
-                    "Gender": s.gender,
-                    "Pattern": s.pattern_name,
-                    "Status": s.is_packed ? "Packed" : "Pending"
-                };
-
-                if (cols.length > 0) {
-                    cols.forEach(k => base[k] = m[k.toLowerCase()] || '');
-                } else {
-                    base["Measurements"] = "Select Item to View Details";
-                }
-                return base;
-            });
-
-            const ws = XLSX.utils.json_to_sheet(exportData);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "GlobalData");
-            XLSX.writeFile(wb, "Tailoring_Report.xlsx");
-        }
-
-
-        // COMPLAINTS LOGIC
-        let currentComplaintId = null;
-
-        // COMPLAINTS ANALYTICS LOGIC
-        let rawComplaints = [];
-        let filteredComplaints = [];
-        let chartIssues = null;
-        let chartStatus = null;
-
-        async function fetchComplaints() {
-            try {
-                const res = await fetch(`${API_BASE}/data/complaints`, { headers: { 'Authorization': `Bearer ${token}` } });
-                rawComplaints = await res.json();
-                if (!Array.isArray(rawComplaints)) rawComplaints = [];
-
-                // Populate Filter Dropdowns (Patterns)
-                const patterns = new Set();
-                rawComplaints.forEach(c => {
-                    if (c.pattern_name) {
-                        c.pattern_name.split(',').forEach(p => patterns.add(p.trim()));
-                    }
-                });
-                const sel = document.getElementById('c-filter-pattern');
-                const currentVal = sel.value;
-                sel.innerHTML = '<option value="all">All Patterns</option>' +
-                    Array.from(patterns).sort().map(p => `<option value="${p}">${p}</option>`).join('');
-                sel.value = currentVal;
-
-                renderComplaintDash();
-            } catch (e) { console.error("Complaints Error", e); }
-        }
-
-        function renderComplaintDash() {
-            // 1. Filter Data
-            const sFil = document.getElementById('c-filter-school').value.toLowerCase();
-            const pFil = document.getElementById('c-filter-pattern').value;
-            const gFil = document.getElementById('c-filter-gender').value;
-
-            filteredComplaints = rawComplaints.filter(c => {
-                if (sFil && !c.school_name.toLowerCase().includes(sFil)) return false;
-                if (gFil !== 'all' && c.gender !== gFil) return false;
-                if (pFil !== 'all' && (!c.pattern_name || !c.pattern_name.includes(pFil))) return false;
-                return true;
-            });
-
-            // 2. Update Stats
-            const total = filteredComplaints.length;
-            const resolved = filteredComplaints.filter(c => c.status === 'Resolved').length;
-            const open = total - resolved;
-
-            document.getElementById('c-stat-total').innerText = total;
-            document.getElementById('c-stat-open').innerText = open;
-            document.getElementById('c-stat-resolved').innerText = resolved;
-
-            // 3. Update Charts
-            updateComplaintCharts(filteredComplaints);
-
-            // 4. Render School Cards (Grouping)
-            const grid = document.getElementById('school-complaints-grid');
-            grid.innerHTML = '';
-
-            if (total === 0) {
-                document.getElementById('c-no-data').classList.remove('hidden');
-                return;
+                // Store filtered data & cols for export
+                window.filteredDataForExport = f;
+                window.currentCols = showCols;
             }
-            document.getElementById('c-no-data').classList.add('hidden');
 
-            // Group by School ID
-            const schools = {};
-            filteredComplaints.forEach(c => {
-                if (!schools[c.school_id]) {
-                    schools[c.school_id] = { name: c.school_name, count: 0, open: 0, resolved: 0, tickets: [] };
+            // Removed renderMeasurements Helper as it's now inline
+            function dummy() { }
+
+            function renderCharts() {
+                const p = globalStudents.filter(s => s.is_packed).length, pe = globalStudents.length - p;
+                // Destroy exists?
+                new Chart(document.getElementById('chart-packing'), { type: 'doughnut', data: { labels: ['Packed', 'Pending'], datasets: [{ data: [p, pe], backgroundColor: ['#10b981', '#f59e0b'], borderWidth: 0 }] }, options: { maintainAspectRatio: false } });
+                const sc = {}; globalStudents.forEach(s => { sc[s.school_name] = (sc[s.school_name] || 0) + 1 });
+                new Chart(document.getElementById('chart-schools'), { type: 'bar', data: { labels: Object.keys(sc), datasets: [{ label: 'Student Count', data: Object.values(sc), backgroundColor: '#1c1917', borderRadius: 4 }] }, options: { maintainAspectRatio: false, scales: { y: { beginAtZero: true } } } });
+            }
+
+            async function createUser(e) { e.preventDefault(); try { const r = await fetch(`${API_BASE}/data/users/create`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify(Object.fromEntries(new FormData(e.target).entries())) }); if (r.ok) { alert("User Created!"); e.target.reset(); fetchUsers(); } else alert((await r.json()).error); } catch (e) { alert(e.message); } }
+            async function generateCode() { const sid = document.getElementById('access-school-select').value, type = document.getElementById('access-type').value, hrs = document.getElementById('access-expiry').value; try { const r = await fetch(`${API_BASE}/data/access_codes`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ school_id: sid, type, expires_in_hours: parseFloat(hrs) }) }); if (r.ok) { alert(`Code Created: ${(await r.json()).code}`); fetchAccessCodes(); } else alert((await r.json()).error); } catch (e) { alert(e.message); } }
+            async function toggleCode(id, a) { if (!confirm(a ? "Activate?" : "Revoke?")) return; await fetch(`${API_BASE}/data/access_codes/${id}/toggle`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ is_active: a }) }); fetchAccessCodes(); }
+            async function toggleUserStatus(id, a, n) { if (confirm(a ? "Enable?" : "Disable?")) await fetch(`${API_BASE}/data/users/${id}/toggle`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ is_active: a }) }); fetchUsers(); }
+            async function registerSchool(e) { e.preventDefault(); try { const r = await fetch(`${API_BASE}/data/schools`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify(Object.fromEntries(new FormData(e.target).entries())) }); if (r.ok) { alert("School Registered!"); document.getElementById('school-modal').classList.add('hidden'); e.target.reset(); fetchSchoolsForSelect(); fetchUsers(); } else alert((await r.json()).error); } catch (e) { alert("Failed"); } }
+            function openSchoolModal() { document.getElementById('school-modal').classList.remove('hidden'); }
+            function toggleSchoolSelect() { const r = document.getElementById('user-role').value, s = document.getElementById('school-select-wrapper'); if (r === 'company') s.classList.add('hidden'); else s.classList.remove('hidden'); }
+            async function fixDatabase() { if (confirm("Maintain DB?")) { await fetch(`${API_BASE}/data/migrate`, { method: 'POST' }); location.reload(); } }
+            function logout() { sessionStorage.clear(); window.location.href = 'login.html'; }
+
+            // CLIENT SIDE EXPORTS (Filtered)
+            function downloadPDF() {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                const data = window.filteredDataForExport || globalStudents;
+                const cols = window.currentCols || [];
+
+                doc.text("Tailoring Data Report", 14, 15);
+                doc.setFontSize(10);
+                doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 22);
+
+                let head = [['School', 'Name', 'Class', 'Gender', 'Pattern']];
+
+                if (cols.length > 0) head[0].push(...cols);
+                else head[0].push("Measurements");
+
+                head[0].push('Packed');
+
+                const body = data.map(s => {
+                    const m = getMeasurementsSafe(s);
+                    const row = [
+                        s.school_name,
+                        s.name,
+                        `${s.class || ''} ${s.section || ''}`,
+                        s.gender || '-',
+                        s.pattern_name || '-'
+                    ];
+
+                    if (cols.length > 0) {
+                        cols.forEach(k => row.push(m[k.toLowerCase()] || '-'));
+                    } else {
+                        row.push("Select Item to View Details");
+                    }
+
+                    row.push(s.is_packed ? 'Yes' : 'No');
+                    return row;
+                });
+
+                doc.autoTable({
+                    head: head,
+                    body: body,
+                    startY: 25,
+                    styles: { fontSize: 8 },
+                    headStyles: { fillColor: [244, 63, 94] }
+                });
+
+                doc.save("Global_Report.pdf");
+            }
+
+            function downloadExcel() {
+                const data = window.filteredDataForExport || globalStudents;
+                const cols = window.currentCols || [];
+
+                const exportData = data.map(s => {
+                    const m = getMeasurementsSafe(s);
+                    const base = {
+                        "School": s.school_name,
+                        "Student Name": s.name,
+                        "Admission No": s.admission_no,
+                        "Class": s.class,
+                        "Section": s.section,
+                        "House": s.house,
+                        "Gender": s.gender,
+                        "Pattern": s.pattern_name,
+                        "Status": s.is_packed ? "Packed" : "Pending"
+                    };
+
+                    if (cols.length > 0) {
+                        cols.forEach(k => base[k] = m[k.toLowerCase()] || '');
+                    } else {
+                        base["Measurements"] = "Select Item to View Details";
+                    }
+                    return base;
+                });
+
+                const ws = XLSX.utils.json_to_sheet(exportData);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "GlobalData");
+                XLSX.writeFile(wb, "Tailoring_Report.xlsx");
+            }
+
+
+            // COMPLAINTS LOGIC
+            let currentComplaintId = null;
+
+            // COMPLAINTS ANALYTICS LOGIC
+            let rawComplaints = [];
+            let filteredComplaints = [];
+            let chartIssues = null;
+            let chartStatus = null;
+
+            async function fetchComplaints() {
+                try {
+                    const res = await fetch(`${API_BASE}/data/complaints`, { headers: { 'Authorization': `Bearer ${token}` } });
+                    rawComplaints = await res.json();
+                    if (!Array.isArray(rawComplaints)) rawComplaints = [];
+
+                    // Populate Filter Dropdowns (Patterns)
+                    const patterns = new Set();
+                    rawComplaints.forEach(c => {
+                        if (c.pattern_name) {
+                            c.pattern_name.split(',').forEach(p => patterns.add(p.trim()));
+                        }
+                    });
+                    const sel = document.getElementById('c-filter-pattern');
+                    const currentVal = sel.value;
+                    sel.innerHTML = '<option value="all">All Patterns</option>' +
+                        Array.from(patterns).sort().map(p => `<option value="${p}">${p}</option>`).join('');
+                    sel.value = currentVal;
+
+                    renderComplaintDash();
+                } catch (e) { console.error("Complaints Error", e); }
+            }
+
+            function renderComplaintDash() {
+                // 1. Filter Data
+                const sFil = document.getElementById('c-filter-school').value.toLowerCase();
+                const pFil = document.getElementById('c-filter-pattern').value;
+                const gFil = document.getElementById('c-filter-gender').value;
+
+                filteredComplaints = rawComplaints.filter(c => {
+                    if (sFil && !c.school_name.toLowerCase().includes(sFil)) return false;
+                    if (gFil !== 'all' && c.gender !== gFil) return false;
+                    if (pFil !== 'all' && (!c.pattern_name || !c.pattern_name.includes(pFil))) return false;
+                    return true;
+                });
+
+                // 2. Update Stats
+                const total = filteredComplaints.length;
+                const resolved = filteredComplaints.filter(c => c.status === 'Resolved').length;
+                const open = total - resolved;
+
+                document.getElementById('c-stat-total').innerText = total;
+                document.getElementById('c-stat-open').innerText = open;
+                document.getElementById('c-stat-resolved').innerText = resolved;
+
+                // 3. Update Charts
+                updateComplaintCharts(filteredComplaints);
+
+                // 4. Render School Cards (Grouping)
+                const grid = document.getElementById('school-complaints-grid');
+                grid.innerHTML = '';
+
+                if (total === 0) {
+                    document.getElementById('c-no-data').classList.remove('hidden');
+                    return;
                 }
-                schools[c.school_id].count++;
-                if (c.status === 'Resolved') schools[c.school_id].resolved++;
-                else schools[c.school_id].open++;
-                schools[c.school_id].tickets.push(c);
-            });
+                document.getElementById('c-no-data').classList.add('hidden');
 
-            Object.values(schools).sort((a, b) => b.open - a.open).forEach(s => {
-                const div = document.createElement('div');
-                div.className = "clay-card p-6 rounded-xl hover:shadow-xl transition-all cursor-pointer border hover:border-rose-300 relative group overflow-hidden";
-                div.onclick = () => openSchoolComplaints(s);
+                // Group by School ID
+                const schools = {};
+                filteredComplaints.forEach(c => {
+                    if (!schools[c.school_id]) {
+                        schools[c.school_id] = { name: c.school_name, count: 0, open: 0, resolved: 0, tickets: [] };
+                    }
+                    schools[c.school_id].count++;
+                    if (c.status === 'Resolved') schools[c.school_id].resolved++;
+                    else schools[c.school_id].open++;
+                    schools[c.school_id].tickets.push(c);
+                });
 
-                div.innerHTML = `
+                Object.values(schools).sort((a, b) => b.open - a.open).forEach(s => {
+                    const div = document.createElement('div');
+                    div.className = "bg-white border border-gray-200 shadow-sm rounded-xl p-6 rounded-xl hover:shadow-xl transition-all cursor-pointer border hover:border-rose-300 relative group overflow-hidden";
+                    div.onclick = () => openSchoolComplaints(s);
+
+                    div.innerHTML = `
                     <div class="absolute top-0 right-0 w-24 h-24 bg-rose-50 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 group-hover:bg-rose-100 transition-colors"></div>
                     <div class="relative z-10 flex justify-between items-start mb-4">
                         <div class="w-12 h-12 rounded-full bg-white shadow-inner flex items-center justify-center text-rose-500 font-bold text-xl">
@@ -1149,108 +1111,108 @@
                     <h3 class="relative z-10 font-bold text-xl text-gray-700 mb-1 truncate">${s.name}</h3>
                     <p class="relative z-10 text-xs text-gray-400 uppercase font-bold tracking-wider">${s.count} Total Items</p>
                 `;
-                grid.appendChild(div);
-            });
-        }
+                    grid.appendChild(div);
+                });
+            }
 
-        function updateComplaintCharts(data) {
-            // 1. Calculate Aggregates
-            const patternCounts = {};
-            const issueCounts = {};
+            function updateComplaintCharts(data) {
+                // 1. Calculate Aggregates
+                const patternCounts = {};
+                const issueCounts = {};
 
-            data.forEach(c => {
-                // Patterns
-                if (c.pattern_name) {
-                    c.pattern_name.split(',').forEach(p => {
-                        const cleanP = p.trim();
-                        if (cleanP) patternCounts[cleanP] = (patternCounts[cleanP] || 0) + 1;
-                    });
-                }
+                data.forEach(c => {
+                    // Patterns
+                    if (c.pattern_name) {
+                        c.pattern_name.split(',').forEach(p => {
+                            const cleanP = p.trim();
+                            if (cleanP) patternCounts[cleanP] = (patternCounts[cleanP] || 0) + 1;
+                        });
+                    }
 
-                // Issues (Parse "Pattern (Issue)" format)
-                if (c.issue_type) {
-                    c.issue_type.split(',').forEach(i => {
-                        let cleanI = i.trim();
-                        if (cleanI.includes('(')) {
-                            // Extract content between parenthesis e.g., "Size Mismatch" from "Shirt (Size Mismatch)"
-                            const match = cleanI.match(/\(([^)]+)\)/);
-                            if (match && match[1]) cleanI = match[1].trim();
-                        }
-                        if (cleanI) issueCounts[cleanI] = (issueCounts[cleanI] || 0) + 1;
-                    });
-                }
-            });
+                    // Issues (Parse "Pattern (Issue)" format)
+                    if (c.issue_type) {
+                        c.issue_type.split(',').forEach(i => {
+                            let cleanI = i.trim();
+                            if (cleanI.includes('(')) {
+                                // Extract content between parenthesis e.g., "Size Mismatch" from "Shirt (Size Mismatch)"
+                                const match = cleanI.match(/\(([^)]+)\)/);
+                                if (match && match[1]) cleanI = match[1].trim();
+                            }
+                            if (cleanI) issueCounts[cleanI] = (issueCounts[cleanI] || 0) + 1;
+                        });
+                    }
+                });
 
-            // 2. Identify Hotspots (Top 1)
-            const topPattern = Object.entries(patternCounts).sort((a, b) => b[1] - a[1])[0] || ['-', 0];
-            const topIssue = Object.entries(issueCounts).sort((a, b) => b[1] - a[1])[0] || ['-', 0];
+                // 2. Identify Hotspots (Top 1)
+                const topPattern = Object.entries(patternCounts).sort((a, b) => b[1] - a[1])[0] || ['-', 0];
+                const topIssue = Object.entries(issueCounts).sort((a, b) => b[1] - a[1])[0] || ['-', 0];
 
-            document.getElementById('c-top-pattern').innerText = topPattern[0];
-            document.getElementById('c-top-pattern-count').innerText = `${topPattern[1]} complaints`;
+                document.getElementById('c-top-pattern').innerText = topPattern[0];
+                document.getElementById('c-top-pattern-count').innerText = `${topPattern[1]} complaints`;
 
-            document.getElementById('c-top-issue').innerText = topIssue[0];
-            document.getElementById('c-top-issue-count').innerText = `${topIssue[1]} occurrences`;
+                document.getElementById('c-top-issue').innerText = topIssue[0];
+                document.getElementById('c-top-issue-count').innerText = `${topIssue[1]} occurrences`;
 
 
-            // 3. Render Chart 1: Top 10 Patterns (Horizontal Bar)
-            const ctx1 = document.getElementById('chart-patterns');
-            if (chartIssues) chartIssues.destroy(); // using same var name for convenience, represents "Patterns" now
+                // 3. Render Chart 1: Top 10 Patterns (Horizontal Bar)
+                const ctx1 = document.getElementById('chart-patterns');
+                if (chartIssues) chartIssues.destroy(); // using same var name for convenience, represents "Patterns" now
 
-            // Sort and Slice Top 10
-            const sortedPatterns = Object.entries(patternCounts).sort((a, b) => b[1] - a[1]).slice(0, 10);
+                // Sort and Slice Top 10
+                const sortedPatterns = Object.entries(patternCounts).sort((a, b) => b[1] - a[1]).slice(0, 10);
 
-            chartIssues = new Chart(ctx1, {
-                type: 'bar',
-                data: {
-                    labels: sortedPatterns.map(x => x[0]),
-                    datasets: [{
-                        label: 'Complaints',
-                        data: sortedPatterns.map(x => x[1]),
-                        backgroundColor: '#f43f5e',
-                        borderRadius: 4,
-                        barThickness: 20
-                    }]
-                },
-                options: {
-                    indexAxis: 'y', // Horizontal
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: { x: { beginAtZero: true } }
-                }
-            });
+                chartIssues = new Chart(ctx1, {
+                    type: 'bar',
+                    data: {
+                        labels: sortedPatterns.map(x => x[0]),
+                        datasets: [{
+                            label: 'Complaints',
+                            data: sortedPatterns.map(x => x[1]),
+                            backgroundColor: '#f43f5e',
+                            borderRadius: 4,
+                            barThickness: 20
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y', // Horizontal
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: { x: { beginAtZero: true } }
+                    }
+                });
 
-            // 4. Render Chart 2: Defect Types (Doughnut)
-            const ctx2 = document.getElementById('chart-issues'); // using same ID in HTML, different concept
-            if (chartStatus) chartStatus.destroy(); // represents "Issues" now
+                // 4. Render Chart 2: Defect Types (Doughnut)
+                const ctx2 = document.getElementById('chart-issues'); // using same ID in HTML, different concept
+                if (chartStatus) chartStatus.destroy(); // represents "Issues" now
 
-            const sortedIssues = Object.entries(issueCounts).sort((a, b) => b[1] - a[1]);
+                const sortedIssues = Object.entries(issueCounts).sort((a, b) => b[1] - a[1]);
 
-            chartStatus = new Chart(ctx2, {
-                type: 'doughnut',
-                data: {
-                    labels: sortedIssues.map(x => x[0]),
-                    datasets: [{
-                        data: sortedIssues.map(x => x[1]),
-                        backgroundColor: ['#f59e0b', '#ef4444', '#3b82f6', '#10b981', '#6366f1', '#8b5cf6'],
-                        borderWidth: 0
-                    }]
-                },
-                options: { maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
-            });
-        }
+                chartStatus = new Chart(ctx2, {
+                    type: 'doughnut',
+                    data: {
+                        labels: sortedIssues.map(x => x[0]),
+                        datasets: [{
+                            data: sortedIssues.map(x => x[1]),
+                            backgroundColor: ['#f59e0b', '#ef4444', '#3b82f6', '#10b981', '#6366f1', '#8b5cf6'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: { maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
+                });
+            }
 
-        function openSchoolComplaints(schoolData) {
-            document.getElementById('tm-school-name').innerText = schoolData.name;
-            document.getElementById('tm-school-stats').innerText = `${schoolData.open} Active • ${schoolData.resolved} Resolved`;
+            function openSchoolComplaints(schoolData) {
+                document.getElementById('tm-school-name').innerText = schoolData.name;
+                document.getElementById('tm-school-stats').innerText = `${schoolData.open} Active • ${schoolData.resolved} Resolved`;
 
-            const list = document.getElementById('tm-list');
-            list.innerHTML = schoolData.tickets.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).map(c => {
-                const isResolved = c.status === 'Resolved';
-                let images = [];
-                try { images = JSON.parse(c.image_url || '[]'); } catch (e) { if (c.image_url) images = [c.image_url]; }
+                const list = document.getElementById('tm-list');
+                list.innerHTML = schoolData.tickets.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).map(c => {
+                    const isResolved = c.status === 'Resolved';
+                    let images = [];
+                    try { images = JSON.parse(c.image_url || '[]'); } catch (e) { if (c.image_url) images = [c.image_url]; }
 
-                return `
-                    <div class="clay-card p-6 mb-4 animate-in slide-in-from-bottom-2 duration-300">
+                    return `
+                    <div class="bg-white border border-gray-200 shadow-sm rounded-xl p-6 mb-4 animate-in slide-in-from-bottom-2 duration-300">
                          <div class="flex justify-between items-start mb-4">
                              <div>
                                  <span class="text-[10px] bg-gray-100 text-gray-400 px-2 py-1 rounded uppercase font-bold tracking-wider">${new Date(c.created_at).toLocaleDateString()}</span>
@@ -1258,7 +1220,7 @@
                                  <div class="text-xs text-gray-400 font-medium">${c.class || ''} ${c.section || ''} ${c.house ? '• ' + c.house : ''} ${c.gender ? '• ' + c.gender : ''}</div>
                              </div>
                              <div class="text-right">
-                                 <select onchange="updateTicketStatus(${c.id}, this.value)" class="clay-input text-[10px] h-8 py-1 font-bold uppercase ${isResolved ? 'text-emerald-500' : 'text-rose-500'}">
+                                 <select onchange="updateTicketStatus(${c.id}, this.value)" class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all text-[10px] h-8 py-1 font-bold uppercase ${isResolved ? 'text-emerald-500' : 'text-rose-500'}">
                                      <option value="Open" ${!isResolved ? 'selected' : ''}>Open</option>
                                      <option value="Resolved" ${isResolved ? 'selected' : ''}>Resolved</option>
                                  </select>
@@ -1291,197 +1253,198 @@
                          </div>
                     </div>
                  `;
-            }).join('');
+                }).join('');
 
-            document.getElementById('ticketModal').showModal();
-        }
+                document.getElementById('ticketModal').showModal();
+            }
 
-        async function updateTicketStatus(id, newStatus) {
-            // Optimistic Update? No, let's fetch.
-            try {
-                // Reuse reply endpoint or new status toggler? 
-                // We don't have a status toggle route yet explicitly in previous summary, 
-                // but 'PUT /api/data/complaints/:id' works for full updates. 
-                // Let's assume we can enable a standard update.
-                // Wait, the previous code for PUT used: db.run("UPDATE complaints SET rating = ?, comment = ?, image_url = ? ...")
-                // It did NOT update status. 
-                // Checking backend... we need to ensure backend supports status update!
-                // If not, we fall back to just display for now, or use 'reply' to resolve. 
-                // Let's assume simple reply for now is the main interaction, OR use the reply endpoint to also close it if needed. 
-                // Actually, let's stick to just viewing for safety unless I patch the backend. 
-                // User asked for "update complaint style". I will leave status changing as visual for now or patch backend if I can.
-                // Let's create a quick patch in next step if broken.
-                alert("Status update requires Backend Patch. Coming soon.");
-            } catch (e) { }
-        }
+            async function updateTicketStatus(id, newStatus) {
+                // Optimistic Update? No, let's fetch.
+                try {
+                    // Reuse reply endpoint or new status toggler? 
+                    // We don't have a status toggle route yet explicitly in previous summary, 
+                    // but 'PUT /api/data/complaints/:id' works for full updates. 
+                    // Let's assume we can enable a standard update.
+                    // Wait, the previous code for PUT used: db.run("UPDATE complaints SET rating = ?, comment = ?, image_url = ? ...")
+                    // It did NOT update status. 
+                    // Checking backend... we need to ensure backend supports status update!
+                    // If not, we fall back to just display for now, or use 'reply' to resolve. 
+                    // Let's assume simple reply for now is the main interaction, OR use the reply endpoint to also close it if needed. 
+                    // Actually, let's stick to just viewing for safety unless I patch the backend. 
+                    // User asked for "update complaint style". I will leave status changing as visual for now or patch backend if I can.
+                    // Let's create a quick patch in next step if broken.
+                    alert("Status update requires Backend Patch. Coming soon.");
+                } catch (e) { }
+            }
 
-        function generateComplaintReport() {
-            downloadExcel();
-        }
+            function generateComplaintReport() {
+                downloadExcel();
+            }
 
-        function downloadPDF() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF('l', 'mm', 'a4');
+            function downloadPDF() {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF('l', 'mm', 'a4');
 
-            // Header
-            doc.setFontSize(18);
-            doc.text("Planetsolutions - Complaint Report", 14, 20);
-            doc.setFontSize(10);
-            doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 26);
+                // Header
+                doc.setFontSize(18);
+                doc.text("Planetsolutions - Complaint Report", 14, 20);
+                doc.setFontSize(10);
+                doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 26);
 
-            // Stats
-            const total = document.getElementById('c-stat-total')?.innerText || '0';
-            const open = document.getElementById('c-stat-open')?.innerText || '0';
-            doc.text(`Total: ${total} | Open: ${open}`, 14, 32);
+                // Stats
+                const total = document.getElementById('c-stat-total')?.innerText || '0';
+                const open = document.getElementById('c-stat-open')?.innerText || '0';
+                doc.text(`Total: ${total} | Open: ${open}`, 14, 32);
 
-            // Table Data
-            const tableRows = filteredComplaints.map(c => [
-                new Date(c.created_at).toLocaleDateString(),
-                c.school_name,
-                c.student_name + ` (${c.student_reg_no || '-'})`,
-                c.gender,
-                (c.pattern_name || '-').substring(0, 30),
-                (c.issue_type || '-').substring(0, 30),
-                c.status
-            ]);
+                // Table Data
+                const tableRows = filteredComplaints.map(c => [
+                    new Date(c.created_at).toLocaleDateString(),
+                    c.school_name,
+                    c.student_name + ` (${c.student_reg_no || '-'})`,
+                    c.gender,
+                    (c.pattern_name || '-').substring(0, 30),
+                    (c.issue_type || '-').substring(0, 30),
+                    c.status
+                ]);
 
-            doc.autoTable({
-                startY: 36,
-                head: [['Date', 'School', 'Student', 'Gender', 'Patterns', 'Issues', 'Status']],
-                body: tableRows,
-                theme: 'grid',
-                headStyles: { fillColor: [244, 63, 94] },
-                styles: { fontSize: 8 },
-            });
-
-            doc.save(`complaints_report_${new Date().toISOString().slice(0, 10)}.pdf`);
-        }
-
-        function downloadExcel() {
-            const wb = XLSX.utils.book_new();
-            const excelData = filteredComplaints.map(c => ({
-                "Date": new Date(c.created_at).toLocaleDateString(),
-                "School": c.school_name,
-                "Student": c.student_name,
-                "Reg No": c.student_reg_no,
-                "Class": c.class,
-                "Section": c.section,
-                "Gender": c.gender,
-                "Status": c.status,
-                "Patterns": c.pattern_name,
-                "Issues": c.issue_type,
-                "Comment": c.comment,
-                "Reply": c.reply || ''
-            }));
-            const ws = XLSX.utils.json_to_sheet(excelData);
-            const wscols = Object.keys(excelData[0] || {}).map(k => ({ wch: 20 }));
-            ws['!cols'] = wscols;
-            XLSX.utils.book_append_sheet(wb, ws, "Complaints");
-            XLSX.writeFile(wb, `complaints_report_${new Date().toISOString().slice(0, 10)}.xlsx`);
-        }
-
-        function openReplyModal(id, schoolName) {
-            currentComplaintId = id;
-            document.getElementById('reply-school-name').innerText = `Replying to: ${schoolName}`;
-            document.getElementById('reply-text').value = '';
-
-            // Force close ticket modal to fix stacking
-            const tm = document.getElementById('ticketModal');
-            if (tm) tm.close();
-
-            const rm = document.getElementById('reply-modal');
-            rm.classList.remove('hidden');
-            rm.style.zIndex = '9999';
-        }
-
-        function closeReplyModal() {
-            document.getElementById('reply-modal').classList.add('hidden');
-            currentComplaintId = null;
-        }
-
-        async function submitReply() {
-            if (!currentComplaintId) return;
-            const text = document.getElementById('reply-text').value;
-            if (!text.trim()) return alert("Please write a reply.");
-
-            try {
-                const res = await fetch(`${API_BASE}/data/complaints/${currentComplaintId}/reply`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                    body: JSON.stringify({ reply: text })
+                doc.autoTable({
+                    startY: 36,
+                    head: [['Date', 'School', 'Student', 'Gender', 'Patterns', 'Issues', 'Status']],
+                    body: tableRows,
+                    theme: 'grid',
+                    headStyles: { fillColor: [244, 63, 94] },
+                    styles: { fontSize: 8 },
                 });
 
-                if (res.ok) {
-                    alert("Reply Sent!");
-                    closeReplyModal();
-                    fetchComplaints();
-                } else {
-                    alert("Failed to send reply");
-                }
-            } catch (e) { alert(e.message); }
-        }
+                doc.save(`complaints_report_${new Date().toISOString().slice(0, 10)}.pdf`);
+            }
 
-        document.getElementById('nav-overview').classList.add('active'); init().then(() => {
-            // Auto Refresh Pollers
-            setInterval(() => { fetchStats(); }, 30000);
-            setInterval(() => { if (!document.getElementById('view-complaints').classList.contains('hidden')) fetchComplaints(); }, 15000);
-        });
-    </script>
+            function downloadExcel() {
+                const wb = XLSX.utils.book_new();
+                const excelData = filteredComplaints.map(c => ({
+                    "Date": new Date(c.created_at).toLocaleDateString(),
+                    "School": c.school_name,
+                    "Student": c.student_name,
+                    "Reg No": c.student_reg_no,
+                    "Class": c.class,
+                    "Section": c.section,
+                    "Gender": c.gender,
+                    "Status": c.status,
+                    "Patterns": c.pattern_name,
+                    "Issues": c.issue_type,
+                    "Comment": c.comment,
+                    "Reply": c.reply || ''
+                }));
+                const ws = XLSX.utils.json_to_sheet(excelData);
+                const wscols = Object.keys(excelData[0] || {}).map(k => ({ wch: 20 }));
+                ws['!cols'] = wscols;
+                XLSX.utils.book_append_sheet(wb, ws, "Complaints");
+                XLSX.writeFile(wb, `complaints_report_${new Date().toISOString().slice(0, 10)}.xlsx`);
+            }
 
-    <!-- REPLY MODAL -->
-    <div id="reply-modal"
-        class="fixed inset-0 bg-gray-500/30 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
-        <div class="clay-card w-full max-w-lg p-8">
-            <h3 class="text-xl font-bold text-gray-700 mb-2">Reply to Complaint</h3>
-            <p class="text-xs text-gray-400 mb-6 font-medium" id="reply-school-name">School Name</p>
-            <textarea id="reply-text" rows="4" class="clay-input w-full p-4 text-sm"
-                placeholder="Write your response here..."></textarea>
-            <div class="flex justify-end gap-4 mt-6">
-                <button onclick="closeReplyModal()"
-                    class="px-4 py-2 text-xs font-bold text-gray-500 hover:text-gray-700 uppercase tracking-wider">CANCEL</button>
-                <button onclick="submitReply()"
-                    class="clay-btn-primary px-6 py-3 text-xs font-bold rounded-lg shadow-lg uppercase tracking-wider">SEND
-                    REPLY</button>
+            function openReplyModal(id, schoolName) {
+                currentComplaintId = id;
+                document.getElementById('reply-school-name').innerText = `Replying to: ${schoolName}`;
+                document.getElementById('reply-text').value = '';
+
+                // Force close ticket modal to fix stacking
+                const tm = document.getElementById('ticketModal');
+                if (tm) tm.close();
+
+                const rm = document.getElementById('reply-modal');
+                rm.classList.remove('hidden');
+                rm.style.zIndex = '9999';
+            }
+
+            function closeReplyModal() {
+                document.getElementById('reply-modal').classList.add('hidden');
+                currentComplaintId = null;
+            }
+
+            async function submitReply() {
+                if (!currentComplaintId) return;
+                const text = document.getElementById('reply-text').value;
+                if (!text.trim()) return alert("Please write a reply.");
+
+                try {
+                    const res = await fetch(`${API_BASE}/data/complaints/${currentComplaintId}/reply`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                        body: JSON.stringify({ reply: text })
+                    });
+
+                    if (res.ok) {
+                        alert("Reply Sent!");
+                        closeReplyModal();
+                        fetchComplaints();
+                    } else {
+                        alert("Failed to send reply");
+                    }
+                } catch (e) { alert(e.message); }
+            }
+
+            document.getElementById('nav-overview').classList.add('active'); init().then(() => {
+                // Auto Refresh Pollers
+                setInterval(() => { fetchStats(); }, 30000);
+                setInterval(() => { if (!document.getElementById('view-complaints').classList.contains('hidden')) fetchComplaints(); }, 15000);
+            });
+        </script>
+
+        <!-- REPLY MODAL -->
+        <div id="reply-modal"
+            class="fixed inset-0 bg-gray-500/30 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+            <div class="bg-white border border-gray-200 shadow-sm rounded-xl w-full max-w-lg p-8">
+                <h3 class="text-xl font-bold text-gray-700 mb-2">Reply to Complaint</h3>
+                <p class="text-xs text-gray-400 mb-6 font-medium" id="reply-school-name">School Name</p>
+                <textarea id="reply-text" rows="4"
+                    class="w-full bg-white border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none transition-all w-full p-4 text-sm"
+                    placeholder="Write your response here..."></textarea>
+                <div class="flex justify-end gap-4 mt-6">
+                    <button onclick="closeReplyModal()"
+                        class="px-4 py-2 text-xs font-bold text-gray-500 hover:text-gray-700 uppercase tracking-wider">CANCEL</button>
+                    <button onclick="submitReply()"
+                        class="px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:bg-gray-50 font-medium shadow-sm transition-colors-primary px-6 py-3 text-xs font-bold rounded-lg shadow-lg uppercase tracking-wider">SEND
+                        REPLY</button>
+                </div>
             </div>
         </div>
-    </div>
 
-    <script>
-        async function resetDatabase() {
-            if (!confirm("⚠️ DANGER: This will DELETE ALL PATTERNS, MEASUREMENTS and UNLINK STUDENTS from the database.\\n\\nThis action cannot be undone on Production.\\n\\nType 'RESET' to confirm:")) return;
+        <script>
+            async function resetDatabase() {
+                if (!confirm("⚠️ DANGER: This will DELETE ALL PATTERNS, MEASUREMENTS and UNLINK STUDENTS from the database.\\n\\nThis action cannot be undone on Production.\\n\\nType 'RESET' to confirm:")) return;
 
-            const conf = prompt("Type 'RESET' to confirm deletion:");
-            if (conf !== 'RESET') return alert("Cancelled.");
+                const conf = prompt("Type 'RESET' to confirm deletion:");
+                if (conf !== 'RESET') return alert("Cancelled.");
 
-            try {
-                const res = await fetch(`${API_BASE}/data/reset_tables`, {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
+                try {
+                    const res = await fetch(`${API_BASE}/data/reset_tables`, {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
 
-                const d = await res.json();
-                if (!res.ok) throw new Error(d.error || "Reset failed");
-                alert("✅ " + d.message);
-                location.reload();
-            } catch (e) {
-                alert("Error: " + e.message);
+                    const d = await res.json();
+                    if (!res.ok) throw new Error(d.error || "Reset failed");
+                    alert("✅ " + d.message);
+                    location.reload();
+                } catch (e) {
+                    alert("Error: " + e.message);
+                }
             }
-        }
 
-        async function fixDatabase() {
-            if (!confirm("Attempt to repair database schema? (Adds missing tables/columns)")) return;
-            try {
-                const res = await fetch(`${API_BASE}/data/fix_db`, {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const d = await res.json();
-                alert(d.message);
-            } catch (e) {
-                alert("Repair Error: " + e.message);
+            async function fixDatabase() {
+                if (!confirm("Attempt to repair database schema? (Adds missing tables/columns)")) return;
+                try {
+                    const res = await fetch(`${API_BASE}/data/fix_db`, {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    const d = await res.json();
+                    alert(d.message);
+                } catch (e) {
+                    alert("Repair Error: " + e.message);
+                }
             }
-        }
-    </script>
+        </script>
 
 </body>
 
