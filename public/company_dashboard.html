@@ -17,29 +17,36 @@
         @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&family=Poppins:wght@400;500;600;700&display=swap');
 
         :root {
-            /* Pastel Palette */
-            --clay-bg: #F0F4F8;
-            --clay-surface: #F0F4F8;
-            --text-main: #485460;
-            --text-light: #808e9b;
+            /* Snow White & Pastels */
+            --clay-bg: #ffffff;
+            --clay-surface: #ffffff;
 
-            /* Clay Shadows - The "Inflated" Look */
-            --shadow-light: inset -5px -5px 12px rgba(255, 255, 255, 1),
-                5px 5px 12px rgba(166, 180, 200, 0.4);
-            --shadow-pressed: inset 6px 6px 10px rgba(166, 180, 200, 0.6),
+            /* Shadows for White-on-White (Subtle & Soft) */
+            --shadow-light: 10px 10px 30px rgba(174, 186, 204, 0.4),
+                -10px -10px 30px rgba(255, 255, 255, 1);
+            --shadow-pressed: inset 6px 6px 10px rgba(174, 186, 204, 0.25),
                 inset -6px -6px 10px rgba(255, 255, 255, 1);
 
-            /* Accents */
-            --accent-purple: #a55eea;
-            --accent-blue: #45aaf2;
-            --accent-pink: #fc5c65;
+            /* Pastel Accents */
+            --accent-blue: #A0C4FF;
+            /* Soft Blue */
+            --accent-pink: #FFADAD;
+            /* Soft Pink */
+            --accent-peach: #FFD6A5;
+            /* Peach */
+            --accent-mint: #CAFFBF;
+            /* Mint */
+            --accent-purple: #BDB2FF;
+            /* Keep for legacy or replace */
+
+            /* Text */
+            --text-main: #4A5568;
+            --text-light: #A0AEC0;
         }
 
         body {
             font-family: 'Nunito', sans-serif;
             background-color: var(--clay-bg);
-            /* Subtle Pastel Gradient Background */
-            background-image: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
             color: var(--text-main);
         }
 
@@ -50,9 +57,8 @@
             background-color: var(--clay-surface);
             border-radius: 30px;
             /* Super rounded */
-            box-shadow: 12px 12px 24px rgba(163, 177, 198, 0.6),
-                -12px -12px 24px rgba(255, 255, 255, 1);
-            border: 2px solid rgba(255, 255, 255, 0.4);
+            box-shadow: var(--shadow-light);
+            border: 1px solid rgba(255, 255, 255, 0.8);
             transition: transform 0.3s ease;
         }
 
@@ -67,8 +73,7 @@
             border: none;
             outline: none;
             cursor: pointer;
-            box-shadow: 8px 8px 16px rgba(163, 177, 198, 0.6),
-                -8px -8px 16px rgba(255, 255, 255, 1);
+            box-shadow: var(--shadow-light);
             transition: all 0.1s ease;
             display: inline-flex;
             align-items: center;
@@ -185,13 +190,13 @@
         <!-- Brand -->
         <div class="p-8 flex items-center gap-4">
             <div class="w-12 h-12 rounded-2xl clay-primary flex items-center justify-center text-2xl font-bold shadow-inner text-white"
-                style="background: var(--accent-purple);">
+                style="background: var(--accent-blue);">
                 P
             </div>
             <div>
                 <h1 class="text-xl font-extrabold text-gray-700 tracking-tight">Planet</h1>
                 <p
-                    class="text-[10px] font-bold text-indigo-400 uppercase tracking-widest bg-indigo-50 px-2 py-0.5 rounded-full inline-block mt-1">
+                    class="text-[10px] font-bold text-blue-400 uppercase tracking-widest bg-blue-50 px-2 py-0.5 rounded-full inline-block mt-1">
                     Clay Command</p>
             </div>
         </div>
@@ -199,7 +204,7 @@
         <!-- User Profile Mini -->
         <div class="mx-6 p-4 clay-input !w-auto flex items-center gap-3 mb-6 shadow-inner">
             <div
-                class="w-10 h-10 rounded-full bg-gradient-to-tr from-purple-400 to-indigo-500 text-white flex items-center justify-center font-bold text-lg shadow-lg">
+                class="w-10 h-10 rounded-full bg-gradient-to-tr from-purple-400 to-blue-500 text-white flex items-center justify-center font-bold text-lg shadow-lg">
                 A
             </div>
             <div>
@@ -214,7 +219,7 @@
         <!-- Navigation -->
         <nav class="flex-1 px-4 space-y-3 overflow-y-auto py-2">
             <button onclick="switchTab('overview')" id="nav-overview"
-                class="nav-item clay-btn w-full flex items-center gap-4 px-6 py-4 text-sm mb-1 text-gray-600 hover:text-indigo-600 transition-all">
+                class="nav-item clay-btn w-full flex items-center gap-4 px-6 py-4 text-sm mb-1 text-gray-600 hover:text-blue-600 transition-all">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <rect x="3" y="3" width="7" height="7"></rect>
                     <rect x="14" y="3" width="7" height="7"></rect>
@@ -224,7 +229,7 @@
                 Overview
             </button>
             <button onclick="switchTab('data')" id="nav-data"
-                class="nav-item clay-btn w-full flex items-center gap-4 px-6 py-4 text-sm mb-1 text-gray-600 hover:text-indigo-600 transition-all">
+                class="nav-item clay-btn w-full flex items-center gap-4 px-6 py-4 text-sm mb-1 text-gray-600 hover:text-blue-600 transition-all">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path
                         d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z">
@@ -235,7 +240,7 @@
                 Tailoring Data
             </button>
             <button onclick="switchTab('users')" id="nav-users"
-                class="nav-item clay-btn w-full flex items-center gap-4 px-6 py-4 text-sm mb-1 text-gray-600 hover:text-indigo-600 transition-all">
+                class="nav-item clay-btn w-full flex items-center gap-4 px-6 py-4 text-sm mb-1 text-gray-600 hover:text-blue-600 transition-all">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
                     <circle cx="9" cy="7" r="4"></circle>
@@ -245,7 +250,7 @@
                 User Management
             </button>
             <button onclick="switchTab('access')" id="nav-access"
-                class="nav-item clay-btn w-full flex items-center gap-4 px-6 py-4 text-sm mb-1 text-gray-600 hover:text-indigo-600 transition-all">
+                class="nav-item clay-btn w-full flex items-center gap-4 px-6 py-4 text-sm mb-1 text-gray-600 hover:text-blue-600 transition-all">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                     <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
@@ -253,7 +258,7 @@
                 Access Codes
             </button>
             <button onclick="switchTab('schools')" id="nav-schools"
-                class="nav-item clay-btn w-full flex items-center gap-4 px-6 py-4 text-sm mb-1 text-gray-600 hover:text-indigo-600 transition-all">
+                class="nav-item clay-btn w-full flex items-center gap-4 px-6 py-4 text-sm mb-1 text-gray-600 hover:text-blue-600 transition-all">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M3 21h18"></path>
                     <path d="M5 21V7l8-4 8 4v14"></path>
@@ -262,7 +267,7 @@
                 Schools
             </button>
             <button onclick="switchTab('reports')" id="nav-reports"
-                class="nav-item clay-btn w-full flex items-center gap-4 px-6 py-4 text-sm mb-1 text-gray-600 hover:text-indigo-600 transition-all">
+                class="nav-item clay-btn w-full flex items-center gap-4 px-6 py-4 text-sm mb-1 text-gray-600 hover:text-blue-600 transition-all">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                     <polyline points="14 2 14 8 20 8"></polyline>
@@ -273,7 +278,7 @@
                 Reports
             </button>
             <button onclick="switchTab('complaints')" id="nav-complaints"
-                class="nav-item clay-btn w-full flex items-center gap-4 px-6 py-4 rounded-xl text-sm mb-1 text-gray-600 hover:text-indigo-600 transition-all">
+                class="nav-item clay-btn w-full flex items-center gap-4 px-6 py-4 rounded-xl text-sm mb-1 text-gray-600 hover:text-blue-600 transition-all">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path
                         d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z">
@@ -285,7 +290,7 @@
             <div class="h-px bg-gray-300/50 mx-4 my-2"></div>
 
             <button onclick="window.open('pattern_view.html', '_blank')"
-                class="clay-btn w-full flex items-center gap-4 px-6 py-3 text-sm text-indigo-400">
+                class="clay-btn w-full flex items-center gap-4 px-6 py-3 text-sm text-blue-400">
                 <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                     <rect x="3" y="3" width="7" height="7"></rect>
                     <rect x="14" y="3" width="7" height="7"></rect>
@@ -319,7 +324,7 @@
                     Reset DB
                 </button>
                 <button onclick="fixDatabase()"
-                    class="clay-btn clay-primary px-6 py-3 text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-lg hover:shadow-indigo-500/30 transition-all active:scale-95 whitespace-nowrap">
+                    class="clay-btn clay-primary px-6 py-3 text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-lg hover:shadow-blue-500/30 transition-all active:scale-95 whitespace-nowrap">
                     Repair DB
                 </button>
             </div>
@@ -332,7 +337,7 @@
                 <div class="clay-card p-6 flex flex-col justify-between h-40 relative overflow-hidden group">
                     <div class="flex justify-between items-start">
                         <div
-                            class="w-12 h-12 rounded-full bg-indigo-50 text-indigo-500 flex items-center justify-center text-xl shadow-sm">
+                            class="w-12 h-12 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center text-xl shadow-sm">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0z">
@@ -351,14 +356,14 @@
                 <div class="clay-card p-6 flex flex-col justify-between h-40 relative overflow-hidden group">
                     <div class="flex justify-between items-start">
                         <div
-                            class="w-12 h-12 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center text-xl shadow-sm">
+                            class="w-12 h-12 rounded-full bg-orange-50 text-orange-500 flex items-center justify-center text-xl shadow-sm">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                             </svg>
                         </div>
                         <span
-                            class="bg-amber-100 text-amber-600 px-2 py-1 rounded-lg text-[10px] font-bold uppercase">Pending</span>
+                            class="bg-orange-100 text-orange-600 px-2 py-1 rounded-lg text-[10px] font-bold uppercase">Pending</span>
                     </div>
                     <div>
                         <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Orders Pending</p>
@@ -387,7 +392,7 @@
                 <div class="clay-card p-6 flex flex-col justify-between h-40 relative overflow-hidden group">
                     <div class="flex justify-between items-start">
                         <div
-                            class="w-12 h-12 rounded-full bg-purple-50 text-purple-500 flex items-center justify-center text-xl shadow-sm">
+                            class="w-12 h-12 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center text-xl shadow-sm">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4">
@@ -540,7 +545,7 @@
                                 <th class="p-4">Class</th>
                                 <th class="p-4">Pattern</th>
                                 <!-- Dynamic Header -->
-                                <th class="p-4 text-center text-amber-600 bg-amber-50/30" id="th-measurements">
+                                <th class="p-4 text-center text-orange-600 bg-orange-50/30" id="th-measurements">
                                     Measurements</th>
                                 <th class="p-4 text-center">Status</th>
                             </tr>
@@ -732,8 +737,8 @@
                     </div>
                     <div
                         class="clay-card p-4 flex flex-col justify-center items-center text-center relative overflow-hidden">
-                        <div class="absolute top-0 left-0 w-1 h-full bg-amber-400"></div>
-                        <p class="text-[10px] text-amber-500 font-bold uppercase tracking-widest">Open</p>
+                        <div class="absolute top-0 left-0 w-1 h-full bg-orange-400"></div>
+                        <p class="text-[10px] text-orange-500 font-bold uppercase tracking-widest">Open</p>
                         <p class="text-3xl font-extrabold text-gray-700 mt-1" id="c-stat-open">0</p>
                     </div>
                     <div
@@ -753,8 +758,8 @@
                     <p class="text-xs text-gray-400 font-medium" id="c-top-pattern-count">0 complaints</p>
                 </div>
                 <div class="clay-card p-4 col-span-2 relative overflow-hidden">
-                    <div class="absolute top-0 left-0 w-full h-1 bg-indigo-400"></div>
-                    <p class="text-[10px] text-indigo-500 font-bold uppercase tracking-widest mb-2">Common Issue</p>
+                    <div class="absolute top-0 left-0 w-full h-1 bg-blue-400"></div>
+                    <p class="text-[10px] text-blue-500 font-bold uppercase tracking-widest mb-2">Common Issue</p>
                     <h4 class="font-bold text-gray-800 truncate text-lg" id="c-top-issue">-</h4>
                     <p class="text-xs text-gray-400 font-medium" id="c-top-issue-count">0 occurrences</p>
                 </div>
@@ -973,7 +978,7 @@
                     subRow.classList.remove('hidden');
                     subRow.innerHTML = `
                     <th colspan="4" class="bg-gray-100/30 border-r border-white/60"></th>
-                    ${showCols.map(c => `<th class="p-2 text-center border-x border-white/60 text-amber-600 bg-amber-50/50 text-xs font-bold">${c}</th>`).join('')}
+                    ${showCols.map(c => `<th class="p-2 text-center border-x border-white/60 text-orange-600 bg-orange-50/50 text-xs font-bold">${c}</th>`).join('')}
                     <th></th>
                 `;
                 } else {
@@ -986,7 +991,7 @@
                     const m = getMeasurementsSafe(s);
                     let measCells = '';
                     if (showCols.length > 0) {
-                        measCells = showCols.map(k => `<td class="p-4 text-center border-b border-stone-100 font-mono font-bold text-stone-700 bg-amber-50/20">${m[k.toLowerCase()] || '-'}</td>`).join('');
+                        measCells = showCols.map(k => `<td class="p-4 text-center border-b border-stone-100 font-mono font-bold text-stone-700 bg-orange-50/20">${m[k.toLowerCase()] || '-'}</td>`).join('');
                     } else {
                         measCells = `<td class="p-4 border-b border-stone-100 text-xs italic text-stone-400">Select Item...</td>`;
                     }
@@ -1005,11 +1010,11 @@
                         <div class="text-xs text-gray-400">${s.house || ''} ${s.gender ? '• ' + s.gender : ''}</div>
                     </td>
                     <td class="p-4 border-b border-white/50 text-xs font-mono text-gray-500">
-                        ${s.pattern_name ? `<span class="bg-indigo-50 text-indigo-500 px-3 py-1 rounded-full font-bold shadow-sm text-[10px] uppercase tracking-wider">${s.pattern_name}</span>` : '-'}
+                        ${s.pattern_name ? `<span class="bg-blue-50 text-blue-500 px-3 py-1 rounded-full font-bold shadow-sm text-[10px] uppercase tracking-wider">${s.pattern_name}</span>` : '-'}
                     </td>
                     ${measCells}
                     <td class="p-4 border-b border-white/50 text-center">
-                        <span class="px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wide shadow-sm ${s.is_packed ? 'bg-emerald-100 text-emerald-600' : 'bg-amber-100 text-amber-600'}">${s.is_packed ? 'PACKED' : 'PENDING'}</span>
+                        <span class="px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wide shadow-sm ${s.is_packed ? 'bg-emerald-100 text-emerald-600' : 'bg-orange-100 text-orange-600'}">${s.is_packed ? 'PACKED' : 'PENDING'}</span>
                     </td>
                 </tr>`;
                 }).join('');
