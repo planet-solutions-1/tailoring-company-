@@ -331,82 +331,114 @@
 
         <!-- 1. OVERVIEW -->
         <div id="view-overview" class="space-y-8 fade-in">
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                <!-- Stat Card 1: Total Students -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                <!-- Stat Card 1: Total Students (Blue/Cyan Theme) -->
                 <div
-                    class="clay-card p-6 flex flex-col justify-between h-40 relative overflow-hidden group transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl bg-gradient-to-br from-white to-blue-50/50">
-                    <div class="flex justify-between items-start">
+                    class="clay-card p-7 flex flex-col justify-between h-48 relative overflow-hidden group transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl bg-gradient-to-br from-[#eff6ff] via-white to-[#eff6ff]">
+                    <div class="flex justify-between items-start z-10 relative">
                         <div
-                            class="w-12 h-12 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center text-xl shadow-xl shadow-blue-300">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            class="w-14 h-14 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center text-2xl shadow-lg shadow-blue-100/50 group-hover:scale-110 transition-transform duration-300">
+                            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0z">
                                 </path>
                             </svg>
                         </div>
                         <span
-                            class="bg-emerald-400 text-white px-3 py-1 rounded-full text-[10px] font-bold uppercase shadow-lg shadow-emerald-200">+12%</span>
+                            class="bg-blue-400 text-white px-4 py-1.5 rounded-full text-[11px] font-extrabold uppercase tracking-wide shadow-md shadow-blue-200">+12%</span>
                     </div>
-                    <div>
-                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Students</p>
-                        <p class="text-4xl font-extrabold text-gray-800" id="stat-students">0</p>
+                    <div class="z-10 relative">
+                        <p class="text-[11px] font-extrabold text-slate-400 uppercase tracking-widest mb-1.5">Total
+                            Students</p>
+                        <p class="text-[42px] font-black text-slate-800 leading-none tracking-tight user-select-none"
+                            id="stat-students">0</p>
+                    </div>
+                    <!-- Decorative Blur -->
+                    <div
+                        class="absolute -bottom-6 -right-6 w-32 h-32 bg-blue-100/40 rounded-full blur-2xl group-hover:bg-blue-200/40 transition-colors">
                     </div>
                 </div>
 
-                <!-- Stat Card 2: Orders Pending -->
+                <!-- Stat Card 2: Orders Pending (Amber/Cream Theme - REFERENCE MATCH) -->
                 <div
-                    class="clay-card p-6 flex flex-col justify-between h-40 relative overflow-hidden group transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl bg-gradient-to-br from-white to-orange-50/50">
-                    <div class="flex justify-between items-start">
+                    class="clay-card p-7 flex flex-col justify-between h-48 relative overflow-hidden group transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl bg-gradient-to-br from-[#fffbeb] via-white to-[#fffbeb]">
+                    <div class="flex justify-between items-start z-10 relative">
                         <div
-                            class="w-12 h-12 rounded-full bg-orange-50 text-orange-500 flex items-center justify-center text-xl shadow-xl shadow-orange-300">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            class="w-14 h-14 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center text-2xl shadow-lg shadow-amber-100/50 group-hover:scale-110 transition-transform duration-300">
+                            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <circle cx="12" cy="12" r="10" stroke-width="2"></circle>
+                                <polyline points="12 6 12 12 16 14" stroke-width="2"></polyline>
                             </svg>
                         </div>
                         <span
-                            class="bg-orange-400 text-white px-3 py-1 rounded-full text-[10px] font-bold uppercase shadow-lg shadow-orange-200">Pending</span>
+                            class="bg-amber-400 text-white px-4 py-1.5 rounded-full text-[11px] font-extrabold uppercase tracking-wide shadow-md shadow-amber-200">Pending</span>
                     </div>
-                    <div>
-                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Orders Pending</p>
-                        <p class="text-4xl font-extrabold text-gray-800" id="stat-pending">0</p>
+                    <div class="z-10 relative">
+                        <p class="text-[11px] font-extrabold text-slate-400 uppercase tracking-widest mb-1.5">Orders
+                            Pending</p>
+                        <p class="text-[42px] font-black text-slate-800 leading-none tracking-tight user-select-none"
+                            id="stat-pending">0</p>
+                    </div>
+                    <!-- Decorative Blur -->
+                    <div
+                        class="absolute -bottom-6 -right-6 w-32 h-32 bg-amber-100/40 rounded-full blur-2xl group-hover:bg-amber-200/40 transition-colors">
                     </div>
                 </div>
 
-                <!-- Stat Card 3: Completed -->
+                <!-- Stat Card 3: Completed (Emerald/Mint Theme) -->
                 <div
-                    class="clay-card p-6 flex flex-col justify-between h-40 relative overflow-hidden group transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl bg-gradient-to-br from-white to-emerald-50/50">
-                    <div class="flex justify-between items-start">
+                    class="clay-card p-7 flex flex-col justify-between h-48 relative overflow-hidden group transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl bg-gradient-to-br from-[#ecfdf5] via-white to-[#ecfdf5]">
+                    <div class="flex justify-between items-start z-10 relative">
                         <div
-                            class="w-12 h-12 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center text-xl shadow-xl shadow-emerald-300">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            class="w-14 h-14 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center text-2xl shadow-lg shadow-emerald-100/50 group-hover:scale-110 transition-transform duration-300">
+                            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                             </svg>
                         </div>
+                        <!-- Dynamic Badge for Completed (Hidden if 0 or styled differently) -->
+                        <div
+                            class="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M5 13l4 4L19 7"></path>
+                            </svg>
+                        </div>
                     </div>
-                    <div>
-                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Completed</p>
-                        <p class="text-4xl font-extrabold text-gray-800" id="stat-packed">0</p>
+                    <div class="z-10 relative">
+                        <p class="text-[11px] font-extrabold text-slate-400 uppercase tracking-widest mb-1.5">Completed
+                        </p>
+                        <p class="text-[42px] font-black text-slate-800 leading-none tracking-tight user-select-none"
+                            id="stat-packed">0</p>
+                    </div>
+                    <!-- Decorative Blur -->
+                    <div
+                        class="absolute -bottom-6 -right-6 w-32 h-32 bg-emerald-100/40 rounded-full blur-2xl group-hover:bg-emerald-200/40 transition-colors">
                     </div>
                 </div>
 
-                <!-- Stat Card 4: Total Schools -->
+                <!-- Stat Card 4: Total Schools (Rose/Pink Theme) -->
                 <div
-                    class="clay-card p-6 flex flex-col justify-between h-40 relative overflow-hidden group transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl bg-gradient-to-br from-white to-rose-50/50">
-                    <div class="flex justify-between items-start">
+                    class="clay-card p-7 flex flex-col justify-between h-48 relative overflow-hidden group transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl bg-gradient-to-br from-[#fff1f2] via-white to-[#fff1f2]">
+                    <div class="flex justify-between items-start z-10 relative">
                         <div
-                            class="w-12 h-12 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center text-xl shadow-xl shadow-rose-300">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            class="w-14 h-14 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center text-2xl shadow-lg shadow-rose-100/50 group-hover:scale-110 transition-transform duration-300">
+                            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4">
                                 </path>
                             </svg>
                         </div>
                     </div>
-                    <div>
-                        <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Schools</p>
-                        <p class="text-4xl font-extrabold text-gray-800" id="stat-schools">0</p>
+                    <div class="z-10 relative">
+                        <p class="text-[11px] font-extrabold text-slate-400 uppercase tracking-widest mb-1.5">Total
+                            Schools</p>
+                        <p class="text-[42px] font-black text-slate-800 leading-none tracking-tight user-select-none"
+                            id="stat-schools">0</p>
+                    </div>
+                    <!-- Decorative Blur -->
+                    <div
+                        class="absolute -bottom-6 -right-6 w-32 h-32 bg-rose-100/40 rounded-full blur-2xl group-hover:bg-rose-200/40 transition-colors">
                     </div>
                 </div>
             </div>
