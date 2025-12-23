@@ -311,7 +311,22 @@
         </div>
     </aside>
 
-    <div class="flex-1 flex flex-col h-screen overflow-y-auto relative md:ml-80 transition-all duration-300">
+    <div class="flex-1 flex flex-col h-screen overflow-y-auto relative md:ml-80 transition-all duration-300 isolate">
+        <!-- Background Decor (Watercolor Effect) -->
+        <div class="absolute inset-0 overflow-hidden pointer-events-none -z-10">
+            <!-- Top Right Organic Blob -->
+            <div
+                class="absolute -top-[10%] -right-[5%] w-[700px] h-[700px] rounded-full bg-[#e2f7e7] blur-[100px] opacity-80 mix-blend-multiply">
+            </div>
+            <div
+                class="absolute top-[5%] -right-[10%] w-[600px] h-[600px] rounded-full bg-[#dcfce7] blur-[80px] opacity-70 mix-blend-multiply">
+            </div>
+
+            <!-- Bottom Left Soft Wash -->
+            <div
+                class="absolute -bottom-[10%] -left-[10%] w-[800px] h-[800px] rounded-full bg-[#f0fdf4] blur-[120px] opacity-60">
+            </div>
+        </div>
         <!-- Header -->
         <!-- Header -->
         <header class="px-8 py-6 flex justify-between items-center z-30">
