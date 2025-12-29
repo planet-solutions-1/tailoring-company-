@@ -1,4 +1,4 @@
-const sqlite3 = require('sqlite3').verbose();
+// const sqlite3 = require('sqlite3').verbose(); // Moved to local block
 const mysql = require('mysql2');
 const path = require('path');
 const fs = require('fs');
@@ -255,6 +255,7 @@ if (process.env.RAILWAY_ENVIRONMENT || process.env.NODE_ENV === 'production') {
 
 } else {
     // --- SQLite (Local) ---
+    const sqlite3 = require('sqlite3').verbose();
     const dbPath = path.resolve(__dirname, '../../planet_local.sqlite');
     console.log("Connecting to SQLite (Local)...");
 
