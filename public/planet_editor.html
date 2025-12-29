@@ -114,142 +114,6 @@
 
 <body class="h-screen flex flex-col overflow-hidden relative">
 
-    <!-- LOGIN OVERLAY -->
-    <div id="loginOverlay" class="fixed inset-0 z-[100] bg-[#F9F9F7] flex items-center justify-center">
-        <div
-            class="bg-white p-8 rounded-xl shadow-2xl max-w-md w-full border border-indigo-50 relative overflow-hidden">
-            <!-- Decorative Header -->
-            <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-indigo-500 to-indigo-300"></div>
-
-            <div class="text-center mb-8">
-                <div class="w-16 h-16 bg-indigo-50 rounded-full flex items-center justify-center mx-auto mb-4 text-3xl">
-                    🔐
-                </div>
-                <h2 class="text-2xl font-serif font-bold text-slate-800">Planet Editor</h2>
-                <p class="text-slate-400 text-sm mt-1 uppercase tracking-wider">Authentication Required</p>
-            </div>
-
-            <!-- Tabs -->
-            <div class="flex border-b border-indigo-100 mb-6">
-                <button onclick="switchAuthTab('tailor')" id="tabTailor"
-                    class="flex-1 pb-2 text-sm font-bold text-indigo-600 border-b-2 border-indigo-600 transition-colors">Tailor
-                    Login</button>
-                <button onclick="switchAuthTab('code')" id="tabCode"
-                    class="flex-1 pb-2 text-sm font-bold text-slate-400 border-b-2 border-transparent hover:text-indigo-400 transition-colors">Access
-                    Code</button>
-            </div>
-
-            <!-- Tailor Form -->
-            <form id="formTailor" onsubmit="handleLogin(event)" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Username</label>
-                    <input type="text" id="loginUser"
-                        class="w-full border border-indigo-100 rounded p-3 outline-none focus:border-indigo-400 bg-indigo-50/30"
-                        placeholder="Enter username" required>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Password</label>
-                    <input type="password" id="loginPass"
-                        class="w-full border border-indigo-100 rounded p-3 outline-none focus:border-indigo-400 bg-indigo-50/30"
-                        placeholder="••••••••" required>
-                </div>
-                <button type="submit"
-                    class="w-full bg-indigo-600 text-white py-3 rounded-lg font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-transform active:scale-95">
-                    Secure Login
-                </button>
-            </form>
-
-            <!-- Access Code Form -->
-            <form id="formCode" onsubmit="handleAccessCode(event)" class="space-y-4 hidden">
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">6-Digit Access Code</label>
-                    <input type="text" id="accessCode"
-                        class="w-full border border-indigo-100 rounded p-3 outline-none focus:border-indigo-400 bg-indigo-50/30 font-mono text-center text-2xl tracking-widest uppercase"
-                        placeholder="XXXXXX" maxlength="6" required>
-                </div>
-                <button type="submit"
-                    class="w-full bg-indigo-600 text-white py-3 rounded-lg font-bold shadow-lg shadow-indigo-200 hover:bg-indigo-700 transition-transform active:scale-95">
-                    Unlock Editor
-                </button>
-            </form>
-
-            <p id="authError" class="text-rose-500 text-xs text-center mt-4 font-bold min-h-[1.5em]"></p>
-        </div>
-    </div>
-
-    <!-- PATTERN MODAL -->
-    <div id="patternModal"
-        class="fixed inset-0 z-50 hidden bg-black/30 backdrop-blur-sm flex items-center justify-center">
-        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-lg relative border border-slate-100">
-            <button onclick="document.getElementById('patternModal').classList.add('hidden')"
-                class="absolute top-4 right-4 text-slate-400 hover:text-slate-600">
-                <svg width="20" height="20" viewbox="0 0 24 24">
-                    <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-                </svg>
-            </button>
-
-            <h3 class="text-xl font-serif font-bold text-slate-800 mb-1">Create Pattern</h3>
-            <p class="text-xs text-slate-400 uppercase tracking-widest mb-6">Store Configuration</p>
-
-            <form onsubmit="handleCreatePattern(event)" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Pattern Name</label>
-                    <input type="text" id="patName"
-                        class="w-full border border-slate-200 rounded p-2 text-sm focus:border-indigo-400 outline-none"
-                        placeholder="e.g. Boys Full Kit Class 1-5" required>
-                </div>
-
-                <div class="grid grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Consumption (M)</label>
-                        <input type="number" step="0.01" id="patCons"
-                            class="w-full border border-slate-200 rounded p-2 text-sm focus:border-indigo-400 outline-none"
-                            placeholder="0.00">
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Cloth Details</label>
-                    <textarea id="patCloth"
-                        class="w-full border border-slate-200 rounded p-2 text-sm focus:border-indigo-400 outline-none h-20"
-                        placeholder="Fabric type, shade, etc."></textarea>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Special Requirements</label>
-                    <input type="text" id="patReq"
-                        class="w-full border border-slate-200 rounded p-2 text-sm focus:border-indigo-400 outline-none"
-                        placeholder="Optional notes">
-                </div>
-
-                <div class="mb-4 bg-yellow-50 p-3 rounded border border-yellow-200">
-                    <label class="block text-xs font-bold text-yellow-800 uppercase mb-2">Item Quantities
-                        (Default)</label>
-                    <div id="pattern-qty-grid"
-                        class="grid grid-cols-2 gap-2 text-xs max-h-40 overflow-y-auto custom-scrollbar">
-                        <!-- Populated dynamically -->
-                    </div>
-                </div>
-
-                <div class="bg-indigo-50 p-3 rounded border border-indigo-100 text-xs text-indigo-800">
-                    <strong>Note:</strong> This pattern will be assigned to
-                    <span id="patCount" class="font-bold underline">0</span>
-                    currently filtered students.
-                </div>
-
-                <button type="submit"
-                    class="w-full bg-rose-600 text-white py-3 rounded-lg font-bold shadow-lg shadow-rose-200 hover:bg-rose-700 transition-transform active:scale-95 flex justify-center items-center gap-2">
-                    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                        <polyline points="17 8 12 3 7 8" />
-                        <line x1="12" y1="3" x2="12" y2="15" />
-                    </svg>
-                    Upload Measurement Data
-                </button>
-            </form>
-        </div>
-    </div>
-
     <!-- Japanese Art Watermark - Refined Design -->
     <svg class="watermark" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
         <defs>
@@ -297,7 +161,7 @@
         <div
             class="bg-white rounded-lg shadow-xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden transform transition-all scale-100">
             <div class="px-6 py-4 border-b border-[#E2E8F0] bg-[#F9F9F7] flex justify-between items-center shrink-0">
-                <h3 class="font-bold text-[#2C3E50] text-lg">Upload / Export Data</h3>
+                <h3 class="font-bold text-[#2C3E50] text-lg">Export Details</h3>
                 <button onclick="closeExportModal()" class="text-[#7F8C8D] hover:text-[#2C3E50]">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -363,24 +227,16 @@
                         <span>Filtered Students:</span>
                         <span id="exportCount" class="font-mono">0</span>
                     </div>
-                    <div
-                        class="bg-gray-50 p-2 rounded border border-gray-200 text-xs text-[#7F8C8D] flex justify-between items-center">
-                        <div>
-                            <strong class="block text-gray-700">Total Items:</strong>
-                            <span id="exportTotalQty" class="font-mono text-lg font-bold text-indigo-600">0</span>
-                        </div>
-                        <div class="w-px h-8 bg-gray-300 mx-2"></div>
-                        <div>
-                            <strong class="block text-gray-700">Total Cloth:</strong>
-                            <span id="exportTotalCloth" class="font-mono text-lg font-bold text-gray-600">0.00 M</span>
-                        </div>
+                    <div class="flex justify-between font-bold text-[#2C3E50] border-t border-[#CBD5E0] pt-2 mt-1">
+                        <span>Total Cloth Needed:</span>
+                        <span id="exportTotalCloth" class="font-mono text-lg">0.00 M</span>
                     </div>
+                </div>
 
-                    <!-- Active Filters Readout -->
-                    <div class="text-xs text-[#7F8C8D] mt-2">
-                        <strong class="block mb-1">Active Filters:</strong>
-                        <p id="exportFilters" class="italic overflow-hidden text-ellipsis">None</p>
-                    </div>
+                <!-- Active Filters Readout -->
+                <div class="text-xs text-[#7F8C8D] bg-white p-2 rounded border border-[#E2E8F0]">
+                    <strong class="block mb-1">Active Filters:</strong>
+                    <p id="exportFilters" class="italic overflow-hidden text-ellipsis">None</p>
                 </div>
             </div>
 
@@ -388,18 +244,6 @@
                 <button onclick="closeExportModal()"
                     class="btn-outline px-4 py-2 rounded text-sm font-medium">Cancel</button>
                 <div class="flex gap-2">
-                    <!-- Upload Data Button (New) -->
-                    <button onclick="handleDataUpload()"
-                        class="px-5 py-2 rounded text-sm font-bold shadow-md bg-indigo-600 text-white hover:bg-indigo-700 flex items-center gap-2">
-                        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"
-                            viewBox="0 0 24 24">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                            <polyline points="17 8 12 3 7 8" />
-                            <line x1="12" y1="3" x2="12" y2="15" />
-                        </svg>
-                        Upload Data
-                    </button>
-                    <div class="w-px bg-gray-300 mx-1"></div>
                     <button onclick="confirmExportPDF()"
                         class="btn-outline px-5 py-2 rounded text-sm font-medium shadow-sm hover:bg-gray-50 text-[#C0392B] border-[#C0392B]/30">Export
                         PDF</button>
@@ -441,11 +285,6 @@
     <header
         class="bg-white border-b border-[#E2E8F0] px-6 py-4 flex flex-col md:flex-row justify-between items-center shadow-sm z-30 relative gap-4">
         <div class="flex items-center gap-4">
-            <button onclick="logout()"
-                class="text-xs text-rose-500 border border-rose-200 px-2 py-1 rounded hover:bg-rose-50 font-bold"
-                title="Sign Out">
-                Logout
-            </button>
             <div class="bg-[#4A5568] text-white p-2 rounded-md shadow-sm">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -461,26 +300,48 @@
                         style="font-family: 'Inter', sans-serif;">v2.1</span></h1>
                 <p class="text-xs text-[#7F8C8D] tracking-wide">RAPID DATA ENTRY SYSTEM</p>
             </div>
+            <button id="btnSync" onclick="syncToCloud()"
+                class="ml-4 px-4 py-2 bg-green-600 text-white rounded-md text-sm font-bold shadow hover:bg-green-700 transition-colors">
+                Save / Sync
+            </button>
         </div>
         <!-- Hidden File Input -->
         <input type="file" id="fileInput" accept=".xlsx, .xls" class="hidden" onchange="handleFileUpload(event)" />
         <div id="headerActions" class="grid grid-cols-2 w-full md:w-auto md:flex gap-2 md:gap-3 items-center">
             <!-- Navigation Button -->
-            <!-- School Name Display -->
-            <div class="hidden md:block text-right">
-                <h2 id="schoolNameDisplay" class="text-sm font-bold text-slate-700"></h2>
-                <span class="text-[10px] text-slate-400 uppercase tracking-widest">Target School</span>
-            </div>
-
-            <div class="h-8 w-px bg-[#E2E8F0] hidden md:block"></div>
-
-            <!-- Create Pattern Button -->
-            <button onclick="goToPatternCreation()"
-                class="bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 px-4 py-2 rounded-md text-sm font-medium flex items-center justify-center gap-2 transition-colors">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M12 5v14M5 12h14"></path>
+            <a href="packing.html"
+                class="flex items-center justify-center gap-2 px-3 py-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-md text-sm font-medium transition-colors border border-indigo-200"
+                title="Switch to Packing Mode">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path
+                        d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z">
+                    </path>
+                    <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                    <line x1="12" y1="22.08" x2="12" y2="12"></line>
                 </svg>
-                <span class="inline">Create Pattern</span>
+                Packing
+            </a>
+
+            <a href="pattern_dashboard.html"
+                class="flex items-center justify-center gap-2 px-3 py-2 bg-purple-50 text-purple-700 hover:bg-purple-100 rounded-md text-sm font-medium transition-colors border border-purple-200"
+                title="Switch to Pattern Grouping Mode">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="14" width="7" height="7"></rect>
+                    <rect x="3" y="14" width="7" height="7"></rect>
+                </svg>
+                Patterns
+            </a>
+
+            <button onclick="document.getElementById('fileInput').click()"
+                class="btn-outline px-4 py-2 rounded-md text-sm font-medium flex items-center justify-center gap-2">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                <span class="inline">Import</span>
             </button>
 
             <button onclick="openExportModal()"
@@ -504,24 +365,6 @@
                 </svg>
                 <span class="md:hidden ml-2">Info</span>
             </button>
-
-            <!-- SYNC BUTTON -->
-            <div class="h-8 w-px bg-[#E2E8F0] hidden md:block"></div>
-            <div class="flex items-center gap-2">
-                <span id="syncStatus"
-                    class="text-[10px] font-bold text-slate-400 uppercase tracking-wider hidden md:block">Offline</span>
-                <button onclick="syncToCloud()" id="btnSync"
-                    class="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm font-bold hover:bg-indigo-700 shadow-md shadow-indigo-200 flex items-center gap-2 transition-all active:scale-95">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 2v6h-6"></path>
-                        <path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path>
-                        <path d="M3 22v-6h6"></path>
-                        <path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path>
-                    </svg>
-                    Sync
-                </button>
-            </div>
-
         </div>
     </header>
 
@@ -801,25 +644,22 @@
                     return;
                 }
 
-                if (Array.isArray(data)) {
-                    container.innerHTML = data.map(c => `
-                        <div class="border rounded p-3 bg-white text-xs">
-                            <div class="flex justify-between font-bold text-[#2C3E50] mb-1">
-                                <span>${'★'.repeat(c.rating || 0)}</span>
-                                <span class="${c.status === 'Resolved' ? 'text-green-600' : 'text-rose-500'}">${c.status}</span>
-                            </div>
-                            <p class="text-gray-600 mb-2">"${c.comment}"</p>
-                            ${c.reply ? `
-                                <div class="bg-blue-50 p-2 rounded border border-blue-100 mt-2">
-                                    <strong class="block text-blue-800 text-[10px] uppercase">Admin Reply:</strong>
-                                    <p class="text-blue-900">${c.reply}</p>
-                                </div>
-                            ` : ''}
-                            <div class="text-[10px] text-gray-400 text-right mt-1">${new Date(c.created_at).toLocaleDateString()}</div>
+                container.innerHTML = data.map(c => `
+                    <div class="border rounded p-3 bg-white text-xs">
+                        <div class="flex justify-between font-bold text-[#2C3E50] mb-1">
+                            <span>${'★'.repeat(c.rating || 0)}</span>
+                            <span class="${c.status === 'Resolved' ? 'text-green-600' : 'text-rose-500'}">${c.status}</span>
                         </div>
-                    `).join('');
-                }
-
+                        <p class="text-gray-600 mb-2">"${c.comment}"</p>
+                        ${c.reply ? `
+                            <div class="bg-blue-50 p-2 rounded border border-blue-100 mt-2">
+                                <strong class="block text-blue-800 text-[10px] uppercase">Admin Reply:</strong>
+                                <p class="text-blue-900">${c.reply}</p>
+                            </div>
+                        ` : ''}
+                        <div class="text-[10px] text-gray-400 text-right mt-1">${new Date(c.created_at).toLocaleDateString()}</div>
+                    </div>
+                `).join('');
 
             } catch (e) {
                 console.error(e);
@@ -830,139 +670,34 @@
 
 
 
-
-        // --- AUTH LOGIC ---
-        function switchAuthTab(type) {
-            const tailorBtn = document.getElementById('tabTailor');
-            const codeBtn = document.getElementById('tabCode');
-            const tailorForm = document.getElementById('formTailor');
-            const codeForm = document.getElementById('formCode');
-
-            if (type === 'tailor') {
-                tailorBtn.classList.replace('text-slate-400', 'text-indigo-600');
-                tailorBtn.classList.replace('border-transparent', 'border-indigo-600');
-                codeBtn.classList.replace('text-indigo-600', 'text-slate-400');
-                codeBtn.classList.replace('border-indigo-600', 'border-transparent');
-                tailorForm.classList.remove('hidden');
-                codeForm.classList.add('hidden');
-            } else {
-                codeBtn.classList.replace('text-slate-400', 'text-indigo-600');
-                codeBtn.classList.replace('border-transparent', 'border-indigo-600');
-                tailorBtn.classList.replace('text-indigo-600', 'text-slate-400');
-                tailorBtn.classList.replace('border-indigo-600', 'border-transparent');
-                codeForm.classList.remove('hidden');
-                tailorForm.classList.add('hidden');
-            }
-            document.getElementById('authError').innerText = "";
-        }
-
-        async function handleLogin(e) {
-            e.preventDefault();
-            const username = document.getElementById('loginUser').value;
-            const password = document.getElementById('loginPass').value;
-            const errorEl = document.getElementById('authError');
-
-            errorEl.innerText = "Authenticating...";
-
-            try {
-                const res = await fetch('/api/auth/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, password })
-                });
-                const data = await res.json();
-
-                if (!res.ok) throw new Error(data.error || "Login Failed");
-
-                // Check Role
-                if (data.role !== 'tailor' && data.role !== 'admin' && data.role !== 'company') {
-                    throw new Error("Unauthorized Role for Editor");
-                }
-
-                saveSession({ ...data, type: 'credentials' });
-            } catch (err) {
-                errorEl.innerText = err.message;
-            }
-        }
-
-        async function handleAccessCode(e) {
-            e.preventDefault();
-            const code = document.getElementById('accessCode').value.toUpperCase();
-            const errorEl = document.getElementById('authError');
-            errorEl.innerText = "Verifying...";
-
-            try {
-                const res = await fetch('/api/auth/access-code', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ code })
-                });
-                const data = await res.json();
-
-                if (!res.ok) throw new Error(data.error || "Invalid Code");
-
-                // Only allow Access Code type 'editor' (mapped to role 'tailor' by backend)
-                if (data.role !== 'editor' && data.role !== 'tailor') {
-                    // Note: Backend map 'editor' -> 'tailor' role in JWT, but returns original type sometimes.
-                    // The auth endpoint returns { accessToken, role: type, ... } where type is 'editor' or 'packing'
-                    if (data.role !== 'editor') throw new Error("This code is for Packing DB, not Editor.");
-                }
-
-                saveSession({ ...data, type: 'code' });
-            } catch (err) {
-                errorEl.innerText = err.message;
-            }
-        }
-
-        function saveSession(sessionData) {
-            sessionStorage.setItem('token', sessionData.accessToken);
-            sessionStorage.setItem('schoolId', sessionData.schoolId);
-            sessionStorage.setItem('role', sessionData.role);
-
-            // Unlock
-            document.getElementById('loginOverlay').classList.add('hidden');
-
-            // Trigger Cloud Fetch
-            fetchCloudData();
-        }
-
-        function checkSession() {
+        // --- INITIALIZATION ---
+        function init() {
+            // Check Auth
             const token = sessionStorage.getItem('token');
             if (!token) {
-                // Show Login
-                document.getElementById('loginOverlay').classList.remove('hidden');
-            } else {
-                // Valid (Client-side assumption, API will reject real calls if expired)
-                document.getElementById('loginOverlay').classList.add('hidden');
-                fetchCloudData(); // Load data from cloud, fallback to local if fail
+                // Redirect if not logged in? Or allow demo mode?
+                // window.location.href = 'index.html'; // Assuming this IS index.html now... wait.
+                // If we are planet_editor.html, we likely came from a login.
             }
-        }
 
+            // Attempt Cloud Load First
+            fetchFromCloud();
 
-        function logout() {
-            sessionStorage.clear();
-            window.location.reload();
-        }
-
-        // --- INITIALIZATION ---
-        // Removed default auto-init, now called by checkSession
-        // function init() { ... } 
-
-        // Start Here
-        document.addEventListener('DOMContentLoaded', checkSession);
-
-        function init() {
             const saved = localStorage.getItem('planetEditorData');
-            if (saved) {
+            if (saved && data.length === 0) { // Only load local if cloud didn't populate yet (race condition? fetch is async)
                 try {
                     data = JSON.parse(saved);
                 } catch (e) {
                     console.error("Local data corrupt", e);
                     for (let i = 0; i < 5; i++) addNewRow(false);
                 }
-            } else {
+            } else if (data.length === 0) {
+                // Wait for cloud... if empty, add rows.
+                // We'll let fetchFromCloud handle population or fallback.
+                // But for immediate UI:
                 for (let i = 0; i < 5; i++) addNewRow(false);
             }
+
 
             // Ensure consistent S.No
             if (data.length > 0) {
@@ -1020,281 +755,157 @@
             });
         }
 
+
         // --- DATA SYNC LOGIC ---
 
-        async function fetchCloudData() {
+        async function fetchFromCloud() {
             const token = sessionStorage.getItem('token');
-            const schoolId = sessionStorage.getItem('schoolId');
-            const statusEl = document.getElementById('syncStatus');
+            // Try to find School ID from session
+            let schoolId = sessionStorage.getItem('schoolId');
 
-            if (!token || !schoolId) return init(); // Fallback to local if no auth
-
-            statusEl.innerText = "Fetching...";
-            statusEl.className = "text-[10px] font-bold text-blue-500 uppercase tracking-wider hidden md:block animate-pulse";
+            // Fallback: If company admin, they might be viewing a specific school. 
+            // We need a way to know WHICH school to load.
+            // For now, let's assume the user is logged in as a School Admin or Tailor linked to a school.
+            if (!token || !schoolId) {
+                console.warn("No auth token or school ID found. Running in Offline Mode.");
+                return;
+            }
 
             try {
-                // Use the route I verified in data.js: router.get('/students/:schoolId')
                 const res = await fetch(`/api/data/students/${schoolId}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
 
-                if (!res.ok) throw new Error("Fetch Failed");
+                if (!res.ok) throw new Error("Failed to fetch data");
 
                 const cloudData = await res.json();
+                console.log("Cloud Data:", cloudData);
 
                 if (Array.isArray(cloudData) && cloudData.length > 0) {
-                    console.log("Cloud Data Loaded:", cloudData.length);
-                    // Map DB fields to Editor keys if needed, OR just ensure init handles DB format
-                    // DB: name, admission_no, role_no, class, section, house, gender
-                    // Editor: "Student Name", "Admission No", "Roll No", "Class", "Section", "House", "Gender"
+                    // Map Cloud DB format to Editor Format
+                    data = cloudData.map((s, i) => {
+                        const row = {
+                            "S.No": i + 1,
+                            "Roll No": s.roll_no || "",
+                            "Admission No": s.admission_no || "",
+                            "Student Name": s.name || "",
+                            "Class": s.class || "",
+                            "Section": s.section || "",
+                            "House": s.house || "",
+                            "Gender": s.gender || "",
+                            "Absent/Present": (s.measurements && s.is_absent) ? "Absent" : ((s.measurements && s.measurements.is_absent) ? "Absent" : "Present")
+                        };
 
-                    data = cloudData.map(d => ({
-                        "id": d.id, // Keep ID for updates
-                        "Student Name": d.name,
-                        "Admission No": d.admission_no,
-                        "Roll No": d.roll_no,
-                        "Class": d.class,
-                        "Section": d.section,
-                        "House": d.house,
-                        "Gender": d.gender,
-                        "Absent/Present": d.is_active ? "Present" : "Absent", // Basic map
-                        "pattern_id": d.pattern_id,
-                        ...d.measurements, // Spread measurements (U1, U2 etc) if stored in JSON column
+                        // Map Measurements (U1..U8, L1..L8)
+                        if (s.measurements) {
+                            measureCols.forEach(col => {
+                                row[col] = s.measurements[col] || "00";
+                            });
+                        } else {
+                            measureCols.forEach(col => row[col] = "00");
+                        }
 
-                        // Hydrate Production Data (Quantities)
-                        ...(() => {
-                            const qtyMap = {};
-                            if (d.production_data) {
-                                // If production_data exists (Snapshot), use it to restore Qty fields
-                                Object.keys(d.production_data).forEach(k => {
-                                    // Ignore metadata keys
-                                    if (k === 'Calculated' || k === 'Timestamp') return;
+                        // Map Quantities (Qty_...)
+                        if (s.item_quantities) {
+                            Object.keys(s.item_quantities).forEach(key => {
+                                row[key] = s.item_quantities[key];
+                            });
+                        }
 
-                                    // Map "Item Name" -> "Qty_ItemName"
-                                    qtyMap[`Qty_${k}`] = d.production_data[k];
-                                });
-                            }
-                            return qtyMap;
-                        })()
-                    }));
+                        return row;
+                    });
 
-                    statusEl.innerText = "Cloud Synced";
-                    statusEl.className = "text-[10px] font-bold text-green-500 uppercase tracking-wider hidden md:block";
-
-                    // Fetch School Info Wrapper
-                    fetchSchoolDetails(schoolId);
-
-                    // Save to local as backup
-                    localStorage.setItem('planetEditorData', JSON.stringify(data));
-                } else {
-                    // No cloud data? Keep local or empty?
-                    // Let's rely on init() logic but maybe show "No Cloud Data"
-                    console.log("No cloud data found, using local/empty.");
+                    updateCount();
+                    populateFilters();
+                    renderTable();
+                    renderCards();
+                    alert(`Loaded ${data.length} students from Database.`);
                 }
-
-                init(); // Re-render
-
             } catch (e) {
                 console.error("Cloud Fetch Error:", e);
-                statusEl.innerText = "Sync Error";
-                statusEl.className = "text-[10px] font-bold text-rose-500 uppercase tracking-wider hidden md:block";
-                init(); // Load local anyway
+                // alert("Failed to sync with cloud. Using local data.");
             }
         }
 
         async function syncToCloud() {
             const token = sessionStorage.getItem('token');
             const schoolId = sessionStorage.getItem('schoolId');
-            const btn = document.getElementById('btnSync');
-            const statusEl = document.getElementById('syncStatus');
 
-            if (!token) return alert("You are offline. Login to sync.");
-
-            const originalText = btn.innerHTML;
-            btn.innerHTML = `Saving...`;
-            btn.disabled = true;
-            statusEl.innerText = "Syncing...";
-
-            try {
-                // Prepare Payload with corrected Measurements Structure
-                const payload = data.map(d => {
-                    const measurements = {};
-                    measureCols.forEach(k => {
-                        if (d[k] !== undefined) measurements[k] = d[k];
-                    });
-
-                    return {
-                        id: d.id,
-                        admission_no: d["Admission No"],
-                        roll: d["Roll No"],
-                        name: d["Student Name"],
-                        class: d["Class"],
-                        section: d["Section"],
-                        house: d["House"],
-                        gender: d["Gender"],
-                        pattern_id: d.pattern_id, // Persist pattern link
-                        measurements: measurements, // Key Fix: Send measurements object
-                        production_data: (() => {
-                            // Snapshot Calculated Production Data
-                            const snapshot = {};
-                            const gender = (d["Gender"] || "").toUpperCase();
-
-                            // 1. Snapshot Item Output (e.g. "Boys Shirt": "2")
-                            allItems.forEach(item => {
-                                // Skip if gender mismatch (optimization)
-                                const iType = item.type.toUpperCase();
-                                if (iType === "MALE" && gender !== "MALE") return;
-                                if (iType === "FEMALE" && gender !== "FEMALE") return;
-
-                                const val = calculateItemValue(d, item);
-                                if (val && val !== "" && val !== "0" && val !== "00") {
-                                    snapshot[item.name] = val;
-                                }
-                            });
-
-                            // 2. Snapshot Raw Measurements (U1, L2 etc) flattened ?
-                            // User asked for "full measurement datas". The raw measurements are in `measurements` col.
-                            // The calculated item outputs are in `snapshot`.
-                            // Storing both covers all bases.
-                            return snapshot;
-                        })()
-                    };
-                });
-
-                const res = await fetch('/api/sync', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                    body: JSON.stringify({ students: payload })
-                });
-
-
-                if (!res.ok) throw new Error("Sync Failed");
-
-                const result = await res.json();
-                console.log("Sync Result:", result);
-
-                statusEl.innerText = "Saved";
-                statusEl.className = "text-[10px] font-bold text-green-600 uppercase tracking-wider hidden md:block";
-                setTimeout(() => statusEl.innerText = "Cloud Synced", 2000);
-
-                alert(`Sync Successful!\nUpdated/Inserted: ${result.count}`);
-
-            } catch (e) {
-                console.error(e);
-                alert("Sync Failed. Check console.");
-                statusEl.innerText = "Error";
-                statusEl.className = "text-[10px] font-bold text-rose-600 uppercase tracking-wider hidden md:block";
-            } finally {
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-            }
-        }
-
-        async function fetchSchoolDetails(id) {
-            const token = sessionStorage.getItem('token');
-            try {
-                // Endpoint might not exist directly returning one school, use list?
-                // Or we can infer name from something else.
-                // Actually, let's use /api/data/schools if role is appropriate, OR add a tiny endpoint.
-                // User can just see local storage name if we saved it? No.
-                // Minimal: Update UI with School ID at least.
-                document.getElementById('schoolNameDisplay').innerText = "School #" + id;
-            } catch (e) { }
-        }
-
-        // --- PATTERN LOGIC ---
-        // --- PATTERN LOGIC ---
-        function openPatternModal() {
-            const filtered = getFilteredData();
-            document.getElementById('patCount').innerText = filtered.length;
-
-            // Populate Quantities Grid
-            const grid = document.getElementById('pattern-qty-grid');
-            if (grid) {
-                grid.innerHTML = '';
-                allItems.forEach(item => {
-                    const div = document.createElement('div');
-                    div.className = "flex items-center justify-between bg-white border border-gray-200 p-2 rounded";
-                    div.innerHTML = `<span class="text-[10px] font-mono font-bold text-gray-600 truncate mr-2" title="${item.name}">${item.name}</span>
-                    <input type="number" min="0" value="0" data-item="${item.name}" class="w-12 text-center border border-gray-300 rounded px-1 py-0.5 text-xs font-bold text-blue-600 outline-none focus:border-blue-500">`;
-                    grid.appendChild(div);
-                });
+            if (!token || !schoolId) {
+                alert("You are offline. Data saved locally only.");
+                saveToLocal();
+                return;
             }
 
-            document.getElementById('patternModal').classList.remove('hidden');
-        }
+            // Prepare Payload
+            const validStudents = data.filter(r => r["Admission No"] && r["Student Name"]); // Minimal validation
 
-        async function handleCreatePattern(e) {
-            e.preventDefault();
-            const token = sessionStorage.getItem('token');
-            const schoolId = sessionStorage.getItem('schoolId');
+            if (validStudents.length === 0) return;
 
-            const name = document.getElementById('patName').value;
-            const consumption = document.getElementById('patCons').value;
-            const cloth = document.getElementById('patCloth').value;
-            const req = document.getElementById('patReq').value;
-
-            if (!name) return alert("Pattern Name Required");
-            if (!token) return alert("Offline!");
-
-            // Gather Quantities
-            const quantities = {};
-            const grid = document.getElementById('pattern-qty-grid');
-            if (grid) {
-                grid.querySelectorAll('input').forEach(inp => {
-                    const val = parseInt(inp.value);
-                    if (val > 0) quantities[inp.getAttribute('data-item')] = val;
-                });
-            }
-
-            try {
-                // 1. Create Pattern (Upload Data)
-                const res = await fetch('/api/data/patterns', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                    body: JSON.stringify({
-                        school_id: schoolId,
-                        name: name,
-                        consumption: parseFloat(consumption),
-                        cloth_details: cloth,
-                        special_req: req,
-                        quantities: quantities
-                    })
+            const payload = validStudents.map(r => {
+                // Extract Measurements
+                const measurements = {};
+                measureCols.forEach(col => {
+                    measurements[col] = r[col];
                 });
 
-                if (!res.ok) throw new Error("Failed to create pattern");
-                const resData = await res.json();
-                const patternId = resData.id;
-
-                // 2. Assign to Filtered Students
-                const filtered = getFilteredData();
-                const ids = filtered.map(d => d.id);
-
-                data.forEach(d => {
-                    if (ids.includes(d.id)) {
-                        d.pattern_id = patternId;
+                // Extract Quantities (Any key starting with Qty_)
+                const itemQuantities = {};
+                Object.keys(r).forEach(key => {
+                    if (key.startsWith("Qty_")) {
+                        itemQuantities[key] = r[key];
                     }
                 });
 
-                document.getElementById('patternModal').classList.add('hidden');
-                e.target.reset(); // Reset form
+                return {
+                    admission_no: r["Admission No"],
+                    roll_no: r["Roll No"],
+                    name: r["Student Name"],
+                    class: r["Class"],
+                    section: r["Section"],
+                    house: r["House"],
+                    gender: r["Gender"],
+                    measurements: measurements, // Sent as JSON to be stored in `data` column
+                    item_quantities: itemQuantities, // Sent as JSON to be stored in `item_quantities`
+                    remarks: "" // Add remarks field if exists in UI
+                };
+            });
 
-                alert(`✅ Upload Successful! Pattern "${name}" Saved.\nLinked to ${filtered.length} students.`);
+            const btn = document.getElementById('btnSync');
+            if (btn) btn.innerText = "Syncing...";
 
-                // 3. Sync
-                syncToCloud();
+            try {
+                const res = await fetch('/api/sync', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ students: payload })
+                });
 
-            } catch (err) {
-                console.error(err);
-                alert("Error: " + err.message);
+                const result = await res.json();
+                if (res.ok) {
+                    console.log("Sync Success:", result);
+                    // alert("Cloud Sync Complete!"); 
+                    // Optional: Toast notification
+                } else {
+                    console.error("Sync Failed:", result);
+                    alert("Cloud Sync Failed: " + (result.error || "Unknown"));
+                }
+            } catch (e) {
+                console.error("Sync Error:", e);
+                alert("Network Error during Sync");
+            } finally {
+                if (btn) btn.innerText = "Save / Sync";
             }
         }
 
-
-
-
-
-
+        function triggerAutoSync() {
+            clearTimeout(syncTimeout);
+            syncTimeout = setTimeout(syncToCloud, 2000); // 2 sec debounce
+        }
+        let syncTimeout;
 
         function populateFilters() {
             const classes = [...new Set(data.map(r => r.Class).filter(v => v != null && v !== ""))].sort();
@@ -2148,23 +1759,6 @@
 
             document.getElementById('exportCount').textContent = count;
 
-            // Auto-Fill School Name (Best Effort)
-            const schoolNameInput = document.getElementById('metaSchool');
-            if (schoolNameInput && !schoolNameInput.value) {
-                // Try to get from session or school display
-                const storedName = sessionStorage.getItem('schoolName'); // If we stored it
-                if (storedName) schoolNameInput.value = storedName;
-                else {
-                    // Fallback: Use ID
-                    const sid = sessionStorage.getItem('schoolId');
-                    if (sid) schoolNameInput.value = "School #" + sid;
-                }
-            }
-
-            // Calculate Totals
-            const totalQty = calculateTotalQty(filtered);
-            document.getElementById('exportTotalQty').innerText = totalQty;
-
             // Generate Filter Summary
             const activeFilters = [];
             if (filters.class) activeFilters.push(`Class: ${filters.class}`);
@@ -2220,32 +1814,6 @@
                 });
             });
             return total;
-        }
-
-        function calculateTotalBreakdown(dataset) {
-            const breakdown = {};
-            dataset.forEach(row => {
-                allItems.forEach(item => {
-                    const qtyKey = `Qty_${item.name}`;
-                    let rawQ = row[qtyKey];
-                    if (typeof rawQ === 'string' && rawQ.includes(',')) rawQ = NaN;
-                    let q = parseFloat(rawQ);
-
-                    // Logic matches calculateTotalQty:
-                    // 1. Explicit Quantity?
-                    if (!isNaN(q)) {
-                        breakdown[item.name] = (breakdown[item.name] || 0) + q;
-                    } else {
-                        // 2. Calculated Value?
-                        const valStr = calculateItemValue(row, item);
-                        const hasMeasurements = valStr.replace(/00/g, '').replace(/,/g, '').length > 0;
-                        if (hasMeasurements) {
-                            breakdown[item.name] = (breakdown[item.name] || 0) + 1;
-                        }
-                    }
-                });
-            });
-            return breakdown;
         }
 
         function updateExportTotal() {
@@ -2699,86 +2267,11 @@
 
 
 
-
-        async function handleDataUpload() {
-            const c = confirm("Are you sure you want to UPLOAD this data?\nThis will create a Pattern/Order record and save student quantities.");
-            if (!c) return;
-
-            const token = sessionStorage.getItem('token');
-            const schoolId = sessionStorage.getItem('schoolId');
-
-            // Metadata from Modal
-            const meta = {
-                school_id: schoolId,
-                name: document.getElementById('metaPattern').value || "Upload_" + new Date().toISOString().slice(0, 10),
-                consumption: parseFloat(document.getElementById('metaConsumption').value) || 0,
-                cloth_details: document.getElementById('metaClothDetails').value,
-                special_req: document.getElementById('metaSpecialReq').value,
-                // Store Individual Item Breakdown
-                quantities: calculateTotalBreakdown(getFilteredData())
-            };
-
-            try {
-                // 1. Create Pattern/Order Record
-                // Use existing /api/data/patterns endpoint (it accepts name, consumption, etc.)
-                const res = await fetch('/api/data/patterns', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                    body: JSON.stringify(meta)
-                });
-
-                if (!res.ok) throw new Error("Failed to create Order Record");
-                const resData = await res.json();
-                const patternId = resData.id;
-
-                // 2. Link Filtered Students to this Pattern
-                const filtered = getFilteredData();
-                const ids = filtered.map(d => d.id);
-                data.forEach(d => {
-                    if (ids.includes(d.id)) {
-                        d.pattern_id = patternId;
-                    }
-                });
-
-                // 3. Sync Students (Production Data Snapshot)
-                await syncToCloud();
-
-                alert(`✅ Upload Successful!\nOrder Record Created (ID: ${patternId}).\n${filtered.length} Students Updated.\n\nRedirecting to Pattern Dashboard...`);
-                // Redirect immediately to the new Pattern View Dashboard
-                window.location.href = `pattern_view.html?id=${patternId}`;
-
-            } catch (e) {
-                alert("Upload Failed: " + e.message);
-            }
-        }
-
-        function goToPatternCreation() {
-            const filtered = getFilteredData();
-            // Try to get school name safely
-            const headerName = document.getElementById('schoolNameDisplay') ? document.getElementById('schoolNameDisplay').innerText : "";
-            const schoolName = headerName.replace('School: ', '').replace('Target School', '').trim();
-
-            // Validate
-            if (filtered.length === 0) return alert("Please filter/load students first.");
-
-            // Store Draft Data
-            const draft = {
-                students: filtered,
-                schoolName: schoolName,
-                schoolId: sessionStorage.getItem('schoolId')
-            };
-            sessionStorage.setItem('draftPatternData', JSON.stringify(draft));
-
-            // Redirect to Create Mode
-            window.location.href = 'pattern_view.html?mode=create';
-        }
-
         init();
     </script>
 
 
 
 </body>
-
 
 </html>

@@ -4,352 +4,490 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pattern View | Planet Admin</title>
+    <title>Pattern Editor - Read Only Grouping</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script>window.jsPDF = window.jspdf.jsPDF;</script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     <link
-        href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=Inter:wght@300;400;500;600&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap"
         rel="stylesheet">
     <style>
-        :root {
-            --ink-black: #1c1917;
-            --rice-paper: #fafaf9;
-            --seal-red: #be123c;
-        }
-
         body {
             font-family: 'Inter', sans-serif;
-            background-color: var(--rice-paper);
-            color: #44403c;
+            background-color: #F9F9F7;
+            color: #2C3E50;
         }
 
-        .font-ink {
+        h1,
+        h2,
+        h3,
+        h4,
+        h5,
+        h6 {
             font-family: 'Noto Serif JP', serif;
         }
 
-        .glass-panel {
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(0, 0, 0, 0.05);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        /* Read-only cell styling */
+        .cell-read {
+            background-color: transparent;
+            width: 100%;
+            height: 100%;
+            padding: 8px;
+            border: none;
+            cursor: default;
+        }
+
+        .sticky-col {
+            position: sticky;
+            left: 0;
+            z-index: 10;
+            background-color: #FFFFFF;
+        }
+
+        .sticky-header {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+        }
+
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .btn-action {
+            background-color: #4A5568;
+            color: white;
+            transition: all 0.2s;
+        }
+
+        .btn-action:hover {
+            background-color: #2D3748;
+        }
+
+        .btn-primary {
+            background-color: #C0392B;
+            color: white;
+            transition: all 0.2s;
+        }
+
+        .btn-primary:hover {
+            background-color: #A93226;
+        }
+
+        .btn-outline {
+            background-color: #FFFFFF;
+            border: 1px solid #E2E8F0;
+            color: #4A5568;
+            transition: all 0.2s;
+        }
+
+        .btn-outline:hover {
+            background-color: #F7FAFC;
+            border-color: #CBD5E0;
+        }
+
+        /* Japanese Art Watermark */
+        .watermark {
+            position: absolute;
+            bottom: -50px;
+            right: -50px;
+            opacity: 0.15;
+            pointer-events: none;
+            z-index: 0;
+            width: 400px;
+            height: 400px;
         }
     </style>
 </head>
 
-<body class="min-h-screen flex flex-col">
+<body class="h-screen flex flex-col overflow-hidden relative">
+
+    <svg class="watermark" viewBox="0 0 300 300" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+            <filter id="ink-blur" x="-20%" y="-20%" width="140%" height="140%">
+                <feGaussianBlur in="SourceGraphic" stdDeviation="0.5" />
+            </filter>
+        </defs>
+        <circle cx="220" cy="60" r="35" fill="#C0392B" opacity="0.8" style="mix-blend-mode: multiply;" />
+        <g stroke="#2C3E50" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.9">
+            <path d="M260 300 Q270 200 240 100" stroke-width="4" />
+            <path d="M220 300 Q230 250 210 180" stroke-width="2.5" />
+        </g>
+    </svg>
+
+    <!-- Create Pattern Modal -->
+    <div id="patternModal"
+        class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center backdrop-blur-sm p-4">
+        <div
+            class="bg-white rounded-lg shadow-xl w-[95%] sm:w-full max-w-md flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div class="px-6 py-4 border-b border-[#E2E8F0] bg-[#F9F9F7]">
+                <h3 class="font-bold text-[#2C3E50] text-lg">Create Pattern Group</h3>
+            </div>
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-[#7F8C8D] uppercase mb-1">Pattern Name</label>
+                    <input type="text" id="newPatternName"
+                        class="w-full border border-gray-300 rounded p-2 text-sm focus:border-blue-500 outline-none"
+                        placeholder="e.g. Class 10 Boys Bundle">
+                </div>
+                <div class="bg-blue-50 p-3 rounded text-xs text-blue-800 border border-blue-100">
+                    <p>Current Filters will be saved with this pattern.</p>
+                    <p class="mt-1 font-bold">Students: <span id="patternCountDisplay">0</span></p>
+                </div>
+            </div>
+            <div class="px-6 py-4 border-t border-[#E2E8F0] bg-[#F9F9F7] flex justify-end gap-3">
+                <button onclick="document.getElementById('patternModal').classList.add('hidden')"
+                    class="btn-outline px-4 py-2 rounded text-sm">Cancel</button>
+                <button onclick="savePattern()" class="btn-primary px-6 py-2 rounded text-sm shadow-md">Create
+                    Pattern</button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Export Modal (Reused Logic) -->
+    <div id="exportModal"
+        class="fixed inset-0 bg-black/50 z-50 hidden flex items-center justify-center backdrop-blur-sm p-4">
+        <div
+            class="bg-white rounded-lg shadow-xl w-[95%] sm:w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div class="px-6 py-4 border-b border-[#E2E8F0] bg-[#F9F9F7] flex justify-between items-center">
+                <h3 class="font-bold text-[#2C3E50] text-lg">Export Pattern</h3>
+                <button onclick="closeExportModal()" class="text-gray-400 hover:text-gray-600">×</button>
+            </div>
+            <div class="p-6 space-y-4 overflow-y-auto">
+                <div class="grid grid-cols-2 gap-4">
+                    <div><label class="block text-xs uppercase text-gray-500">School Name</label><input type="text"
+                            id="metaSchool" class="w-full border p-2 rounded text-sm"></div>
+                    <div><label class="block text-xs uppercase text-gray-500">Pattern Code</label><input type="text"
+                            id="metaPattern" class="w-full border p-2 rounded text-sm"></div>
+                </div>
+                <div><label class="block text-xs uppercase text-gray-500">Description</label><textarea id="metaDesc"
+                        rows="2" class="w-full border p-2 rounded text-sm"></textarea></div>
+
+                <div class="bg-[#F0F4F8] p-4 rounded-md border border-[#CBD5E0]">
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="text-xs font-bold uppercase">Cloth Consumption (M/Student)</label>
+                        <input type="number" id="metaConsumption" step="0.01" class="w-32 border p-1 rounded text-right"
+                            placeholder="0.00" oninput="updateExportTotal()">
+                    </div>
+                    <div class="flex justify-between text-xs text-gray-500 pt-2 border-t border-gray-300">
+                        <span>Total Cloth Needed:</span>
+                        <span id="exportTotalCloth" class="font-bold text-lg text-gray-800">0.00 M</span>
+                    </div>
+                </div>
+
+                <!-- Additional Metadata Fields -->
+                <div>
+                    <label class="block text-xs uppercase text-gray-500">Cloth Details</label>
+                    <textarea id="metaClothDetails" rows="2" class="w-full border p-2 rounded text-sm"
+                        placeholder="e.g. Cotton 100%"></textarea>
+                </div>
+                <div>
+                    <label class="block text-xs uppercase text-gray-500">Special Requirements</label>
+                    <textarea id="metaSpecialReq" rows="2" class="w-full border p-2 rounded text-sm"
+                        placeholder="Any special instructions..."></textarea>
+                </div>
+
+                <div class="text-xs text-gray-500 bg-gray-50 p-2 rounded border border-gray-200">
+                    <strong>Filters in this Pattern:</strong> <span id="exportFilters" class="italic"></span>
+                </div>
+            </div>
+            <div class="px-6 py-4 border-t bg-[#F9F9F7] flex justify-end gap-3">
+                <button onclick="confirmExportPDF()"
+                    class="btn-outline px-4 py-2 rounded text-sm text-red-600 border-red-200 hover:bg-red-50">Export
+                    PDF</button>
+                <button onclick="confirmExport()" class="btn-action px-6 py-2 rounded text-sm">Export Excel</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Header -->
-    <header class="bg-stone-900 text-white p-4 shadow-md sticky top-0 z-50">
-        <div class="max-w-[1920px] mx-auto flex justify-between items-center">
-            <div class="flex items-center gap-4">
-                <a href="planet_editor.html"
-                    class="text-stone-400 hover:text-white transition-colors flex items-center gap-2 text-sm font-bold uppercase tracking-wider">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="15 18 9 12 15 6"></polyline>
-                    </svg>
-                    Back to Editor
-                </a>
-                <div class="h-6 w-px bg-stone-700"></div>
-                <h1 class="font-ink text-xl flex items-center gap-2"><span class="text-rose-600 text-2xl">●</span>
-                    <span id="pageTitle">Pattern Details View</span>
-                </h1>
+    <header
+        class="bg-white border-b border-[#E2E8F0] px-4 sm:px-6 py-4 flex flex-col lg:flex-row justify-between items-center shadow-sm z-30 relative gap-4">
+        <div class="flex items-center gap-4 w-full lg:w-auto justify-center lg:justify-start">
+            <div class="bg-gradient-to-br from-[#C0392B] to-[#922B21] text-white p-2 rounded-md shadow-sm shrink-0">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <path d="M14 2v6h6"></path>
+                    <path d="M16 13H8"></path>
+                    <path d="M16 17H8"></path>
+                    <path d="M10 9H8"></path>
+                </svg>
             </div>
-
-            <!-- Default Actions (View Mode) -->
-            <div id="viewActions" class="flex gap-3">
-                <button onclick="downloadPDF()"
-                    class="bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 rounded shadow-lg text-xs font-bold uppercase flex items-center gap-2 transition-transform active:scale-95">
-                    Download PDF
-                </button>
-                <button onclick="downloadExcel()"
-                    class="bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded shadow-lg text-xs font-bold uppercase flex items-center gap-2 transition-transform active:scale-95">
-                    Download Excel
-                </button>
-            </div>
-
-            <!-- Create Actions (Create Mode) -->
-            <div id="createActions" class="hidden flex gap-3">
-                <button onclick="savePattern()"
-                    class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded shadow-lg text-sm font-bold uppercase flex items-center gap-2 transition-transform active:scale-95 ring-2 ring-indigo-400">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
-                        <polyline points="17 21 17 13 7 13 7 21"></polyline>
-                        <polyline points="7 3 7 8 15 8"></polyline>
-                    </svg>
-                    Save & Create Pattern
-                </button>
+            <div>
+                <h1 class="text-2xl font-serif text-[#2D3748] tracking-tight">Pattern Dashboard</h1>
+                <p class="text-xs text-[#7F8C8D] tracking-wide">READ-ONLY GROUPING SYSTEM</p>
             </div>
         </div>
+
+        <div class="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto justify-center lg:justify-end">
+            <a href="index.html"
+                class="text-xs font-bold text-gray-500 hover:text-gray-800 uppercase tracking-wide mr-0 sm:mr-4 order-2 sm:order-1">
+                &larr; Go to Cutting Dashboard
+            </a>
+            <button onclick="loadFromCloud()"
+                class="mr-2 text-xs font-bold text-blue-500 hover:text-blue-700 uppercase tracking-wide">
+                Refresh Cloud Data
+            </button>
+            <input type="file" id="fileInput" accept=".xlsx, .xls" class="hidden" onchange="handleFileUpload(event)" />
+
+            <div class="flex gap-2 order-1 sm:order-2 w-full sm:w-auto justify-center">
+                <button onclick="clearData()"
+                    class="btn-outline px-4 py-2 rounded-md text-sm font-medium text-red-600 border-red-200 hover:bg-red-50 flex items-center gap-2"
+                    title="Clear saved data">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="3 6 5 6 21 6" />
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                    </svg>
+                    Clear Data
+                </button>
+                <button onclick="document.getElementById('fileInput').click()"
+                    class="btn-outline px-4 py-2 rounded-md text-sm font-medium flex items-center gap-2">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                    Import Excel
+                </button>
+            </div>
     </header>
 
-    <!-- Main Content -->
-    <main class="flex-1 p-4 md:p-6 max-w-[1920px] mx-auto w-full space-y-4">
-
-        <!-- Creation Panel (Only Visible in Create Mode) -->
-        <div id="creationPanel" class="hidden glass-panel p-6 rounded-xl border-l-4 border-indigo-500 shadow-lg mb-4">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Metadata Inputs -->
-                <div class="space-y-4">
-                    <h3 class="text-lg font-bold text-stone-800 border-b border-stone-200 pb-2">Pattern Details</h3>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-bold text-stone-500 uppercase mb-1">School Name</label>
-                            <input type="text" id="metaSchool" readonly
-                                class="w-full text-sm border border-gray-300 rounded p-2 bg-gray-100 text-gray-600 font-bold">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-stone-500 uppercase mb-1">Pattern Code</label>
-                            <input type="text" id="metaPattern"
-                                class="w-full text-sm border border-gray-300 rounded p-2 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-200"
-                                placeholder="e.g. P-101">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-stone-500 uppercase mb-1">Description</label>
-                        <textarea id="metaDesc" rows="2"
-                            class="w-full text-sm border border-gray-300 rounded p-2 outline-none focus:border-indigo-500"
-                            placeholder="Optional description..."></textarea>
-                    </div>
-                </div>
-
-                <!-- Specs Inputs -->
-                <div class="space-y-4 bg-stone-50 p-4 rounded-lg border border-stone-200">
-                    <h3 class="text-lg font-bold text-stone-800 border-b border-stone-200 pb-2">Specifications</h3>
-
-                    <div class="flex items-center justify-between">
-                        <label class="block text-xs font-bold text-stone-600 uppercase">Cloth Consumption
-                            (Mtrs/Student)</label>
-                        <input type="number" id="metaConsumption" step="0.01"
-                            class="w-32 text-sm border border-gray-300 rounded p-1 text-right font-mono font-bold text-indigo-700"
-                            placeholder="0.00">
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-bold text-stone-600 uppercase mb-1">Cloth Details</label>
-                        <input type="text" id="metaClothDetails"
-                            class="w-full text-sm border border-gray-300 rounded p-2 outline-none"
-                            placeholder="Type...">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-stone-600 uppercase mb-1">Special
-                            Requirements</label>
-                        <input type="text" id="metaSpecialReq"
-                            class="w-full text-sm border border-gray-300 rounded p-2 outline-none"
-                            placeholder="Type...">
-                    </div>
-                </div>
-            </div>
+    <!-- Pattern List & Toolbar -->
+    <div
+        class="bg-[#F8F9FA] border-b border-[#E2E8F0] px-6 py-2 flex items-center gap-4 overflow-x-auto whitespace-nowrap">
+        <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Saved Patterns:</span>
+        <div id="patternList" class="flex gap-2">
+            <!-- Patterns inserted here -->
+            <span class="text-xs text-gray-400 italic py-1">No patterns created yet.</span>
         </div>
+    </div>
 
+    <!-- Filters Toolbar -->
+    <div
+        class="bg-white border-b border-[#E2E8F0] px-4 sm:px-6 py-3 flex flex-col xl:flex-row items-center gap-4 overflow-x-auto z-20">
+        <div
+            class="flex flex-col sm:flex-row flex-wrap items-center gap-3 w-full xl:w-auto justify-center sm:justify-start">
+            <div class="relative w-full sm:w-auto">
+                <svg class="absolute left-3 top-2 text-[#A0AEC0]" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+                <input type="text" id="searchInput" oninput="handleSearch()" placeholder="Search..."
+                    class="pl-9 pr-3 py-1.5 text-sm border border-[#E2E8F0] rounded-md focus:border-[#4A5568] w-full sm:w-32 bg-[#F9F9F7]">
+            </div>
 
-        <!-- Advanced Toolbar (Ported from Editor) -->
-        <div id="filterPanel"
-            class="bg-white border-b border-[#E2E8F0] px-6 py-3 flex flex-col sm:flex-row items-start sm:items-center gap-4 overflow-x-auto no-scrollbar z-20 relative sticky top-0">
-
-            <!-- Search & Filters -->
-            <div class="flex items-center gap-3 w-full sm:w-auto overflow-x-auto">
-                <div class="relative">
-                    <svg class="absolute left-3 top-2 text-[#A0AEC0]" width="16" height="16" viewBox="0 0 24 24"
-                        fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="11" cy="11" r="8"></circle>
-                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                    </svg>
-                    <input type="text" id="searchInput" oninput="handleSearch()" placeholder="Search..."
-                        class="pl-9 pr-3 py-1.5 text-sm border border-[#E2E8F0] rounded-md focus:border-[#4A5568] outline-none w-32 sm:w-48 bg-[#F9F9F7] focus:bg-white transition-colors">
-                </div>
-
+            <div class="flex flex-wrap gap-2 w-full sm:w-auto justify-center sm:justify-start">
                 <select id="filterClass" onchange="handleFilter()"
-                    class="text-sm border border-[#E2E8F0] rounded-md px-3 py-1.5 outline-none focus:border-[#4A5568] bg-white text-[#4A5568]">
+                    class="text-sm border border-[#E2E8F0] rounded-md px-2 py-1.5 flex-1 sm:flex-none">
                     <option value="">All Classes</option>
                 </select>
-
                 <select id="filterSection" onchange="handleFilter()"
-                    class="text-sm border border-[#E2E8F0] rounded-md px-3 py-1.5 outline-none focus:border-[#4A5568] bg-white text-[#4A5568]">
+                    class="text-sm border border-[#E2E8F0] rounded-md px-2 py-1.5 flex-1 sm:flex-none">
                     <option value="">All Sections</option>
                 </select>
-
                 <select id="filterHouse" onchange="handleFilter()"
-                    class="text-sm border border-[#E2E8F0] rounded-md px-3 py-1.5 outline-none focus:border-[#4A5568] bg-white text-[#4A5568]">
+                    class="text-sm border border-[#E2E8F0] rounded-md px-2 py-1.5 flex-1 sm:flex-none">
                     <option value="">All Houses</option>
                 </select>
-
                 <select id="filterGender" onchange="handleFilter()"
-                    class="text-sm border border-[#E2E8F0] rounded-md px-3 py-1.5 outline-none focus:border-[#4A5568] bg-white text-[#4A5568]">
+                    class="text-sm border border-[#E2E8F0] rounded-md px-2 py-1.5 flex-1 sm:flex-none">
                     <option value="">All Genders</option>
-                    <option value="M">Male</option>
-                    <option value="F">Female</option>
                 </select>
-
-                <select id="filterAttendance" onchange="handleFilter()"
-                    class="text-sm border border-[#E2E8F0] rounded-md px-3 py-1.5 outline-none focus:border-[#4A5568] bg-white text-[#4A5568]">
-                    <option value="">All Attendance</option>
-                    <option value="Present">Present</option>
-                    <option value="Absent">Absent</option>
-                </select>
-
-                <div class="h-8 w-px bg-[#E2E8F0] hidden sm:block mx-2"></div>
-
-                <select id="filterItem" onchange="handleItemFilter()"
-                    class="text-sm border border-[#E2E8F0] rounded-md px-3 py-1.5 outline-none focus:border-[#4A5568] bg-white text-[#4A5568] max-w-[200px] font-medium">
-                    <option value="">All Measurements (U1-L8)</option>
-                </select>
-
-                <div class="flex items-center gap-2 pl-2 border-l border-[#E2E8F0] ml-2">
-                    <input type="checkbox" id="filterHasData" onchange="handleFilter()" checked
-                        class="w-4 h-4 text-indigo-600 rounded border-gray-300 focus:ring-indigo-500">
-                    <label for="filterHasData"
-                        class="text-sm text-[#4A5568] font-medium whitespace-nowrap select-none cursor-pointer">With
-                        Data Only</label>
-                </div>
-
-                <!-- School/Pattern Hidden Selects for View Mode Compatibility -->
-                <!-- School/Pattern Filters (Unhidden for Pattern Management) -->
-                <select id="f-school" onchange="handleFilter()"
-                    class="text-sm border border-[#E2E8F0] rounded-md px-3 py-1.5 outline-none focus:border-[#4A5568] bg-white text-[#4A5568] max-w-[150px]">
-                    <option value="all">All Schools</option>
-                </select>
-                <select id="f-pattern" onchange="handleFilter()"
-                    class="text-sm border border-[#E2E8F0] rounded-md px-3 py-1.5 outline-none focus:border-[#4A5568] bg-white text-[#4A5568] max-w-[150px]">
-                    <option value="all">All Patterns</option>
-                </select>
-                <!-- Legacy IDs Mapped -->
-                <input type="hidden" id="f-class" value="">
-                <input type="hidden" id="f-gender" value="all">
-                <input type="hidden" id="f-packed" value="all">
-                <input type="hidden" id="f-item" value="all">
-
-                <!-- Dynamic Component Filters Container -->
-                <div id="dynamicFilters" class="flex flex-wrap items-center gap-2">
-                    <!-- Dropdowns will be injected here -->
-                </div>
             </div>
 
-            <div class="h-8 w-px bg-[#E2E8F0] hidden sm:block"></div>
+            <div class="h-px w-full sm:h-6 sm:w-px bg-gray-300 mx-2 hidden sm:block"></div>
 
-            <div class="flex items-center gap-2 ml-auto">
-                <!-- Export Buttons from Header -->
-                <div id="viewActions" class="flex gap-2">
-                    <button id="btnToggleView" onclick="togglePatternView()"
-                        class="bg-stone-700 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-stone-800 shadow-sm flex items-center gap-1 transition-colors">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <rect x="3" y="3" width="7" height="7"></rect>
-                            <rect x="14" y="3" width="7" height="7"></rect>
-                            <rect x="14" y="14" width="7" height="7"></rect>
-                            <rect x="3" y="14" width="7" height="7"></rect>
-                        </svg>
-                        <span id="txtToggleView">View Groups</span>
-                    </button>
-                    <button onclick="openRenameModal()" id="btnRenamePattern"
-                        class="hidden bg-stone-100 text-stone-700 border border-stone-200 px-3 py-1.5 rounded text-xs font-bold hover:bg-stone-200 shadow-sm">
-                        Rename
-                    </button>
-                    <button onclick="downloadPDF()"
-                        class="btn-outline px-3 py-1.5 rounded text-xs font-bold text-rose-600 border-rose-200 hover:bg-rose-50">PDF</button>
-                    <button onclick="downloadExcel()"
-                        class="bg-indigo-600 text-white px-3 py-1.5 rounded text-xs font-bold hover:bg-indigo-700 shadow-sm">Excel</button>
-                    <button id="btnDeletePattern" onclick="deletePattern()"
-                        class="hidden bg-red-100 text-red-700 border border-red-200 px-3 py-1.5 rounded text-xs font-bold hover:bg-red-200 shadow-sm flex items-center gap-1">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <polyline points="3 6 5 6 21 6"></polyline>
-                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2">
-                            </path>
-                        </svg>
-                        Delete
-                    </button>
-                </div>
-                <div id="createActions" class="hidden flex items-center gap-4">
-                    <div class="flex items-center gap-2 bg-purple-50 px-3 py-1 rounded border border-purple-200">
-                        <label class="text-[10px] font-bold text-purple-700 uppercase">Material Calc</label>
-                        <input type="number" id="metaConsumption" placeholder="Unit (m)" step="0.1"
-                            oninput="calculateMaterial()"
-                            class="w-16 border border-purple-300 rounded px-2 py-1 text-xs outline-none focus:border-purple-500 font-bold text-purple-700 bg-white">
-                        <span class="text-xs text-purple-400">x Qty =</span>
-                        <span id="calcTotalMaterial" class="text-sm font-bold text-purple-800">0m</span>
-                    </div>
+            <select id="filterItem" onchange="handleItemFilter()"
+                class="text-sm border border-[#E2E8F0] rounded-md px-2 py-1.5 outline-none focus:border-[#4A5568] w-full sm:w-auto max-w-none sm:max-w-[150px]">
+                <option value="">Filter by Item</option>
+            </select>
 
-                    <button onclick="savePattern()"
-                        class="bg-indigo-600 text-white px-4 py-2 rounded text-sm font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-200 flex items-center gap-2 transition-transform active:scale-95">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
-                            <polyline points="17 21 17 13 7 13 7 21"></polyline>
-                            <polyline points="7 3 7 8 15 8"></polyline>
-                        </svg>
-                        Save & Create Pattern
-                    </button>
-                </div>
+            <!-- Dynamic Range Filters -->
+            <div id="dynamicFilters"
+                class="flex flex-wrap items-center gap-2 justify-center sm:justify-start w-full sm:w-auto"></div>
+
+            <div class="h-px w-full sm:h-6 sm:w-px bg-gray-300 mx-2 hidden sm:block"></div>
+
+            <div class="flex gap-2 w-full sm:w-auto justify-center sm:justify-start">
+                <button onclick="resetView()"
+                    class="text-gray-500 hover:text-gray-800 text-xs font-bold uppercase mx-2 whitespace-nowrap"
+                    title="Clear all filters to create new pattern">
+                    Reset / New
+                </button>
+
+                <button id="btnCreatePattern" onclick="openPatternModal()"
+                    class="bg-[#2D3748] text-white px-4 py-1.5 rounded-md text-sm font-bold shadow hover:bg-[#1A202C] flex items-center gap-2 whitespace-nowrap">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 5v14"></path>
+                        <path d="M5 12h14"></path>
+                    </svg>
+                    Create Pattern
+                </button>
+
+                <button id="btnUpdatePattern" onclick="updatePattern()"
+                    class="bg-blue-600 text-white px-4 py-1.5 rounded-md text-sm font-bold shadow hover:bg-blue-700 flex items-center gap-2 hidden whitespace-nowrap">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                        <polyline points="17 21 17 13 7 13 7 21" />
+                        <polyline points="7 3 7 8 15 8" />
+                    </svg>
+                    Update Pattern
+                </button>
             </div>
         </div>
 
-        <!-- Pattern Groups View (New Window/Section) -->
-        <div id="groupsView"
-            class="hidden flex-1 glass-panel rounded-xl p-6 shadow-xl border border-stone-200 overflow-auto">
-            <h2 class="text-xl font-ink font-bold text-stone-800 mb-6 flex items-center gap-2">
-                <span class="text-indigo-600 text-2xl">❖</span> Pattern Groups
-            </h2>
-            <div id="patternGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
-                <!-- Grid Items -->
-            </div>
+        <div class="text-xs text-gray-500 ml-auto w-full xl:w-auto text-center xl:text-right mt-2 xl:mt-0">
+            Showing <span id="rowCount" class="font-bold text-gray-800">0</span> Records
         </div>
+    </div>
 
-        <!-- Data Table View -->
-        <div id="tableView"
-            class="hidden glass-panel rounded-xl overflow-hidden shadow-xl border border-stone-200 flex-1 min-h-[500px] flex flex-col">
-            <div class="overflow-auto flex-1 h-full">
-                <table class="w-full text-left border-collapse whitespace-nowrap">
-                    <thead class="bg-stone-50 text-stone-500 uppercase text-xs sticky top-0 z-20 shadow-sm">
-                        <tr>
-                            <th class="p-3 font-bold border-b border-r bg-stone-50 sticky left-0 z-30 w-16">No.</th>
-                            <th class="p-3 font-bold border-b">School</th>
-                            <th class="p-3 font-bold border-b">Student</th>
-                            <th class="p-3 font-bold border-b">Class</th>
-                            <th class="p-3 font-bold border-b">Pattern</th>
-                            <!-- Dynamic Measurement Headers -->
-                            <th class="p-3 font-bold border-b bg-amber-50 text-amber-700 text-center"
-                                id="meas-header-group" colspan="1">Measurements</th>
-                            <th class="p-3 font-bold border-b text-center">Status</th>
-                        </tr>
-                        <tr id="sub-header-row" class="bg-stone-100 text-[10px] font-mono text-stone-600 hidden">
-                            <!-- Will be populated by JS -->
-                        </tr>
-                    </thead>
-                    <tbody id="table-body" class="divide-y divide-stone-100 bg-white text-sm">
-                        <!-- Rows -->
-                    </tbody>
-                </table>
-            </div>
-            <div class="p-2 border-t bg-stone-50 text-right text-xs text-stone-500 font-mono" id="row-count">Loading...
-            </div>
+    <!-- Main Content -->
+    <main class="flex-1 overflow-auto relative bg-[#F9F9F7]/90 z-10 flex flex-col">
+        <div id="tableView" class="flex-1 overflow-auto">
+            <table class="w-full border-collapse text-sm">
+                <thead id="tableHead"
+                    class="bg-white text-gray-500 font-medium text-xs uppercase sticky-header shadow-sm"></thead>
+                <tbody id="tableBody" class="bg-white/80 backdrop-blur-sm"></tbody>
+            </table>
         </div>
-
     </main>
 
     <script>
-        const API_BASE = '/api';
-        const token = sessionStorage.getItem('token');
-        if (!token) window.location.href = 'planet_editor.html';
-
-        // --- URL PARAMS ---
-        const urlParams = new URLSearchParams(window.location.search);
-        const TARGET_PATTERN_ID = urlParams.get('id');
-        const MODE = urlParams.get('mode'); // 'create' or null
-
-        // --- DATA ---
-        let allStudents = [];
+        let data = [];
         let patterns = [];
-        let schools = [];
-        let filteredStudents = []; // Active dataset
-        let draftMetadata = null;
+        let currentWorkbook = null;
+        let loadedPatternId = null;
 
-        // --- CONFIG ---
-        // --- CONFIG ---
+        let filters = { search: '', class: '', section: '', house: '', gender: '', item: '', components: {} };
+
+        // Persistence Keys
+        const STORAGE_KEY_DATA = 'pattern_dashboard_data';
+        const STORAGE_KEY_PATTERNS = 'pattern_dashboard_patterns';
+
+        // --- PERSISTENCE ---
+        function saveToLocal() {
+            try {
+                localStorage.setItem(STORAGE_KEY_DATA, JSON.stringify(data));
+                localStorage.setItem(STORAGE_KEY_PATTERNS, JSON.stringify(patterns));
+            } catch (e) {
+                console.warn("Storage full or disabled", e);
+            }
+        }
+
+        function loadFromLocal() {
+            try {
+                const sData = localStorage.getItem(STORAGE_KEY_DATA);
+                const sPatterns = localStorage.getItem(STORAGE_KEY_PATTERNS);
+                if (sData) {
+                    data = JSON.parse(sData);
+                    populateFilters();
+                    renderTable();
+                    updateCount();
+                }
+                if (sPatterns) {
+                    patterns = JSON.parse(sPatterns);
+                    renderModules();
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        function clearData() {
+            if (confirm("Are you sure you want to clear all data and patterns? This cannot be undone.")) {
+                localStorage.removeItem(STORAGE_KEY_DATA);
+                localStorage.removeItem(STORAGE_KEY_PATTERNS);
+                location.reload();
+            }
+        }
+
+        // Load on Init
+        window.addEventListener('DOMContentLoaded', () => {
+            // loadFromLocal(); // Legacy
+            loadFromCloud();
+        });
+
+        async function loadFromCloud() {
+            const token = sessionStorage.getItem('token');
+            const schoolId = sessionStorage.getItem('schoolId'); // Or derived from user
+
+            if (!token) {
+                console.warn("No token, loading local");
+                loadFromLocal();
+                return;
+            }
+
+            try {
+                // 1. Fetch Students (Global School Data)
+                const resS = await fetch(`/api/data/students/${schoolId}`, { headers: { 'Authorization': `Bearer ${token}` } });
+                if (resS.ok) {
+                    const cloudStudents = await resS.json();
+                    data = cloudStudents.map((s, i) => {
+                        // Map DB Student to Dashboard Row Format
+                        const row = {
+                            "id": s.id, // Primary Key for Linking
+                            "S.No": i + 1,
+                            "Roll No": s.roll_no || "",
+                            "Admission No": s.admission_no || "",
+                            "Student Name": s.name || "",
+                            "Class": s.class || "",
+                            "Section": s.section || "",
+                            "House": s.house || "",
+                            "Gender": s.gender || "",
+                            "Absent/Present": (s.measurements && s.is_absent) ? "Absent" : "Present"
+                        };
+                        if (s.measurements) {
+                            measureCols.forEach(col => row[col] = s.measurements[col] || "00");
+                        } else {
+                            measureCols.forEach(col => row[col] = "00");
+                        }
+                        // Quantities
+                        if (s.item_quantities) {
+                            Object.keys(s.item_quantities).forEach(key => row[key] = s.item_quantities[key]);
+                        }
+                        return row;
+                    });
+
+                    updateCount();
+                    populateFilters();
+                    renderTable();
+                }
+
+                // 2. Fetch Patterns
+                const resP = await fetch(`/api/data/patterns/${schoolId}`, { headers: { 'Authorization': `Bearer ${token}` } });
+                if (resP.ok) {
+                    const cloudPatterns = await resP.json();
+                    // Map DB Patterns to Local Format
+                    patterns = cloudPatterns.map(cp => ({
+                        id: cp.id,
+                        name: cp.name,
+                        filters: {}, // We might need to store filters in DB if we want to restore them exactly! 
+                        // Currently DB pattern schema has name, consumption, etc. but NOT the strict filter set.
+                        // We can maybe store filters in `special_req` or add a column.
+                        // For now, these are "Saved Output" patterns.
+                        count: 0 // We'd calculate this or store it
+                    }));
+                    renderModules();
+                }
+
+            } catch (e) {
+                console.error("Cloud Error", e);
+                loadFromLocal();
+            }
+        }
+
+        // Constants
         const infoCols = ["S.No", "Roll No", "Admission No", "Student Name", "Class", "Section", "House", "Gender", "Absent/Present"];
         const measureCols = ["U1", "U2", "U3", "U4", "U5", "U6", "U7", "U8", "L1", "L2", "L3", "L4", "L5", "L6", "L7", "L8"];
 
+        // Item Definitions
         const boysItems = [
             { name: "BOYS - FORMAL SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Male" },
             { name: "BOYS - TRACK T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Male" },
@@ -362,7 +500,6 @@
             { name: "BOYS - TRACK SHORTS", cols: ["L3", "L2"], type: "Male" },
             { name: "BOYS - PANT SPECIAL CASE", cols: ["L1", "L2", "L6", "L7"], type: "Male" },
         ];
-
         const girlsItems = [
             { name: "GIRLS - FORMAL SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Female" },
             { name: "GIRLS - TRACK T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Female" },
@@ -381,74 +518,104 @@
         ];
         const allItems = [...boysItems, ...girlsItems];
 
-        let filters = {
-            search: '',
-            class: '',
-            section: '',
-            house: '',
-            gender: '',
-            attendance: '',
-            item: '',
-            hasData: true, // Default Checked
-            components: {}
-        };
-        let searchTimeout = null;
+        // --- CORE FUNCTIONS ---
 
-        // --- INIT ---
-        async function init() {
-            // Populate Items (handled by populateFilters and static options)
-            // But we need to load initial items into Item Select
-            const itemSel = document.getElementById('f-item'); // Note: ID changed to filterItem in new HTML but kept aliases
-            // Wait, I replaced the HTML. The new ID is `filterItem`. The old one `f-item` is hidden.
-            // I should update this to populate `filterItem`.
-            const newItemSel = document.getElementById('filterItem');
-            if (newItemSel) {
-                newItemSel.innerHTML = '<option value="">All Measurements (U1-L8)</option>' + allItems.map(i => `<option value="${i.name}">${i.name}</option>`).join('');
+        async function handleFileUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const ab = await file.arrayBuffer();
+            currentWorkbook = XLSX.read(ab);
+            const ws = currentWorkbook.Sheets[currentWorkbook.SheetNames[0]];
+
+            let headerRowIndex = 0;
+            const rawRows = XLSX.utils.sheet_to_json(ws, { header: 1 });
+            for (let i = 0; i < Math.min(rawRows.length, 20); i++) {
+                const rowStr = JSON.stringify(rawRows[i] || []).toLowerCase();
+                if (rowStr.includes("student") && rowStr.includes("name")) { headerRowIndex = i; break; }
             }
 
-            if (MODE === 'create') {
-                setupCreateMode();
-            } else {
-                setupViewMode();
-            }
-        }
-        init();
+            const jsonData = XLSX.utils.sheet_to_json(ws, { range: headerRowIndex, defval: "" });
 
-        // --- FILTERING LOGIC ---
-        function populateFilters() {
-            const classes = new Set();
-            const sections = new Set();
-            const houses = new Set();
+            // RELIABLE IMPORT (Array Mode) to fix Quantity Mapping
+            const headerRow = rawRows[headerRowIndex];
+            const dataRows = rawRows.slice(headerRowIndex + 1);
 
-            allStudents.forEach(s => {
-                const c = getStudentProp(s, 'class');
-                const sec = getStudentProp(s, 'section');
-                const h = getStudentProp(s, 'house'); // Assuming 'house' prop handled in getStudentProp
-                if (c) classes.add(c);
-                if (sec) sections.add(sec);
-                if (h) houses.add(h);
+            data = dataRows.map((rArr, i) => {
+                const newRow = {};
+                // fill info/measures
+                infoCols.forEach(col => {
+                    const idx = headerRow.findIndex(h => h && h.toString().trim().toLowerCase() === col.toLowerCase());
+                    if (idx !== -1) newRow[col] = rArr[idx];
+                });
+                measureCols.forEach(col => {
+                    const idx = headerRow.findIndex(h => h && h.toString().startsWith(col));
+                    if (idx !== -1) newRow[col] = rArr[idx] || "00";
+                    else newRow[col] = "00";
+                });
+
+                // Fill Quantities by Header Position - Robust Logic
+                allItems.forEach(item => {
+                    const itemIdx = headerRow.indexOf(item.name);
+                    if (itemIdx !== -1) {
+                        // Assume Qty is next
+                        const nextCol = headerRow[itemIdx + 1];
+                        if (nextCol && (nextCol.toString().toLowerCase().includes("qty") || nextCol.toString().toLowerCase().includes("quantity"))) {
+                            newRow[`Qty_${item.name}`] = rArr[itemIdx + 1];
+                        }
+                    }
+                });
+
+                if (!newRow["S.No"]) newRow["S.No"] = i + 1;
+                return newRow;
             });
 
-            const fillParam = (id, set) => {
-                const el = document.getElementById(id);
-                if (!el) return;
-                const current = el.value;
-                el.innerHTML = `<option value="">All ${id.replace('filter', '')}s</option>` +
-                    [...set].sort().map(v => `<option value="${v}">${v}</option>`).join('');
-                el.value = current;
-            };
+            populateFilters();
 
-            fillParam('filterClass', classes);
-            fillParam('filterSection', sections);
-            fillParam('filterHouse', houses);
+            // Auto-Detect Item Logic
+            // If the uploaded file contains a column header matching an item name, auto-select it.
+            let detectedItem = null;
+            if (headerRow) {
+                for (const item of allItems) {
+                    if (headerRow.some(h => h && h.toString().trim() === item.name)) {
+                        detectedItem = item.name;
+                        break; // Prioritize the first one found
+                    }
+                }
+            }
+
+            if (detectedItem) {
+                document.getElementById('filterItem').value = detectedItem;
+                handleItemFilter(); // This handles rendering
+                // Also trigger basic filter update to ensure state consistency
+                // handleFilter(); 
+            } else {
+                renderTable();
+                updateCount();
+            }
+            saveToLocal(); // Save new data
         }
 
-        function handleSearch() {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => {
-                filters.search = document.getElementById('searchInput').value.toLowerCase();
-                renderTable();
-            }, 300);
+        function populateFilters() {
+            const getOpts = (key) => [...new Set(data.map(r => r[key]).filter(Boolean))].sort();
+            const updateSelect = (id, opts, label) => {
+                const el = document.getElementById(id);
+                // Preserve value if possible, but usually we reset on new file
+                const currentVal = el.value;
+                el.innerHTML = `<option value="">${label}</option>` + opts.map(o => `<option value="${o}">${o}</option>`).join('');
+                if (opts.includes(currentVal)) el.value = currentVal;
+            };
+
+            updateSelect('filterClass', getOpts('Class'), 'All Classes');
+            updateSelect('filterSection', getOpts('Section'), 'All Sections');
+            updateSelect('filterHouse', getOpts('House'), 'All Houses');
+            updateSelect('filterGender', getOpts('Gender'), 'All Genders');
+
+            const itemSelect = document.getElementById('filterItem');
+            // We want to keep the list of ALL items, not just present ones?
+            // Actually, showing only present items might be better UX?
+            // "pattern dashboard" should allow filtering by any known item type to create new patterns?
+            // No, stick to allItems as defined constantly.
+            itemSelect.innerHTML = '<option value="">Filter by Item</option>' + allItems.map(i => `<option value="${i.name}">${i.name}</option>`).join('');
         }
 
         function handleFilter() {
@@ -456,28 +623,14 @@
             filters.section = document.getElementById('filterSection').value;
             filters.house = document.getElementById('filterHouse').value;
             filters.gender = document.getElementById('filterGender').value;
-            filters.attendance = document.getElementById('filterAttendance').value;
-            filters.hasData = document.getElementById('filterHasData').checked;
-
-            // Show/Hide Delete Button based on Pattern Selection
-            const fPattern = document.getElementById('f-pattern').value;
-            const btnDel = document.getElementById('btnDeletePattern');
-            if (fPattern && fPattern !== 'all') {
-                btnDel.classList.remove('hidden');
-                document.getElementById('btnRenamePattern').classList.remove('hidden');
-            } else {
-                btnDel.classList.add('hidden');
-                document.getElementById('btnRenamePattern').classList.add('hidden');
-            }
-
             renderTable();
+            updateCount();
         }
 
         function handleItemFilter() {
             const itemName = document.getElementById('filterItem').value;
             filters.item = itemName;
             filters.components = {};
-
             const container = document.getElementById('dynamicFilters');
             container.innerHTML = '';
 
@@ -485,16 +638,7 @@
                 const item = allItems.find(i => i.name === itemName);
                 if (item) {
                     item.cols.forEach(col => {
-                        // Extract unique values for this col from data
-                        // Need to use getMeasurementsSafe and handle flat/nested
-                        const values = new Set();
-                        allStudents.forEach(s => {
-                            const m = getMeasurementsSafe(s);
-                            // Robust access: U1 or u1
-                            const val = m[col] || m[col.toLowerCase()];
-                            if (val && val !== "00") values.add(val);
-                        });
-                        const sortedValues = [...values].sort();
+                        const values = [...new Set(data.map(r => r[col]).filter(v => v && v !== "00"))].sort();
 
                         const wrapper = document.createElement('div');
                         wrapper.className = "relative inline-block";
@@ -503,795 +647,483 @@
                         input.setAttribute('list', `list-${col}`);
                         input.type = "text";
                         input.placeholder = col;
-                        input.className = "text-sm border border-[#E2E8F0] rounded-md px-2 py-1.5 outline-none focus:border-[#4A5568] bg-white w-24 text-[#4A5568] placeholder-gray-400";
+                        input.className = "text-sm border border-[#E2E8F0] rounded-md px-2 py-1.5 outline-none focus:border-[#4A5568] w-20 text-gray-600";
+
+                        const dl = document.createElement('datalist');
+                        dl.id = `list-${col}`;
+                        dl.innerHTML = values.map(v => `<option value="${v}">`).join('');
 
                         input.onchange = (e) => {
                             if (e.target.value) filters.components[col] = e.target.value;
                             else delete filters.components[col];
                             renderTable();
+                            updateCount();
                         };
 
-                        const datalist = document.createElement('datalist');
-                        datalist.id = `list-${col}`;
-                        datalist.innerHTML = sortedValues.map(v => `<option value="${v}">`).join('');
-
                         wrapper.appendChild(input);
-                        wrapper.appendChild(datalist);
+                        wrapper.appendChild(dl);
                         container.appendChild(wrapper);
                     });
                 }
             }
             renderTable();
+            updateCount();
         }
 
-        // Advanced Matching Helper
-        function advancedMatch(rowVal, filterVal) {
-            if (!filterVal) return true;
-            if (rowVal == null || rowVal === "") return false;
-            const rVal = String(rowVal).trim().toUpperCase();
-            const fVal = filterVal.toUpperCase();
-
-            // Comma List
-            if (fVal.includes(',')) {
-                return fVal.split(',').map(p => p.trim()).includes(rVal);
-            }
-            // Range
-            if (fVal.includes('-')) {
-                const [min, max] = fVal.split('-').map(p => p.trim());
-                if (!isNaN(min) && !isNaN(max)) {
-                    const numVal = parseFloat(rowVal);
-                    return !isNaN(numVal) && numVal >= parseFloat(min) && numVal <= parseFloat(max);
-                }
-                if (min.length === 1 && max.length === 1 && rVal.length === 1) {
-                    return rVal >= min && rVal <= max;
-                }
-            }
-            return rVal === fVal;
-        }
-
-        function setupCreateMode() {
-            document.getElementById('pageTitle').innerText = "Create New Pattern";
-            document.getElementById('viewActions').classList.add('hidden');
-            document.getElementById('createActions').classList.remove('hidden');
-            document.getElementById('creationPanel').classList.remove('hidden');
-            document.getElementById('creationPanel').classList.remove('hidden');
-            document.getElementById('tableView').classList.remove('hidden'); // Fix: Ensure Table is Visible
-            // document.getElementById('filterPanel').classList.add('hidden'); // UNHIDDEN per user request
-
-            // Load Draft Data
-            try {
-                const draft = JSON.parse(sessionStorage.getItem('draftPatternData'));
-                if (draft && draft.students) {
-                    allStudents = draft.students; // Flat objects from Editor
-                    draftMetadata = draft;
-                    document.getElementById('metaSchool').value = draft.schoolName || 'Unknown';
-                    populateFilters(); // Populate dropdowns from Loaded Data
-                    renderTable();
-                } else {
-                    alert("No data passed for creation. Returning to Editor.");
-                    window.location.href = 'planet_editor.html';
-                }
-            } catch (e) { console.error(e); }
-        }
-
-        async function setupViewMode() {
-            await Promise.all([
-                fetchData(),
-                fetchPatterns(),
-                fetchSchools()
-            ]);
-
-            if (TARGET_PATTERN_ID) {
-                const patSel = document.getElementById('f-pattern');
-                const schSel = document.getElementById('f-school');
-                patSel.value = TARGET_PATTERN_ID;
-                const targetPattern = patterns.find(p => p.id == TARGET_PATTERN_ID);
-                if (targetPattern) schSel.value = targetPattern.school_id;
-            }
+        function handleSearch() {
+            filters.search = document.getElementById('searchInput').value.toLowerCase();
             renderTable();
+            updateCount();
         }
 
-        async function fetchData() {
-            try {
-                const res = await fetch(`${API_BASE}/data/all_students`, { headers: { 'Authorization': `Bearer ${token}` } });
-                allStudents = await res.json();
-            } catch (e) { console.error(e); }
-        }
+        function getFilteredData() {
+            return data.filter(row => {
+                // 1. Basic Filters
+                const matchSearch = !filters.search || Object.values(row).some(v => String(v).toLowerCase().includes(filters.search));
+                const matchClass = !filters.class || row.Class == filters.class;
+                const matchSection = !filters.section || row.Section == filters.section;
+                const matchHouse = !filters.house || row.House == filters.house;
+                const matchGender = !filters.gender || row.Gender == filters.gender;
 
-        async function fetchPatterns() {
-            try {
-                const res = await fetch(`${API_BASE}/data/patterns/all`, { headers: { 'Authorization': `Bearer ${token}` } });
-                patterns = await res.json();
-                const sel = document.getElementById('f-pattern');
-                sel.innerHTML = '<option value="all">All Patterns</option>';
-                patterns.forEach(p => {
-                    const opt = document.createElement('option');
-                    opt.value = p.id;
-                    opt.text = `${p.name} (${p.school_name})`;
-                    sel.appendChild(opt);
-                });
-            } catch (e) { console.error(e); }
-        }
-
-        async function fetchSchools() {
-            try {
-                const res = await fetch(`${API_BASE}/data/schools`, { headers: { 'Authorization': `Bearer ${token}` } });
-                schools = await res.json();
-                const sel = document.getElementById('f-school');
-                sel.innerHTML = '<option value="all">All Schools</option>';
-                schools.forEach(s => {
-                    const opt = document.createElement('option');
-                    opt.value = s.id;
-                    opt.text = s.name;
-                    sel.appendChild(opt);
-                });
-            } catch (e) { console.error(e); }
-        }
-
-        // --- HELPER: NORMALIZE DATA ACCESS ---
-        function getStudentProp(s, prop) {
-            // 1. Try Direct Property (DB style)
-            if (s[prop] !== undefined) return s[prop];
-
-            // 2. Try Editor CSV/Excel Mapping
-            if (prop === 'name') return s["Student Name"] || s["Student"] || s["Name"];
-            if (prop === 'class') return s["Class"];
-            if (prop === 'section') return s["Section"];
-            if (prop === 'roll') return s["Roll No"] || s["Admission No"];
-            if (prop === 'gender') return s["Gender"];
-            if (prop === 'school_name') return draftMetadata ? draftMetadata.schoolName : '';
-            if (prop === 'pattern_name') return '';
-            if (prop === 'is_packed') return false;
-
-            if (prop === 'attendance') return s["Absent/Present"] || s["attendance"] || "Present";
-            if (prop === 'school_id') return s.school_id;
-            return '';
-        }
-
-        // --- RENDER ---
-        function renderTable() {
-            // 1. FILTERING
-            let data = allStudents.filter(s => {
-                // Search
-                if (filters.search) {
-                    const name = (getStudentProp(s, 'name') || '').toLowerCase();
-                    const roll = String(getStudentProp(s, 'roll') || '').toLowerCase();
-                    if (!name.includes(filters.search) && !roll.includes(filters.search)) return false;
-                }
-
-                // View Mode Specific Filters (Legacy preservation)
-                if (MODE !== 'create') {
-                    const fSchool = document.getElementById('f-school').value;
-                    const fPattern = document.getElementById('f-pattern').value;
-                    /* Legacy Packed Filter check - hidden in UI now but logic remains valid if used */
-                    // if (fPattern !== 'all' && s.pattern_id != fPattern) return false;
-                }
-
-                // ADVANCED FILTERS
-                if (!advancedMatch(getStudentProp(s, 'class'), filters.class)) return false;
-                if (!advancedMatch(getStudentProp(s, 'section'), filters.section)) return false;
-                if (!advancedMatch(getStudentProp(s, 'house'), filters.house)) return false;
-
-                if (filters.gender) {
-                    const g = getStudentProp(s, 'gender');
-                    if (filters.gender === 'M' && g !== 'Male' && g !== 'M') return false;
-                    if (filters.gender === 'F' && g !== 'Female' && g !== 'F') return false;
-                    if (filters.gender !== 'M' && filters.gender !== 'F' && g !== filters.gender) return false;
-                }
-
-                if (filters.attendance) {
-                    const status = (getStudentProp(s, 'attendance') || '').toLowerCase();
-                    if (filters.attendance === 'Absent' && !status.includes('absent')) return false;
-                    if (filters.attendance === 'Present' && status.includes('absent')) return false;
-                }
-
-                // Item & Dynamic Filters
+                // 2. Item Gender Logic
+                let matchItem = true;
                 if (filters.item) {
-                    const def = allItems.find(x => x.name === filters.item);
-                    const sGen = getStudentProp(s, 'gender');
-                    // Gender Check for Item
-                    if (def && sGen && def.type) {
-                        const normGen = (sGen === 'Male' || sGen === 'M') ? 'Male' : (sGen === 'Female' || sGen === 'F') ? 'Female' : '';
-                        if (normGen && normGen !== def.type) return false;
-                    }
-
-                    // Dynamic Components (Range Filters)
-                    if (filters.components && Object.keys(filters.components).length > 0) {
-                        const m = getMeasurementsSafe(s);
-                        for (const [col, fVal] of Object.entries(filters.components)) {
-                            const mVal = m[col] || m[col.toLowerCase()] || "";
-                            if (!advancedMatch(mVal, fVal)) return false;
-                        }
+                    const item = allItems.find(i => i.name === filters.item);
+                    if (item) {
+                        const gender = (row.Gender || "").toUpperCase();
+                        if (item.type === "Male" && gender !== "MALE") matchItem = false;
+                        if (item.type === "Female" && gender !== "FEMALE") matchItem = false;
                     }
                 }
 
-                // HAS DATA FILTER
-                if (filters.hasData) {
-                    const m = getMeasurementsSafe(s);
-                    // Check if ANY measurement column has a value != "00"/"0"/""
-                    // We check against ALL measureCols
-                    const hasAny = measureCols.some(k => {
-                        const val = m[k] || m[k.toLowerCase()];
-                        return val && val !== "00" && val !== "0";
+                // 3. Component Range Logic (The "Advanced" part)
+                let matchComp = true;
+                if (filters.item) {
+                    Object.keys(filters.components).forEach(col => {
+                        const filterVal = filters.components[col];
+                        const rowVal = row[col];
+                        // Range e.g. "30-32"
+                        if (filterVal.includes('-')) {
+                            const [min, max] = filterVal.split('-').map(Number);
+                            if (!isNaN(min) && !isNaN(max)) {
+                                const valNum = parseFloat(rowVal);
+                                if (isNaN(valNum) || valNum < min || valNum > max) matchComp = false;
+                            } else {
+                                if (String(rowVal) !== filterVal) matchComp = false; // fallback
+                            }
+                        } else {
+                            if (String(rowVal) !== filterVal) matchComp = false;
+                        }
                     });
-                    if (!hasAny) return false;
                 }
 
-                return true;
+                return matchSearch && matchClass && matchSection && matchHouse && matchGender && matchItem && matchComp;
             });
-
-            const fItem = filters.item; // Use state
-            const measHeader = document.getElementById('meas-header-group');
-            let subRow = document.getElementById('sub-header-row');
-            let showCols = [];
-
-            if (fItem) { // Check state instead of DOM value
-                const def = allItems.find(x => x.name === fItem);
-                if (def) showCols = def.cols;
-                measHeader.innerText = fItem;
-                measHeader.colSpan = showCols.length;
-            } else {
-                // SHOW ALL
-                showCols = measureCols;
-                measHeader.innerText = "All Measurements";
-                measHeader.colSpan = showCols.length;
-            }
-
-            const tbody = document.getElementById('table-body');
-            tbody.innerHTML = data.map((s, idx) => {
-                const m = getMeasurementsSafe(s);
-                let measCells = '';
-
-                if (showCols.length > 0) {
-                    measCells = showCols.map(k => {
-                        // Access: Try "U1" (exact) then "u1" (lowercase) - robust access
-                        let val = m[k] || m[k.toLowerCase()] || '-';
-                        return `<td class="p-3 text-center font-mono font-bold bg-amber-50/30 text-stone-700 border-b border-stone-100">${val}</td>`;
-                    }).join('');
-                } else {
-                    measCells = `<td class="p-3 text-xs text-stone-400 italic border-b border-stone-100">Select Item Type...</td>`;
-                }
-
-                const dName = getStudentProp(s, 'name');
-                const dRoll = getStudentProp(s, 'roll');
-                const dClass = getStudentProp(s, 'class');
-                const dSection = getStudentProp(s, 'section');
-                const dGender = getStudentProp(s, 'gender');
-                const dSchool = getStudentProp(s, 'school_name');
-                const dPattern = getStudentProp(s, 'pattern_name');
-                const dPacked = getStudentProp(s, 'is_packed');
-
-                return `<tr class="hover:bg-blue-50 transition-colors">
-                    <td class="p-3 border-b border-r bg-stone-50/50 sticky left-0 font-mono text-xs text-stone-400 font-bold">${idx + 1}</td>
-                    <td class="p-3 border-b border-stone-100 font-bold text-stone-700">${dSchool}</td>
-                    <td class="p-3 border-b border-stone-100">
-                        <div class="font-bold text-stone-800">${dName || '<span class="text-red-400">?</span>'}</div>
-                        <div class="text-[10px] text-stone-500 font-mono">Roll: ${dRoll || '-'}</div>
-                    </td>
-                    <td class="p-3 border-b border-stone-100 text-sm">${dClass} ${dSection || ''} <span class="text-xs text-stone-400">(${dGender?.[0] || '?'})</span></td>
-                    <td class="p-3 border-b border-stone-100">
-                        ${dPattern ? `<span class="px-2 py-1 bg-indigo-50 text-indigo-700 rounded text-xs font-bold ring-1 ring-indigo-200">${dPattern}</span>` : '<span class="text-stone-300">-</span>'}
-                    </td>
-                    ${measCells}
-                    <td class="p-3 border-b border-stone-100 text-center">
-                        <span class="px-2 py-1 rounded-full text-[10px] font-bold uppercase ${dPacked ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${dPacked ? 'Packed' : 'Pending'}</span>
-                    </td>
-                </tr>`;
-            }).join('');
-
-            if (showCols.length > 0) {
-                subRow.classList.remove('hidden');
-                subRow.innerHTML = `
-                    <th colspan="5"></th>
-                    ${showCols.map(c => `<th class="p-2 text-center bg-amber-100 text-amber-800 border-x border-amber-200">${c}</th>`).join('')}
-                    <th></th>
-                `;
-            } else {
-                subRow.classList.add('hidden');
-            }
-
-            document.getElementById('row-count').innerText = `Showing ${data.length} Records`;
-            window.filteredData = data;
-            window.currentCols = showCols;
         }
 
-        function getMeasurementsSafe(s) {
-            // DB: nested Object string or object
-            if (s.measurements) {
-                if (typeof s.measurements === 'string') { try { return JSON.parse(s.measurements); } catch (e) { return {}; } }
-                return s.measurements;
+        function calculateItemValue(row, item) {
+            const parts = item.cols.map(col => {
+                const v = row[col];
+                return (v && v !== '00') ? v : "00";
+            });
+            return parts.join(",");
+        }
+
+        function renderTable() {
+            const filtered = getFilteredData();
+            const thead = document.getElementById('tableHead');
+            const tbody = document.getElementById('tableBody');
+
+            // Header
+            let h = `<tr class="bg-[#F7FAFC]">
+                <th class="p-3 border-b border-r min-w-[50px] text-center font-bold text-gray-600">#</th>
+                <th class="p-3 border-b border-r min-w-[200px] text-left font-bold text-gray-600 sticky-col z-20">Student Name</th>
+                <th class="p-3 border-b border-r min-w-[80px]">Class</th>
+                <th class="p-3 border-b border-r min-w-[80px]">Sec</th>
+                <th class="p-3 border-b border-r min-w-[80px]">Gender</th>
+                <th class="p-3 border-b border-r min-w-[100px]">Adm No</th>`;
+
+            measureCols.forEach(c => {
+                const color = c.startsWith('U') ? 'text-blue-600 bg-blue-50' : 'text-green-600 bg-green-50';
+                h += `<th class="p-2 border-b border-r ${color} text-center text-xs font-mono">${c}</th>`;
+            });
+            // Add Item Columns if Filtered
+            const activeItemName = document.getElementById('filterItem') ? document.getElementById('filterItem').value : null;
+            if (activeItemName) {
+                h += `<th class="p-3 border-b border-r bg-purple-50 text-purple-700 font-bold min-w-[150px] sticky-col z-20" style="left: 200px;">${activeItemName}</th>`;
+                h += `<th class="p-3 border-b border-r bg-yellow-50 text-yellow-700 font-bold min-w-[80px]">Qty</th>`;
             }
-            // Editor: Flat Object, return s itself
-            return s;
-        }
 
-        // --- CREATE/SAVE LOGIC ---
-        // Duplicate Logic from Planet Editor but adapted for this view
-        function calculateItemValue(row, itemInfo) {
-            const m = getMeasurementsSafe(row);
-            // Reconstruct Logic from Editor if needed
-            // For now assuming 'm' has keys "u1", "l1" etc.
-            // itemInfo.cols = ["U1", "U2"]
-            const vals = itemInfo.cols.map(c => m[c.toLowerCase()] || "00");
-            // Filter logic? 
-            if (itemInfo.type && row.gender && row.gender.toUpperCase() !== itemInfo.type.toUpperCase()) return "";
+            h += `</tr>`;
+            thead.innerHTML = h;
 
-            // Check if all empty?
-            const allEmpty = vals.every(v => v === "00" || v === "" || v === "0");
-            if (allEmpty) return "00,00"; // Or whatever format
-            return vals.join(",");
-        }
+            // Body
+            tbody.innerHTML = filtered.map((row, i) => {
+                let r = `<tr class="hover:bg-gray-50 border-b border-gray-100">
+                    <td class="p-2 border-r text-center text-xs text-gray-400 font-mono">${row["S.No"]}</td>
+                    <td class="p-2 border-r font-medium text-gray-700 sticky-col bg-white">${row["Student Name"]}</td>
+                    <td class="p-2 border-r text-center text-gray-600 text-xs">${row["Class"]}</td>
+                    <td class="p-2 border-r text-center text-gray-600 text-xs">${row["Section"]}</td>
+                    <td class="p-2 border-r text-center text-gray-600 text-xs">${row["Gender"]}</td>
+                    <td class="p-2 border-r text-center text-gray-600 text-xs text-mono">${row["Admission No"]}</td>`;
 
-        function calculateTotalBreakdown(dataset) {
-            const breakdown = {};
-            dataset.forEach(row => {
-                allItems.forEach(item => {
-                    // We don't have explicit Qty columns here unless we pulled them.
-                    // Editor filtered data SHOULD include all columns from the table.
-                    // Check if 'Qty_Item' exists in `row`.
-                    // The `allStudents` here comes from `filtered` in Editor which is `data.filter(...)`.
-                    // `data` in Editor has everything. So yes.
-
-                    const qtyKey = `Qty_${item.name}`;
-                    let rawQ = row[qtyKey];
-                    if (typeof rawQ === 'string' && rawQ.includes(',')) rawQ = NaN;
-                    let q = parseFloat(rawQ);
-
-                    if (!isNaN(q)) {
-                        breakdown[item.name] = (breakdown[item.name] || 0) + q;
-                    } else {
-                        // Calculated
-                        const valStr = calculateItemValue(row, item);
-                        const hasMeasurements = valStr.replace(/00/g, '').replace(/,/g, '').length > 0;
-                        if (hasMeasurements) {
-                            breakdown[item.name] = (breakdown[item.name] || 0) + 1;
-                        }
-                    }
+                measureCols.forEach(c => {
+                    let val = row[c];
+                    if (val === '00' || val === '0') val = '';
+                    r += `<td class="p-2 border-r text-center font-mono text-gray-600 text-sm">${val}</td>`;
                 });
-            });
-            return breakdown;
+                if (activeItemName) {
+                    const item = allItems.find(i => i.name === activeItemName);
+                    if (item) {
+                        const calcVal = calculateItemValue(row, item);
+                        const qty = row[`Qty_${item.name}`] || "";
+                        r += `<td class="p-2 border-r text-center text-xs text-purple-700 font-mono bg-purple-50/30 font-bold">${calcVal}</td>`;
+                        r += `<td class="p-2 border-r text-center text-sm font-bold text-yellow-700 bg-yellow-50/30">${qty}</td>`;
+                    }
+                }
+
+                r += `</tr>`;
+                return r;
+            }).join('');
+        }
+
+        function updateCount() {
+            const count = getFilteredData().length;
+            document.getElementById('rowCount').textContent = count;
+            document.getElementById('patternCountDisplay').textContent = count;
+        }
+
+        // --- PATTERN LOGIC ---
+
+        function openPatternModal() {
+            if (getFilteredData().length === 0) {
+                alert("No data to group! Import a file or adjust filters.");
+                return;
+            }
+            document.getElementById('newPatternName').value = `Pattern ${patterns.length + 1}`;
+            updateCount();
+            document.getElementById('patternModal').classList.remove('hidden');
         }
 
         async function savePattern() {
-            if (!draftMetadata) return alert("Missing Session Data");
+            const name = document.getElementById('newPatternName').value;
+            if (!name) return alert("Enter a pattern name");
 
-            // USE FILTERED DATA (User Intent: "These filtered data are used")
-            const targetData = window.filteredData && window.filteredData.length > 0 ? window.filteredData : allStudents;
-            const currentItem = filters.item ? allItems.find(i => i.name === filters.item) : null;
+            // Get currently filtered students
+            const currentData = getFilteredData();
 
-            if (targetData.length === 0) return alert("No students selected for this pattern.");
+            // 1. Calculate Aggregate Consumption (Total of all Qty fields for all students)
+            // And 2. Prepare Per-Student Quantity Snapshot & IDs
+            let totalConsumption = 0;
+            const studentIds = [];
 
-            const name = document.getElementById('metaPattern').value;
-            const description = document.getElementById('metaDesc').value;
-            const consumption = document.getElementById('metaConsumption').value;
-            const cloth = document.getElementById('metaClothDetails').value;
-            const req = document.getElementById('metaSpecialReq').value;
+            const studentQuantities = currentData.map(student => {
+                if (student.id) studentIds.push(student.id);
 
-            if (!name) return alert("Pattern Code is Required");
+                // Extract only Qty_ fields
+                const qties = {};
+                Object.keys(student).forEach(k => {
+                    if (k.startsWith("Qty_")) {
+                        qties[k] = parseFloat(student[k]) || 0;
+                        totalConsumption += qties[k];
+                    }
+                });
+                return {
+                    admission_no: student['Admission No'],
+                    name: student['Student Name'],
+                    quantities: qties
+                };
+            });
 
-            // Calculate Breakdown based on TARGET DATA
-            const quantities = calculateTotalBreakdown(targetData);
+            // Metadata
+            const description = `Pattern Group with ${currentData.length} students`;
+            const cloth_details = "N/A"; // Could be input later
 
-            if (Object.keys(quantities).length === 0) {
-                if (!confirm("Warning: No quantities calculated. Provide quantities or check if measurements exist. Continue?")) return;
-            }
+            const payload = {
+                school_id: sessionStorage.getItem('schoolId'),
+                name: name,
+                description: description,
+                consumption: parseFloat(totalConsumption.toFixed(2)), // Aggregate total
+                cloth_details: cloth_details,
+                special_req: JSON.stringify(filters), // Save filters as metadata
+                quantities: studentQuantities, // Save detailed calculated snapshot
+                student_ids: studentIds // Link students to this pattern
+            };
 
             try {
-                // 1. Create Pattern Group
+                const token = sessionStorage.getItem('token');
+                if (!token) throw new Error("Offline");
+
                 const res = await fetch('/api/data/patterns', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                    body: JSON.stringify({
-                        school_id: draftMetadata.schoolId,
-                        name: name,
-                        description: description,
-                        consumption: parseFloat(consumption) || 0,
-                        cloth_details: cloth,
-                        special_req: req,
-                        quantities: quantities
-                    })
+                    body: JSON.stringify(payload)
                 });
 
-                if (!res.ok) throw new Error("Failed to create pattern");
-                const resData = await res.json();
-                const patternId = resData.id;
-
-                // 2. Link Students & Store Production Data
-                const syncPayload = targetData.map(s => {
-                    const prodData = {};
-
-                    // Logic: If Item Filter active, store ONLY that item.
-                    // If NO Item Filter, store ALL items? (Likely not intended for a specific pattern, but safer to store what's calculated)
-
-                    const itemsToStore = currentItem ? [currentItem] : allItems;
-
-                    itemsToStore.forEach(item => {
-                        // Calculate Qty for this item for this student
-                        // Check calculated first
-                        const valStr = calculateItemValue(s, item);
-                        const hasMeas = valStr.replace(/00/g, '').replace(/,/g, '').length > 0;
-                        if (hasMeas) {
-                            prodData[item.name] = "1"; // Default 1 if measured
-                        }
-                        // Check explicit Qty override (if we had it in data) - logic from breakdown
-                        const qtyKey = `Qty_${item.name}`;
-                        if (s[qtyKey] && !isNaN(parseFloat(s[qtyKey]))) {
-                            prodData[item.name] = String(s[qtyKey]);
-                        }
-                    });
-
-                    return {
-                        id: s.id, // ID must exist if we are syncing. In Create Mode, these are from DB or drafts?
-                        // Drafts from Editor have IDs if they came from DB. New rows have _tempId?
-                        // If they are new rows, they might not have IDs yet? 
-                        // Wait, Editor loads data from DB. New rows in Editor have _tempId.
-                        // If we sync _tempId, backend won't match. 
-                        // BUT the user says "store the datas". Backend handles INSERT if no ID match but match Admission No.
-                        // Create Mode data implies we are creating pattern for EXISTING students usually?
-                        // Ensure we pass necessary identifying info.
-                        admission_no: s.admission_no || s["Admission No"], // Fallback for safety
-                        roll_no: s.roll_no || s["Roll No"],
-                        name: s.name || s["Student Name"],
-                        school_id: draftMetadata.schoolId, // Ensure Context
-
-                        pattern_id: patternId,
-                        production_data: prodData
-                    };
-                });
-
-                const syncRes = await fetch('/api/sync', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                    body: JSON.stringify({ students: syncPayload })
-                });
-
-                if (!syncRes.ok) throw new Error("Failed to link students.");
-
-                alert(`✅ Pattern '${name}' Created!\\nLinked ${targetData.length} Students.`);
-                window.location.href = `pattern_view.html?id=${patternId}`;
-
-            } catch (e) {
-                alert("Error: " + e.message);
-                console.error(e);
-            }
-        }
-
-
-
-        // --- MATERIAL CALCULATOR ---
-        function calculateMaterial() {
-            const unit = parseFloat(document.getElementById('metaConsumption').value) || 0;
-            // Get current filtered student count
-            const count = window.filteredData ? window.filteredData.length : (allStudents ? allStudents.length : 0);
-
-            // Or should it be based on "Quantities" of items?
-            // "quantity is given... metirial type quantity it automatically add calculate user input"
-            // Usually Material is per garment.
-            // Let's assume Unit * Count of Students (Garments)
-
-            const total = (unit * count).toFixed(2);
-            document.getElementById('calcTotalMaterial').innerText = `${total}m`;
-        }
-
-
-        // --- DELETE WITH UNDO ---
-        let undoTimeout = null;
-        let deleteToast = null;
-
-        async function deletePattern() {
-            const patId = document.getElementById('f-pattern').value;
-            if (!patId || patId === 'all') return;
-
-            if (!confirm("Are you sure you want to DELETE this pattern?")) return;
-
-            // OPTIMISTIC UNDO UI
-            const btn = document.getElementById('btnDeletePattern');
-            const originalText = btn.innerHTML;
-
-            // Show Undo Toast
-            showUndoToast(patId);
-
-            // Hide pattern locally immediately? Or just wait?
-            // User requirement: "undo it 20 seconds".
-            // So we delay the actual call.
-        }
-
-        function showUndoToast(patId) {
-            // Create Toast
-            if (deleteToast) deleteToast.remove();
-
-            deleteToast = document.createElement('div');
-            deleteToast.className = "fixed bottom-10 right-10 bg-stone-900 text-white px-6 py-4 rounded-lg shadow-2xl flex items-center gap-4 z-50 animate-bounce";
-            deleteToast.innerHTML = `
-                <div>
-                    <div class="font-bold text-sm">Pattern Deletion Pending...</div>
-                    <div class="text-xs text-stone-400">Executing in <span id="undo-timer">20</span>s</div>
-                </div>
-                <button onclick="cancelDelete()" class="bg-stone-700 hover:bg-stone-600 px-3 py-1 rounded text-xs font-bold uppercase">Undo</button>
-            `;
-            document.body.appendChild(deleteToast);
-
-            let timeLeft = 20;
-            const timerSpan = document.getElementById('undo-timer');
-
-            undoTimeout = setInterval(async () => {
-                timeLeft--;
-                if (timerSpan) timerSpan.innerText = timeLeft;
-
-                if (timeLeft <= 0) {
-                    clearInterval(undoTimeout);
-                    deleteToast.remove();
-                    await executeDelete(patId);
-                }
-            }, 1000);
-        }
-
-        function cancelDelete() {
-            clearInterval(undoTimeout);
-            if (deleteToast) deleteToast.remove();
-            alert("Deletion Cancelled.");
-        }
-
-        async function executeDelete(patId) {
-            try {
-                const res = await fetch(`/api/data/patterns/${patId}`, {
-                    method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-
-                if (!res.ok) throw new Error("Delete failed");
-
-                alert("Pattern Deleted Permanently.");
-                window.location.href = 'pattern_view.html';
-            } catch (e) {
-                alert("Error: " + e.message);
-            }
-        }
-
-        // --- EXPORT ---
-        // --- EXPORT ---
-        function downloadPDF() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF('l', 'mm', 'a4');
-            const data = window.filteredData || allStudents;
-            const cols = window.currentCols || [];
-
-            // Meta Info
-            const patternName = MODE === 'create' ? document.getElementById('metaPattern').value : (data[0]?.pattern_name || "Custom View");
-            const consumption = document.getElementById('metaConsumption') ? document.getElementById('metaConsumption').value : (data[0]?.pattern_consumption || 0);
-            const totalMaterial = document.getElementById('calcTotalMaterial') ? document.getElementById('calcTotalMaterial').innerText : "0m";
-
-            // Header (Pattern Name Centered)
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(18);
-            doc.text(patternName.toUpperCase(), 148.5, 15, { align: "center" });
-
-            // Sub-Header Details
-            doc.setFontSize(10);
-            doc.setFont("helvetica", "normal");
-            const details = `Item: ${document.getElementById('f-item').value} | Material/Unit: ${consumption}m | Total: ${totalMaterial}`;
-            doc.text(details, 148.5, 22, { align: "center" });
-
-            // Description
-            const description = MODE === 'create' ? document.getElementById('metaDesc').value : (data[0]?.pattern_description || "");
-
-            if (description) {
-                doc.setFont("helvetica", "italic");
-                doc.text(`"${description}"`, 148.5, 27, { align: "center" });
-            }
-
-            // Table
-
-            // Table
-            let headers = [['School', 'Name', 'Class', 'Admsn No', ...cols, 'Status']];
-            const body = data.map(s => {
-                const m = getMeasurementsSafe(s);
-                const row = [
-                    s.school_name || "N/A",
-                    s.name,
-                    `${s.class || ''} ${s.section || ''}`,
-                    s.admission_no || s["Admission No"] || "-",
-                ];
-
-                cols.forEach(k => row.push(m[k.toLowerCase()] || '-'));
-                row.push(s.is_packed ? 'Packed' : 'Pending');
-                return row;
-            });
-
-            doc.autoTable({
-                head: headers,
-                body: body,
-                startY: 30,
-                theme: 'grid',
-                headStyles: { fillColor: [40, 40, 40], textColor: 255, halign: 'center' },
-                styles: { fontSize: 9, cellPadding: 3, halign: 'center' },
-                columnStyles: { 0: { halign: 'left' }, 1: { halign: 'left' } } // Name/School left align
-            });
-
-            // Footer / End of Data Summary
-            // "pattern name under its datas also adde messurments..."
-            const finalY = doc.lastAutoTable.finalY + 10;
-            doc.setFontSize(10);
-            doc.setFont("helvetica", "bold");
-            doc.text(`End of List: ${patternName}`, 14, finalY);
-
-            doc.save(`Pattern_${patternName.replace(/\s+/g, '_')}.pdf`);
-        }
-
-        function downloadExcel() {
-            const data = window.filteredData || allStudents;
-            const cols = window.currentCols || [];
-
-            const exportData = data.map(s => {
-                const m = getMeasurementsSafe(s);
-                const row = {
-                    "School": s.school_name || (draftMetadata ? draftMetadata.schoolName : '-'),
-                    "Name": s.name,
-                    "Class": s.class,
-                    "Section": s.section,
-                    "Gender": s.gender,
-                    "Pattern": s.pattern_name,
-                    "Status": s.is_packed ? "Packed" : "Pending"
-                };
-
-                if (cols.length > 0) {
-                    cols.forEach(k => row[k] = m[k.toLowerCase()] || '');
+                if (res.ok) {
+                    alert("Pattern Saved to Cloud with Calculated Quantities!");
+                    document.getElementById('patternModal').classList.add('hidden');
+                    loadFromCloud();
                 } else {
-                    row["Measurements"] = "Select Item to View";
+                    const err = await res.json();
+                    alert("Failed to save: " + err.error);
                 }
-                return row;
-            });
-
-            const ws = XLSX.utils.json_to_sheet(exportData);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "PatternData");
-            XLSX.writeFile(wb, `Pattern_Data_${TARGET_PATTERN_ID || 'View'}.xlsx`);
+            } catch (e) {
+                console.error(e);
+                alert("Offline Mode: Saving locally only (Quantities not synced).");
+                // Fallback to local
+                const currentFilters = JSON.parse(JSON.stringify(filters));
+                const pattern = {
+                    id: Date.now(),
+                    name: name,
+                    filters: currentFilters,
+                    count: getFilteredData().length
+                };
+                patterns.push(pattern);
+                renderModules();
+                saveToLocal();
+                document.getElementById('patternModal').classList.add('hidden');
+            }
         }
+        // Auto-load the new pattern to allow immediate editing? 
+        // Better to stay in "Create" mode or switch? 
+        // Let's just reset view to prompt user to start fresh OR keep filters?
+        // Standard: keep filters, but user might want to reset.
 
-    </script>
-    <!-- MODALS -->
-    <!-- Pattern Manager Modal REMOVED - Converted to Main View -->
 
-    <!-- Rename Modal -->
-    <div id="renameModal"
-        class="hidden fixed inset-0 bg-black/50 z-[70] flex items-center justify-center backdrop-blur-sm">
-        <div class="bg-white rounded-xl shadow-2xl w-96 p-6">
-            <h3 class="font-bold text-lg mb-4 text-stone-800">Rename Pattern</h3>
-            <input type="hidden" id="renameId">
-            <div class="space-y-3">
-                <div>
-                    <label class="text-xs font-bold text-stone-500 uppercase">Pattern Name</label>
-                    <input type="text" id="renameName" class="w-full border p-2 rounded text-sm font-bold">
-                </div>
-                <div>
-                    <label class="text-xs font-bold text-stone-500 uppercase">Description</label>
-                    <textarea id="renameDesc" class="w-full border p-2 rounded text-sm" rows="3"></textarea>
-                </div>
-                <div class="flex gap-2 justify-end pt-2">
-                    <button onclick="document.getElementById('renameModal').classList.add('hidden')"
-                        class="px-3 py-1.5 text-stone-500 text-sm font-bold hover:bg-stone-100 rounded">Cancel</button>
-                    <button onclick="executeRename()"
-                        class="px-3 py-1.5 bg-indigo-600 text-white text-sm font-bold hover:bg-indigo-700 rounded shadow">Save</button>
-                </div>
-            </div>
-        </div>
-    </div>
+        function updatePattern() {
+            if (!loadedPatternId) return;
+            const pIndex = patterns.findIndex(p => p.id === loadedPatternId);
+            if (pIndex === -1) return;
 
-    <script>
-        // ... (Existing Script) ...
-
-        // --- VIEW SWITCHING LOGIC ---
-        let currentView = 'table'; // table | groups
-
-        async function togglePatternView(forceView) {
-            const target = forceView || (currentView === 'table' ? 'groups' : 'table');
-            const btnTxt = document.getElementById('txtToggleView');
-            const dataView = document.getElementById('tableView');
-            const groupsView = document.getElementById('groupsView');
-            const filterPanel = document.getElementById('filterPanel');
-
-            if (target === 'groups') {
-                await fetchPatterns();
-                renderGroupGrid();
-                dataView.classList.add('hidden');
-                groupsView.classList.remove('hidden');
-                filterPanel.classList.add('opacity-50', 'pointer-events-none'); // Disable filters in group view
-                btnTxt.innerText = "Back to Data";
-                currentView = 'groups';
-            } else {
-                dataView.classList.remove('hidden');
-                groupsView.classList.add('hidden');
-                filterPanel.classList.remove('opacity-50', 'pointer-events-none');
-                btnTxt.innerText = "All Patterns";
-                currentView = 'table';
+            if (confirm(`Update pattern "${patterns[pIndex].name}" with current filters?`)) {
+                patterns[pIndex].filters = JSON.parse(JSON.stringify(filters));
+                patterns[pIndex].count = getFilteredData().length;
+                renderModules();
+                saveToLocal();
+                alert("Pattern updated successfully!");
             }
         }
 
-        // Initialize based on ID
-        if (!TARGET_PATTERN_ID && MODE !== 'create') {
-            // If no ID, show groups by default
-            setTimeout(() => togglePatternView('groups'), 100);
-        } else {
-            document.getElementById('tableView').classList.remove('hidden');
-        }
-
-        function renderGroupGrid() {
-            const grid = document.getElementById('patternGrid');
+        function renderModules() {
+            const container = document.getElementById('patternList');
             if (patterns.length === 0) {
-                grid.innerHTML = '<div class="col-span-full text-center text-stone-400 italic py-10">No patterns created yet.</div>';
+                container.innerHTML = '<span class="text-xs text-gray-400 italic py-1">No patterns created yet.</span>';
                 return;
             }
-            grid.innerHTML = patterns.map(p => `
-                <div onclick="selectPattern('${p.id}')" class="bg-white p-6 rounded-xl shadow-sm border border-stone-200 cursor-pointer hover:border-indigo-500 hover:shadow-lg hover:-translate-y-1 transition-all group relative">
-                    <div class="flex justify-between items-start mb-3">
-                        <div class="font-ink font-bold text-stone-800 text-xl group-hover:text-indigo-600">${p.name}</div>
-                         <div class="flex flex-col items-end gap-1">
-                            <span class="text-[10px] font-mono bg-stone-100 px-2 py-0.5 rounded text-stone-500">
-                            ${new Date(p.created_at).toLocaleDateString()}
-                            </span>
-                            <span class="text-[10px] font-bold uppercase text-indigo-400">#${p.id}</span>
-                        </div>
-                    </div>
-                    
-                    <div class="flex items-center gap-2 mb-3">
-                        <span class="px-2 py-1 rounded bg-amber-50 text-amber-700 text-xs font-bold border border-amber-100">${p.school_name}</span>
-                    </div>
 
-                    <div class="bg-stone-50 p-3 rounded-lg border border-stone-100 mb-4 h-20 overflow-hidden relative">
-                         <div class="text-xs text-stone-400 uppercase font-bold mb-1">Description</div>
-                        <div class="text-xs text-stone-600 italic leading-relaxed line-clamp-3">${p.description || "No description provided."}</div>
-                        <div class="absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-stone-50 to-transparent"></div>
-                    </div>
-                    
-                    <div class="flex justify-between items-center pt-2 border-t border-stone-100 mt-auto">
-                         <span class="text-xs font-bold text-stone-400 uppercase tracking-widest group-hover:text-indigo-500 transition-colors">Open Group &rarr;</span>
-                         ${p.consumption ? `<span class="text-xs font-bold text-stone-500 bg-stone-100 px-2 py-1 rounded">${p.consumption}m / unit</span>` : ''}
-                    </div>
+            container.innerHTML = patterns.map(p => `
+                <div class="flex items-center gap-2 bg-white border border-gray-200 rounded-md px-3 py-1 text-sm shadow-sm group">
+                    <button onclick="loadPattern(${p.id})" class="text-blue-600 font-bold hover:underline" title="Load Filters">${p.name}</button>
+                    <span class="text-xs text-gray-400 font-mono">(${p.count})</span>
+                    <button onclick="openExportForPattern(${p.id})" class="text-gray-400 hover:text-green-600 ml-1" title="Export Pattern">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    </button>
+                    <button onclick="deletePattern(${p.id})" class="text-gray-300 hover:text-red-500 ml-1 opacity-0 group-hover:opacity-100 transition-opacity">×</button>
                 </div>
             `).join('');
         }
 
-        async function openPatternManager() { togglePatternView('groups'); } // Alias for safety
-
-        function selectPattern(id) {
-            // Update URL logic to avoid full reload? 
-            // Better to reload to ensure Clean State for Table View or just re-init?
-            // User requested "window", so reload is cleaner for "Entering" a pattern.
-            window.location.href = `pattern_view.html?id=${id}`;
-        }
-
-        // --- RENAME LOGIC ---
-        function openRenameModal() {
-            const id = document.getElementById('f-pattern').value;
-            if (!id || id === 'all') return;
-            const p = patterns.find(pat => pat.id == id);
+        function loadPattern(id) {
+            const p = patterns.find(x => x.id === id);
             if (!p) return;
 
-            document.getElementById('renameId').value = id;
-            document.getElementById('renameName').value = p.name;
-            document.getElementById('renameDesc').value = p.description || "";
-            document.getElementById('renameModal').classList.remove('hidden');
+            filters = JSON.parse(JSON.stringify(p.filters));
+
+            // Restore Inputs
+            document.getElementById('searchInput').value = filters.search;
+            document.getElementById('filterClass').value = filters.class;
+            document.getElementById('filterSection').value = filters.section;
+            document.getElementById('filterHouse').value = filters.house;
+            document.getElementById('filterGender').value = filters.gender;
+
+            // Restore Item Filters & Datalists
+            document.getElementById('filterItem').value = filters.item;
+
+            // Re-trigger item filter rendering to show dyanmic controls
+            handleItemFilter();
+
+            // Now restore the dynamic component values
+            const container = document.getElementById('dynamicFilters');
+            if (filters.components) {
+                Array.from(container.children).forEach(wrapper => {
+                    const input = wrapper.querySelector('input');
+                    if (input && filters.components[input.placeholder]) {
+                        input.value = filters.components[input.placeholder];
+                    }
+                });
+            }
+
+            renderTable();
+            updateCount();
+            alert(`Loaded pattern: ${p.name}`);
+
+            // Enter "Update Mode"
+            loadedPatternId = p.id;
+            document.getElementById('btnCreatePattern').classList.add('hidden');
+            document.getElementById('btnUpdatePattern').classList.remove('hidden');
         }
 
-        async function executeRename() {
-            const id = document.getElementById('renameId').value;
-            const name = document.getElementById('renameName').value;
-            const desc = document.getElementById('renameDesc').value;
+        function resetView() {
+            // Clear Filters
+            document.getElementById('searchInput').value = '';
+            document.getElementById('filterClass').value = '';
+            document.getElementById('filterSection').value = '';
+            document.getElementById('filterHouse').value = '';
+            document.getElementById('filterGender').value = '';
+            document.getElementById('filterItem').value = '';
 
-            try {
-                const res = await fetch(`${API_BASE}/data/patterns/${id}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                    body: JSON.stringify({ name, description: desc })
-                });
+            // Clear internal state
+            filters = { search: '', class: '', section: '', house: '', gender: '', item: '', components: {} };
 
-                if (!res.ok) throw new Error("Update failed");
-                alert("Pattern Updated!");
-                location.reload();
-            } catch (e) {
-                alert(e.message);
+            // Re-render
+            handleItemFilter(); // Clears dynamic
+            // handleFilter() called internally? no, manual reset
+            renderTable();
+            updateCount();
+
+            // Reset Mode
+            loadedPatternId = null;
+            document.getElementById('btnCreatePattern').classList.remove('hidden');
+            document.getElementById('btnUpdatePattern').classList.add('hidden');
+        }
+
+        function deletePattern(id) {
+            if (confirm("Remove this pattern group?")) {
+                patterns = patterns.filter(p => p.id !== id);
+                renderModules();
+                saveToLocal(); // Update storage
             }
         }
+
+        // --- EXPORT LOGIC ---
+
+        let currentExportPatternId = null;
+
+        function openExportForPattern(id) {
+            currentExportPatternId = id;
+            const p = patterns.find(x => x.id === id);
+
+            document.getElementById('metaPattern').value = p.name;
+            document.getElementById('exportFilters').textContent = p.name; // Simplified filter text
+
+            // Must Ensure Data is Correct (Reload Filters quietly)
+            // Ideally we should cache the data keys, but reloading filters is safest for "what will be exported"
+            loadPattern(id);
+
+            document.getElementById('exportModal').classList.remove('hidden');
+            updateExportTotal();
+        }
+
+        function closeExportModal() {
+            document.getElementById('exportModal').classList.add('hidden');
+        }
+
+        function updateExportTotal() {
+            const consumption = parseFloat(document.getElementById('metaConsumption').value) || 0;
+            const filtered = getFilteredData();
+            // Count "Active" Students: For simplistic grouping, every row is a student.
+            const total = (filtered.length * consumption).toFixed(2);
+            document.getElementById('exportTotalCloth').textContent = `${total} M`;
+        }
+
+        async function confirmExportPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ orientation: 'landscape' });
+
+            // Metadata Block
+            const school = document.getElementById('metaSchool').value;
+            const code = document.getElementById('metaPattern').value;
+            const desc = document.getElementById('metaDesc').value;
+            const cloth = document.getElementById('metaClothDetails').value;
+            const req = document.getElementById('metaSpecialReq').value;
+            const totalCloth = document.getElementById('exportTotalCloth').textContent;
+
+            let y = 15;
+            doc.setFontSize(14); doc.text(`Pattern Group: ${code}`, 14, y); y += 8;
+            doc.setFontSize(10);
+            if (school) { doc.text(`School: ${school}`, 14, y); y += 6; }
+            if (desc) { doc.text(`Desc: ${desc}`, 14, y); y += 6; }
+            if (cloth) { doc.text(`Cloth: ${cloth}`, 14, y); y += 6; }
+            if (req) { doc.text(`Special: ${req}`, 14, y); y += 6; }
+            doc.text(`Total Qty: ${getFilteredData().length} Students | Total Cloth: ${totalCloth}`, 14, y); y += 10;
+
+            // Determine Cols
+            const activeItemName = filters.item;
+            const itemHeaders = activeItemName ? [activeItemName, "Qty"] : [];
+
+            const rows = getFilteredData().map(r => {
+                const base = [r['Roll No'], r['Student Name'], r['Class'], r['Section'], ...measureCols.map(m => r[m])];
+                if (activeItemName) {
+                    const item = allItems.find(i => i.name === activeItemName);
+                    if (item) {
+                        base.push(calculateItemValue(r, item));
+                        base.push(r[`Qty_${item.name}`] || "");
+                    }
+                }
+                return base;
+            });
+
+            doc.autoTable({
+                head: [['Roll', 'Name', 'Class', 'Sec', ...measureCols, ...itemHeaders]],
+                body: rows,
+                startY: y,
+                styles: { fontSize: 8, cellPadding: 2 }
+            });
+            doc.save(`Pattern_${code}.pdf`);
+            closeExportModal();
+        }
+
+        function confirmExport() {
+            const wb = XLSX.utils.book_new();
+            const filtered = getFilteredData();
+
+            const school = document.getElementById('metaSchool').value;
+            const code = document.getElementById('metaPattern').value;
+            const desc = document.getElementById('metaDesc').value;
+            const cloth = document.getElementById('metaClothDetails').value;
+            const req = document.getElementById('metaSpecialReq').value;
+            const totalCloth = document.getElementById('exportTotalCloth').textContent;
+
+
+
+            const activeItemName = filters.item;
+            const itemHeaders = activeItemName ? [activeItemName, "Quantity"] : [];
+
+            const wsData = [
+                ["PATTERN GROUP EXPORT"],
+                ["Pattern Code", code],
+                ["School Name", school],
+                ["Description", desc],
+                ["Cloth Details", cloth],
+                ["Special Requirements", req],
+                ["Total Cloth Needed", totalCloth],
+                ["Total Students", filtered.length],
+                [],
+                ["Roll No", "Student Name", "Class", "Section", "Gender", ...measureCols, ...itemHeaders]
+            ];
+
+            filtered.forEach(r => {
+                const rowArr = [
+                    r['Roll No'], r['Student Name'], r['Class'], r['Section'], r['Gender'],
+                    ...measureCols.map(m => r[m])
+                ];
+                if (activeItemName) {
+                    const item = allItems.find(i => i.name === activeItemName);
+                    if (item) {
+                        rowArr.push(calculateItemValue(r, item));
+                        rowArr.push(r[`Qty_${item.name}`] || "");
+                    }
+                }
+                wsData.push(rowArr);
+            });
+
+            const ws = XLSX.utils.aoa_to_sheet(wsData);
+            XLSX.utils.book_append_sheet(wb, ws, "Pattern");
+            XLSX.writeFile(wb, `Pattern_${code}.xlsx`);
+            closeExportModal();
+        }
+
     </script>
 </body>
 

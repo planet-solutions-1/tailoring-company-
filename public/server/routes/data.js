@@ -677,21 +677,38 @@ router.get('/patterns/:schoolId', authenticateToken, (req, res) => {
     });
 });
 
-// POST /api/data/patterns
 router.post('/patterns', authenticateToken, (req, res) => {
-    const { school_id, name, description, consumption, cloth_details, special_req, quantities } = req.body;
+    const { school_id, name, description, consumption, cloth_details, special_req, quantities, student_ids } = req.body;
 
     // Validate quantities (Optional)
     let qtyJson = null;
     try { qtyJson = JSON.stringify(quantities || {}); } catch (e) { }
 
-    db.run("INSERT INTO patterns (school_id, name, description, consumption, cloth_details, special_req, quantities) VALUES (?, ?, ?, ?, ?, ?, ?)",
-        [school_id, name, description, consumption, cloth_details, special_req, qtyJson],
-        function (err) {
-            if (err) return res.status(500).json({ error: err.message });
-            res.json({ id: this.lastID, message: "Pattern Created With Quantities" });
-        }
-    );
+    db.serialize(() => {
+        db.run("INSERT INTO patterns (school_id, name, description, consumption, cloth_details, special_req, quantities) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            [school_id, name, description, consumption, cloth_details, special_req, qtyJson],
+            function (err) {
+                if (err) return res.status(500).json({ error: err.message });
+                const patternId = this.lastID;
+
+                // Link Students if IDs provided
+                if (student_ids && Array.isArray(student_ids) && student_ids.length > 0) {
+                    const placeholders = student_ids.map(() => '?').join(',');
+                    const sqlLink = `UPDATE students SET pattern_id = ? WHERE id IN (${placeholders})`;
+                    const params = [patternId, ...student_ids];
+
+                    db.run(sqlLink, params, (errLink) => {
+                        if (errLink) console.error("Failed to link students to pattern", errLink);
+                        // We respond success even if link fails partially, or we could handle it.
+                        // Ideally transaction.
+                        res.json({ id: patternId, message: "Pattern Created & Students Linked" });
+                    });
+                } else {
+                    res.json({ id: patternId, message: "Pattern Created (No students linked)" });
+                }
+            }
+        );
+    });
 });
 
 

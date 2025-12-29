@@ -107,10 +107,11 @@ app.post('/api/sync', authenticateToken, async (req, res) => {
                             // Check if measurement exists
                             db.get("SELECT id FROM measurements WHERE student_id = ?", [studentId], (errM, rowM) => {
                                 if (!errM) {
+                                    const itemQty = s.item_quantities ? JSON.stringify(s.item_quantities) : null;
                                     if (rowM) {
-                                        db.run("UPDATE measurements SET data = ?, remarks = ?, updated_at = CURRENT_TIMESTAMP WHERE student_id = ?", [measData, remarks, studentId]);
+                                        db.run("UPDATE measurements SET data = ?, remarks = ?, item_quantities = ?, updated_at = CURRENT_TIMESTAMP WHERE student_id = ?", [measData, remarks, itemQty, studentId]);
                                     } else {
-                                        db.run("INSERT INTO measurements (student_id, data, remarks) VALUES (?, ?, ?)", [studentId, measData, remarks]);
+                                        db.run("INSERT INTO measurements (student_id, data, remarks, item_quantities) VALUES (?, ?, ?, ?)", [studentId, measData, remarks, itemQty]);
                                     }
                                 }
                             });
