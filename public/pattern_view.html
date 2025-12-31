@@ -1339,14 +1339,13 @@
                     p.consumption = parseFloat(totalCloth);
                     p.cloth_details = newCloth;
                     p.notes = newNotes;
-                    p.saved_item_summary = itemSummaryArray; // Update local summary
-                    // Update filters wrapped in notes? No, filters separate.
+                    p.saved_item_summary = itemSummaryArray;
 
-                    // We need to reload to be sure or just update local
                     loadFromCloud(); // Safest
                 } else {
-                    const err = await res.json();
-                    alert("Failed to save: " + err.error);
+                    const errText = await res.text();
+                    console.error("Save Failed:", res.status, errText);
+                    alert(`Failed to save (Server ${res.status}): ${errText}`);
                 }
             } catch (e) {
                 console.error(e);
