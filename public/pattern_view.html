@@ -1132,15 +1132,12 @@
                     alert("Pattern Deleted.");
                     loadFromCloud();
                 } else {
-                    const err = await res.json();
-                    alert("Failed to delete: " + err.error);
+                    const err = await res.text();
+                    alert(`Failed to delete (Server ${res.status}): ${err}`);
                 }
             } catch (e) {
                 console.error(e);
-                alert("Offline/Local Delete Only.");
-                patterns = patterns.filter(p => p.id !== id);
-                renderModules();
-                saveToLocal();
+                alert("Delete Failed: " + e.message);
             }
         }
 
