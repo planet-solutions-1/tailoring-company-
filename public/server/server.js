@@ -301,6 +301,12 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../login.html')); // Adjusted relative path to climb out of public/server
 });
 
+// Explicit Dashboard Routes (Fallback for Static Issues)
+app.get('/company_dashboard.html', (req, res) => res.sendFile(path.join(__dirname, '../company_dashboard.html')));
+app.get('/school_dashboard.html', (req, res) => res.sendFile(path.join(__dirname, '../school_dashboard.html')));
+app.get('/packing_dashboard.html', (req, res) => res.sendFile(path.join(__dirname, '../packing_dashboard.html')));
+
+
 // DEBUG ROUTE (Remove later)
 app.get('/debug-fs', (req, res) => {
     const rootDir = path.join(__dirname, '../');
