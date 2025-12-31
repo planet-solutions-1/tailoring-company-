@@ -776,7 +776,11 @@
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
 
-                if (!res.ok) throw new Error("Failed to fetch data");
+                if (res.status === 401 || res.status === 403) {
+                    throw new Error("Session Expired - Please Log In Again");
+                }
+
+                if (!res.ok) throw new Error("Failed to fetch data (Server " + res.status + ")");
 
                 const cloudData = await res.json();
                 console.log("Cloud Data:", cloudData);
@@ -819,11 +823,12 @@
                     populateFilters();
                     renderTable();
                     renderCards();
-                    alert(`Loaded ${data.length} students from Database.`);
+                    // Alert success logic - specific to user feedback preference
+                    // alert(`Loaded ${data.length} students from Cloud.`);
                 }
             } catch (e) {
                 console.error("Cloud Fetch Error:", e);
-                // alert("Failed to sync with cloud. Using local data.");
+                alert("Load Failed: " + e.message);
             }
         }
 
@@ -884,18 +889,21 @@
                     body: JSON.stringify({ students: payload })
                 });
 
+                if (res.status === 401 || res.status === 403) {
+                    throw new Error("Session Expired - Please Log In Again");
+                }
+
                 const result = await res.json();
                 if (res.ok) {
                     console.log("Sync Success:", result);
-                    // alert("Cloud Sync Complete!"); 
-                    // Optional: Toast notification
+                    alert("✅ Cloud Sync Complete!");
                 } else {
                     console.error("Sync Failed:", result);
-                    alert("Cloud Sync Failed: " + (result.error || "Unknown"));
+                    alert("Cloud Sync Failed: " + (result.error || "Unknown Error"));
                 }
             } catch (e) {
                 console.error("Sync Error:", e);
-                alert("Network Error during Sync");
+                alert("Sync Error: " + e.message);
             } finally {
                 if (btn) btn.innerText = "Save / Sync";
             }
