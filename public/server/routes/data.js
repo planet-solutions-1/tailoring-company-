@@ -817,19 +817,7 @@ router.put('/patterns/:id', authenticateToken, (req, res) => {
         });
     });
 });
-res.json({ message: "Pattern Updated & Students Relinked" });
-                            });
-                        } else {
-    res.json({ message: "Pattern Updated (All students unlinked)" });
-}
-                    });
-                } else {
-    res.json({ message: "Pattern Updated (Students unchanged)" });
-}
-            }
-        );
-    });
-});
+
 
 // DELETE /api/data/patterns/:id - Delete Pattern
 router.delete('/patterns/:id', authenticateToken, (req, res) => {
