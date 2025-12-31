@@ -680,9 +680,12 @@ router.get('/patterns/:schoolId', authenticateToken, (req, res) => {
 router.post('/patterns', authenticateToken, (req, res) => {
     const { school_id, name, description, consumption, cloth_details, special_req, quantities, student_ids } = req.body;
 
-    // Validate quantities (Optional)
-    let qtyJson = null;
-    try { qtyJson = JSON.stringify(quantities || {}); } catch (e) { }
+    // Ensure quantities is stringified if it's an object/array, passing raw string if already string
+    // Default to '[]' (empty array) instead of '{}' (object) to satisfy Array.isArray checks in frontend
+    let qtyJson = '[]';
+    if (quantities) {
+        qtyJson = (typeof quantities === 'object') ? JSON.stringify(quantities) : quantities;
+    }
 
     db.serialize(() => {
         db.run("INSERT INTO patterns (school_id, name, description, consumption, cloth_details, special_req, quantities) VALUES (?, ?, ?, ?, ?, ?, ?)",
