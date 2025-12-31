@@ -1226,9 +1226,13 @@
 
         // === STATUS TRACKER RENDERER ===
         function renderStatusTracker(status) {
-            const statusMap = { 'Pending': 0, 'Measurements': 1, 'Production': 2, 'Delivered': 3 };
-            let currentStep = statusMap[status] !== undefined ? statusMap[status] : 0;
-            if (status && status.toLowerCase().includes('measure')) currentStep = 1;
+            // Robust Matching
+            const s = (status || '').toLowerCase();
+            let currentStep = 0;
+            if (s.includes('deliver')) currentStep = 3;
+            else if (s.includes('product')) currentStep = 2;
+            else if (s.includes('measure')) currentStep = 1;
+            else currentStep = 0;
 
             const progressBar = document.getElementById('trackerProgressBar');
             const statusLabel = document.getElementById('trackerCurrentStatus');
