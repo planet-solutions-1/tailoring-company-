@@ -993,7 +993,7 @@
 
             try {
                 const token = sessionStorage.getItem('token');
-                if (!token) throw new Error("Offline");
+                if (!token) throw new Error("Offline - Please Log In");
 
                 const res = await fetch(`/api/data/patterns/${loadedPatternId}`, {
                     method: 'PUT',
@@ -1001,23 +1001,21 @@
                     body: JSON.stringify(payload)
                 });
 
+                if (res.status === 401 || res.status === 403) {
+                    throw new Error("Session Expired - Please Log In Again");
+                }
+
                 if (res.ok) {
                     alert("Pattern Updated Successfully!");
                     loadFromCloud(); // Reload to get fresh state
                     resetView(); // Exit update mode
                 } else {
-                    const err = await res.json();
-                    alert("Failed to update: " + err.error);
+                    const err = await res.text();
+                    alert(`Failed to update (Server ${res.status}): ${err}`);
                 }
             } catch (e) {
                 console.error(e);
-                alert("Offline Mode: Updating locally only.");
-                // Local Fallback
-                patterns[pIndex].filters = JSON.parse(JSON.stringify(filters));
-                patterns[pIndex].count = getFilteredData().length;
-                renderModules();
-                saveToLocal();
-                resetView();
+                alert("Update Failed: " + e.message);
             }
         }
 
