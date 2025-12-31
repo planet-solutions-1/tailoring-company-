@@ -41,44 +41,48 @@ if (process.env.RAILWAY_ENVIRONMENT || process.env.NODE_ENV === 'production') {
     }
 
     // Map common methods to match SQLite style (helper wrapper)
+    // Map common methods to match SQLite style (helper wrapper)
     db = {
         get: async (sql, params, callback) => {
             try {
                 if (!promisePool) return callback(new Error("Database not connected (No PromisePool)"));
-                const [rows] = await promisePool.execute(sql, params);
+                // Use .query instead of .execute to avoid "Malformed Packet" errors on Railway proxies
+                const [rows] = await promisePool.query(sql, params);
                 callback(null, rows ? rows[0] : null);
             } catch (e) { console.error("DB GET Error:", e.message); callback(e, null); }
         },
         all: async (sql, params, callback) => {
             try {
                 if (!promisePool) return callback(new Error("Database not connected (No PromisePool)"));
-                const [rows] = await promisePool.execute(sql, params);
+                const [rows] = await promisePool.query(sql, params);
                 callback(null, rows || []);
             } catch (e) { console.error("DB ALL Error:", e.message); callback(e, null); }
         },
         run: async (sql, params, callback) => {
             try {
                 if (!promisePool) return callback(new Error("Database not connected (No PromisePool)"));
-                const [result] = await promisePool.execute(sql, params);
+                const [result] = await promisePool.query(sql, params);
                 if (callback) callback.call({ lastID: result.insertId, changes: result.affectedRows }, null);
             } catch (e) { console.error("DB RUN Error:", e.message); if (callback) callback(e); }
         },
         logActivity: (userId, username, action, details) => {
             // FIRE AND FORGET - Don't crash
             if (promisePool) {
-                promisePool.execute("INSERT INTO activity_logs (user_id, username, action, details) VALUES (?, ?, ?, ?)", [userId, username, action, details])
+                promisePool.query("INSERT INTO activity_logs (user_id, username, action, details) VALUES (?, ?, ?, ?)", [userId, username, action, details])
                     .catch(e => console.error("Log failed", e.message));
             }
         },
-        // EXPOSE RAW EXECUTE FOR MANUAL MIGRATION
-        execute: async (sql) => {
+        // EXPOSE RAW QUERY (Preferred over execute for stability)
+        query: async (sql, params) => {
             if (!promisePool) throw new Error("Database not connected");
-            return await promisePool.execute(sql);
+            return await promisePool.query(sql, params);
+        },
+        // Keep execute for compatibility but map to query
+        execute: async (sql, params) => {
+            if (!promisePool) throw new Error("Database not connected");
+            return await promisePool.query(sql, params);
         },
         serialize: (callback) => {
-            // MySQL2 Pool is async/parallel by default. 
-            // 'serialize' is an SQLite concept for sequencing.
-            // For this app, simply executing the callback immediately is sufficient/compatible.
             if (callback) callback();
         }
     };
