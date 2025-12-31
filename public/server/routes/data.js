@@ -716,28 +716,35 @@ router.post('/patterns', authenticateToken, (req, res) => {
 
 
 // DELETE /api/data/patterns/:id - Delete Pattern & Revert Status
-router.delete('/patterns/:id', authenticateToken, requireRole('company'), (req, res) => {
+router.delete('/patterns/:id', authenticateToken, (req, res) => {
     const { id } = req.params;
-    db.serialize(() => {
-        // 1. Revert Order Status for linked students
-        // We need to find students with this pattern_id first, then update their orders.
-        // Or do a subquery update if supported.
-        // SQLite/MySQL syntax differs. Safer to do:
-        // UPDATE orders SET status = 'Pending' WHERE student_id IN (SELECT id FROM students WHERE pattern_id = ?)
 
-        const revertSql = "UPDATE orders SET status = 'Pending' WHERE student_id IN (SELECT id FROM students WHERE pattern_id = ?)";
+    // Check ownership before deleting
+    db.get("SELECT school_id FROM patterns WHERE id = ?", [id], (err, row) => {
+        if (err) return res.status(500).json({ error: err.message });
+        if (!row) return res.status(404).json({ error: "Pattern not found" });
 
-        db.run(revertSql, [id], (err0) => {
-            if (err0) console.error("Warn: Failed to revert order status", err0.message);
+        // Permission Check: Must be Company OR Owner School
+        if (req.user.role !== 'company' && row.school_id != req.user.schoolId) {
+            return res.status(403).json({ error: "Forbidden: Not your pattern" });
+        }
 
-            // 2. Unlink students
-            db.run("UPDATE students SET pattern_id = NULL WHERE pattern_id = ?", [id], (err) => {
-                if (err) return res.status(500).json({ error: "Failed to unlink students: " + err.message });
+        db.serialize(() => {
+            // 1. Revert Order Status for linked students
+            const revertSql = "UPDATE orders SET status = 'Pending' WHERE student_id IN (SELECT id FROM students WHERE pattern_id = ?)";
 
-                // 3. Delete Pattern
-                db.run("DELETE FROM patterns WHERE id = ?", [id], (err2) => {
-                    if (err2) return res.status(500).json({ error: "Failed to delete pattern: " + err2.message });
-                    res.json({ message: "Pattern Deleted, Students Unlinked, Status Reverted to Pending" });
+            db.run(revertSql, [id], (err0) => {
+                if (err0) console.error("Warn: Failed to revert order status", err0.message);
+
+                // 2. Unlink students
+                db.run("UPDATE students SET pattern_id = NULL WHERE pattern_id = ?", [id], (err) => {
+                    if (err) return res.status(500).json({ error: "Failed to unlink students: " + err.message });
+
+                    // 3. Delete Pattern
+                    db.run("DELETE FROM patterns WHERE id = ?", [id], (err2) => {
+                        if (err2) return res.status(500).json({ error: "Failed to delete pattern: " + err2.message });
+                        res.json({ message: "Pattern Deleted, Students Unlinked, Status Reverted to Pending" });
+                    });
                 });
             });
         });
