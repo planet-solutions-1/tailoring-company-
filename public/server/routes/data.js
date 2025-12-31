@@ -82,14 +82,27 @@ router.get('/schools', authenticateToken, requireRole('company'), (req, res) => 
 // PUT /api/data/schools/:id - Update School Metadata (Priority/Status)
 router.put('/schools/:id', authenticateToken, requireRole('company'), (req, res) => {
     const { id } = req.params;
-    const { priority, status } = req.body;
+    // Ensure undefined values become null for SQL binding
+    const priority = req.body.priority === undefined ? null : req.body.priority;
+    const status = req.body.status === undefined ? null : req.body.status;
 
     const sql = "UPDATE schools SET priority = COALESCE(?, priority), status = COALESCE(?, status) WHERE id = ?";
-    db.run(sql, [priority, status, id], function (err) {
-        if (err) return res.status(500).json({ error: err.message });
-        if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'UPDATE_SCHOOL', `Updated School #${id} Priority/Status`);
-        res.json({ message: "School Updated" });
-    });
+
+    // Use db.execute if available (MySQL), otherwise db.run (SQLite)
+    if (db.execute) {
+        db.execute(sql, [priority, status, id])
+            .then(() => {
+                if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'UPDATE_SCHOOL', `Updated School #${id} Priority/Status`);
+                res.json({ message: "School Updated" });
+            })
+            .catch(err => res.status(500).json({ error: err.message }));
+    } else {
+        db.run(sql, [priority, status, id], function (err) {
+            if (err) return res.status(500).json({ error: err.message });
+            if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'UPDATE_SCHOOL', `Updated School #${id} Priority/Status`);
+            res.json({ message: "School Updated" });
+        });
+    }
 });
 
 // POST /api/data/schools - Create new school

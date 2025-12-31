@@ -1357,10 +1357,17 @@
                         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                         body: JSON.stringify({ status: val })
                     });
+
                     if (r.ok) {
                         alert("✅ Status Updated Successfully!");
                     } else {
-                        alert("❌ Update Failed");
+                        const errText = await r.text();
+                        try {
+                            const errJson = JSON.parse(errText);
+                            alert("❌ Update Failed: " + (errJson.error || errText));
+                        } catch (e) {
+                            alert("❌ Update Failed: " + errText);
+                        }
                     }
                 } catch (e) { alert("Error: " + e.message); }
             }
