@@ -751,41 +751,46 @@ router.delete('/patterns/:id', authenticateToken, (req, res) => {
     });
 });
 
-// PUT /api/data/patterns/:id - Rename/Update Pattern
-router.put('/patterns/:id', authenticateToken, requireRole('company'), (req, res) => {
-    const { id } = req.params;
-    const { name, description } = req.body;
-
-    db.run("UPDATE patterns SET name = ?, description = ? WHERE id = ?", [name, description, id], function (err) {
-        if (err) return res.status(500).json({ error: err.message });
-        if (this.changes === 0) return res.status(404).json({ error: "Pattern not found" });
-        res.json({ message: "Pattern Updated" });
-    });
-});
-
 // PUT /api/data/patterns/:id - Update Pattern & Relink Students
 router.put('/patterns/:id', authenticateToken, (req, res) => {
-    console.log(`[PUT] Update Pattern ${req.params.id}`, req.body);
+    // console.log(`[PUT] Update Pattern ${req.params.id}`, req.body);
     const patternId = req.params.id;
     const { name, description, consumption, cloth_details, special_req, quantities, student_ids } = req.body;
-    // Ensure quantities is stringified if it's an object/array, passing raw string if already string
-    const qtyJson = (typeof quantities === 'object') ? JSON.stringify(quantities) : quantities;
 
-    db.serialize(() => {
-        // 1. Update Pattern Fields
-        db.run(
-            "UPDATE patterns SET name=?, description=?, consumption=?, cloth_details=?, special_req=?, quantities=? WHERE id=?",
-            [name, description, consumption, cloth_details, special_req, qtyJson, patternId],
-            function (err) {
-                if (err) {
-                    console.error("Pattern Update Error:", err);
-                    return res.status(500).json({ error: err.message });
+    // 1. Check Ownership First
+    db.get("SELECT school_id FROM patterns WHERE id = ?", [patternId], (err, row) => {
+        if (err) return res.status(500).json({ error: err.message });
+        if (!row) return res.status(404).json({ error: "Pattern not found" });
+
+        // Permission: Company or Owner School
+        if (req.user.role !== 'company' && row.school_id != req.user.schoolId) {
+            return res.status(403).json({ error: "Forbidden: Not your pattern" });
+        }
+
+        // Ensure quantities is stringified if it's an object/array, passing raw string if already string
+        const qtyJson = (typeof quantities === 'object') ? JSON.stringify(quantities) : (quantities || '[]');
+
+        db.serialize(() => {
+            // 2. Update Pattern Fields
+            // Handling partial updates if needed, but for now we assume full payload or at least name/desc
+            const sql = "UPDATE patterns SET name=?, description=?, consumption=?, cloth_details=?, special_req=?, quantities=? WHERE id=?";
+            const params = [
+                name || row.name, // Fallback to existing if undefined
+                description || row.description,
+                consumption !== undefined ? consumption : row.consumption,
+                cloth_details !== undefined ? cloth_details : row.cloth_details,
+                special_req !== undefined ? special_req : row.special_req,
+                qtyJson,
+                patternId
+            ];
+
+            db.run(sql, params, function (errUpd) {
+                if (errUpd) {
+                    console.error("Pattern Update Error:", errUpd);
+                    return res.status(500).json({ error: errUpd.message });
                 }
-                // Note: this.changes might be 0 if values are same, so we don't strictly check for 404 here on success.
 
-                // 2. Relink Students (if student_ids provided)
-                // If student_ids is sent, we Assume it's the COMPLETE list. 
-                // So we Unlink Old -> Link New.
+                // 3. Relink Students (Only if student_ids provided)
                 if (student_ids && Array.isArray(student_ids)) {
                     // A. Unlink all students currently linked to this pattern
                     db.run("UPDATE students SET pattern_id = NULL WHERE pattern_id = ?", [patternId], (errUnlink) => {
@@ -795,18 +800,32 @@ router.put('/patterns/:id', authenticateToken, (req, res) => {
                         if (student_ids.length > 0) {
                             const placeholders = student_ids.map(() => '?').join(',');
                             const sqlLink = `UPDATE students SET pattern_id = ? WHERE id IN (${placeholders})`;
-                            const params = [patternId, ...student_ids];
-                            db.run(sqlLink, params, (errLink) => {
+                            const linkParams = [patternId, ...student_ids];
+                            db.run(sqlLink, linkParams, (errLink) => {
                                 if (errLink) return res.status(500).json({ error: "Failed to relink students" });
                                 res.json({ message: "Pattern Updated & Students Relinked" });
                             });
                         } else {
-                            res.json({ message: "Pattern Updated (All students unlinked)" });
+                            res.json({ message: "Pattern Updated (No students linked)" });
                         }
                     });
                 } else {
-                    res.json({ message: "Pattern Updated (Students unchanged)" });
+                    res.json({ message: "Pattern Updated" });
                 }
+            }
+            );
+        });
+    });
+});
+res.json({ message: "Pattern Updated & Students Relinked" });
+                            });
+                        } else {
+    res.json({ message: "Pattern Updated (All students unlinked)" });
+}
+                    });
+                } else {
+    res.json({ message: "Pattern Updated (Students unchanged)" });
+}
             }
         );
     });
