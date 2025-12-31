@@ -1090,8 +1090,8 @@
         // === INIT ===
         async function fetchSchoolDetails() {
             try {
-                // Attempt to fetch school details using the ID
-                const res = await fetch(`/api/schools/${schoolId}`, {
+                // Attempt to fetch school details using the ID with cache busting
+                const res = await fetch(`/api/schools/${schoolId}?t=${Date.now()}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
 

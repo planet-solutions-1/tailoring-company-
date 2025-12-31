@@ -54,6 +54,8 @@ app.get('/uploads/:filename', (req, res) => {
 
 // 1. School Details (SQL Version - Fixes 404)
 app.get('/api/schools/:id', (req, res) => {
+    // Prevent Caching of Status/Priority
+    res.set('Cache-Control', 'no-store');
     db.get("SELECT id, name, username, priority, status FROM schools WHERE id = ?", [req.params.id], (err, row) => {
         if (err) return res.status(500).json({ error: err.message });
         if (row) res.json(row);
