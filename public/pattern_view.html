@@ -465,15 +465,20 @@
                 if (resP.ok) {
                     const cloudPatterns = await resP.json();
                     // Map DB Patterns to Local Format
-                    patterns = cloudPatterns.map(cp => ({
-                        id: cp.id,
-                        name: cp.name,
-                        filters: {}, // We might need to store filters in DB if we want to restore them exactly! 
-                        // Currently DB pattern schema has name, consumption, etc. but NOT the strict filter set.
-                        // We can maybe store filters in `special_req` or add a column.
-                        // For now, these are "Saved Output" patterns.
-                        count: 0 // We'd calculate this or store it
-                    }));
+                    patterns = cloudPatterns.map(cp => {
+                        let parsedFilters = {};
+                        try { parsedFilters = JSON.parse(cp.special_req || '{}'); } catch (e) { }
+
+                        let parsedQty = [];
+                        try { parsedQty = JSON.parse(cp.quantities || '[]'); } catch (e) { }
+
+                        return {
+                            id: cp.id,
+                            name: cp.name,
+                            filters: parsedFilters,
+                            count: Array.isArray(parsedQty) ? parsedQty.length : 0
+                        };
+                    });
                     renderModules();
                 }
 
@@ -891,17 +896,76 @@
         // Standard: keep filters, but user might want to reset.
 
 
-        function updatePattern() {
+        async function updatePattern() {
             if (!loadedPatternId) return;
             const pIndex = patterns.findIndex(p => p.id === loadedPatternId);
             if (pIndex === -1) return;
 
-            if (confirm(`Update pattern "${patterns[pIndex].name}" with current filters?`)) {
+            const name = patterns[pIndex].name; // Keep existing name or ask? 
+            // For now, assume name doesn't change on update, only content. 
+            // If name change is needed, we need a prompt or input.
+            // Let's stick to content update for now.
+
+            if (!confirm(`Update pattern "${name}" with current filters and calculated quantities?`)) return;
+
+            // --- Payload Construction (Duplicated from savePattern for safety) ---
+            const currentData = getFilteredData();
+            let totalConsumption = 0;
+            const studentIds = [];
+            const studentQuantities = currentData.map(student => {
+                if (student.id) studentIds.push(student.id);
+                const qties = {};
+                Object.keys(student).forEach(k => {
+                    if (k.startsWith("Qty_")) {
+                        qties[k] = parseFloat(student[k]) || 0;
+                        totalConsumption += qties[k];
+                    }
+                });
+                return {
+                    admission_no: student['Admission No'],
+                    name: student['Student Name'],
+                    quantities: qties
+                };
+            });
+
+            const payload = {
+                school_id: sessionStorage.getItem('schoolId'),
+                name: name,
+                description: `Updated Pattern Group (${currentData.length} students)`,
+                consumption: parseFloat(totalConsumption.toFixed(2)),
+                cloth_details: "N/A",
+                special_req: JSON.stringify(filters),
+                quantities: studentQuantities,
+                student_ids: studentIds
+            };
+
+            try {
+                const token = sessionStorage.getItem('token');
+                if (!token) throw new Error("Offline");
+
+                const res = await fetch(`/api/data/patterns/${loadedPatternId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    alert("Pattern Updated Successfully!");
+                    loadFromCloud(); // Reload to get fresh state
+                    resetView(); // Exit update mode
+                } else {
+                    const err = await res.json();
+                    alert("Failed to update: " + err.error);
+                }
+            } catch (e) {
+                console.error(e);
+                alert("Offline Mode: Updating locally only.");
+                // Local Fallback
                 patterns[pIndex].filters = JSON.parse(JSON.stringify(filters));
                 patterns[pIndex].count = getFilteredData().length;
                 renderModules();
                 saveToLocal();
-                alert("Pattern updated successfully!");
+                resetView();
             }
         }
 
@@ -988,11 +1052,31 @@
             document.getElementById('btnUpdatePattern').classList.add('hidden');
         }
 
-        function deletePattern(id) {
-            if (confirm("Remove this pattern group?")) {
+        async function deletePattern(id) {
+            if (!confirm("Are you sure you want to permanently delete this pattern group?")) return;
+
+            try {
+                const token = sessionStorage.getItem('token');
+                if (!token) throw new Error("Offline");
+
+                const res = await fetch(`/api/data/patterns/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (res.ok) {
+                    alert("Pattern Deleted.");
+                    loadFromCloud();
+                } else {
+                    const err = await res.json();
+                    alert("Failed to delete: " + err.error);
+                }
+            } catch (e) {
+                console.error(e);
+                alert("Offline/Local Delete Only.");
                 patterns = patterns.filter(p => p.id !== id);
                 renderModules();
-                saveToLocal(); // Update storage
+                saveToLocal();
             }
         }
 

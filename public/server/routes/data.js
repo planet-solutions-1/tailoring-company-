@@ -753,6 +753,68 @@ router.put('/patterns/:id', authenticateToken, requireRole('company'), (req, res
     });
 });
 
+// PUT /api/data/patterns/:id - Update Pattern & Relink Students
+router.put('/patterns/:id', authenticateToken, (req, res) => {
+    const patternId = req.params.id;
+    const { name, description, consumption, cloth_details, special_req, quantities, student_ids } = req.body;
+    // Ensure quantities is stringified if it's an object/array, passing raw string if already string
+    const qtyJson = (typeof quantities === 'object') ? JSON.stringify(quantities) : quantities;
+
+    db.serialize(() => {
+        // 1. Update Pattern Fields
+        db.run(
+            "UPDATE patterns SET name=?, description=?, consumption=?, cloth_details=?, special_req=?, quantities=? WHERE id=?",
+            [name, description, consumption, cloth_details, special_req, qtyJson, patternId],
+            function (err) {
+                if (err) return res.status(500).json({ error: err.message });
+                // Note: this.changes might be 0 if values are same, so we don't strictly check for 404 here on success.
+
+                // 2. Relink Students (if student_ids provided)
+                // If student_ids is sent, we Assume it's the COMPLETE list. 
+                // So we Unlink Old -> Link New.
+                if (student_ids && Array.isArray(student_ids)) {
+                    // A. Unlink all students currently linked to this pattern
+                    db.run("UPDATE students SET pattern_id = NULL WHERE pattern_id = ?", [patternId], (errUnlink) => {
+                        if (errUnlink) console.error("Unlink error", errUnlink);
+
+                        // B. Link new list (if any)
+                        if (student_ids.length > 0) {
+                            const placeholders = student_ids.map(() => '?').join(',');
+                            const sqlLink = `UPDATE students SET pattern_id = ? WHERE id IN (${placeholders})`;
+                            const params = [patternId, ...student_ids];
+                            db.run(sqlLink, params, (errLink) => {
+                                if (errLink) return res.status(500).json({ error: "Failed to relink students" });
+                                res.json({ message: "Pattern Updated & Students Relinked" });
+                            });
+                        } else {
+                            res.json({ message: "Pattern Updated (All students unlinked)" });
+                        }
+                    });
+                } else {
+                    res.json({ message: "Pattern Updated (Students unchanged)" });
+                }
+            }
+        );
+    });
+});
+
+// DELETE /api/data/patterns/:id - Delete Pattern
+router.delete('/patterns/:id', authenticateToken, (req, res) => {
+    const patternId = req.params.id;
+    db.serialize(() => {
+        // 1. Unlink Students
+        db.run("UPDATE students SET pattern_id = NULL WHERE pattern_id = ?", [patternId], (errUnlink) => {
+            if (errUnlink) console.error("Unlink on delete error", errUnlink);
+
+            // 2. Delete Pattern
+            db.run("DELETE FROM patterns WHERE id = ?", [patternId], function (err) {
+                if (err) return res.status(500).json({ error: err.message });
+                res.json({ message: "Pattern Deleted" });
+            });
+        });
+    });
+});
+
 // POST /api/data/reset_tables - Clear Pattern/Measurement Data (Admin)
 router.post('/reset_tables', authenticateToken, requireRole('company'), (req, res) => {
     db.serialize ? db.serialize(runReset) : runReset();
