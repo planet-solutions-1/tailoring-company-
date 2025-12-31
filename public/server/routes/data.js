@@ -418,7 +418,9 @@ router.get('/all_students', authenticateToken, requireRole('company'), (req, res
             o.status as order_status, 
             o.is_packed, 
             o.priority as order_priority,
+            o.priority as order_priority,
             m.data as measurements,
+            m.item_quantities,
             p.name as pattern_name,
             p.consumption as pattern_consumption,
             p.quantities as pattern_quantities
@@ -439,6 +441,9 @@ router.get('/all_students', authenticateToken, requireRole('company'), (req, res
             }
             if (r.pattern_quantities) {
                 try { r.pattern_quantities = JSON.parse(r.pattern_quantities); } catch (e) { }
+            }
+            if (r.item_quantities) {
+                try { r.item_quantities = JSON.parse(r.item_quantities); } catch (e) { }
             }
             return r;
         });

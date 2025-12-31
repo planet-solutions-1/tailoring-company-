@@ -302,7 +302,13 @@
             <div>
                 <h2 class="font-brand text-2xl md:text-3xl font-extrabold text-slate-700 tracking-tight" id="pageTitle">
                     Overview</h2>
-                <p class="text-slate-400 text-sm font-medium mt-1 ml-1 hide-on-mobile">Welcome back, Admin 👋</p>
+                <div class="flex items-center gap-3">
+                    <span id="schoolStatusBadge"
+                        class="hidden px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-slate-100 text-slate-500">
+                        --
+                    </span>
+                    <p class="text-slate-400 text-sm font-medium mt-1 ml-1 hide-on-mobile">Welcome back, Admin 👋</p>
+                </div>
             </div>
         </header>
 
@@ -1098,6 +1104,23 @@
                         if (el) el.innerText = schoolData.name;
                         const setsEl = document.getElementById('settingsSchoolName');
                         if (setsEl) setsEl.innerText = schoolData.name;
+
+                        // UPDATE STATUS
+                        const statusEl = document.getElementById('schoolStatusBadge');
+                        if (statusEl && schoolData.status) {
+                            statusEl.innerText = schoolData.status;
+                            statusEl.classList.remove('hidden');
+
+                            // Remove old colors
+                            statusEl.className = "px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-sm transition-all ";
+
+                            const s = schoolData.status.toLowerCase();
+                            if (s.includes('measure')) statusEl.classList.add('bg-indigo-100', 'text-indigo-600', 'border', 'border-indigo-200');
+                            else if (s.includes('product')) statusEl.classList.add('bg-amber-100', 'text-amber-700', 'border', 'border-amber-200');
+                            else if (s.includes('deliver')) statusEl.classList.add('bg-emerald-100', 'text-emerald-700', 'border', 'border-emerald-200');
+                            else statusEl.classList.add('bg-slate-100', 'text-slate-500');
+                        }
+
                         return;
                     }
                 }

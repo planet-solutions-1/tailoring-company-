@@ -462,17 +462,64 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div class="clay-card p-6">
-                    <h3 class="text-lg font-bold text-gray-600 mb-6 flex items-center gap-2"><span
-                            class="w-2 h-2 rounded-full bg-blue-400"></span> Packing Progress</h3>
-                    <div class="flex-1 relative h-64"><canvas id="chart-packing"></canvas></div>
+            <!-- Smart Insights Row (New) -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+                <!-- 1. Performance Leaderboard -->
+                <div class="clay-card p-6 flex flex-col lg:col-span-1 h-[450px]">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-bold text-gray-700 flex items-center gap-2">
+                            <span class="p-2 rounded-lg bg-yellow-100 text-yellow-600">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                                </svg>
+                            </span>
+                            Leaderboard
+                        </h3>
+                        <span class="text-[10px] font-bold uppercase text-gray-400 tracking-wider">Top Efficiency</span>
+                    </div>
+
+                    <div class="overflow-y-auto pr-2 custom-scrollbar flex-1 space-y-4" id="leaderboard-list">
+                        <!-- Injected via JS -->
+                        <div class="animate-pulse flex space-x-4">
+                            <div class="rounded-full bg-gray-200 h-10 w-10"></div>
+                            <div class="flex-1 space-y-2 py-1">
+                                <div class="h-2 bg-gray-200 rounded"></div>
+                                <div class="space-y-3">
+                                    <div class="grid grid-cols-3 gap-4">
+                                        <div class="h-2 bg-gray-200 rounded col-span-2"></div>
+                                        <div class="h-2 bg-gray-200 rounded col-span-1"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="clay-card p-6">
-                    <h3 class="text-lg font-bold text-gray-600 mb-6 flex items-center gap-2"><span
-                            class="w-2 h-2 rounded-full bg-purple-400"></span> School Enrollment</h3>
-                    <div class="flex-1 relative h-64"><canvas id="chart-schools"></canvas></div>
+
+                <!-- 2. Live Activity Feed -->
+                <div class="clay-card p-6 flex flex-col lg:col-span-2 h-[450px]">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-lg font-bold text-gray-700 flex items-center gap-2">
+                            <span class="p-2 rounded-lg bg-blue-100 text-blue-600">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </span>
+                            Live Activity
+                        </h3>
+                        <span class="text-[10px] font-bold uppercase text-gray-400 tracking-wider">Real-time
+                            Updates</span>
+                    </div>
+
+                    <div class="overflow-y-auto pr-4 custom-scrollbar flex-1 relative" id="activity-feed">
+                        <!-- Timeline Line -->
+                        <div class="absolute left-6 top-4 bottom-4 w-0.5 bg-gray-100"></div>
+                        <!-- Injected Items -->
+                    </div>
                 </div>
+
             </div>
         </div>
 
@@ -580,6 +627,25 @@
                         class="clay-input w-full h-12 px-5 text-sm font-bold text-gray-700 bg-gray-50 focus:bg-white transition-all shadow-inner hover:shadow-md border border-gray-100 placeholder-gray-400 rounded-2xl focus:ring-2 focus:ring-blue-200 outline-none"
                         placeholder="All">
                     <datalist id="list-house"></datalist>
+                </div>
+
+                <!-- Filter: School (New) -->
+                <div class="col-span-2 md:col-span-2">
+                    <label
+                        class="text-xs font-bold text-gray-500 uppercase ml-2 mb-2 block tracking-wider">School</label>
+                    <div class="relative group">
+                        <select id="filter-school" onchange="renderGlobalTable()"
+                            class="clay-input w-full h-12 pl-5 pr-10 text-sm font-bold text-gray-700 bg-gray-50 focus:bg-white transition-all appearance-none cursor-pointer shadow-inner hover:shadow-md border border-gray-100 rounded-2xl focus:ring-2 focus:ring-blue-200 outline-none">
+                            <option value="all">All Schools</option>
+                        </select>
+                        <div
+                            class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-400 group-hover:text-blue-500 transition-colors">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Filter: Gender -->
@@ -831,6 +897,132 @@
             </div>
         </div>
 
+
+        <!-- 5.5 SCHOOL DETAILS VIEW -->
+        <div id="view-school-details" class="hidden fade-in max-w-7xl mx-auto space-y-6">
+            <!-- Header -->
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <button onclick="switchTab('schools')"
+                        class="text-xs font-bold text-gray-400 hover:text-blue-500 uppercase flex items-center gap-1 mb-2 group">
+                        <svg class="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none"
+                            stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7">
+                            </path>
+                        </svg>
+                        Back to Schools List
+                    </button>
+                    <h3 class="text-3xl font-extrabold text-gray-700" id="sd-school-name">-</h3>
+                    <p class="text-sm text-gray-400 font-bold uppercase tracking-wider" id="sd-school-meta">School Data
+                        Explorer</p>
+                </div>
+                <!-- Export for this school? -->
+                <div class="flex gap-2">
+                    <button onclick="downloadPDF()"
+                        class="clay-btn px-4 py-2 text-xs font-bold text-rose-500 uppercase flex items-center gap-2">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
+                        Export PDF
+                    </button>
+                    <button onclick="downloadExcel()"
+                        class="clay-btn px-4 py-2 text-xs font-bold text-emerald-500 uppercase flex items-center gap-2">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="16" y1="8" x2="8" y2="8"></line>
+                            <line x1="16" y1="16" x2="8" y2="16"></line>
+                            <line x1="10" y1="12" x2="3" y2="12"></line>
+                        </svg>
+                        Export Excel
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tabs -->
+            <div class="flex gap-4 border-b border-gray-200/50 pb-1 overflow-x-auto">
+                <button onclick="switchSchoolTab('students')" id="tab-sd-students"
+                    class="clay-btn text-sm text-gray-500 hover:text-gray-700">Students List</button>
+                <button onclick="switchSchoolTab('measurements')" id="tab-sd-measurements"
+                    class="clay-btn text-sm text-gray-500 hover:text-gray-700">Measurements Data</button>
+                <button onclick="switchSchoolTab('patterns')" id="tab-sd-patterns"
+                    class="clay-btn text-sm active bg-blue-50 text-blue-600 border-blue-100">Patterns &
+                    Consumption</button>
+            </div>
+
+            <!-- Tab Content: Students -->
+            <div id="sd-view-students" class="hidden fade-in">
+                <div class="clay-card p-6">
+                    <div class="overflow-x-auto h-[650px] custom-scrollbar">
+                        <table class="w-full text-sm text-left whitespace-nowrap">
+                            <thead
+                                class="sticky top-0 bg-white z-10 text-xs font-extrabold text-gray-400 uppercase tracking-wider shadow-sm">
+                                <tr>
+                                    <th class="p-4 border-b">Roll No</th>
+                                    <th class="p-4 border-b">Student Name</th>
+                                    <th class="p-4 border-b">Class / Section</th>
+                                    <th class="p-4 border-b">Gender</th>
+                                    <th class="p-4 border-b">Pattern Assigned</th>
+                                    <th class="p-4 border-b text-center">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sd-list-students" class="divide-y divide-gray-50"></tbody>
+                        </table>
+                    </div>
+                    <p class="text-right text-xs text-gray-400 mt-4 px-2" id="sd-count-students">0 records</p>
+                </div>
+            </div>
+
+            <!-- Tab Content: Measurements -->
+            <div id="sd-view-measurements" class="hidden fade-in">
+                <div class="clay-card p-6">
+                    <p
+                        class="text-xs text-sky-500 font-bold mb-4 uppercase tracking-wider bg-sky-50 inline-block px-3 py-1 rounded-lg">
+                        Showing All Measurement Data</p>
+                    <div class="overflow-x-auto h-[650px] custom-scrollbar">
+                        <table class="w-full text-sm text-left whitespace-nowrap font-mono selection:bg-purple-100">
+                            <thead
+                                class="sticky top-0 bg-white z-10 text-xs font-extrabold text-gray-400 uppercase tracking-wider shadow-sm">
+                                <tr>
+                                    <th class="p-3 border-b bg-gray-50/80 sticky left-0 z-20">Name</th>
+                                    <th class="p-3 border-b text-center">Pattern</th>
+                                    <!-- Standard Unified Columns -->
+                                    <th class="p-3 border-b text-center text-orange-400">U1</th>
+                                    <th class="p-3 border-b text-center text-orange-400">U2</th>
+                                    <th class="p-3 border-b text-center text-orange-400">U3</th>
+                                    <th class="p-3 border-b text-center text-orange-400">U4</th>
+                                    <th class="p-3 border-b text-center text-orange-400">U5</th>
+                                    <th class="p-3 border-b text-center text-orange-400">U6</th>
+                                    <th class="p-3 border-b text-center text-indigo-400">L1</th>
+                                    <th class="p-3 border-b text-center text-indigo-400">L2</th>
+                                    <th class="p-3 border-b text-center text-indigo-400">L3</th>
+                                    <th class="p-3 border-b text-center text-indigo-400">L4</th>
+                                    <th class="p-3 border-b text-center text-indigo-400">L5</th>
+                                    <th class="p-3 border-b text-center text-purple-600 bg-purple-50">Items Qty</th>
+                                    <th class="p-3 border-b pl-6">Remarks</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sd-list-measurements" class="divide-y divide-gray-50"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Content: Patterns -->
+            <div id="sd-view-patterns" class="hidden fade-in">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="sd-list-patterns">
+                    <!-- Cards Injected Here -->
+                </div>
+                <p id="sd-no-patterns" class="hidden text-center text-gray-400 py-12 italic">No patterns found for this
+                    school.</p>
+            </div>
+        </div>
+
         <!-- 6. REPORTS -->
         <div id="view-reports" class="hidden fade-in max-w-4xl mx-auto">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -931,7 +1123,7 @@
                     </select>
                 </div>
                 <div class="flex gap-4">
-                    <button onclick="downloadPDF()"
+                    <button onclick="downloadComplaintsPDF()"
                         class="clay-btn px-4 py-3 text-xs font-bold uppercase text-rose-500 flex items-center gap-2">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2">
@@ -943,7 +1135,7 @@
                         </svg>
                         PDF
                     </button>
-                    <button onclick="downloadExcel()"
+                    <button onclick="downloadComplaintsExcel()"
                         class="clay-btn px-4 py-3 text-xs font-bold uppercase text-emerald-500 flex items-center gap-2">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2">
@@ -1040,8 +1232,34 @@
             function toggleSidebar() { sidebarOpen = !sidebarOpen; const s = document.getElementById('sidebar'), b = document.getElementById('sidebar-backdrop'); if (sidebarOpen) { s.classList.remove('-translate-x-[120%]'); b.classList.remove('hidden'); setTimeout(() => b.classList.remove('opacity-0'), 10); } else { s.classList.add('-translate-x-[120%]'); b.classList.add('opacity-0'); setTimeout(() => b.classList.add('hidden'), 300); } }
             const boysItems = [{ name: "BOYS - FORMAL SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Male" }, { name: "BOYS - TRACK T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Male" }, { name: "BOYS - UNIFORM T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Male" }, { name: "BOYS - JERKIN", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Male" }, { name: "BOYS - PULLOVER", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Male" }, { name: "BOYS - FORMAL PANT", cols: ["L1", "L2"], type: "Male" }, { name: "BOYS - TRACK PANT", cols: ["L1", "L2"], type: "Male" }, { name: "BOYS - FORMAL SHORTS", cols: ["L3", "L2"], type: "Male" }, { name: "BOYS - TRACK SHORTS", cols: ["L3", "L2"], type: "Male" }, { name: "BOYS - PANT SPECIAL CASE", cols: ["L1", "L2", "L6", "L7"], type: "Male" }];
             const girlsItems = [{ name: "GIRLS - FORMAL SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Female" }, { name: "GIRLS - TRACK T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Female" }, { name: "GIRLS - UNIFORM T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Female" }, { name: "GIRLS - JERKIN", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Female" }, { name: "GIRLS - FULL SLEEVE SHIRT", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Female" }, { name: "GIRLS - PULLOVER", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Female" }, { name: "GIRLS - KURTHA SHIRT", cols: ["U7", "U2", "U3", "U4", "U6"], type: "Female" }, { name: "GIRLS - SPECIAL FROCKS", cols: ["U7", "U2", "U3", "U4", "U6"], type: "Female" }, { name: "GIRLS - FORMAL PANT", cols: ["L1", "L2"], type: "Female" }, { name: "GIRLS - TRACK PANT", cols: ["L1", "L2"], type: "Female" }, { name: "GIRLS - TRACK SHORTS", cols: ["L3", "L2"], type: "Female" }, { name: "GIRLS - PINOFORE", cols: ["L4", "L2"], type: "Female" }, { name: "GIRLS - SKIRT", cols: ["L5", "L2"], type: "Female" }, { name: "GIRLS - PANT SPECIAL CASE", cols: ["L1", "L2", "L6", "L7"], type: "Female" }];
-            const allItems = [...boysItems, ...girlsItems];
-            async function init() { await Promise.all([fetchStats(), fetchAllStudents(), fetchSchoolsForSelect(), fetchGlobalPatterns()]); renderGlobalTable(); renderCharts(); populateDynamicFilters(); }
+            // Consolidated Item Definitions for Lookup
+            const itemDefinitions = [...boysItems, ...girlsItems];
+
+            // Format time ago helper
+            function timeAgo(date) {
+                const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+                let interval = seconds / 31536000;
+                if (interval > 1) return Math.floor(interval) + " years ago";
+                interval = seconds / 2592000;
+                if (interval > 1) return Math.floor(interval) + " months ago";
+                interval = seconds / 86400;
+                if (interval > 1) return Math.floor(interval) + " days ago";
+                interval = seconds / 3600;
+                if (interval > 1) return Math.floor(interval) + " hours ago";
+                interval = seconds / 60;
+                if (interval > 1) return Math.floor(interval) + " minutes ago";
+                return Math.floor(seconds) + " seconds ago";
+            }
+
+            async function init() {
+                await Promise.all([fetchStats(), fetchAllStudents(), fetchSchoolsForSelect(), fetchGlobalPatterns()]);
+                renderGlobalTable();
+                renderCharts();
+                populateDynamicFilters();
+                // Smart Insights
+                renderLeaderboard();
+                fetchActivityLogs();
+            }
             function switchTab(id) { document.querySelectorAll('div[id^="view-"]').forEach(d => d.classList.add('hidden')); document.getElementById(`view-${id}`).classList.remove('hidden'); document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active')); document.getElementById(`nav-${id}`).classList.add('active'); if (window.innerWidth < 768 && sidebarOpen) toggleSidebar(); if (id === 'access') fetchAccessCodes(); if (id === 'users') fetchUsers(); if (id === 'complaints') fetchComplaints(); if (id === 'schools') fetchSchoolsManage(); }
             function animateValue(obj, start, end, duration) { let startTimestamp = null; const step = (timestamp) => { if (!startTimestamp) startTimestamp = timestamp; const progress = Math.min((timestamp - startTimestamp) / duration, 1); obj.innerText = Math.floor(progress * (end - start) + start); if (progress < 1) { window.requestAnimationFrame(step); } }; window.requestAnimationFrame(step); }
             async function fetchStats() { try { const r = await fetch(`${API_BASE}/data/stats`, { headers: { 'Authorization': `Bearer ${token}` } }); const d = await r.json(); animateValue(document.getElementById('stat-students'), parseInt(document.getElementById('stat-students').innerText) || 0, d.students || 0, 1500); animateValue(document.getElementById('stat-schools'), parseInt(document.getElementById('stat-schools').innerText) || 0, d.schools || 0, 1500); animateValue(document.getElementById('stat-packed'), parseInt(document.getElementById('stat-packed').innerText) || 0, d.packed || 0, 1500); animateValue(document.getElementById('stat-pending'), parseInt(document.getElementById('stat-pending').innerText) || 0, d.pending || 0, 1500); } catch (e) { console.error("Stats Error", e) } }
@@ -1051,11 +1269,153 @@
 
             async function fetchUsers() { try { const r = await fetch(`${API_BASE}/data/users`, { headers: { 'Authorization': `Bearer ${token}` } }); const u = await r.json(); if (!Array.isArray(u)) return; document.getElementById('user-list-body').innerHTML = u.map(x => `<tr class="hover:bg-gray-50/50 group border-b border-gray-50"><td class="p-4 font-bold text-gray-700">${x.username}</td><td class="p-4"><span class="px-3 py-1 rounded-full text-xs bg-gray-100/80 uppercase font-bold text-gray-500 shadow-inner">${x.role}</span></td><td class="p-4 text-gray-500">${x.school_name || '-'}</td><td class="p-4 text-center"><span class="px-3 py-1 rounded-full text-xs font-bold shadow-sm ${x.is_active !== false ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}">${x.is_active !== false ? 'Active' : 'Disabled'}</span></td><td class="p-4 text-right text-xs"><button onclick="toggleUserStatus(${x.id},${!(x.is_active !== false)},'${x.username}')" class="opacity-0 group-hover:opacity-100 transition-opacity px-4 py-2 rounded-lg font-bold shadow-sm ${x.is_active !== false ? 'text-red-500 bg-red-50 hover:bg-red-100' : 'text-green-500 bg-green-50 hover:bg-green-100'}">${x.is_active !== false ? 'Disable' : 'Enable'}</button></td></tr>`).join(''); } catch (e) { console.error(e) } }
             async function fetchAccessCodes() { try { const r = await fetch(`${API_BASE}/data/access_codes`, { headers: { 'Authorization': `Bearer ${token}` } }); const c = await r.json(); if (Array.isArray(c)) document.getElementById('access-code-list').innerHTML = c.map(x => `<tr class="border-b border-gray-50 ${x.is_active ? '' : 'opacity-40'}"><td class="py-4 font-bold text-gray-600">${x.school_name}</td><td class="py-4 font-mono text-rose-500 font-bold tracking-wider">${x.code}</td><td class="py-4 capitalize text-gray-500 font-medium">${x.type}</td><td class="py-4 text-center"><span class="${x.is_active ? 'text-green-500' : 'text-red-400 animate-pulse'} font-extrabold text-xs uppercase tracking-wider">${x.is_active ? 'Active' : 'Revoked'}</span></td><td class="py-4 text-right space-x-2">${x.is_active ? `<button onclick="toggleCode(${x.id},false)" class="text-red-500 hover:bg-red-50 px-3 py-1 rounded-lg text-xs font-bold transition-colors">REVOKE</button>` : `<button onclick="toggleCode(${x.id},true)" class="text-green-500 hover:bg-green-50 px-3 py-1 rounded-lg text-xs font-bold transition-colors">ACTIVATE</button>`}</td></tr>`).join(''); } catch (e) { console.error(e) } }
-            async function fetchSchoolsManage() { try { const r = await fetch(`${API_BASE}/data/schools`, { headers: { 'Authorization': `Bearer ${token}` } }); const d = await r.json(); document.getElementById('school-list-body').innerHTML = Array.isArray(d) ? d.map(s => `<tr class="hover:bg-gray-50/50 group border-b border-gray-50"><td class="p-4 font-bold text-gray-700">${s.name}</td><td class="p-4"><select onchange="updateSchoolMeta(${s.id},'priority',this.value)" class="clay-input h-8 py-1 px-2 text-xs font-bold uppercase ${s.priority === 'High' ? 'text-rose-500' : 'text-gray-500'}"><option value="Normal" ${s.priority === 'Normal' ? 'selected' : ''}>Normal Priority</option><option value="High" ${s.priority === 'High' ? 'selected' : ''}>High Priority</option><option value="Low" ${s.priority === 'Low' ? 'selected' : ''}>Low Priority</option></select></td><td class="p-4"><select onchange="updateSchoolMeta(${s.id},'status',this.value)" class="clay-input h-8 py-1 px-2 text-xs font-bold uppercase w-full"><option value="Pending" ${!s.status || s.status === 'Pending' ? 'selected' : ''}>Pending</option><option value="Measurements" ${s.status === 'Measurements' ? 'selected' : ''}>Measurements</option><option value="Production" ${s.status === 'Production' ? 'selected' : ''}>Production</option><option value="Delivered" ${s.status === 'Delivered' ? 'selected' : ''}>Delivered</option></select></td><td class="p-4 text-right"><button onclick="viewSchoolStudents('${s.name}')" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold px-4 py-2 rounded-lg transition-colors shadow-sm">VIEW STUDENTS</button></td></tr>`).join('') : ''; } catch (e) { console.error(e) } }
+            async function fetchSchoolsManage() { try { const r = await fetch(`${API_BASE}/data/schools`, { headers: { 'Authorization': `Bearer ${token}` } }); const d = await r.json(); document.getElementById('school-list-body').innerHTML = Array.isArray(d) ? d.map(s => `<tr class="hover:bg-gray-50/50 group border-b border-gray-50"><td class="p-4 font-bold text-gray-700">${s.name}</td><td class="p-4"><select onchange="updateSchoolMeta(${s.id},'priority',this.value)" class="clay-input h-8 py-1 px-2 text-xs font-bold uppercase ${s.priority === 'High' ? 'text-rose-500' : 'text-gray-500'}"><option value="Normal" ${s.priority === 'Normal' ? 'selected' : ''}>Normal Priority</option><option value="High" ${s.priority === 'High' ? 'selected' : ''}>High Priority</option><option value="Low" ${s.priority === 'Low' ? 'selected' : ''}>Low Priority</option></select></td><td class="p-4"><select onchange="updateSchoolMeta(${s.id},'status',this.value)" class="clay-input h-8 py-1 px-2 text-xs font-bold uppercase w-full"><option value="Pending" ${!s.status || s.status === 'Pending' ? 'selected' : ''}>Pending</option><option value="Measurements" ${s.status === 'Measurements' ? 'selected' : ''}>Measurements</option><option value="Production" ${s.status === 'Production' ? 'selected' : ''}>Production</option><option value="Delivered" ${s.status === 'Delivered' ? 'selected' : ''}>Delivered</option></select></td><td class="p-4 text-right flex gap-2 justify-end"><button onclick="viewSchoolData('${s.name}')" class="text-xs bg-blue-50 text-blue-600 hover:bg-blue-100 font-bold px-3 py-2 rounded-lg transition-colors shadow-sm">STUDENTS</button><button onclick="viewSchoolDetails('${s.name}', ${s.id})" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold px-3 py-2 rounded-lg transition-colors shadow-sm">DETAILS</button></td></tr>`).join('') : ''; } catch (e) { console.error(e) } }
 
             async function updateSchoolMeta(id, f, v) { await fetch(`${API_BASE}/data/schools/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ [f]: v }) }); }
-            async function viewSchoolStudents(n) { switchTab('data'); await fetchAllStudents(); document.getElementById('date-search').value = n; renderGlobalTable(); }
-            function populateDynamicFilters() { const c = [...new Set(globalStudents.map(s => s.class).filter(Boolean))].sort(), se = [...new Set(globalStudents.map(s => s.section).filter(Boolean))].sort(), h = [...new Set(globalStudents.map(s => s.house).filter(Boolean))].sort(); document.getElementById('list-class').innerHTML = c.map(x => `<option value="${x}">`).join(''); document.getElementById('list-section').innerHTML = se.map(x => `<option value="${x}">`).join(''); document.getElementById('list-house').innerHTML = h.map(x => `<option value="${x}">`).join(''); document.getElementById('filter-item').innerHTML = '<option value="all">-- Select Item --</option>' + allItems.map(i => `<option value="${i.name}">${i.name}</option>`).join(''); }
+
+            // SCHOOL DETAILS LOGIC
+            let currentSchoolDetails = { id: null, name: null };
+
+            // NEW: Link from Schools List to Data View
+            async function viewSchoolData(schoolName) {
+                switchTab('data');
+                // Ensure options populated
+                if (document.getElementById('filter-school').options.length <= 1) populateDynamicFilters();
+
+                document.getElementById('filter-school').value = schoolName;
+                renderGlobalTable();
+            }
+
+            // MODIFIED: School Details now focuses on Settings/Patterns
+            async function viewSchoolDetails(schoolName, schoolId) {
+                switchTab('school-details');
+                currentSchoolDetails = { name: schoolName, id: schoolId };
+                document.getElementById('sd-school-name').innerText = schoolName;
+
+                // Ensure data is loaded
+                if (globalStudents.length === 0) await fetchAllStudents();
+                if (globalPatterns.length === 0) await fetchGlobalPatterns();
+
+                // Default to students
+                switchSchoolTab('students');
+                renderSchoolDetails();
+            }
+
+            function switchSchoolTab(t) {
+                const tabs = ['students', 'measurements', 'patterns'];
+                tabs.forEach(tab => {
+                    const view = document.getElementById(`sd-view-${tab}`);
+                    const btn = document.getElementById(`tab-sd-${tab}`);
+                    if (view) view.classList.add('hidden');
+                    if (btn) btn.className = "clay-btn text-sm text-gray-500 hover:text-gray-700";
+                });
+
+                const v = document.getElementById(`sd-view-${t}`);
+                const b = document.getElementById(`tab-sd-${t}`);
+                if (v) v.classList.remove('hidden');
+                if (b) b.className = "clay-btn text-sm active bg-blue-50 text-blue-600 border-blue-100";
+            }
+
+            function renderSchoolDetails() {
+                const sName = currentSchoolDetails.name;
+                const students = globalStudents.filter(s => s.school_name === sName);
+                const patterns = globalPatterns.filter(p => p.school_name === sName);
+
+                // 1. Render Students List
+                document.getElementById('sd-count-students').innerText = `${students.length} records`;
+                document.getElementById('sd-list-students').innerHTML = students.map(s => `
+                    <tr class="hover:bg-gray-50 group transition-colors">
+                        <td class="p-4 font-mono text-xs font-bold text-gray-500">${s.roll_no || '-'}</td>
+                        <td class="p-4 font-bold text-gray-700">${s.name}</td>
+                        <td class="p-4 text-xs font-bold text-gray-500">${s.class || ''} ${s.section || ''}</td>
+                        <td class="p-4 text-xs font-bold text-gray-500 opacity-70">${s.gender || '-'}</td>
+                         <td class="p-4 text-xs font-mono text-blue-500 font-bold">${s.pattern_name || '-'}</td>
+                        <td class="p-4 text-center">
+                             <span class="px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wide ${s.is_packed ? 'bg-emerald-100 text-emerald-600' : 'bg-orange-100 text-orange-600'}">${s.is_packed ? 'PACKED' : 'PENDING'}</span>
+                        </td>
+                    </tr>
+                `).join('');
+
+                // 2. Render Measurements (Detailed)
+                document.getElementById('sd-list-measurements').innerHTML = students.map(s => {
+                    const m = getMeasurementsSafe(s);
+                    const iq = getItemQuantitiesSafe(s);
+                    const qtyStr = Object.entries(iq).map(([k, v]) => `${k}: ${v}`).join(', ');
+
+                    return `
+                    <tr class="hover:bg-gray-50 group border-b border-gray-50">
+                        <td class="p-3 font-bold text-gray-700 bg-white sticky left-0 shadow-sm">${s.name}</td>
+                        <td class="p-3 text-center text-xs text-blue-500 font-bold">${s.pattern_name || '-'}</td>
+                        <td class="p-3 text-center text-xs font-mono text-orange-600 bg-orange-50/30">${m.u1 || '-'}</td>
+                        <td class="p-3 text-center text-xs font-mono text-orange-600 bg-orange-50/30">${m.u2 || '-'}</td>
+                        <td class="p-3 text-center text-xs font-mono text-orange-600 bg-orange-50/30">${m.u3 || '-'}</td>
+                        <td class="p-3 text-center text-xs font-mono text-orange-600 bg-orange-50/30">${m.u4 || '-'}</td>
+                        <td class="p-3 text-center text-xs font-mono text-orange-600 bg-orange-50/30">${m.u5 || '-'}</td>
+                        <td class="p-3 text-center text-xs font-mono text-orange-600 bg-orange-50/30">${m.u6 || '-'}</td>
+                        <td class="p-3 text-center text-xs font-mono text-indigo-600 bg-indigo-50/30">${m.l1 || '-'}</td>
+                        <td class="p-3 text-center text-xs font-mono text-indigo-600 bg-indigo-50/30">${m.l2 || '-'}</td>
+                        <td class="p-3 text-center text-xs font-mono text-indigo-600 bg-indigo-50/30">${m.l3 || '-'}</td>
+                        <td class="p-3 text-center text-xs font-mono text-indigo-600 bg-indigo-50/30">${m.l4 || '-'}</td>
+                        <td class="p-3 text-center text-xs font-mono text-indigo-600 bg-indigo-50/30">${m.l5 || '-'}</td>
+                        <td class="p-3 text-xs text-purple-600 font-bold bg-purple-50/50 max-w-[200px] truncate" title="${qtyStr}">${qtyStr || '-'}</td>
+                        <td class="p-3 text-xs text-gray-400 italic pl-6 max-w-[150px] truncate" title="${m.remarks || ''}">${m.remarks || '-'}</td>
+                    </tr>`;
+                }).join('');
+
+                // 3. Render Patterns
+                if (patterns.length === 0) {
+                    document.getElementById('sd-no-patterns').classList.remove('hidden');
+                    document.getElementById('sd-list-patterns').innerHTML = '';
+                } else {
+                    document.getElementById('sd-no-patterns').classList.add('hidden');
+                    document.getElementById('sd-list-patterns').innerHTML = patterns.map(p => `
+                        <div class="clay-card p-6 flex flex-col justify-between hover:scale-[1.02] transition-transform">
+                            <div>
+                                <h4 class="font-bold text-lg text-gray-700 mb-2">${p.name}</h4>
+                                <p class="text-xs text-gray-400 font-bold uppercase tracking-wider mb-4">Consumption: <span class="text-blue-500 text-lg">${p.consumption}m</span></p>
+                                <div class="bg-gray-50 p-3 rounded-xl mb-4">
+                                    <p class="text-[10px] text-gray-400 uppercase font-bold mb-1">Cloth Details</p>
+                                    <p class="text-xs text-gray-600 font-medium line-clamp-2">${p.cloth_details || 'No details provided.'}</p>
+                                </div>
+                            </div>
+                            <button onclick="window.open('pattern_view.html', '_blank')" class="text-xs font-bold text-center w-full py-3 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors uppercase tracking-wider">
+                                Manage in Editor
+                            </button>
+                        </div>
+                    `).join('');
+                }
+            }
+            function populateDynamicFilters() {
+                const c = [...new Set(globalStudents.map(s => s.class).filter(Boolean))].sort();
+                const se = [...new Set(globalStudents.map(s => s.section).filter(Boolean))].sort();
+                const h = [...new Set(globalStudents.map(s => s.house).filter(Boolean))].sort();
+
+                // Dynamic Item Population
+                const itemSet = new Set();
+                globalStudents.forEach(s => {
+                    const iq = getItemQuantitiesSafe(s);
+                    Object.keys(iq).forEach(k => itemSet.add(k));
+                });
+                const dbItems = Array.from(itemSet).sort();
+
+                // Schools from globalSchools or students
+                let schools = [];
+                if (globalSchools.length > 0) schools = globalSchools.map(s => s.name).sort();
+                else schools = [...new Set(globalStudents.map(s => s.school_name).filter(Boolean))].sort();
+
+
+                document.getElementById('list-class').innerHTML = c.map(x => `<option value="${x}">`).join('');
+                document.getElementById('list-section').innerHTML = se.map(x => `<option value="${x}">`).join('');
+                document.getElementById('list-house').innerHTML = h.map(x => `<option value="${x}">`).join('');
+                document.getElementById('filter-item').innerHTML = '<option value="all">-- Select Item --</option>' + dbItems.map(i => `<option value="${i}">${i}</option>`).join('');
+
+                // Populate School Filter
+                const schoolSelect = document.getElementById('filter-school');
+                const currentSchool = schoolSelect.value;
+                schoolSelect.innerHTML = '<option value="all">All Schools</option>' + schools.map(s => `<option value="${s.replace(/"/g, '&quot;')}">${s}</option>`).join('');
+                if (currentSchool && schools.includes(currentSchool)) schoolSelect.value = currentSchool;
+
+            }
             // REMOVED handleItemFilter - now handled in renderGlobalTable directly
             function advancedMatch(r, f) { if (!f || f === 'all') return true; if (r == null || r === "") return false; const rv = String(r).trim().toUpperCase(), fv = f.toUpperCase(); if (fv.includes(',')) return fv.split(',').map(p => p.trim()).includes(rv); if (fv.includes('-')) { const p = fv.split('-').map(x => x.trim()); if (p.length === 2) { const [mn, mx] = p; if (!isNaN(mn) && !isNaN(mx)) { const n = parseFloat(r); return !isNaN(n) && n >= parseFloat(mn) && n <= parseFloat(mx) } if (mn.length === 1 && mx.length === 1 && rv.length === 1) return rv >= mn && rv <= mx } } return rv === fv; }
 
@@ -1064,8 +1424,13 @@
                 return s.measurements || {};
             }
 
+            function getItemQuantitiesSafe(s) {
+                if (typeof s.item_quantities === 'string') { try { return JSON.parse(s.item_quantities); } catch (e) { return {}; } }
+                return s.item_quantities || {};
+            }
+
             function renderGlobalTable() {
-                const pr = document.getElementById('filter-priority').value, pa = document.getElementById('filter-packed').value, cl = document.getElementById('filter-class').value, sc = document.getElementById('filter-section').value, ho = document.getElementById('filter-house').value, ge = document.getElementById('filter-gender').value, pt = document.getElementById('filter-pattern').value, it = document.getElementById('filter-item').value, se = document.getElementById('date-search').value.toLowerCase();
+                const pr = document.getElementById('filter-priority').value, pa = document.getElementById('filter-packed').value, cl = document.getElementById('filter-class').value, sc = document.getElementById('filter-section').value, ho = document.getElementById('filter-house').value, ge = document.getElementById('filter-gender').value, pt = document.getElementById('filter-pattern').value, it = document.getElementById('filter-item').value, sch = document.getElementById('filter-school').value, se = document.getElementById('date-search').value.toLowerCase();
 
                 // 1. Filter
                 const f = globalStudents.filter(s => {
@@ -1073,6 +1438,7 @@
                     if (pr !== 'all' && s.school_priority !== pr) return false;
                     if (pa === 'packed' && !s.is_packed) return false;
                     if (pa === 'pending' && s.is_packed) return false;
+                    if (sch !== 'all' && s.school_name !== sch) return false; // School Filter
                     if (!advancedMatch(s.class, cl)) return false;
                     if (!advancedMatch(s.section, sc)) return false;
                     if (!advancedMatch(s.house, ho)) return false;
@@ -1080,9 +1446,12 @@
                     if (pt !== 'all' && s.pattern_id != pt) return false;
                     if (se && !(s.name || '').toLowerCase().includes(se) && !(s.roll_no || '').toLowerCase().includes(se) && !(s.school_name || '').toLowerCase().includes(se)) return false;
                     if (it !== 'all') {
-                        const i = allItems.find(x => x.name === it);
-                        if (i) {
-                            if ((i.type === 'Male' && s.gender === 'Female') || (i.type === 'Female' && s.gender === 'Male')) return false;
+                        if (it !== 'all') {
+                            // Only filter if we have explicit gender types in definitions
+                            const i = itemDefinitions.find(x => x.name === it);
+                            if (i) {
+                                if ((i.type === 'Male' && s.gender === 'Female') || (i.type === 'Female' && s.gender === 'Male')) return false;
+                            }
                         }
                     }
                     return true;
@@ -1094,11 +1463,16 @@
                 const subRow = document.getElementById('th-sub-row');
 
                 if (it !== 'all') {
-                    const def = allItems.find(x => x.name === it);
+                    // Look up definition for columns
+                    const def = itemDefinitions.find(x => x.name === it);
                     if (def) {
                         showCols = def.cols;
                         measHeader.innerText = def.name;
-                        measHeader.colSpan = showCols.length;
+                        measHeader.colSpan = showCols.length + 1; // +1 for Quantity
+                    } else {
+                        // If dynamic item has no definition, default to empty or standard
+                        measHeader.innerText = it;
+                        measHeader.colSpan = 1; // Just Quantity?
                     }
                 } else {
                     measHeader.innerText = "Measurements (Select Item)";
@@ -1106,11 +1480,12 @@
                 }
 
                 // 3. Render sub-headers
-                if (showCols.length > 0) {
+                if (it !== 'all') {
                     subRow.classList.remove('hidden');
                     subRow.innerHTML = `
                     <th colspan="4" class="bg-gray-100/30 border-r border-white/60"></th>
                     ${showCols.map(c => `<th class="p-2 text-center border-x border-white/60 text-orange-600 bg-orange-50/50 text-xs font-bold">${c}</th>`).join('')}
+                    <th class="p-2 text-center border-x border-white/60 text-purple-600 bg-purple-50/50 text-xs font-bold">Qty</th>
                     <th></th>
                 `;
                 } else {
@@ -1121,9 +1496,16 @@
                 document.getElementById('record-count').innerText = `Showing ${f.length} records`;
                 document.getElementById('global-table-body').innerHTML = f.map(s => {
                     const m = getMeasurementsSafe(s);
+                    const iq = getItemQuantitiesSafe(s);
                     let measCells = '';
-                    if (showCols.length > 0) {
-                        measCells = showCols.map(k => `<td class="p-4 text-center border-b border-stone-100 font-mono font-bold text-stone-700 bg-orange-50/20">${m[k.toLowerCase()] || '-'}</td>`).join('');
+
+                    if (it !== 'all') {
+                        const qty = iq[it] || 0;
+                        // Measure Columns
+                        const mCols = showCols.map(k => `<td class="p-4 text-center border-b border-stone-100 font-mono font-bold text-stone-700 bg-orange-50/20">${m[k.toLowerCase()] || '-'}</td>`).join('');
+                        // Quantity Column
+                        const qCol = `<td class="p-4 text-center border-b border-stone-100 font-mono font-bold text-purple-700 bg-purple-50/20">${qty}</td>`;
+                        measCells = mCols + qCol;
                     } else {
                         measCells = `<td class="p-4 border-b border-stone-100 text-xs italic text-stone-400">Select Item...</td>`;
                     }
@@ -1159,7 +1541,81 @@
                 window.currentCols = showCols;
             }
 
-            // Removed renderMeasurements Helper as it's now inline
+            function renderLeaderboard() {
+                // Calculate Stats per school
+                const stats = {};
+                globalStudents.forEach(s => {
+                    if (!stats[s.school_name]) stats[s.school_name] = { total: 0, packed: 0 };
+                    stats[s.school_name].total++;
+                    if (s.is_packed) stats[s.school_name].packed++;
+                });
+
+                const sorted = Object.entries(stats)
+                    .map(([name, d]) => ({ name, pct: d.total > 0 ? (d.packed / d.total * 100) : 0, ...d }))
+                    .sort((a, b) => b.pct - a.pct)
+                    .slice(0, 10); // Top 10
+
+                document.getElementById('leaderboard-list').innerHTML = sorted.map((s, i) => `
+                    <div class="flex items-center gap-4 p-3 rounded-xl bg-gray-50/50 hover:bg-white border border-transparent hover:border-gray-100 hover:shadow-md transition-all group">
+                         <div class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${i === 0 ? 'bg-yellow-100 text-yellow-600' : 'bg-white text-gray-400 shadow-sm'}">
+                            ${i + 1}
+                         </div>
+                         <div class="flex-1">
+                            <div class="flex justify-between mb-1">
+                                <span class="text-xs font-bold text-gray-700">${s.name}</span>
+                                <span class="text-[10px] font-bold text-gray-400">${Math.round(s.pct)}%</span>
+                            </div>
+                            <div class="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
+                                <div class="bg-gradient-to-r from-blue-400 to-purple-400 h-1.5 rounded-full" style="width: ${s.pct}%"></div>
+                            </div>
+                         </div>
+                    </div>
+                `).join('');
+            }
+
+            async function fetchActivityLogs() {
+                try {
+                    const r = await fetch(`${API_BASE}/data/logs`, { headers: { 'Authorization': `Bearer ${token}` } });
+                    const logs = await r.json();
+
+                    if (!Array.isArray(logs)) return;
+
+                    const iconMap = {
+                        'CREATE': '<span class="bg-green-100 text-green-600 p-2 rounded-lg"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg></span>',
+                        'UPDATE': '<span class="bg-blue-100 text-blue-600 p-2 rounded-lg"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg></span>',
+                        'DELETE': '<span class="bg-red-100 text-red-600 p-2 rounded-lg"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></span>',
+                        'DEFAULT': '<span class="bg-gray-100 text-gray-500 p-2 rounded-lg"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></span>'
+                    };
+
+                    document.getElementById('activity-feed').innerHTML = '<div class="absolute left-6 top-4 bottom-4 w-0.5 bg-gray-100"></div>' + logs.map(l => {
+                        let type = 'DEFAULT';
+                        if (l.action.includes('CREATE')) type = 'CREATE';
+                        if (l.action.includes('UPDATE')) type = 'UPDATE';
+                        if (l.action.includes('DELETE')) type = 'DELETE';
+
+                        return `
+                        <div class="relative pl-14 py-2 group">
+                             <!-- Dot on Line -->
+                             <div class="absolute left-[1.35rem] top-6 w-3 h-3 bg-white border-2 border-gray-300 rounded-full group-hover:border-blue-500 group-hover:scale-110 transition-all z-10"></div>
+                             
+                             <div class="flex items-start gap-4">
+                                 <!-- Icon User -->
+                                 ${iconMap[type]}
+                                 <div>
+                                     <p class="text-xs text-gray-400 font-bold uppercase tracking-wider mb-0.5 flex items-center gap-2">
+                                        ${l.username} 
+                                        <span class="text-[10px] text-gray-300">• ${timeAgo(l.created_at)}</span>
+                                     </p>
+                                     <p class="text-sm font-bold text-gray-700">${l.details}</p>
+                                 </div>
+                             </div>
+                        </div>`;
+                    }).join('');
+
+                } catch (e) { console.error("Logs Error", e); }
+            }
+
+            // Removed dummy renderMeasurements Helper as it's now inline
             function dummy() { }
 
             function renderCharts() {
@@ -1184,10 +1640,25 @@
             function downloadPDF() {
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF();
-                const data = window.filteredDataForExport || globalStudents;
-                const cols = window.currentCols || [];
 
-                doc.text("Tailoring Data Report", 14, 15);
+                // Determine Data Source
+                let data = window.filteredDataForExport || globalStudents;
+                let title = "Tailoring Data Report";
+                const isSchoolView = !document.getElementById('view-school-details').classList.contains('hidden');
+
+                // Active Columns
+                let cols = window.currentCols || [];
+                if (isSchoolView && cols.length === 0) {
+                    // In school view, default to showing all raw measurements if no specific item filter active (which isn't in details view usually)
+                    cols = ['U1', 'U2', 'U3', 'U4', 'U5', 'U6', 'L1', 'L2', 'L3', 'L4', 'L5'];
+                }
+
+                if (isSchoolView && currentSchoolDetails.name) {
+                    data = globalStudents.filter(s => s.school_name === currentSchoolDetails.name);
+                    title = `${currentSchoolDetails.name} - Student Data`;
+                }
+
+                doc.text(title, 14, 15);
                 doc.setFontSize(10);
                 doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 22);
 
@@ -1230,8 +1701,21 @@
             }
 
             function downloadExcel() {
-                const data = window.filteredDataForExport || globalStudents;
-                const cols = window.currentCols || [];
+                // Determine Data Source
+                let data = window.filteredDataForExport || globalStudents;
+                let sheetName = "GlobalData";
+                const isSchoolView = !document.getElementById('view-school-details').classList.contains('hidden');
+
+                // Active Columns
+                let cols = window.currentCols || [];
+                if (isSchoolView && cols.length === 0) {
+                    cols = ['U1', 'U2', 'U3', 'U4', 'U5', 'U6', 'L1', 'L2', 'L3', 'L4', 'L5'];
+                }
+
+                if (isSchoolView && currentSchoolDetails.name) {
+                    data = globalStudents.filter(s => s.school_name === currentSchoolDetails.name);
+                    sheetName = currentSchoolDetails.name.substring(0, 30); // Max 31 chars for sheet name
+                }
 
                 const exportData = data.map(s => {
                     const m = getMeasurementsSafe(s);
@@ -1257,8 +1741,8 @@
 
                 const ws = XLSX.utils.json_to_sheet(exportData);
                 const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, ws, "GlobalData");
-                XLSX.writeFile(wb, "Tailoring_Report.xlsx");
+                XLSX.utils.book_append_sheet(wb, ws, sheetName);
+                XLSX.writeFile(wb, `${sheetName}_Report.xlsx`);
             }
 
 
@@ -1524,10 +2008,10 @@
             }
 
             function generateComplaintReport() {
-                downloadExcel();
+                downloadComplaintsExcel();
             }
 
-            function downloadPDF() {
+            function downloadComplaintsPDF() {
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF('l', 'mm', 'a4');
 
@@ -1565,7 +2049,7 @@
                 doc.save(`complaints_report_${new Date().toISOString().slice(0, 10)}.pdf`);
             }
 
-            function downloadExcel() {
+            function downloadComplaintsExcel() {
                 const wb = XLSX.utils.book_new();
                 const excelData = filteredComplaints.map(c => ({
                     "Date": new Date(c.created_at).toLocaleDateString(),

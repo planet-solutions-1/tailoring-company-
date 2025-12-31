@@ -208,6 +208,9 @@
                 <p class="text-[10px] md:text-xs text-slate-500 font-medium tracking-wide uppercase">Rapid Data
                     Logistics
                     • v3.0</p>
+                <div id="schoolStatusBadge"
+                    class="hidden inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-500">
+                    --</div>
             </div>
         </div>
 
@@ -540,10 +543,36 @@
                 populateFilters();
                 applyFilters();
 
+                // Fetch School Status for Badge
+                fetchSchoolStatus(schoolId, token);
+
             } catch (e) {
                 console.error("Load Error", e);
                 alert("Failed to load list.");
             }
+        }
+
+        async function fetchSchoolStatus(sid, tok) {
+            try {
+                const res = await fetch(`/api/schools/${sid}`, { headers: { 'Authorization': `Bearer ${tok}` } });
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data && data.status) {
+                        const el = document.getElementById('schoolStatusBadge');
+                        if (el) {
+                            el.innerText = data.status;
+                            el.classList.remove('hidden');
+                            el.className = "inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border ";
+
+                            const s = data.status.toLowerCase();
+                            if (s.includes('measure')) el.classList.add('bg-indigo-50', 'text-indigo-600', 'border-indigo-100');
+                            else if (s.includes('product')) el.classList.add('bg-amber-50', 'text-amber-600', 'border-amber-100');
+                            else if (s.includes('deliver')) el.classList.add('bg-emerald-50', 'text-emerald-600', 'border-emerald-100');
+                            else el.classList.add('bg-slate-50', 'text-slate-500', 'border-slate-100');
+                        }
+                    }
+                }
+            } catch (e) { console.warn("Status fetch warning", e); }
         }
 
         function parseMeasurements(m) {

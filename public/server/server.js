@@ -294,7 +294,7 @@ app.post('/api/data/upload', upload.array('images', 5), (req, res) => {
 });
 
 // Serve Static Files
-app.use(express.static(path.join(process.cwd(), 'public')));
+app.use(express.static(process.cwd()));
 
 // Basic Route
 app.get('/', (req, res) => {
