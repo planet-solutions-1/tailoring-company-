@@ -462,6 +462,49 @@
                 </div>
             </div>
 
+            <!-- Charts Row (Restored) -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 h-96">
+                <!-- Chart 1: Schools Distribution -->
+                <div class="clay-card p-6 flex flex-col justify-between lg:col-span-2 relative overflow-hidden">
+                    <div class="flex justify-between items-start z-10">
+                        <div>
+                            <h3 class="font-extrabold text-lg text-slate-700">School Distribution</h3>
+                            <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">Student
+                                Capacity &
+                                Enrollment</p>
+                        </div>
+                        <span class="p-2 rounded-xl bg-purple-50 text-purple-500 shadow-sm">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+                                </path>
+                            </svg>
+                        </span>
+                    </div>
+                    <div class="flex-1 w-full mt-4 relative">
+                        <canvas id="chart-schools"></canvas>
+                    </div>
+                </div>
+
+                <!-- Chart 2: Packing Status -->
+                <div class="clay-card p-6 flex flex-col justify-between relative overflow-hidden">
+                    <div class="flex justify-between items-start z-10">
+                        <div>
+                            <h3 class="font-extrabold text-lg text-slate-700">Order Status</h3>
+                            <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">Completion
+                                Rate
+                            </p>
+                        </div>
+                        <div class="flex -space-x-2">
+                            <!-- Decor -->
+                        </div>
+                    </div>
+                    <div class="flex-1 w-full mt-4 relative flex items-center justify-center">
+                        <canvas id="chart-packing"></canvas>
+                    </div>
+                </div>
+            </div>
+
             <!-- Smart Insights Row (New) -->
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
