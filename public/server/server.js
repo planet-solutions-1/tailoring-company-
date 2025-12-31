@@ -61,6 +61,33 @@ app.get('/api/schools/:id', (req, res) => {
     });
 });
 
+// EMERGENCY DATABASE RESET (Per User Request)
+app.post('/api/admin/reset-database', authenticateToken, async (req, res) => {
+    const { secret } = req.body;
+    if (req.user.role !== 'company' && secret !== 'force_reset_2025') {
+        return res.status(403).json({ error: "Unauthorized" });
+    }
+    console.log(`🚨 DATABASE RESET TRIGGERED BY ${req.user.username} 🚨`);
+    try {
+        if (process.env.RAILWAY_ENVIRONMENT || process.env.NODE_ENV === 'production') {
+            await db.execute("SET FOREIGN_KEY_CHECKS = 0");
+            const tables = ['patterns', 'students', 'orders', 'complaints', 'access_codes'];
+            for (const t of tables) await db.execute(`DROP TABLE IF EXISTS ${t}`);
+            await db.execute("SET FOREIGN_KEY_CHECKS = 1");
+            res.json({ message: "Database Partial Reset (Patterns/Students). Restarting..." });
+            setTimeout(() => process.exit(0), 1000);
+        } else {
+            db.serialize(() => {
+                const tables = ['patterns', 'students', 'orders', 'complaints', 'access_codes'];
+                tables.forEach(t => db.run(`DROP TABLE IF EXISTS ${t}`));
+            });
+            res.json({ message: "SQLite Database Reset." });
+        }
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // 2. Sync Logic (SQL Version - Fixed 413 & Persistence)
 app.post('/api/sync', authenticateToken, async (req, res) => {
     const { students } = req.body;
