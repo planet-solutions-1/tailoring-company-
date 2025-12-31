@@ -323,6 +323,98 @@
     <!-- 1. DASHBOARD VIEW -->
     <template id="view-dashboard">
         <div class="max-w-6xl mx-auto space-y-8">
+            <!-- Status Tracker -->
+            <div class="clay-card p-6 md:p-8 bg-white mb-2 transform transition-all hover:scale-[1.01] duration-500">
+                <div class="flex items-center justify-between mb-8">
+                    <div>
+                        <h2 class="font-brand text-xl font-bold text-slate-700">Production Status</h2>
+                        <p class="text-slate-400 text-sm font-medium">Track your uniform order progress</p>
+                    </div>
+                    <span id="trackerCurrentStatus"
+                        class="px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider bg-slate-100 text-slate-500 shadow-sm transition-colors duration-500">Loading...</span>
+                </div>
+
+                <!-- Tracker Container -->
+                <div class="relative w-full px-4 md:px-12 py-4">
+                    <!-- Progress Bar Background -->
+                    <div
+                        class="absolute top-1/2 left-0 w-full h-1.5 bg-slate-100 -translate-y-1/2 rounded-full z-0 mx-auto right-0 max-w-[90%]">
+                    </div>
+                    <!-- Progress Bar Active -->
+                    <div id="trackerProgressBar"
+                        class="absolute top-1/2 left-0 h-1.5 bg-gradient-to-r from-emerald-400 to-emerald-500 -translate-y-1/2 rounded-full z-0 transition-all duration-1000 ease-out mx-auto right-0 max-w-[90%] shadow-lg shadow-emerald-200"
+                        style="width: 0%"></div>
+
+                    <!-- Steps -->
+                    <div class="relative z-10 flex justify-between w-full max-w-[90%] mx-auto">
+                        <!-- Step 1: Pending -->
+                        <div class="flex flex-col items-center gap-3 group step-item transition-all duration-500"
+                            data-step="0">
+                            <div
+                                class="step-circle w-10 h-10 md:w-14 md:h-14 rounded-full bg-white border-4 border-slate-100 flex items-center justify-center text-slate-300 shadow-sm transition-all duration-500 relative z-10">
+                                <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                            <p
+                                class="text-[10px] md:text-xs font-bold uppercase tracking-wider text-slate-400 font-brand transition-colors duration-300">
+                                Pending</p>
+                        </div>
+
+                        <!-- Step 2: Measurements -->
+                        <div class="flex flex-col items-center gap-3 group step-item transition-all duration-500"
+                            data-step="1">
+                            <div
+                                class="step-circle w-10 h-10 md:w-14 md:h-14 rounded-full bg-white border-4 border-slate-100 flex items-center justify-center text-slate-300 shadow-sm transition-all duration-500 relative z-10">
+                                <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                                        d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10">
+                                    </path>
+                                </svg>
+                            </div>
+                            <p
+                                class="text-[10px] md:text-xs font-bold uppercase tracking-wider text-slate-400 font-brand transition-colors duration-300">
+                                Measure</p>
+                        </div>
+
+                        <!-- Step 3: Production -->
+                        <div class="flex flex-col items-center gap-3 group step-item transition-all duration-500"
+                            data-step="2">
+                            <div
+                                class="step-circle w-10 h-10 md:w-14 md:h-14 rounded-full bg-white border-4 border-slate-100 flex items-center justify-center text-slate-300 shadow-sm transition-all duration-500 relative z-10">
+                                <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                                        d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                            <p
+                                class="text-[10px] md:text-xs font-bold uppercase tracking-wider text-slate-400 font-brand transition-colors duration-300">
+                                Production</p>
+                        </div>
+
+                        <!-- Step 4: Delivered -->
+                        <div class="flex flex-col items-center gap-3 group step-item transition-all duration-500"
+                            data-step="3">
+                            <div
+                                class="step-circle w-10 h-10 md:w-14 md:h-14 rounded-full bg-white border-4 border-slate-100 flex items-center justify-center text-slate-300 shadow-sm transition-all duration-500 relative z-10">
+                                <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                                        d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                                </svg>
+                            </div>
+                            <p
+                                class="text-[10px] md:text-xs font-bold uppercase tracking-wider text-slate-400 font-brand transition-colors duration-300">
+                                Delivered</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Stats Grid -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8 p-2">
                 <!-- Total Students -->
@@ -1118,15 +1210,59 @@
                             if (s.includes('measure')) statusEl.classList.add('bg-indigo-100', 'text-indigo-600', 'border', 'border-indigo-200');
                             else if (s.includes('product')) statusEl.classList.add('bg-amber-100', 'text-amber-700', 'border', 'border-amber-200');
                             else if (s.includes('deliver')) statusEl.classList.add('bg-emerald-100', 'text-emerald-700', 'border', 'border-emerald-200');
-                            else statusEl.classList.add('bg-slate-100', 'text-slate-500');
-                        }
+                            else statusEl.classList.add('bg-slate-100', 'text-slate-500', 'border', 'border-slate-200');
 
-                        return;
+                            // NEW TRACKER UPDATE
+                            renderStatusTracker(schoolData.status);
+                        }
                     }
+                } else {
+                    console.error("Fetch Failed", res.status);
                 }
             } catch (e) {
-                console.warn("Could not fetch school details automatically", e);
+                console.error("Init Error", e);
             }
+        }
+
+        // === STATUS TRACKER RENDERER ===
+        function renderStatusTracker(status) {
+            const statusMap = { 'Pending': 0, 'Measurements': 1, 'Production': 2, 'Delivered': 3 };
+            let currentStep = statusMap[status] !== undefined ? statusMap[status] : 0;
+            if (status && status.toLowerCase().includes('measure')) currentStep = 1;
+
+            const progressBar = document.getElementById('trackerProgressBar');
+            const statusLabel = document.getElementById('trackerCurrentStatus');
+            if (statusLabel) statusLabel.innerText = status || 'Pending';
+
+            // Calulate Progress
+            // 0->0, 1->33, 2->66, 3->100
+            const progress = (currentStep / 3) * 100;
+            if (progressBar) progressBar.style.width = `${progress}%`;
+
+            const steps = document.querySelectorAll('.step-item');
+            steps.forEach((step, index) => {
+                const circle = step.querySelector('.step-circle');
+                const label = step.querySelector('p');
+
+                // Reset Base
+                circle.className = 'step-circle w-10 h-10 md:w-14 md:h-14 rounded-full flex items-center justify-center shadow-sm transition-all duration-500 relative z-10 border-4';
+                label.className = 'text-[10px] md:text-xs font-bold uppercase tracking-wider font-brand transition-colors duration-300';
+
+                if (index < currentStep) {
+                    // Completed
+                    circle.classList.add('bg-emerald-500', 'border-emerald-500', 'text-white');
+                    label.classList.add('text-emerald-600');
+                } else if (index === currentStep) {
+                    // Active
+                    circle.classList.add('bg-white', 'border-emerald-500', 'text-emerald-600', 'ring-4', 'ring-emerald-50');
+                    label.classList.add('text-emerald-600', 'scale-110');
+                    circle.classList.add('scale-110');
+                } else {
+                    // Future
+                    circle.classList.add('bg-white', 'border-slate-100', 'text-slate-300');
+                    label.classList.add('text-slate-300');
+                }
+            });
         }
 
         // === INIT ===
