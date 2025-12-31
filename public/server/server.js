@@ -293,8 +293,8 @@ app.post('/api/data/upload', upload.array('images', 5), (req, res) => {
     }
 });
 
-// Serve Static Files
-app.use(express.static(process.cwd()));
+// Serve Static Files -> Fix: Use explicit path relative to server.js
+app.use(express.static(path.join(__dirname, '../')));
 
 // Basic Route
 app.get('/', (req, res) => {
