@@ -1312,9 +1312,58 @@
 
             async function fetchUsers() { try { const r = await fetch(`${API_BASE}/data/users`, { headers: { 'Authorization': `Bearer ${token}` } }); const u = await r.json(); if (!Array.isArray(u)) return; document.getElementById('user-list-body').innerHTML = u.map(x => `<tr class="hover:bg-gray-50/50 group border-b border-gray-50"><td class="p-4 font-bold text-gray-700">${x.username}</td><td class="p-4"><span class="px-3 py-1 rounded-full text-xs bg-gray-100/80 uppercase font-bold text-gray-500 shadow-inner">${x.role}</span></td><td class="p-4 text-gray-500">${x.school_name || '-'}</td><td class="p-4 text-center"><span class="px-3 py-1 rounded-full text-xs font-bold shadow-sm ${x.is_active !== false ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}">${x.is_active !== false ? 'Active' : 'Disabled'}</span></td><td class="p-4 text-right text-xs"><button onclick="toggleUserStatus(${x.id},${!(x.is_active !== false)},'${x.username}')" class="opacity-0 group-hover:opacity-100 transition-opacity px-4 py-2 rounded-lg font-bold shadow-sm ${x.is_active !== false ? 'text-red-500 bg-red-50 hover:bg-red-100' : 'text-green-500 bg-green-50 hover:bg-green-100'}">${x.is_active !== false ? 'Disable' : 'Enable'}</button></td></tr>`).join(''); } catch (e) { console.error(e) } }
             async function fetchAccessCodes() { try { const r = await fetch(`${API_BASE}/data/access_codes`, { headers: { 'Authorization': `Bearer ${token}` } }); const c = await r.json(); if (Array.isArray(c)) document.getElementById('access-code-list').innerHTML = c.map(x => `<tr class="border-b border-gray-50 ${x.is_active ? '' : 'opacity-40'}"><td class="py-4 font-bold text-gray-600">${x.school_name}</td><td class="py-4 font-mono text-rose-500 font-bold tracking-wider">${x.code}</td><td class="py-4 capitalize text-gray-500 font-medium">${x.type}</td><td class="py-4 text-center"><span class="${x.is_active ? 'text-green-500' : 'text-red-400 animate-pulse'} font-extrabold text-xs uppercase tracking-wider">${x.is_active ? 'Active' : 'Revoked'}</span></td><td class="py-4 text-right space-x-2">${x.is_active ? `<button onclick="toggleCode(${x.id},false)" class="text-red-500 hover:bg-red-50 px-3 py-1 rounded-lg text-xs font-bold transition-colors">REVOKE</button>` : `<button onclick="toggleCode(${x.id},true)" class="text-green-500 hover:bg-green-50 px-3 py-1 rounded-lg text-xs font-bold transition-colors">ACTIVATE</button>`}</td></tr>`).join(''); } catch (e) { console.error(e) } }
-            async function fetchSchoolsManage() { try { const r = await fetch(`${API_BASE}/data/schools`, { headers: { 'Authorization': `Bearer ${token}` } }); const d = await r.json(); document.getElementById('school-list-body').innerHTML = Array.isArray(d) ? d.map(s => `<tr class="hover:bg-gray-50/50 group border-b border-gray-50"><td class="p-4 font-bold text-gray-700">${s.name}</td><td class="p-4"><select onchange="updateSchoolMeta(${s.id},'priority',this.value)" class="clay-input h-8 py-1 px-2 text-xs font-bold uppercase ${s.priority === 'High' ? 'text-rose-500' : 'text-gray-500'}"><option value="Normal" ${s.priority === 'Normal' ? 'selected' : ''}>Normal Priority</option><option value="High" ${s.priority === 'High' ? 'selected' : ''}>High Priority</option><option value="Low" ${s.priority === 'Low' ? 'selected' : ''}>Low Priority</option></select></td><td class="p-4"><select onchange="updateSchoolMeta(${s.id},'status',this.value)" class="clay-input h-8 py-1 px-2 text-xs font-bold uppercase w-full"><option value="Pending" ${!s.status || s.status === 'Pending' ? 'selected' : ''}>Pending</option><option value="Measurements" ${s.status === 'Measurements' ? 'selected' : ''}>Measurements</option><option value="Production" ${s.status === 'Production' ? 'selected' : ''}>Production</option><option value="Delivered" ${s.status === 'Delivered' ? 'selected' : ''}>Delivered</option></select></td><td class="p-4 text-right flex gap-2 justify-end"><button onclick="viewSchoolData('${s.name}')" class="text-xs bg-blue-50 text-blue-600 hover:bg-blue-100 font-bold px-3 py-2 rounded-lg transition-colors shadow-sm">STUDENTS</button><button onclick="viewSchoolDetails('${s.name}', ${s.id})" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold px-3 py-2 rounded-lg transition-colors shadow-sm">DETAILS</button></td></tr>`).join('') : ''; } catch (e) { console.error(e) } }
+            async function fetchSchoolsManage() {
+                try {
+                    const r = await fetch(`${API_BASE}/data/schools`, { headers: { 'Authorization': `Bearer ${token}` } });
+                    const d = await r.json();
+                    document.getElementById('school-list-body').innerHTML = Array.isArray(d) ? d.map(s => `
+                    <tr class="hover:bg-gray-50/50 group border-b border-gray-50">
+                        <td class="p-4 font-bold text-gray-700">${s.name}</td>
+                        <td class="p-4">
+                            <select onchange="updateSchoolMeta(${s.id},'priority',this.value)" class="clay-input h-8 py-1 px-2 text-xs font-bold uppercase ${s.priority === 'High' ? 'text-rose-500' : 'text-gray-500'}">
+                                <option value="Normal" ${s.priority === 'Normal' ? 'selected' : ''}>Normal Priority</option>
+                                <option value="High" ${s.priority === 'High' ? 'selected' : ''}>High Priority</option>
+                                <option value="Low" ${s.priority === 'Low' ? 'selected' : ''}>Low Priority</option>
+                            </select>
+                        </td>
+                        <td class="p-4 flex items-center gap-2">
+                            <select id="status-select-${s.id}" class="clay-input h-8 py-1 px-2 text-xs font-bold uppercase w-full">
+                                <option value="Pending" ${!s.status || s.status === 'Pending' ? 'selected' : ''}>Pending</option>
+                                <option value="Measurements" ${s.status === 'Measurements' ? 'selected' : ''}>Measurements</option>
+                                <option value="Production" ${s.status === 'Production' ? 'selected' : ''}>Production</option>
+                                <option value="Delivered" ${s.status === 'Delivered' ? 'selected' : ''}>Delivered</option>
+                            </select>
+                            <button onclick="updateSchoolStatusManual(${s.id})" class="bg-blue-50 hover:bg-blue-100 text-blue-600 p-2 rounded-lg shadow-sm transition-colors" title="Update Status">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                            </button>
+                        </td>
+                        <td class="p-4 text-right">
+                             <div class="flex gap-2 justify-end">
+                                <button onclick="viewSchoolData('${s.name}')" class="text-xs bg-blue-50 text-blue-600 hover:bg-blue-100 font-bold px-3 py-2 rounded-lg transition-colors shadow-sm">STUDENTS</button>
+                                <button onclick="viewSchoolDetails('${s.name}', ${s.id})" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold px-3 py-2 rounded-lg transition-colors shadow-sm">DETAILS</button>
+                             </div>
+                        </td>
+                    </tr>`).join('') : '';
+                } catch (e) { console.error(e) }
+            }
 
             async function updateSchoolMeta(id, f, v) { await fetch(`${API_BASE}/data/schools/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ [f]: v }) }); }
+
+            async function updateSchoolStatusManual(id) {
+                const val = document.getElementById(`status-select-${id}`).value;
+                try {
+                    const r = await fetch(`${API_BASE}/data/schools/${id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                        body: JSON.stringify({ status: val })
+                    });
+                    if (r.ok) {
+                        alert("✅ Status Updated Successfully!");
+                    } else {
+                        alert("❌ Update Failed");
+                    }
+                } catch (e) { alert("Error: " + e.message); }
+            }
 
             // SCHOOL DETAILS LOGIC
             let currentSchoolDetails = { id: null, name: null };
