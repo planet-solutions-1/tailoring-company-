@@ -73,14 +73,14 @@ app.post('/api/admin/reset-database', async (req, res) => {
     try {
         if (process.env.RAILWAY_ENVIRONMENT || process.env.NODE_ENV === 'production') {
             await db.execute("SET FOREIGN_KEY_CHECKS = 0");
-            const tables = ['patterns', 'students', 'orders', 'complaints', 'access_codes'];
+            const tables = ['patterns', 'students', 'orders', 'complaints', 'access_codes', 'measurements', 'activity_logs'];
             for (const t of tables) await db.execute(`DROP TABLE IF EXISTS ${t}`);
             await db.execute("SET FOREIGN_KEY_CHECKS = 1");
-            res.json({ message: "Database Partial Reset (Patterns/Students). Restarting..." });
+            res.json({ message: "Database FULL Reset (Inc. Measurements). Restarting..." });
             setTimeout(() => process.exit(0), 1000);
         } else {
             db.serialize(() => {
-                const tables = ['patterns', 'students', 'orders', 'complaints', 'access_codes'];
+                const tables = ['patterns', 'students', 'orders', 'complaints', 'access_codes', 'measurements', 'activity_logs'];
                 tables.forEach(t => db.run(`DROP TABLE IF EXISTS ${t}`));
             });
             res.json({ message: "SQLite Database Reset." });
