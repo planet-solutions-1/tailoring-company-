@@ -921,7 +921,7 @@
 
             try {
                 const token = sessionStorage.getItem('token');
-                if (!token) throw new Error("Offline");
+                if (!token) throw new Error("Offline - Please Log In");
 
                 const res = await fetch('/api/data/patterns', {
                     method: 'POST',
@@ -930,28 +930,16 @@
                 });
 
                 if (res.ok) {
-                    alert("Pattern Saved to Cloud with Calculated Quantities!");
+                    alert("Pattern Saved to Cloud!");
                     document.getElementById('patternModal').classList.add('hidden');
                     loadFromCloud();
                 } else {
-                    const err = await res.json();
-                    alert("Failed to save: " + err.error);
+                    const err = await res.text();
+                    alert(`Failed to save (Server ${res.status}): ${err}`);
                 }
             } catch (e) {
                 console.error(e);
-                alert("Offline Mode: Saving locally only (Quantities not synced).");
-                // Fallback to local
-                const currentFilters = JSON.parse(JSON.stringify(filters));
-                const pattern = {
-                    id: Date.now(),
-                    name: name,
-                    filters: currentFilters,
-                    count: getFilteredData().length
-                };
-                patterns.push(pattern);
-                renderModules();
-                saveToLocal();
-                document.getElementById('patternModal').classList.add('hidden');
+                alert("Save Failed: " + e.message);
             }
         }
         // Auto-load the new pattern to allow immediate editing? 
