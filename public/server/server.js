@@ -90,6 +90,64 @@ app.post('/api/admin/reset-database', async (req, res) => {
     }
 });
 
+// FORCE SCHEMA INIT (To Fix Missing Tables)
+app.post('/api/admin/fix-schema', async (req, res) => {
+    const { secret } = req.body;
+    if (secret !== 'force_reset_2025') return res.status(403).json({ error: "Unauthorized" });
+
+    try {
+        const createMeasurements = `CREATE TABLE IF NOT EXISTS measurements (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            student_id INT NOT NULL,
+            data TEXT,
+            remarks TEXT,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            is_absent TINYINT DEFAULT 0,
+            item_quantities TEXT,
+            FOREIGN KEY (student_id) REFERENCES students(id)
+        )`;
+
+        if (process.env.RAILWAY_ENVIRONMENT || process.env.NODE_ENV === 'production') {
+            await db.execute(createMeasurements);
+            // Also ensure others just in case
+            await db.execute(`CREATE TABLE IF NOT EXISTS students (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                school_id INT NOT NULL,
+                roll_no VARCHAR(50),
+                admission_no VARCHAR(50) NOT NULL,
+                name VARCHAR(255) NOT NULL,
+                class VARCHAR(50),
+                section VARCHAR(50),
+                house VARCHAR(50),
+                gender VARCHAR(50),
+                order_status VARCHAR(50) DEFAULT 'Pending',
+                is_active BOOLEAN DEFAULT 1,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                pattern_id INT,
+                production_data TEXT,
+                FOREIGN KEY (school_id) REFERENCES schools(id)
+            )`);
+            res.json({ message: "Schema Fixed: Measurements Table Created." });
+        } else {
+            db.serialize(() => {
+                db.run(`CREATE TABLE IF NOT EXISTS measurements (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    student_id INTEGER NOT NULL,
+                    data TEXT,
+                    remarks TEXT,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    is_absent INTEGER DEFAULT 0,
+                    item_quantities TEXT,
+                    FOREIGN KEY (student_id) REFERENCES students(id)
+                )`);
+            });
+            res.json({ message: "SQLite Schema Fixed." });
+        }
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // 2. Sync Logic (SQL Version - Fixed 413 & Persistence)
 app.post('/api/sync', authenticateToken, async (req, res) => {
     const { students } = req.body;
