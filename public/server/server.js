@@ -301,6 +301,20 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../login.html')); // Adjusted relative path to climb out of public/server
 });
 
+// DEBUG ROUTE (Remove later)
+app.get('/debug-fs', (req, res) => {
+    const rootDir = path.join(__dirname, '../');
+    fs.readdir(rootDir, (err, files) => {
+        res.json({
+            cwd: process.cwd(),
+            __dirname: __dirname,
+            rootDir: rootDir,
+            files: files || [],
+            error: err ? err.message : null
+        });
+    });
+});
+
 // Start Server
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
