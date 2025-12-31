@@ -755,6 +755,7 @@ router.put('/patterns/:id', authenticateToken, requireRole('company'), (req, res
 
 // PUT /api/data/patterns/:id - Update Pattern & Relink Students
 router.put('/patterns/:id', authenticateToken, (req, res) => {
+    console.log(`[PUT] Update Pattern ${req.params.id}`, req.body);
     const patternId = req.params.id;
     const { name, description, consumption, cloth_details, special_req, quantities, student_ids } = req.body;
     // Ensure quantities is stringified if it's an object/array, passing raw string if already string
@@ -766,7 +767,10 @@ router.put('/patterns/:id', authenticateToken, (req, res) => {
             "UPDATE patterns SET name=?, description=?, consumption=?, cloth_details=?, special_req=?, quantities=? WHERE id=?",
             [name, description, consumption, cloth_details, special_req, qtyJson, patternId],
             function (err) {
-                if (err) return res.status(500).json({ error: err.message });
+                if (err) {
+                    console.error("Pattern Update Error:", err);
+                    return res.status(500).json({ error: err.message });
+                }
                 // Note: this.changes might be 0 if values are same, so we don't strictly check for 404 here on success.
 
                 // 2. Relink Students (if student_ids provided)
