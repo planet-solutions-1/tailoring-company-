@@ -482,6 +482,10 @@
                 const resP = await fetch(`/api/data/patterns/${schoolId}`, { headers: { 'Authorization': `Bearer ${token}` } });
                 if (resP.ok) {
                     const cloudPatterns = await resP.json();
+
+                    // MAP to store quantities by Admission No (Unique key)
+                    const qtyMap = {};
+
                     // Map DB Patterns to Local Format
                     patterns = cloudPatterns.map(cp => {
                         let parsedSpecial = {};
@@ -504,6 +508,17 @@
                         let parsedQty = [];
                         try { parsedQty = JSON.parse(cp.quantities || '[]'); } catch (e) { }
 
+                        // Merge Quantities into Map
+                        if (Array.isArray(parsedQty)) {
+                            parsedQty.forEach(pq => {
+                                // pq = { admission_no: "...", name: "...", quantities: { "Qty_Shirt": 2 } }
+                                // Map by Admission No
+                                if (pq.admission_no && pq.quantities) {
+                                    qtyMap[pq.admission_no] = pq.quantities;
+                                }
+                            });
+                        }
+
                         return {
                             id: cp.id,
                             name: cp.name,
@@ -516,7 +531,19 @@
                             count: Array.isArray(parsedQty) ? parsedQty.length : 0
                         };
                     });
+
+                    // 3. MERGE Quantities into Main Data Array
+                    // This ensures "created pattern contains data" when loaded
+                    data = data.map(row => {
+                        const admNo = row['Admission No'];
+                        if (qtyMap[admNo]) {
+                            return { ...row, ...qtyMap[admNo] }; // Overwrite with saved values
+                        }
+                        return row;
+                    });
+
                     renderModules();
+                    renderTable(); // Re-render table with new quantities
                 }
 
             } catch (e) {
