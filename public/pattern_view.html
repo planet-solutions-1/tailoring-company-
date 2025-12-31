@@ -195,11 +195,29 @@
                         placeholder="Any special instructions..."></textarea>
                 </div>
 
+                <!-- Item Summary Display (Dynamic) -->
+                <div>
+                    <label class="block text-xs uppercase text-gray-500 mb-1">Item Quantity Breakdown</label>
+                    <div id="exportItemSummary" class="flex flex-wrap gap-2">
+                        <!-- Items injected by JS -->
+                    </div>
+                </div>
+
                 <div class="text-xs text-gray-500 bg-gray-50 p-2 rounded border border-gray-200">
                     <strong>Filters in this Pattern:</strong> <span id="exportFilters" class="italic"></span>
                 </div>
             </div>
             <div class="px-6 py-4 border-t bg-[#F9F9F7] flex justify-end gap-3">
+                <button onclick="savePatternMetadata()"
+                    class="btn-action bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded text-sm text-white shadow-sm flex items-center gap-1">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                        <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                        <polyline points="7 3 7 8 15 8"></polyline>
+                    </svg>
+                    Save Details
+                </button>
+                <div class="w-px h-6 bg-gray-300 mx-1"></div>
                 <button onclick="confirmExportPDF()"
                     class="btn-outline px-4 py-2 rounded text-sm text-red-600 border-red-200 hover:bg-red-50">Export
                     PDF</button>
@@ -466,8 +484,22 @@
                     const cloudPatterns = await resP.json();
                     // Map DB Patterns to Local Format
                     patterns = cloudPatterns.map(cp => {
-                        let parsedFilters = {};
-                        try { parsedFilters = JSON.parse(cp.special_req || '{}'); } catch (e) { }
+                        let parsedSpecial = {};
+                        try { parsedSpecial = JSON.parse(cp.special_req || '{}'); } catch (e) { }
+
+                        let filters = {};
+                        let notes = "";
+                        let itemSummary = [];
+
+                        // Handle Legacy vs New Format
+                        if (parsedSpecial.filters) {
+                            filters = parsedSpecial.filters;
+                            notes = parsedSpecial.notes || "";
+                            itemSummary = parsedSpecial.item_summary || [];
+                        } else {
+                            // Assume Legacy (Direct Filters)
+                            filters = parsedSpecial;
+                        }
 
                         let parsedQty = [];
                         try { parsedQty = JSON.parse(cp.quantities || '[]'); } catch (e) { }
@@ -475,7 +507,12 @@
                         return {
                             id: cp.id,
                             name: cp.name,
-                            filters: parsedFilters,
+                            description: cp.description || "",
+                            consumption: cp.consumption || 0,
+                            cloth_details: cp.cloth_details || "",
+                            filters: filters,
+                            notes: notes,
+                            saved_item_summary: itemSummary,
                             count: Array.isArray(parsedQty) ? parsedQty.length : 0
                         };
                     });
@@ -850,7 +887,7 @@
                 description: description,
                 consumption: parseFloat(totalConsumption.toFixed(2)), // Aggregate total
                 cloth_details: cloth_details,
-                special_req: JSON.stringify(filters), // Save filters as metadata
+                special_req: JSON.stringify({ filters: filters, notes: "", item_summary: [] }), // New Structure
                 quantities: studentQuantities, // Save detailed calculated snapshot
                 student_ids: studentIds // Link students to this pattern
             };
@@ -1084,19 +1121,217 @@
 
         let currentExportPatternId = null;
 
-        function openExportForPattern(id) {
+        async function openExportForPattern(id) {
             currentExportPatternId = id;
             const p = patterns.find(x => x.id === id);
 
-            document.getElementById('metaPattern').value = p.name;
+            document.getElementById('metaPattern').value = p.name || "";
+            document.getElementById('metaSchool').value = sessionStorage.getItem('schoolName') || ""; // Try to prefill if available
+            document.getElementById('metaDesc').value = p.description || "";
+            document.getElementById('metaConsumption').value = p.consumption || "";
+            document.getElementById('metaClothDetails').value = p.cloth_details || "";
+            document.getElementById('metaSpecialReq').value = p.notes || "";
+
             document.getElementById('exportFilters').textContent = p.name; // Simplified filter text
 
             // Must Ensure Data is Correct (Reload Filters quietly)
-            // Ideally we should cache the data keys, but reloading filters is safest for "what will be exported"
+            // This ensures we calculate totals based on CURRENT data matching filters
             loadPattern(id);
+
+            // Calculate Item Totals based on filtered data
+            const filteredData = getFilteredData();
+            const itemTotals = {};
+            allItems.forEach(item => {
+                let sum = 0;
+                filteredData.forEach(r => {
+                    const val = parseFloat(r[`Qty_${item.name}`]) || 0;
+                    sum += val;
+                });
+                if (sum > 0) itemTotals[item.name] = sum;
+            });
+
+            // Render Item Summary
+            const summaryContainer = document.getElementById('exportItemSummary');
+            if (summaryContainer) {
+                if (Object.keys(itemTotals).length > 0) {
+                    summaryContainer.innerHTML = Object.entries(itemTotals).map(([name, qty]) => `
+                        <div class="flex justify-between items-center bg-gray-50 border border-gray-200 rounded px-2 py-1 text-xs">
+                            <span class="font-medium text-gray-600 truncate mr-2" title="${name}">${name}</span>
+                            <span class="font-bold text-gray-800">${qty}</span>
+                        </div>
+                    `).join('');
+                } else {
+                    summaryContainer.innerHTML = '<span class="text-xs text-gray-400 italic">No item quantities found.</span>';
+                }
+            }
 
             document.getElementById('exportModal').classList.remove('hidden');
             updateExportTotal();
+        }
+
+        async function savePatternMetadata() {
+            if (!currentExportPatternId) return;
+            const p = patterns.find(x => x.id === currentExportPatternId);
+            if (!p) return;
+
+            const newDesc = document.getElementById('metaDesc').value;
+            const newCons = parseFloat(document.getElementById('metaConsumption').value) || 0;
+            const newCloth = document.getElementById('metaClothDetails').value;
+            const newNotes = document.getElementById('metaSpecialReq').value;
+            const newName = document.getElementById('metaPattern').value;
+
+            // Recalculate summary for saving
+            const filteredData = getFilteredData();
+            const itemTotals = {};
+            allItems.forEach(item => {
+                let sum = 0;
+                filteredData.forEach(r => {
+                    const val = parseFloat(r[`Qty_${item.name}`]) || 0;
+                    sum += val;
+                });
+                if (sum > 0) itemTotals[item.name] = sum;
+            });
+            const itemSummaryArray = Object.entries(itemTotals).map(([name, qty]) => ({ name, qty }));
+
+
+            // Construct Payload (Similar to Update Pattern but focuses on metadata)
+            // We need to send everything required by the PUT endpoint
+            // We reuse existing student links/quantities
+
+            // NOTE: We rely on the fact that `p.filters` is up to date.
+            // But wait, `openExportForPattern` called `loadPattern`, so global `filters` matches `p`.
+
+            const payload = {
+                school_id: sessionStorage.getItem('schoolId'),
+                name: newName || p.name,
+                description: newDesc,
+                consumption: newCons,
+                cloth_details: newCloth,
+                special_req: JSON.stringify({
+                    filters: p.filters,
+                    notes: newNotes,
+                    item_summary: itemSummaryArray
+                }),
+                // We must send quantities/students to avoid clearing them or erroring??
+                // The PUT endpoint checks: "if student_ids ... relink". If we omit student_ids, it leaves them unchanged.
+                // It also updates quantities. If we omit, it might set to null or error?
+                // Looking at PUT generic: "quantities=?"
+                // So we should ideally preserve existing quantities.
+                // However, we don't have the raw massive quantity object here easily unless we rebuild it.
+                // OR we just pass the existing `quantities` string/json from the DB?
+                // But `patterns` array doesn't currently store the raw big `quantities` blob.
+                // It only stores derived counts.
+                // Actually, the PUT endpoint is designed for FULL updates.
+                // If we want a lightweight metadata update, we might need to modify the backend or be careful.
+                // Let's look at backend: `const qtyJson = ...`. It updates `quantities=?`.
+                // If we send `undefined`, `qtyJson` is undefined, update sets it to NULL?
+                // NO, `JSON.stringify(undefined)` is undefined.
+                // `UPDATE ... quantities=?` with `undefined` -> SQL error or NULL?
+                // DB driver usually expects a value.
+
+                // Workaround: We really should have a PATCH or specific metadata update.
+                // BUT, since we already implemented PUT to RE-CALCULATE quantities on update...
+                // Maybe we should just re-calculate quantities here too?
+                // Yes, simpler to just treat this as a full update.
+            };
+
+            // Re-calculate full payload logic
+            const currentData = getFilteredData();
+            let totalConsumption = 0;
+            const studentIds = [];
+            const studentQuantities = currentData.map(student => {
+                if (student.id) studentIds.push(student.id);
+                const qties = {};
+                Object.keys(student).forEach(k => {
+                    if (k.startsWith("Qty_")) {
+                        qties[k] = parseFloat(student[k]) || 0;
+                        totalConsumption += qties[k];
+                    }
+                });
+                return {
+                    admission_no: student['Admission No'],
+                    name: student['Student Name'],
+                    quantities: qties
+                };
+            });
+
+            payload.consumption = newCons; // Use manual override if provided? Or calculated?
+            // User typed consumption is usually "Cloth per student". 
+            // Calculated `totalConsumption` above is sum of dress quantities. Distinct things.
+            // DB `consumption` column usage: "Aggergate total" or "Per Unit"?
+            // In `savePattern`: `consumption: parseFloat(totalConsumption.toFixed(2))` (Aggregate)
+            // But in UI modal: "Cloth Consumption (M/Student)" -> used to calc Total Cloth.
+            // This implies a conflict in definition.
+            // If user types "2.5M per student", Total = 2.5 * N.
+            // If `savePattern` saves Sum(Qty), that's different.
+            // Let's stick to what the Export Modal DOES: It calculates Total Cloth based on Input * Count.
+            // So we should save the Input (Per Student) somewhere? 
+            // OR save the Result (Total)?
+            // Creating Pattern -> saves Sum(Qty).
+            // Exporting Pattern -> User typically enters average consumption.
+            // Let's update `consumption` to be the Total Cloth (calculated or manual).
+            // Actually, if we allow editing, we should save what they typed.
+            // Let's assume `consumption` field = Total Cloth.
+            // And we add a new field `consumption_rate`? Or just overload?
+            // Let's just update `consumption` with the raw value from the input FOR NOW.
+            // Wait, the input label says "M/Student".
+            // So `consumption` in DB = M/Student?
+            // In `savePattern`: `consumption: parseFloat(totalConsumption.toFixed(2))` -> This looks like Total.
+            // Detailed Check: `totalConsumption += qties[k]`. Sum of ALL quantities.
+            // So `savePattern` saves TOTAL items? No, quantities are usually integers (1 shirt).
+            // So `totalConsumption` = Total Items count?
+            // The Label is "Cloth Consumption".
+            // Confusing usage.
+            // Let's Standardize: DB `consumption` = Total Estimated Cloth.
+            // In Export Modal, user types "Rate". Total = Rate * Count.
+            // We should save Total to `consumption`.
+            // But we also want to remember the "Rate"?
+            // We can save Rate in `notes` or just back-calculate.
+            // Let's save `consumption` as the TOTAL CLOTH (Rate * Count).
+
+            const rate = newCons; // The input value
+            const totalCloth = (rate * currentData.length).toFixed(2);
+            payload.consumption = parseFloat(totalCloth);
+            payload.quantities = studentQuantities;
+            payload.student_ids = studentIds;
+
+            try {
+                const token = sessionStorage.getItem('token');
+                if (!token) throw new Error("Offline");
+
+                const res = await fetch(`/api/data/patterns/${currentExportPatternId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    alert("Pattern Details Saved!");
+                    // Update Local State
+                    p.description = newDesc;
+                    p.consumption = parseFloat(totalCloth);
+                    p.cloth_details = newCloth;
+                    p.notes = newNotes;
+                    p.saved_item_summary = itemSummaryArray; // Update local summary
+                    // Update filters wrapped in notes? No, filters separate.
+
+                    // We need to reload to be sure or just update local
+                    loadFromCloud(); // Safest
+                } else {
+                    const err = await res.json();
+                    alert("Failed to save: " + err.error);
+                }
+            } catch (e) {
+                console.error(e);
+                alert("Offline: Saved locally.");
+                // Local update
+                p.description = newDesc;
+                p.consumption = parseFloat((newCons * currentData.length).toFixed(2));
+                p.cloth_details = newCloth;
+                p.notes = newNotes;
+                p.saved_item_summary = itemSummaryArray;
+                saveToLocal();
+            }
         }
 
         function closeExportModal() {
