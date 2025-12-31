@@ -74,6 +74,12 @@ if (process.env.RAILWAY_ENVIRONMENT || process.env.NODE_ENV === 'production') {
         execute: async (sql) => {
             if (!promisePool) throw new Error("Database not connected");
             return await promisePool.execute(sql);
+        },
+        serialize: (callback) => {
+            // MySQL2 Pool is async/parallel by default. 
+            // 'serialize' is an SQLite concept for sequencing.
+            // For this app, simply executing the callback immediately is sufficient/compatible.
+            if (callback) callback();
         }
     };
 
