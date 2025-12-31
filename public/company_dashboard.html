@@ -1359,7 +1359,9 @@
                     });
 
                     if (r.ok) {
-                        alert("✅ Status Updated Successfully!");
+                        const res = await r.json();
+                        const debugInfo = res.debug ? `\n(Affected: ${res.debug.affected}, Changed: ${res.debug.changed})` : '';
+                        alert("✅ Status Updated Successfully!" + debugInfo);
                     } else {
                         const errText = await r.text();
                         try {

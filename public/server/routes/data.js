@@ -89,13 +89,21 @@ router.put('/schools/:id', authenticateToken, requireRole('company'), (req, res)
     const sql = "UPDATE schools SET priority = COALESCE(?, priority), status = COALESCE(?, status) WHERE id = ?";
 
     // Use db.execute if available (MySQL), otherwise db.run (SQLite)
+    // Use db.execute if available (MySQL), otherwise db.run (SQLite)
     if (db.execute) {
         db.execute(sql, [priority, status, id])
-            .then(() => {
+            .then(([result]) => {
+                const affected = result ? result.affectedRows : 'N/A';
+                const changed = result ? result.changedRows : 'N/A';
+                console.log(`[UPDATE DEBUG] ID: ${id}, Prio: ${priority}, Status: ${status} -> Affected: ${affected}, Changed: ${changed}`);
+
                 if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'UPDATE_SCHOOL', `Updated School #${id} Priority/Status`);
-                res.json({ message: "School Updated" });
+                res.json({ message: "School Updated", debug: { affected, changed } });
             })
-            .catch(err => res.status(500).json({ error: err.message }));
+            .catch(err => {
+                console.error("[UPDATE ERROR]", err);
+                res.status(500).json({ error: err.message });
+            });
     } else {
         db.run(sql, [priority, status, id], function (err) {
             if (err) return res.status(500).json({ error: err.message });
