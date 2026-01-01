@@ -1330,6 +1330,7 @@
                             <select id="status-select-${s.id}" class="clay-input h-8 py-1 px-2 text-xs font-bold uppercase w-full">
                                 <option value="Pending" ${!s.status || s.status === 'Pending' ? 'selected' : ''}>Pending</option>
                                 <option value="Measurements" ${s.status === 'Measurements' ? 'selected' : ''}>Measurements</option>
+                                <option value="Processing" ${s.status === 'Processing' ? 'selected' : ''}>Processing</option>
                                 <option value="Production" ${s.status === 'Production' ? 'selected' : ''}>Production</option>
                                 <option value="Delivered" ${s.status === 'Delivered' ? 'selected' : ''}>Delivered</option>
                             </select>
