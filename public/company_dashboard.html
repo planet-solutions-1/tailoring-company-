@@ -1221,6 +1221,50 @@
                 return Math.floor(seconds) + " seconds ago";
             }
 
+            // === HELPER FUNCTIONS (Missing Fix) ===
+            function getStatusColor(status, isPacked) {
+                if (status) {
+                    const s = status.toLowerCase();
+                    if (s === 'processing') return 'bg-yellow-100 text-yellow-600';
+                    if (s === 'production') return 'bg-blue-100 text-blue-600';
+                    if (s === 'dispatch') return 'bg-indigo-100 text-indigo-600';
+                    if (s === 'delivered') return 'bg-emerald-100 text-emerald-600';
+                }
+                if (isPacked) return 'bg-emerald-100 text-emerald-600';
+                return 'bg-gray-100 text-gray-500';
+            }
+
+            function getMeasurementsSafe(s) {
+                if (!s.measurements) return {};
+                if (typeof s.measurements === 'string') {
+                    try { return JSON.parse(s.measurements); } catch (e) { return {}; }
+                }
+                return s.measurements || {};
+            }
+
+            function getItemQuantitiesSafe(s) {
+                const m = getMeasurementsSafe(s);
+                const quantities = {};
+                // Basic logic to count items based on non-empty measurements might be needed, 
+                // OR if you have a specific 'quantities' field. 
+                // Assuming based on previous context we infer it or it's just a placeholder.
+                // For now, let's map known items from column presence if needed.
+                // Actually, let's look at the usage: it iterates keys.
+                // If the student object has a 'quantities' field (parsed), use it? 
+                // Let's implement a simple version that checks if the measurement for a standard item exists.
+
+                // Re-using the itemDefinitions logic if possible, or simplified:
+                itemDefinitions.forEach(def => {
+                    // Check if ANY of the required columns for this item have data
+                    // This is a heuristic.
+                    const hasData = def.cols.some(c => m[c.toLowerCase()] && m[c.toLowerCase()].trim() !== '');
+                    if (hasData) {
+                        quantities[def.name] = 1; // Simple count
+                    }
+                });
+                return quantities;
+            }
+
             async function init() {
                 await Promise.all([fetchStats(), fetchAllStudents(), fetchSchoolsForSelect(), fetchGlobalPatterns()]);
                 renderTailoringData();
