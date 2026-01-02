@@ -725,238 +725,7 @@
                 </div>
             </div>
         </div>
-        <div id="view-data" class="hidden space-y-6 fade-in">
-            <!-- Header with Exports -->
-            <div class="flex flex-col md:flex-row justify-between items-end gap-4">
-                <div>
-                    <h3 class="text-2xl font-bold text-gray-700">Tailoring Data</h3>
-                    <p class="text-gray-400 text-sm mt-1">Manage measurements and student data.</p>
-                </div>
-                <div class="flex gap-4">
-                    <button onclick="downloadPDF()"
-                        class="clay-btn px-4 py-2 text-xs font-bold text-rose-500 uppercase flex items-center gap-2">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                            <polyline points="14 2 14 8 20 8"></polyline>
-                            <line x1="16" y1="13" x2="8" y2="13"></line>
-                            <line x1="16" y1="17" x2="8" y2="17"></line>
-                            <polyline points="10 9 9 9 8 9"></polyline>
-                        </svg>
-                        Export PDF
-                    </button>
-                    <button onclick="downloadExcel()"
-                        class="clay-btn px-4 py-2 text-xs font-bold text-emerald-500 uppercase flex items-center gap-2">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            stroke-width="2">
-                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                            <line x1="16" y1="8" x2="8" y2="8"></line>
-                            <line x1="16" y1="16" x2="8" y2="16"></line>
-                            <line x1="10" y1="12" x2="3" y2="12"></line>
-                        </svg>
-                        Export Excel
-                    </button>
-                </div>
-            </div>
 
-            <!-- Filters Section -->
-            <div
-                class="clay-card p-6 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-6 items-end sticky top-0 z-20 bg-white/90 backdrop-blur-xl border border-blue-50 shadow-xl rounded-3xl mb-8">
-
-                <!-- Filter: Item Type (Span 2) -->
-                <div class="col-span-2 md:col-span-2">
-                    <label class="text-xs font-bold text-gray-500 uppercase ml-2 mb-2 block tracking-wider">Item
-                        Type</label>
-                    <div class="relative group">
-                        <select id="filter-item" onchange="renderGlobalTable()"
-                            class="clay-input w-full h-12 pl-5 pr-10 text-sm font-bold text-gray-700 bg-gray-50 focus:bg-white transition-all appearance-none cursor-pointer shadow-inner hover:shadow-md border border-gray-100 rounded-2xl focus:ring-2 focus:ring-blue-200 outline-none">
-                            <option value="all">-- Select Item --</option>
-                        </select>
-                        <div
-                            class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-400 group-hover:text-blue-500 transition-colors">
-                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M19 9l-7 7-7-7"></path>
-                            </svg>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Filter: Pattern -->
-                <div class="col-span-2 md:col-span-2">
-                    <label
-                        class="text-xs font-bold text-gray-500 uppercase ml-2 mb-2 block tracking-wider">Pattern</label>
-                    <div class="relative group">
-                        <select id="filter-pattern" onchange="renderGlobalTable()"
-                            class="clay-input w-full h-12 pl-5 pr-10 text-sm font-bold text-gray-700 bg-gray-50 focus:bg-white transition-all appearance-none cursor-pointer shadow-inner hover:shadow-md border border-gray-100 rounded-2xl focus:ring-2 focus:ring-blue-200 outline-none">
-                            <option value="all">All Patterns</option>
-                        </select>
-                        <div
-                            class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-400 group-hover:text-blue-500 transition-colors">
-                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M19 9l-7 7-7-7"></path>
-                            </svg>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Filter: Class -->
-                <div class="col-span-1">
-                    <label
-                        class="text-xs font-bold text-gray-500 uppercase ml-2 mb-2 block tracking-wider">Class</label>
-                    <input type="text" id="filter-class" list="list-class" onchange="renderGlobalTable()"
-                        class="clay-input w-full h-12 px-5 text-sm font-bold text-gray-700 bg-gray-50 focus:bg-white transition-all shadow-inner hover:shadow-md border border-gray-100 placeholder-gray-400 rounded-2xl focus:ring-2 focus:ring-blue-200 outline-none"
-                        placeholder="All">
-                    <datalist id="list-class"></datalist>
-                </div>
-
-                <!-- Filter: Sec -->
-                <div class="col-span-1">
-                    <label class="text-xs font-bold text-gray-500 uppercase ml-2 mb-2 block tracking-wider">Sec</label>
-                    <input type="text" id="filter-section" list="list-section" onchange="renderGlobalTable()"
-                        class="clay-input w-full h-12 px-5 text-sm font-bold text-gray-700 bg-gray-50 focus:bg-white transition-all shadow-inner hover:shadow-md border border-gray-100 placeholder-gray-400 rounded-2xl focus:ring-2 focus:ring-blue-200 outline-none"
-                        placeholder="All">
-                    <datalist id="list-section"></datalist>
-                </div>
-
-                <!-- Filter: House -->
-                <div class="col-span-1">
-                    <label
-                        class="text-xs font-bold text-gray-500 uppercase ml-2 mb-2 block tracking-wider">House</label>
-                    <input type="text" id="filter-house" list="list-house" onchange="renderGlobalTable()"
-                        class="clay-input w-full h-12 px-5 text-sm font-bold text-gray-700 bg-gray-50 focus:bg-white transition-all shadow-inner hover:shadow-md border border-gray-100 placeholder-gray-400 rounded-2xl focus:ring-2 focus:ring-blue-200 outline-none"
-                        placeholder="All">
-                    <datalist id="list-house"></datalist>
-                </div>
-
-                <!-- Filter: School (New) -->
-                <div class="col-span-2 md:col-span-2">
-                    <label
-                        class="text-xs font-bold text-gray-500 uppercase ml-2 mb-2 block tracking-wider">School</label>
-                    <div class="relative group">
-                        <select id="filter-school" onchange="renderGlobalTable()"
-                            class="clay-input w-full h-12 pl-5 pr-10 text-sm font-bold text-gray-700 bg-gray-50 focus:bg-white transition-all appearance-none cursor-pointer shadow-inner hover:shadow-md border border-gray-100 rounded-2xl focus:ring-2 focus:ring-blue-200 outline-none">
-                            <option value="all">All Schools</option>
-                        </select>
-                        <div
-                            class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-400 group-hover:text-blue-500 transition-colors">
-                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M19 9l-7 7-7-7"></path>
-                            </svg>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Filter: Gender -->
-                <div class="col-span-1">
-                    <label
-                        class="text-xs font-bold text-gray-500 uppercase ml-2 mb-2 block tracking-wider">Gender</label>
-                    <div class="relative group">
-                        <select id="filter-gender" onchange="renderGlobalTable()"
-                            class="clay-input w-full h-12 pl-5 pr-10 text-sm font-bold text-gray-700 bg-gray-50 focus:bg-white transition-all appearance-none cursor-pointer shadow-inner hover:shadow-md border border-gray-100 rounded-2xl focus:ring-2 focus:ring-blue-200 outline-none">
-                            <option value="">All</option>
-                            <option value="Male">Male</option>
-                            <option value="Female">Female</option>
-                        </select>
-                        <div
-                            class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-400 group-hover:text-blue-500 transition-colors">
-                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M19 9l-7 7-7-7"></path>
-                            </svg>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Filter: Priority -->
-                <div class="col-span-1">
-                    <label
-                        class="text-xs font-bold text-gray-500 uppercase ml-2 mb-2 block tracking-wider">Priority</label>
-                    <div class="relative group">
-                        <select id="filter-priority" onchange="renderGlobalTable()"
-                            class="clay-input w-full h-12 pl-5 pr-10 text-sm font-bold text-gray-700 bg-gray-50 focus:bg-white transition-all appearance-none cursor-pointer shadow-inner hover:shadow-md border border-gray-100 rounded-2xl focus:ring-2 focus:ring-blue-200 outline-none">
-                            <option value="all">All</option>
-                            <option value="High">High</option>
-                            <option value="Normal">Normal</option>
-                            <option value="Low">Low</option>
-                        </select>
-                        <div
-                            class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-400 group-hover:text-blue-500 transition-colors">
-                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M19 9l-7 7-7-7"></path>
-                            </svg>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Filter: Status -->
-                <div class="col-span-1">
-                    <label
-                        class="text-xs font-bold text-gray-500 uppercase ml-2 mb-2 block tracking-wider">Status</label>
-                    <div class="relative group">
-                        <select id="filter-packed" onchange="renderGlobalTable()"
-                            class="clay-input w-full h-12 pl-5 pr-10 text-sm font-bold text-gray-700 bg-gray-50 focus:bg-white transition-all appearance-none cursor-pointer shadow-inner hover:shadow-md border border-gray-100 rounded-2xl focus:ring-2 focus:ring-blue-200 outline-none">
-                            <option value="all">All</option>
-                            <option value="packed">Packed</option>
-                            <option value="pending">Pending</option>
-                        </select>
-                        <div
-                            class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-gray-400 group-hover:text-blue-500 transition-colors">
-                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M19 9l-7 7-7-7"></path>
-                            </svg>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Search -->
-                <div class="col-span-2 md:col-span-3 lg:col-span-4 xl:col-span-2">
-                    <label
-                        class="text-xs font-bold text-gray-500 uppercase ml-2 mb-2 block tracking-wider">Search</label>
-                    <div class="relative group">
-                        <input type="text" id="date-search" onkeyup="renderGlobalTable()"
-                            placeholder="Name / Roll No..."
-                            class="clay-input w-full h-12 pl-12 pr-4 text-sm font-bold text-gray-700 bg-gray-50 focus:bg-white transition-all shadow-inner hover:shadow-md border border-gray-100 placeholder-gray-400 rounded-2xl focus:ring-2 focus:ring-blue-200 outline-none">
-                        <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                            <svg class="h-5 w-5 text-gray-400 group-hover:text-blue-500 transition-colors" fill="none"
-                                stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                            </svg>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Floating Table Container -->
-            <!-- Removed 'clay-card' wrapper to let rows float individually -->
-            <div class="overflow-x-auto h-[650px] custom-scrollbar -mx-4 px-4">
-                <table class="w-full text-left border-separate border-spacing-y-4 min-w-[1000px] whitespace-nowrap">
-                    <thead class="sticky top-0 z-10 text-xs font-extrabold text-gray-400 uppercase tracking-widest">
-                        <tr>
-                            <th class="px-6 py-4 border-b-2 border-transparent">School</th>
-                            <th class="px-6 py-4 border-b-2 border-transparent">Student</th>
-                            <th class="px-6 py-4 border-b-2 border-transparent">Class</th>
-                            <th class="px-6 py-4 border-b-2 border-transparent">Pattern</th>
-                            <!-- Dynamic Header -->
-                            <th class="px-6 py-4 text-center text-orange-400 border-b-2 border-transparent"
-                                id="th-measurements">
-                                Measurements</th>
-                            <th class="px-6 py-4 text-center border-b-2 border-transparent">Status</th>
-                        </tr>
-                        <tr id="th-sub-row" class="hidden">
-                            <!-- Populated by JS -->
-                        </tr>
-                    </thead>
-                    <tbody id="global-table-body" class="text-sm"></tbody>
-                </table>
-            </div>
-            <p class="text-right text-xs text-gray-400 mt-2 font-medium" id="record-count">Showing 0 records</p>
-        </div>
 
         <!-- 3. USER MANAGEMENT -->
         <div id="view-users" class="hidden fade-in max-w-5xl mx-auto space-y-8">
@@ -1458,7 +1227,7 @@
                 renderCharts();
                 populateDynamicFilters();
                 // Smart Insights
-                renderLeaderboard();
+                // renderLeaderboard(); // Removed: Function definition missing
                 fetchActivityLogs();
             }
             function switchTab(id) {
@@ -1509,7 +1278,7 @@
                         </td>
                         <td class="p-4 text-right">
                              <div class="flex gap-2 justify-end">
-                                <button onclick="viewSchoolData('${s.name}')" class="text-xs bg-blue-50 text-blue-600 hover:bg-blue-100 font-bold px-3 py-2 rounded-lg transition-colors shadow-sm">STUDENTS</button>
+                                <button onclick="viewSchoolData('${s.name}', ${s.id})" class="text-xs bg-blue-50 text-blue-600 hover:bg-blue-100 font-bold px-3 py-2 rounded-lg transition-colors shadow-sm">STUDENTS</button>
                                 <button onclick="viewSchoolDetails('${s.name}', ${s.id})" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold px-3 py-2 rounded-lg transition-colors shadow-sm">DETAILS</button>
                              </div>
                         </td>
@@ -1548,13 +1317,25 @@
             let currentSchoolDetails = { id: null, name: null };
 
             // NEW: Link from Schools List to Data View
-            async function viewSchoolData(schoolName) {
+            async function viewSchoolData(schoolName, schoolId) {
                 switchTab('data');
                 // Ensure options populated
                 if (document.getElementById('filter-school').options.length <= 1) populateDynamicFilters();
 
-                document.getElementById('filter-school').value = schoolName;
-                renderGlobalTable();
+                // If ID provided, use new Detail View directly
+                if (schoolId) {
+                    openSchoolDetails(schoolId);
+                } else {
+                    // Fallback for name-only (Legacy support, try to find ID)
+                    const s = globalSchools.find(x => x.name === schoolName);
+                    if (s) openSchoolDetails(s.id);
+                    else {
+                        document.getElementById('filter-school').value = schoolName;
+                        // renderGlobalTable(); // REMOVED OBSOLETE CALL
+                        renderTailoringData(); // Show grid filtered? No, grid doesn't filter by school input yet. 
+                        // Just show grid. User can click.
+                    }
+                }
             }
 
             // MODIFIED: School Details now focuses on Settings/Patterns
@@ -1732,7 +1513,7 @@
 
             function openSchoolDetails(id) {
                 tdCurrentSchoolId = id;
-                const s = globalSchools.find(x => x.id === id);
+                const s = globalSchools.find(x => x.id == id);
                 if (!s) return;
 
                 document.getElementById('td-level-1').classList.add('hidden');
@@ -1780,7 +1561,7 @@
                 if (!tdCurrentSchoolId) return;
 
                 // 1. Get Base Data
-                let data = globalStudents.filter(st => st.school_id === tdCurrentSchoolId);
+                let data = globalStudents.filter(st => st.school_id == tdCurrentSchoolId);
 
                 // 2. Apply Filters
                 const cls = document.getElementById('td-filter-class').value;
