@@ -1520,175 +1520,225 @@
                 if (currentSchool && schools.includes(currentSchool)) schoolSelect.value = currentSchool;
 
             }
-            // REMOVED handleItemFilter - now handled in renderGlobalTable directly
-            function advancedMatch(r, f) { if (!f || f === 'all') return true; if (r == null || r === "") return false; const rv = String(r).trim().toUpperCase(), fv = f.toUpperCase(); if (fv.includes(',')) return fv.split(',').map(p => p.trim()).includes(rv); if (fv.includes('-')) { const p = fv.split('-').map(x => x.trim()); if (p.length === 2) { const [mn, mx] = p; if (!isNaN(mn) && !isNaN(mx)) { const n = parseFloat(r); return !isNaN(n) && n >= parseFloat(mn) && n <= parseFloat(mx) } if (mn.length === 1 && mx.length === 1 && rv.length === 1) return rv >= mn && rv <= mx } } return rv === fv; }
+            // === NEW TAILORING DATA LOGIC (School-Centric) ===
+            let tdCurrentSchoolId = null;
+            let tdCurrentTab = 'students';
 
-            function getMeasurementsSafe(s) {
-                if (typeof s.measurements === 'string') { try { return JSON.parse(s.measurements); } catch (e) { return {}; } }
-                return s.measurements || {};
-            }
+            function renderTailoringData() {
+                document.getElementById('td-level-1').classList.remove('hidden');
+                document.getElementById('td-level-2').classList.add('hidden');
 
-            function getItemQuantitiesSafe(s) {
-                if (typeof s.item_quantities === 'string') { try { return JSON.parse(s.item_quantities); } catch (e) { return {}; } }
-                return s.item_quantities || {};
-            }
+                const grid = document.getElementById('td-school-grid');
+                grid.innerHTML = globalSchools.map(s => {
+                    // Calc stats
+                    const schoolStudents = globalStudents.filter(st => st.school_id === s.id);
+                    const count = schoolStudents.length;
+                    const takingMeas = schoolStudents.filter(st => st.measurements && Object.keys(st.measurements).length > 0).length; // Rough check
 
-            function renderGlobalTable() {
-                const pr = document.getElementById('filter-priority').value, pa = document.getElementById('filter-packed').value, cl = document.getElementById('filter-class').value, sc = document.getElementById('filter-section').value, ho = document.getElementById('filter-house').value, ge = document.getElementById('filter-gender').value, pt = document.getElementById('filter-pattern').value, it = document.getElementById('filter-item').value, sch = document.getElementById('filter-school').value, se = document.getElementById('date-search').value.toLowerCase();
-
-                // 1. Filter
-                const f = globalStudents.filter(s => {
-                    const m = getMeasurementsSafe(s);
-                    if (pr !== 'all' && s.school_priority !== pr) return false;
-                    if (pa === 'packed' && !s.is_packed) return false;
-                    if (pa === 'pending' && s.is_packed) return false;
-                    if (sch !== 'all' && s.school_name !== sch) return false; // School Filter
-                    if (!advancedMatch(s.class, cl)) return false;
-                    if (!advancedMatch(s.section, sc)) return false;
-                    if (!advancedMatch(s.house, ho)) return false;
-                    if (ge && s.gender !== ge) return false;
-                    if (pt !== 'all' && s.pattern_id != pt) return false;
-                    if (se && !(s.name || '').toLowerCase().includes(se) && !(s.roll_no || '').toLowerCase().includes(se) && !(s.school_name || '').toLowerCase().includes(se)) return false;
-                    if (it !== 'all') {
-                        if (it !== 'all') {
-                            // Only filter if we have explicit gender types in definitions
-                            const i = itemDefinitions.find(x => x.name === it);
-                            if (i) {
-                                if ((i.type === 'Male' && s.gender === 'Female') || (i.type === 'Female' && s.gender === 'Male')) return false;
-                            }
-                        }
-                    }
-                    return true;
-                });
-
-                // 2. Setup Columns for Measurement
-                let showCols = [];
-                const measHeader = document.getElementById('th-measurements');
-                const subRow = document.getElementById('th-sub-row');
-
-                if (it !== 'all') {
-                    // Look up definition for columns
-                    const def = itemDefinitions.find(x => x.name === it);
-                    if (def) {
-                        showCols = def.cols;
-                        measHeader.innerText = def.name;
-                        measHeader.colSpan = showCols.length + 1; // +1 for Quantity
-                    } else {
-                        // If dynamic item has no definition, default to empty or standard
-                        measHeader.innerText = it;
-                        measHeader.colSpan = 1; // Just Quantity?
-                    }
-                } else {
-                    measHeader.innerText = "Measurements (Select Item)";
-                    measHeader.colSpan = 1;
-                }
-
-                // 3. Render sub-headers
-                if (it !== 'all') {
-                    subRow.classList.remove('hidden');
-                    subRow.innerHTML = `
-                    <th colspan="4" class="bg-gray-100/30 border-r border-white/60"></th>
-                    ${showCols.map(c => `<th class="p-2 text-center border-x border-white/60 text-orange-600 bg-orange-50/50 text-xs font-bold">${c}</th>`).join('')}
-                    <th class="p-2 text-center border-x border-white/60 text-purple-600 bg-purple-50/50 text-xs font-bold">Qty</th>
-                    <th></th>
-                `;
-                } else {
-                    subRow.classList.add('hidden');
-                }
-
-                // 4. Render Body
-                document.getElementById('record-count').innerText = `Showing ${f.length} records`;
-                document.getElementById('global-table-body').innerHTML = f.map(s => {
-                    const m = getMeasurementsSafe(s);
-                    const iq = getItemQuantitiesSafe(s);
-                    let measCells = '';
-
-                    if (it !== 'all') {
-                        const qty = iq[it] || 0;
-                        // Measure Columns
-                        const mCols = showCols.map(k => `<td class="p-4 text-center border-b border-stone-100 font-mono font-bold text-stone-700 bg-orange-50/20">${m[k.toLowerCase()] || '-'}</td>`).join('');
-                        // Quantity Column
-                        const qCol = `<td class="p-4 text-center border-b border-stone-100 font-mono font-bold text-purple-700 bg-purple-50/20">${qty}</td>`;
-                        measCells = mCols + qCol;
-                    } else {
-                        measCells = `<td class="p-4 border-b border-stone-100 text-xs italic text-stone-400">Select Item...</td>`;
-                    }
-
-                    return `<tr class="group transition-all duration-300 hover:scale-[1.01] hover:-translate-y-1 relative" style="filter: drop-shadow(0 4px 6px rgba(0,0,0,0.05));">
-                    <td class="px-6 py-5 bg-white rounded-l-3xl border-y border-l border-white/50 group-hover:border-blue-100 transition-colors">
-                        <div class="font-extrabold text-gray-700 text-sm tracking-tight">${s.school_name}</div>
-                        <div class="text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-1">${s.school_priority || 'Normal'}</div>
-                    </td>
-                    <td class="px-6 py-5 bg-white border-y border-white/50 group-hover:border-blue-100 transition-colors">
-                        <div class="font-bold text-gray-800 text-sm">${s.name}</div>
-                        <div class="text-[10px] text-gray-400 font-medium uppercase tracking-wider mt-0.5">Roll: <span class="font-bold text-gray-500">${s.roll_no || '-'}</span></div>
-                    </td>
-                    <td class="px-6 py-5 bg-white border-y border-white/50 group-hover:border-blue-100 transition-colors">
-                        <div class="text-sm font-bold text-gray-600">Class ${s.class || '-'} ${s.section || ''}</div>
-                        <div class="text-[10px] text-gray-400 uppercase font-bold mt-1 flex items-center gap-2">
-                            ${s.house ? `<span class="px-2 py-0.5 rounded-md bg-gray-100 text-gray-500 border border-gray-200">${s.house}</span>` : ''}
-                            ${s.gender ? `<span class="opacity-70 flex items-center gap-1">${s.gender === 'Male' ? '💙' : '🩷'} ${s.gender}</span>` : ''}
-                        </div>
-                    </td>
-                    <td class="px-6 py-5 bg-white border-y border-white/50 group-hover:border-blue-100 transition-colors text-xs font-mono text-gray-500">
-                        ${s.pattern_name ? `<span class="bg-blue-50 text-blue-600 px-3 py-1.5 rounded-xl font-bold border border-blue-100 shadow-sm text-[10px] uppercase tracking-wider block w-fit">${s.pattern_name}</span>` : '<span class="text-gray-300">-</span>'}
-                    </td>
-                    ${measCells}
-                    <td class="px-6 py-5 bg-white rounded-r-3xl border-y border-r border-white/50 group-hover:border-blue-100 transition-colors text-center">
-                        <span class="px-4 py-2 rounded-xl text-[10px] font-extrabold uppercase tracking-wide shadow-inner ${getStatusColor(s.order_status, s.is_packed)}">
-                            ${s.order_status || (s.is_packed ? 'PACKED' : 'PENDING')}
-                        </span>
-                    </td>
-                </tr>`;
+                    return `
+                     <div onclick="openSchoolDetails(${s.id})" class="clay-card p-6 flex flex-col cursor-pointer hover:scale-[1.03] transition-transform group">
+                         <div class="flex justify-between items-start mb-6">
+                              <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-extrabold text-2xl shadow-lg shadow-blue-200">
+                                  ${s.name.charAt(0)}
+                              </div>
+                              <span class="px-3 py-1 rounded-lg bg-gray-50 text-gray-400 text-[10px] font-bold uppercase tracking-wider group-hover:bg-blue-50 group-hover:text-blue-500 transition-colors">View Data</span>
+                         </div>
+                         <h3 class="text-xl font-bold text-gray-800 mb-1 line-clamp-1" title="${s.name}">${s.name}</h3>
+                         <p class="text-xs text-gray-400 font-bold uppercase tracking-wider mb-6">${s.priority} Priority</p>
+                         
+                         <div class="mt-auto grid grid-cols-2 gap-4">
+                              <div class="bg-gray-50 rounded-xl p-3">
+                                  <p class="text-[10px] text-gray-400 uppercase font-bold">Students</p>
+                                  <p class="text-lg font-extrabold text-gray-700">${count}</p>
+                              </div>
+                              <div class="bg-gray-50 rounded-xl p-3">
+                                  <p class="text-[10px] text-gray-400 uppercase font-bold">Meas. Taken</p>
+                                  <p class="text-lg font-extrabold text-emerald-500">${takingMeas}</p>
+                              </div>
+                         </div>
+                     </div>
+                     `;
                 }).join('');
-
-                // Store filtered data & cols for export
-                window.filteredDataForExport = f;
-                window.currentCols = showCols;
             }
 
-            function getStatusColor(status, isPacked) {
-                if (!status) return isPacked ? 'bg-emerald-100 text-emerald-600 shadow-emerald-200' : 'bg-orange-100 text-orange-600 shadow-orange-200';
-                const s = status.toLowerCase();
-                if (s.includes('dispatch') || s.includes('despatch')) return 'bg-indigo-100 text-indigo-600 shadow-indigo-200';
-                if (s.includes('deliver')) return 'bg-emerald-100 text-emerald-600 shadow-emerald-200';
-                if (s.includes('product')) return 'bg-purple-100 text-purple-600 shadow-purple-200';
-                if (s.includes('process')) return 'bg-amber-100 text-amber-600 shadow-amber-200';
-                if (s.includes('measure')) return 'bg-blue-100 text-blue-600 shadow-blue-200';
-                return 'bg-gray-100 text-gray-600 shadow-gray-200';
+            function openSchoolDetails(id) {
+                tdCurrentSchoolId = id;
+                const s = globalSchools.find(x => x.id === id);
+                if (!s) return;
+
+                document.getElementById('td-level-1').classList.add('hidden');
+                document.getElementById('td-level-2').classList.remove('hidden');
+                document.getElementById('td-school-name').innerText = s.name;
+                document.getElementById('td-school-badge').innerText = s.status || 'Pending';
+                document.getElementById('td-school-badge').className = `px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${getStatusColor(s.status, false)}`;
+
+                // Reset Filters
+                const schoolStudents = globalStudents.filter(st => st.school_id === id);
+                const classes = [...new Set(schoolStudents.map(st => st.class).filter(Boolean))].sort();
+                const sections = [...new Set(schoolStudents.map(st => st.section).filter(Boolean))].sort();
+
+                document.getElementById('td-filter-class').innerHTML = '<option value="all">All Classes</option>' + classes.map(c => `<option value="${c}">${c}</option>`).join('');
+                document.getElementById('td-filter-section').innerHTML = '<option value="all">All Sections</option>' + sections.map(c => `<option value="${c}">${c}</option>`).join('');
+
+                switchTdTab('students'); // Default tab
             }
 
-            function renderLeaderboard() {
-                // Calculate Stats per school
-                const stats = {};
-                globalStudents.forEach(s => {
-                    if (!stats[s.school_name]) stats[s.school_name] = { total: 0, packed: 0 };
-                    stats[s.school_name].total++;
-                    if (s.is_packed) stats[s.school_name].packed++;
+            function closeSchoolDetails() {
+                tdCurrentSchoolId = null;
+                renderTailoringData(); // Re-render grid to update stats if changed (though unlikely here)
+            }
+
+            function switchTdTab(tab) {
+                tdCurrentTab = tab;
+                // UI Toggle
+                ['students', 'measurements', 'patterns-boys', 'patterns-girls'].forEach(t => {
+                    const btn = document.getElementById(`tab-td-${t}`);
+                    const view = document.getElementById(`td-view-${t}`);
+                    if (t === tab) {
+                        btn.classList.add('text-blue-600', 'border-blue-500', 'bg-gray-50');
+                        btn.classList.remove('text-gray-500', 'border-transparent');
+                        view.classList.remove('hidden');
+                    } else {
+                        btn.classList.remove('text-blue-600', 'border-blue-500', 'bg-gray-50');
+                        btn.classList.add('text-gray-500', 'border-transparent');
+                        view.classList.add('hidden');
+                    }
+                });
+                renderTdCurrentTab();
+            }
+
+            function renderTdCurrentTab() {
+                if (!tdCurrentSchoolId) return;
+
+                // 1. Get Base Data
+                let data = globalStudents.filter(st => st.school_id === tdCurrentSchoolId);
+
+                // 2. Apply Filters
+                const cls = document.getElementById('td-filter-class').value;
+                const sec = document.getElementById('td-filter-section').value;
+
+                if (cls !== 'all') data = data.filter(st => st.class == cls);
+                if (sec !== 'all') data = data.filter(st => st.section == sec);
+
+                // 3. Render Specific Tab
+                if (tdCurrentTab === 'students') renderTdStudents(data);
+                if (tdCurrentTab === 'measurements') renderTdMeasurements(data);
+                if (tdCurrentTab === 'patterns-boys') renderTdPatterns(data, 'Male');
+                if (tdCurrentTab === 'patterns-girls') renderTdPatterns(data, 'Female');
+            }
+
+            function renderTdStudents(data) {
+                document.getElementById('td-list-students').innerHTML = data.map(s => `
+                    <tr class="hover:bg-gray-50 transition-colors border-b border-gray-50">
+                        <td class="p-4 font-mono text-xs text-gray-500">${s.roll_no || '-'}</td>
+                        <td class="p-4 text-gray-800">${s.name}</td>
+                        <td class="p-4 text-xs font-bold text-gray-500">${s.class || ''} ${s.section || ''}</td>
+                        <td class="p-4 text-xs">${s.gender || '-'}</td>
+                        <td class="p-4 text-xs font-mono text-blue-500">${s.pattern_name || '-'}</td>
+                        <td class="p-4 text-center">
+                            <span class="px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wide ${getStatusColor(s.order_status, s.is_packed)}">
+                                ${s.order_status || (s.is_packed ? 'PACKED' : 'PENDING')}
+                            </span>
+                        </td>
+                    </tr>
+                `).join('');
+                document.getElementById('td-school-meta').innerText = `${data.length} Students Shown`;
+            }
+
+            function renderTdMeasurements(data) {
+                document.getElementById('td-list-measurements').innerHTML = data.map(s => {
+                    const m = getMeasurementsSafe(s);
+                    return `
+                     <tr class="hover:bg-blue-50/30 transition-colors border-b border-gray-50">
+                         <td class="p-3 bg-white sticky left-0 border-r border-gray-100 shadow-[4px_0_8px_-4px_rgba(0,0,0,0.05)]">
+                             <div class="font-bold text-gray-700 text-xs">${s.name}</div>
+                             <div class="text-[9px] text-gray-400 font-mono">${s.roll_no || '-'}</div>
+                         </td>
+                         ${['u1', 'u2', 'u3', 'u4', 'u5', 'u6', 'u7', 'u8'].map(k => `<td class="p-2 text-center text-orange-600 bg-orange-50/10">${m[k] || '-'}</td>`).join('')}
+                         ${['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7', 'l8'].map((k, i) => `<td class="p-2 text-center text-indigo-600 bg-indigo-50/10 ${i === 0 ? 'border-l border-gray-100' : ''}">${m[k] || '-'}</td>`).join('')}
+                         <td class="p-3 text-xs italic text-gray-400 truncate max-w-[150px]" title="${m.remarks || ''}">${m.remarks || '-'}</td>
+                     </tr>
+                     `;
+                }).join('');
+            }
+
+            function renderTdPatterns(data, gender) {
+                // Filter by gender first
+                const genderData = data.filter(s => s.gender === gender);
+
+                // Group by Pattern Name
+                const groups = {};
+                genderData.forEach(s => {
+                    const pname = s.pattern_name || 'Unassigned';
+                    if (!groups[pname]) groups[pname] = [];
+                    groups[pname].push(s);
                 });
 
-                const sorted = Object.entries(stats)
-                    .map(([name, d]) => ({ name, pct: d.total > 0 ? (d.packed / d.total * 100) : 0, ...d }))
-                    .sort((a, b) => b.pct - a.pct)
-                    .slice(0, 10); // Top 10
+                const container = document.getElementById(gender === 'Male' ? 'td-list-patterns-boys' : 'td-list-patterns-girls');
 
-                document.getElementById('leaderboard-list').innerHTML = sorted.map((s, i) => `
-                    <div class="flex items-center gap-4 p-3 rounded-xl bg-gray-50/50 hover:bg-white border border-transparent hover:border-gray-100 hover:shadow-md transition-all group">
-                         <div class="w-8 h-8 rounded-full flex items-center justify-center font-bold text-xs ${i === 0 ? 'bg-yellow-100 text-yellow-600' : 'bg-white text-gray-400 shadow-sm'}">
-                            ${i + 1}
-                         </div>
-                         <div class="flex-1">
-                            <div class="flex justify-between mb-1">
-                                <span class="text-xs font-bold text-gray-700">${s.name}</span>
-                                <span class="text-[10px] font-bold text-gray-400">${Math.round(s.pct)}%</span>
+                if (Object.keys(groups).length === 0) {
+                    container.innerHTML = `<div class="col-span-full text-center py-12 text-gray-300 italic">No patterns found for ${gender} students.</div>`;
+                    return;
+                }
+
+                container.innerHTML = Object.entries(groups).sort().map(([name, students]) => {
+                    // Try to find full pattern meta from globalPatterns if available
+                    // The Pattern Name in student record matches 'name' in patterns table? Usually yes.
+                    // Note: 'patterns' table has 'name' and 'school_id'. 
+                    const meta = globalPatterns.find(p => p.name === name && p.school_id === tdCurrentSchoolId) || {};
+
+                    return `
+                    <div class="clay-card p-0 overflow-hidden flex flex-col group">
+                        <div class="p-4 bg-gray-50 border-b border-gray-100 flex justify-between items-center cursor-pointer hover:bg-white transition-colors" onclick="this.parentElement.classList.toggle('active')">
+                            <div>
+                                <h4 class="font-extrabold text-gray-700 text-sm">${name}</h4>
+                                <p class="text-[10px] text-gray-400 font-bold uppercase mt-1">${students.length} Students</p>
                             </div>
-                            <div class="w-full bg-gray-200 rounded-full h-1.5 overflow-hidden">
-                                <div class="bg-gradient-to-r from-blue-400 to-purple-400 h-1.5 rounded-full" style="width: ${s.pct}%"></div>
+                            <div class="text-xs font-mono text-gray-400 bg-white px-2 py-1 rounded border border-gray-200">
+                                ${meta.consumption ? meta.consumption + 'm' : 'N/A'}
                             </div>
-                         </div>
+                        </div>
+                        
+                        <!-- Toggle Content (Measurement Data) -->
+                        <div class="hidden group-[.active]:block bg-white p-4 border-t border-gray-50 animate-in slide-in-from-top-2 duration-200">
+                             <p class="text-[10px] uppercase font-bold text-gray-400 mb-2">Detailed Measurements (Preview)</p>
+                             <div class="space-y-1 max-h-48 overflow-y-auto custom-scrollbar">
+                                 ${students.map(s => {
+                        const m = getMeasurementsSafe(s);
+                        // Show simplified measurements line
+                        return `
+                                     <div class="flex justify-between text-xs py-1 border-b border-gray-50 last:border-0">
+                                         <span class="font-bold text-gray-600">${s.name}</span>
+                                         <span class="font-mono text-gray-400 text-[10px]">
+                                             U:[${m.u1 || '-'},${m.u2 || '-'},${m.u3 || '-'}] L:[${m.l1 || '-'},${m.l2 || '-'}]
+                                         </span>
+                                     </div>`
+                    }).join('')}
+                             </div>
+                             <div class="mt-3 pt-2 border-t border-gray-100 text-[10px] text-gray-400 italic">
+                                 * Top 3 Upper & 2 Lower shown. View full matrix in Measurements tab.
+                             </div>
+                        </div>
                     </div>
-                `).join('');
+                    <!-- Add explicit expand button helper styles in CSS if needed, or rely on JS toggle class -->
+                    `;
+                }).join('');
             }
+
+            function exportTdCurrentData() {
+                // Simple redirect to existing export logic but context sensitive?
+                // Or re-implement for specific formatted export.
+                // For now, let's reuse the global downloadExcel but filtered to current view data.
+                window.filteredDataForExport = globalStudents.filter(st => st.school_id === tdCurrentSchoolId);
+                // Apply filters
+                const cls = document.getElementById('td-filter-class').value;
+                const sec = document.getElementById('td-filter-section').value;
+                if (cls !== 'all') window.filteredDataForExport = window.filteredDataForExport.filter(st => st.class == cls);
+                if (sec !== 'all') window.filteredDataForExport = window.filteredDataForExport.filter(st => st.section == sec);
+
+                downloadExcel(); // Reuses global function
+            }
+
 
             async function fetchActivityLogs() {
                 try {
