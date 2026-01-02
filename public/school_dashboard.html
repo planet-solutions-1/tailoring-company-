@@ -384,7 +384,7 @@
                                 Processing</p>
                         </div>
 
-                        <!-- Step 3: Production (Was Step 4) -->
+                        <!-- Step 3: Production -->
                         <div class="flex flex-col items-center gap-3 group step-item transition-all duration-500"
                             data-step="2">
                             <div
@@ -400,9 +400,25 @@
                                 Production</p>
                         </div>
 
-                        <!-- Step 4: Delivered (Was Step 5) -->
+                        <!-- Step 4: Dispatch (NEW) -->
                         <div class="flex flex-col items-center gap-3 group step-item transition-all duration-500"
                             data-step="3">
+                            <div
+                                class="step-circle w-8 h-8 md:w-12 md:h-12 rounded-full bg-white border-4 border-slate-100 flex items-center justify-center text-slate-300 shadow-sm transition-all duration-500 relative z-10">
+                                <svg class="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
+                                        d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+                                </svg>
+                            </div>
+                            <p
+                                class="text-[9px] md:text-[10px] font-bold uppercase tracking-wider text-slate-400 font-brand transition-colors duration-300">
+                                Dispatch</p>
+                        </div>
+
+                        <!-- Step 5: Delivered -->
+                        <div class="flex flex-col items-center gap-3 group step-item transition-all duration-500"
+                            data-step="4">
                             <div
                                 class="step-circle w-8 h-8 md:w-12 md:h-12 rounded-full bg-white border-4 border-slate-100 flex items-center justify-center text-slate-300 shadow-sm transition-all duration-500 relative z-10">
                                 <svg class="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor"
@@ -1230,10 +1246,11 @@
 
         // === STATUS TRACKER RENDERER ===
         function renderStatusTracker(status) {
-            // Robust Matching & 4-Step Logic
+            // Robust Matching & 5-Step Logic
             const s = (status || '').toLowerCase();
             let currentStep = 0;
-            if (s.includes('deliver')) currentStep = 3;
+            if (s.includes('deliver')) currentStep = 4;
+            else if (s.includes('dispatch') || s.includes('despatch')) currentStep = 3;
             else if (s.includes('product') || s.includes('prodection')) currentStep = 2;
             else if (s.includes('process')) currentStep = 1;
             // Pending and Measurements share the first step (0)
@@ -1248,8 +1265,8 @@
             if (displayStatus === 'Pending') displayStatus = 'Measurements';
             if (statusLabel) statusLabel.innerText = displayStatus;
 
-            // Calulate Progress (Steps 0 to 3)
-            const progress = (currentStep / 3) * 100;
+            // Calulate Progress (Steps 0 to 4)
+            const progress = (currentStep / 4) * 100;
             if (progressBar) progressBar.style.width = `${progress}%`;
 
             const steps = document.querySelectorAll('.step-item');
@@ -3668,6 +3685,7 @@
                                 <option value="Measurements">Measurements</option>
                                 <option value="Processing">Processing</option>
                                 <option value="Production">Production</option>
+                                <option value="Dispatch">Dispatch</option>
                                 <option value="Delivered">Delivered</option>
                             </select>
                         </div>
