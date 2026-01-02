@@ -651,7 +651,7 @@
                 <div class="bg-white rounded-2xl p-1 min-h-[500px] shadow-sm border border-gray-100 relative">
 
                     <!-- 1. STUDENTS TAB -->
-                    <div id="td-view-students" class="hidden fade-in p-4">
+                    <div id="td-view-students" class="hidden p-4">
                         <div class="overflow-x-auto">
                             <table class="w-full text-left border-collapse">
                                 <thead>
@@ -672,7 +672,7 @@
                     </div>
 
                     <!-- 2. MEASUREMENTS TAB (Full Matrix) -->
-                    <div id="td-view-measurements" class="hidden fade-in">
+                    <div id="td-view-measurements" class="hidden">
                         <div class="overflow-x-auto custom-scrollbar pb-4">
                             <table class="w-full text-left whitespace-nowrap border-collapse">
                                 <thead class="bg-gray-50/50 sticky top-0 z-10">
@@ -711,13 +711,13 @@
                     </div>
 
                     <!-- 3. PATTERN BOYS TAB -->
-                    <div id="td-view-patterns-boys" class="hidden fade-in p-6">
+                    <div id="td-view-patterns-boys" class="hidden p-6">
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="td-list-patterns-boys">
                         </div>
                     </div>
 
                     <!-- 4. PATTERN GIRLS TAB -->
-                    <div id="td-view-patterns-girls" class="hidden fade-in p-6">
+                    <div id="td-view-patterns-girls" class="hidden p-6">
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="td-list-patterns-girls">
                         </div>
                     </div>
@@ -1511,7 +1511,9 @@
                 }).join('');
             }
 
-            function openSchoolDetails(id) {
+            async function openSchoolDetails(id) {
+                if (globalStudents.length === 0) await fetchAllStudents();
+
                 tdCurrentSchoolId = id;
                 const s = globalSchools.find(x => x.id == id);
                 if (!s) return;
@@ -1523,7 +1525,7 @@
                 document.getElementById('td-school-badge').className = `px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${getStatusColor(s.status, false)}`;
 
                 // Reset Filters
-                const schoolStudents = globalStudents.filter(st => st.school_id === id);
+                const schoolStudents = globalStudents.filter(st => st.school_id == id);
                 const classes = [...new Set(schoolStudents.map(st => st.class).filter(Boolean))].sort();
                 const sections = [...new Set(schoolStudents.map(st => st.section).filter(Boolean))].sort();
 
@@ -1539,19 +1541,24 @@
             }
 
             function switchTdTab(tab) {
+                console.log("Switching Tab to:", tab);
                 tdCurrentTab = tab;
                 // UI Toggle
                 ['students', 'measurements', 'patterns-boys', 'patterns-girls'].forEach(t => {
                     const btn = document.getElementById(`tab-td-${t}`);
                     const view = document.getElementById(`td-view-${t}`);
-                    if (t === tab) {
-                        btn.classList.add('text-blue-600', 'border-blue-500', 'bg-gray-50');
-                        btn.classList.remove('text-gray-500', 'border-transparent');
-                        view.classList.remove('hidden');
+                    if (btn && view) {
+                        if (t === tab) {
+                            btn.classList.add('text-blue-600', 'border-blue-500', 'bg-gray-50');
+                            btn.classList.remove('text-gray-500', 'border-transparent');
+                            view.classList.remove('hidden');
+                        } else {
+                            btn.classList.remove('text-blue-600', 'border-blue-500', 'bg-gray-50');
+                            btn.classList.add('text-gray-500', 'border-transparent');
+                            view.classList.add('hidden');
+                        }
                     } else {
-                        btn.classList.remove('text-blue-600', 'border-blue-500', 'bg-gray-50');
-                        btn.classList.add('text-gray-500', 'border-transparent');
-                        view.classList.add('hidden');
+                        console.error("Missing Element:", t, btn, view);
                     }
                 });
                 renderTdCurrentTab();
