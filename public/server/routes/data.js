@@ -97,8 +97,26 @@ router.put('/schools/:id', authenticateToken, requireRole('company'), (req, res)
                 const changed = result ? result.changedRows : 'N/A';
                 console.log(`[UPDATE DEBUG] ID: ${id}, Prio: ${priority}, Status: ${status} -> Affected: ${affected}, Changed: ${changed}`);
 
+                // CASCADE UPDATE: If status changed, update ALL Active students for this school
+                if (status) {
+                    const studentSql = "UPDATE students SET order_status = ? WHERE school_id = ? AND status != 'Trash'";
+                    if (db.execute) {
+                        db.execute(studentSql, [status, id])
+                            .then(([sResult]) => {
+                                console.log(`[BULK UPDATE] School ${id} -> ${status}: Updated ${sResult.affectedRows} students.`);
+                            })
+                            .catch(err => console.error("[BULK UPDATE ERROR]", err));
+                    } else {
+                        // SQLite Fallback
+                        db.run(studentSql, [status, id], (err) => {
+                            if (err) console.error("[BULK UPDATE ERROR]", err);
+                            else console.log(`[BULK UPDATE] School ${id} -> ${status}: Students synced.`);
+                        });
+                    }
+                }
+
                 if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'UPDATE_SCHOOL', `Updated School #${id} Priority/Status`);
-                res.json({ message: "School Updated", debug: { affected, changed } });
+                res.json({ message: "School & Students Updated", debug: { affected, changed } });
             })
             .catch(err => {
                 console.error("[UPDATE ERROR]", err);
@@ -107,6 +125,16 @@ router.put('/schools/:id', authenticateToken, requireRole('company'), (req, res)
     } else {
         db.run(sql, [priority, status, id], function (err) {
             if (err) return res.status(500).json({ error: err.message });
+
+            // CASCADE UPDATE (SQLite)
+            if (status) {
+                const studentSql = "UPDATE students SET order_status = ? WHERE school_id = ? AND status != 'Trash'";
+                db.run(studentSql, [status, id], (err) => {
+                    if (err) console.error("[BULK UPDATE ERROR]", err);
+                    else console.log(`[BULK UPDATE] School ${id} -> ${status}: Students synced (SQLite).`);
+                });
+            }
+
             if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'UPDATE_SCHOOL', `Updated School #${id} Priority/Status`);
             res.json({ message: "School Updated" });
         });
