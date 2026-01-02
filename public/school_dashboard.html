@@ -348,7 +348,7 @@
 
                     <!-- Steps -->
                     <div class="relative z-10 flex justify-between w-full max-w-[90%] mx-auto">
-                        <!-- Step 1: Pending -->
+                        <!-- Step 1: Measurements (Was Step 2) -->
                         <div class="flex flex-col items-center gap-3 group step-item transition-all duration-500"
                             data-step="0">
                             <div
@@ -356,23 +356,7 @@
                                 <svg class="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor"
                                     viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
-                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                            </div>
-                            <p
-                                class="text-[9px] md:text-[10px] font-bold uppercase tracking-wider text-slate-400 font-brand transition-colors duration-300">
-                                Pending</p>
-                        </div>
-
-                        <!-- Step 2: Measurements -->
-                        <div class="flex flex-col items-center gap-3 group step-item transition-all duration-500"
-                            data-step="1">
-                            <div
-                                class="step-circle w-8 h-8 md:w-12 md:h-12 rounded-full bg-white border-4 border-slate-100 flex items-center justify-center text-slate-300 shadow-sm transition-all duration-500 relative z-10">
-                                <svg class="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor"
-                                    viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
-                                        d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10">
+                                        d="M3 6l3 1m0 0l-3 9a5.002 5.002 0 006.001 0M6 7l3 9M6 7l6-2m6 2l3-1m-3 1l-3 9a5.002 5.002 0 006.001 0M18 7l3 9m-3-9l-6-2m0-2v2m0 16V5m0 16H9m3 0h3">
                                     </path>
                                 </svg>
                             </div>
@@ -381,9 +365,9 @@
                                 Measure</p>
                         </div>
 
-                        <!-- Step 3: Processing (NEW) -->
+                        <!-- Step 2: Processing (Was Step 3) -->
                         <div class="flex flex-col items-center gap-3 group step-item transition-all duration-500"
-                            data-step="2">
+                            data-step="1">
                             <div
                                 class="step-circle w-8 h-8 md:w-12 md:h-12 rounded-full bg-white border-4 border-slate-100 flex items-center justify-center text-slate-300 shadow-sm transition-all duration-500 relative z-10">
                                 <svg class="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor"
@@ -400,9 +384,9 @@
                                 Processing</p>
                         </div>
 
-                        <!-- Step 4: Production -->
+                        <!-- Step 3: Production (Was Step 4) -->
                         <div class="flex flex-col items-center gap-3 group step-item transition-all duration-500"
-                            data-step="3">
+                            data-step="2">
                             <div
                                 class="step-circle w-8 h-8 md:w-12 md:h-12 rounded-full bg-white border-4 border-slate-100 flex items-center justify-center text-slate-300 shadow-sm transition-all duration-500 relative z-10">
                                 <svg class="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor"
@@ -416,9 +400,9 @@
                                 Production</p>
                         </div>
 
-                        <!-- Step 5: Delivered -->
+                        <!-- Step 4: Delivered (Was Step 5) -->
                         <div class="flex flex-col items-center gap-3 group step-item transition-all duration-500"
-                            data-step="4">
+                            data-step="3">
                             <div
                                 class="step-circle w-8 h-8 md:w-12 md:h-12 rounded-full bg-white border-4 border-slate-100 flex items-center justify-center text-slate-300 shadow-sm transition-all duration-500 relative z-10">
                                 <svg class="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor"
@@ -1246,21 +1230,26 @@
 
         // === STATUS TRACKER RENDERER ===
         function renderStatusTracker(status) {
-            // Robust Matching
+            // Robust Matching & 4-Step Logic
             const s = (status || '').toLowerCase();
             let currentStep = 0;
-            if (s.includes('deliver')) currentStep = 4;
-            else if (s.includes('product') || s.includes('prodection')) currentStep = 3;
-            else if (s.includes('process')) currentStep = 2;
-            else if (s.includes('measure') || s.includes('messure')) currentStep = 1;
+            if (s.includes('deliver')) currentStep = 3;
+            else if (s.includes('product') || s.includes('prodection')) currentStep = 2;
+            else if (s.includes('process')) currentStep = 1;
+            // Pending and Measurements share the first step (0)
+            else if (s.includes('measure') || s.includes('messure') || s.includes('pending')) currentStep = 0;
             else currentStep = 0;
 
             const progressBar = document.getElementById('trackerProgressBar');
             const statusLabel = document.getElementById('trackerCurrentStatus');
-            if (statusLabel) statusLabel.innerText = status || 'Pending';
 
-            // Calulate Progress (Steps 0 to 4)
-            const progress = (currentStep / 4) * 100;
+            // Mask "Pending" text in UI
+            let displayStatus = status || 'Measurements';
+            if (displayStatus === 'Pending') displayStatus = 'Measurements';
+            if (statusLabel) statusLabel.innerText = displayStatus;
+
+            // Calulate Progress (Steps 0 to 3)
+            const progress = (currentStep / 3) * 100;
             if (progressBar) progressBar.style.width = `${progress}%`;
 
             const steps = document.querySelectorAll('.step-item');
