@@ -701,6 +701,10 @@
                                         <th class="p-2 text-center text-indigo-600 bg-indigo-50/30">L6</th>
                                         <th class="p-2 text-center text-indigo-600 bg-indigo-50/30">L7</th>
                                         <th class="p-2 text-center text-indigo-600 bg-indigo-50/30">L8</th>
+                                        <th class="p-2 text-center text-indigo-600 bg-indigo-50/30">L8</th>
+                                        <th
+                                            class="p-3 text-center bg-purple-50/30 text-purple-600 border-l border-gray-100">
+                                            Qty</th>
                                         <th class="p-3 text-center">Remarks</th>
                                     </tr>
                                 </thead>
@@ -726,6 +730,48 @@
             </div>
         </div>
 
+
+        <!-- 3. USER MANAGEMENT -->
+        <div id="td-level-3-pattern" class="hidden space-y-6 fade-in p-6">
+            <div class="flex items-center gap-4 mb-6">
+                <button onclick="closePatternDetails()"
+                    class="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500 hover:text-blue-600 bg-white shadow-sm border border-gray-100">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg>
+                </button>
+                <div class="bg-white px-6 py-3 rounded-2xl shadow-sm border border-gray-100 flex-1">
+                    <h2 class="text-xl font-extrabold text-gray-800 flex items-center gap-3" id="td-p3-title">
+                        Pattern Name
+                        <span
+                            class="text-xs px-2 py-1 rounded bg-blue-50 text-blue-600 font-bold uppercase tracking-wider"
+                            id="td-p3-count">0 Students</span>
+                    </h2>
+                    <p class="text-gray-400 text-xs font-bold uppercase tracking-wider mt-1" id="td-p3-meta">Consumption
+                        Details</p>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="overflow-x-auto custom-scrollbar">
+                    <table class="w-full text-left border-collapse">
+                        <thead class="bg-gray-50/50">
+                            <tr
+                                class="text-xs font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100">
+                                <th class="p-4 pl-6">Student</th>
+                                <th class="p-4">Class</th>
+                                <th class="p-4">Measurements (U/L)</th>
+                                <th class="p-4">Qty</th>
+                                <th class="p-4 text-center">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="td-p3-list" class="text-sm font-medium text-gray-600 divide-y divide-gray-50">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
 
         <!-- 3. USER MANAGEMENT -->
         <div id="view-users" class="hidden fade-in max-w-5xl mx-auto space-y-8">
@@ -1657,6 +1703,9 @@
                          </td>
                          ${['u1', 'u2', 'u3', 'u4', 'u5', 'u6', 'u7', 'u8'].map(k => `<td class="p-2 text-center text-orange-600 bg-orange-50/10">${m[k] || '-'}</td>`).join('')}
                          ${['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7', 'l8'].map((k, i) => `<td class="p-2 text-center text-indigo-600 bg-indigo-50/10 ${i === 0 ? 'border-l border-gray-100' : ''}">${m[k] || '-'}</td>`).join('')}
+                         <td class="p-3 text-xs bg-purple-50/30 text-purple-600 font-bold border-l border-gray-100 max-w-[120px] truncate" title="${Object.entries(getItemQuantitiesSafe(s)).map(([k, v]) => `${k}:${v}`).join(', ')}">
+                             ${Object.entries(getItemQuantitiesSafe(s)).map(([k, v]) => `${k}:${v}`).join(', ')}
+                         </td>
                          <td class="p-3 text-xs italic text-gray-400 truncate max-w-[150px]" title="${m.remarks || ''}">${m.remarks || '-'}</td>
                      </tr>
                      `;
@@ -1664,10 +1713,7 @@
             }
 
             function renderTdPatterns(data, gender) {
-                // Filter by gender first
                 const genderData = data.filter(s => s.gender === gender);
-
-                // Group by Pattern Name
                 const groups = {};
                 genderData.forEach(s => {
                     const pname = s.pattern_name || 'Unassigned';
@@ -1683,47 +1729,72 @@
                 }
 
                 container.innerHTML = Object.entries(groups).sort().map(([name, students]) => {
-                    // Try to find full pattern meta from globalPatterns if available
-                    // The Pattern Name in student record matches 'name' in patterns table? Usually yes.
-                    // Note: 'patterns' table has 'name' and 'school_id'. 
-                    const meta = globalPatterns.find(p => p.name === name && p.school_id === tdCurrentSchoolId) || {};
-
+                    const meta = globalPatterns.find(p => p.name === name && p.school_id == tdCurrentSchoolId) || {};
+                    // Box Grid Layout (Click to Open Level 3)
                     return `
-                    <div class="clay-card p-0 overflow-hidden flex flex-col group">
-                        <div class="p-4 bg-gray-50 border-b border-gray-100 flex justify-between items-center cursor-pointer hover:bg-white transition-colors" onclick="this.parentElement.classList.toggle('active')">
-                            <div>
-                                <h4 class="font-extrabold text-gray-700 text-sm">${name}</h4>
-                                <p class="text-[10px] text-gray-400 font-bold uppercase mt-1">${students.length} Students</p>
+                    <div onclick="openPatternDetails('${name}', '${gender}')" class="clay-card p-6 flex flex-col justify-between hover:scale-[1.02] transition-transform cursor-pointer group h-full">
+                        <div>
+                            <div class="flex justify-between items-start mb-4">
+                                <h4 class="font-extrabold text-lg text-gray-700 line-clamp-2" title="${name}">${name}</h4>
+                                <span class="bg-blue-50 text-blue-600 px-2 py-1 rounded text-xs font-bold shadow-sm group-hover:bg-blue-100 transition-colors">View</span>
                             </div>
-                            <div class="text-xs font-mono text-gray-400 bg-white px-2 py-1 rounded border border-gray-200">
-                                ${meta.consumption ? meta.consumption + 'm' : 'N/A'}
+                            <p class="text-xs text-gray-400 font-bold uppercase tracking-wider mb-4">Consumption: <span class="text-emerald-500 text-lg">${meta.consumption ? meta.consumption + 'm' : 'N/A'}</span></p>
+                            <div class="bg-gray-50 p-3 rounded-xl mb-4 border border-gray-100">
+                                <p class="text-[10px] text-gray-400 uppercase font-bold mb-1">Cloth Details</p>
+                                <p class="text-xs text-gray-600 font-medium line-clamp-2">${meta.cloth_details || 'No details provided.'}</p>
                             </div>
                         </div>
-                        
-                        <!-- Toggle Content (Measurement Data) -->
-                        <div class="hidden group-[.active]:block bg-white p-4 border-t border-gray-50 animate-in slide-in-from-top-2 duration-200">
-                             <p class="text-[10px] uppercase font-bold text-gray-400 mb-2">Detailed Measurements (Preview)</p>
-                             <div class="space-y-1 max-h-48 overflow-y-auto custom-scrollbar">
-                                 ${students.map(s => {
-                        const m = getMeasurementsSafe(s);
-                        // Show simplified measurements line
-                        return `
-                                     <div class="flex justify-between text-xs py-1 border-b border-gray-50 last:border-0">
-                                         <span class="font-bold text-gray-600">${s.name}</span>
-                                         <span class="font-mono text-gray-400 text-[10px]">
-                                             U:[${m.u1 || '-'},${m.u2 || '-'},${m.u3 || '-'}] L:[${m.l1 || '-'},${m.l2 || '-'}]
-                                         </span>
-                                     </div>`
-                    }).join('')}
-                             </div>
-                             <div class="mt-3 pt-2 border-t border-gray-100 text-[10px] text-gray-400 italic">
-                                 * Top 3 Upper & 2 Lower shown. View full matrix in Measurements tab.
-                             </div>
+                        <div class="mt-auto pt-4 border-t border-gray-50 flex justify-between items-center text-xs font-bold text-gray-500">
+                             <span>${students.length} Students</span>
+                             <span class="text-indigo-400 group-hover:translate-x-1 transition-transform">Details &rarr;</span>
                         </div>
                     </div>
-                    <!-- Add explicit expand button helper styles in CSS if needed, or rely on JS toggle class -->
                     `;
                 }).join('');
+            }
+
+            function openPatternDetails(patternName, gender) {
+                // Find data
+                // Need to re-filter because we passed string names. 
+                // Context is tdCurrentSchoolId
+                const schoolStudents = globalStudents.filter(st => st.school_id == tdCurrentSchoolId && st.gender === gender);
+                const students = schoolStudents.filter(s => (s.pattern_name || 'Unassigned') === patternName);
+                const meta = globalPatterns.find(p => p.name === patternName && p.school_id == tdCurrentSchoolId) || {};
+
+                // UI
+                document.getElementById('td-level-2').classList.add('hidden');
+                document.getElementById('td-level-3-pattern').classList.remove('hidden');
+
+                document.getElementById('td-p3-title').innerText = patternName;
+                document.getElementById('td-p3-count').innerText = `${students.length} Students`;
+                document.getElementById('td-p3-meta').innerText = meta.consumption ? `Consumption: ${meta.consumption}m • ${meta.cloth_details || ''}` : 'No additional metadata';
+
+                document.getElementById('td-p3-list').innerHTML = students.map(s => {
+                    const m = getMeasurementsSafe(s);
+                    const iq = getItemQuantitiesSafe(s);
+                    const qtyStr = Object.entries(iq).map(([k, v]) => `${k}:${v}`).join(', ');
+
+                    // Simplified Measurements string for list view
+                    const measStr = `U:[${m.u1 || '-'},${m.u2 || '-'},${m.u3 || '-'}] L:[${m.l1 || '-'},${m.l2 || '-'}]`;
+
+                    return `
+                    <tr class="hover:bg-gray-50 transition-colors border-b border-gray-50">
+                        <td class="p-4 pl-6 font-bold text-gray-700">${s.name} <span class="block text-xs font-mono text-gray-400 font-normal">${s.roll_no || '-'}</span></td>
+                        <td class="p-4 text-xs font-bold text-gray-500">${s.class || ''} ${s.section || ''}</td>
+                        <td class="p-4 text-xs font-mono text-blue-500 bg-blue-50/30 rounded">${measStr}</td>
+                        <td class="p-4 text-xs font-bold text-purple-600 bg-purple-50/30 rounded">${qtyStr}</td>
+                        <td class="p-4 text-center">
+                            <span class="px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wide ${getStatusColor(s.order_status, s.is_packed)}">
+                                ${s.order_status || (s.is_packed ? 'PACKED' : 'PENDING')}
+                            </span>
+                        </td>
+                    </tr>`;
+                }).join('');
+            }
+
+            function closePatternDetails() {
+                document.getElementById('td-level-3-pattern').classList.add('hidden');
+                document.getElementById('td-level-2').classList.remove('hidden');
             }
 
             function exportTdCurrentData() {
