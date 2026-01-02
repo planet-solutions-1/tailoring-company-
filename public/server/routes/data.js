@@ -99,9 +99,14 @@ router.put('/schools/:id', authenticateToken, requireRole('company'), (req, res)
 
                 // CASCADE UPDATE: If status changed, update ALL Active students for this school
                 if (status) {
-                    // 1. Backfill missing order rows (for existing students who have no status yet)
-                    // Fix: 'students' table uses 'is_active', not 'status'
-                    const backfillSql = "INSERT INTO orders (student_id, status) SELECT id, ? FROM students WHERE school_id = ? AND is_active = 1 AND id NOT IN (SELECT student_id FROM orders)";
+                    // 1. Backfill missing order rows (Optimized LEFT JOIN for performance)
+                    const backfillSql = `
+                        INSERT INTO orders (student_id, status) 
+                        SELECT s.id, ? 
+                        FROM students s 
+                        LEFT JOIN orders o ON s.id = o.student_id 
+                        WHERE s.school_id = ? AND s.is_active = 1 AND o.id IS NULL
+                     `;
                     // 2. Update existing rows
                     const updateSql = "UPDATE orders SET status = ? WHERE student_id IN (SELECT id FROM students WHERE school_id = ? AND is_active = 1)";
 
@@ -136,7 +141,13 @@ router.put('/schools/:id', authenticateToken, requireRole('company'), (req, res)
 
             // CASCADE UPDATE (SQLite)
             if (status) {
-                const backfillSql = "INSERT INTO orders (student_id, status) SELECT id, ? FROM students WHERE school_id = ? AND is_active = 1 AND id NOT IN (SELECT student_id FROM orders)";
+                const backfillSql = `
+                    INSERT INTO orders (student_id, status) 
+                    SELECT s.id, ? 
+                    FROM students s 
+                    LEFT JOIN orders o ON s.id = o.student_id 
+                    WHERE s.school_id = ? AND s.is_active = 1 AND o.id IS NULL
+                 `;
                 const updateSql = "UPDATE orders SET status = ? WHERE student_id IN (SELECT id FROM students WHERE school_id = ? AND is_active = 1)";
 
                 db.run(backfillSql, [status, id], (err) => {
