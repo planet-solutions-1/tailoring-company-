@@ -1368,7 +1368,8 @@
 
             console.log(`Fetching data for School #${schoolId} with token: ${token ? 'Present' : 'Missing'}`);
             try {
-                const res = await fetch(`/api/data/students/${schoolId}`, {
+                // Add timestamp to prevent caching
+                const res = await fetch(`/api/data/students/${schoolId}?t=${Date.now()}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (res.status === 404) throw new Error("API Endpoint Not Found (404)");

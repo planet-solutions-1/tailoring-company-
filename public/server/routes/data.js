@@ -99,18 +99,20 @@ router.put('/schools/:id', authenticateToken, requireRole('company'), (req, res)
 
                 // CASCADE UPDATE: If status changed, update ALL Active students for this school
                 if (status) {
-                    const studentSql = "UPDATE students SET order_status = ? WHERE school_id = ? AND status != 'Trash'";
+                    // Fix: Status lives in 'orders' table
+                    const studentSql = "UPDATE orders SET status = ? WHERE student_id IN (SELECT id FROM students WHERE school_id = ? AND status != 'Trash')";
+
                     if (db.execute) {
                         db.execute(studentSql, [status, id])
                             .then(([sResult]) => {
-                                console.log(`[BULK UPDATE] School ${id} -> ${status}: Updated ${sResult.affectedRows} students.`);
+                                console.log(`[BULK UPDATE] School ${id} -> ${status}: Updated orders for ${sResult.affectedRows} students.`);
                             })
                             .catch(err => console.error("[BULK UPDATE ERROR]", err));
                     } else {
                         // SQLite Fallback
                         db.run(studentSql, [status, id], (err) => {
                             if (err) console.error("[BULK UPDATE ERROR]", err);
-                            else console.log(`[BULK UPDATE] School ${id} -> ${status}: Students synced.`);
+                            else console.log(`[BULK UPDATE] School ${id} -> ${status}: Orders synced.`);
                         });
                     }
                 }
@@ -128,10 +130,11 @@ router.put('/schools/:id', authenticateToken, requireRole('company'), (req, res)
 
             // CASCADE UPDATE (SQLite)
             if (status) {
-                const studentSql = "UPDATE students SET order_status = ? WHERE school_id = ? AND status != 'Trash'";
+                // Fix: Status lives in 'orders' table
+                const studentSql = "UPDATE orders SET status = ? WHERE student_id IN (SELECT id FROM students WHERE school_id = ? AND status != 'Trash')";
                 db.run(studentSql, [status, id], (err) => {
                     if (err) console.error("[BULK UPDATE ERROR]", err);
-                    else console.log(`[BULK UPDATE] School ${id} -> ${status}: Students synced (SQLite).`);
+                    else console.log(`[BULK UPDATE] School ${id} -> ${status}: Orders synced (SQLite).`);
                 });
             }
 
