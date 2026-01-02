@@ -760,7 +760,6 @@
                                     <th class="p-4">Name</th>
                                     <th class="p-4">Class</th>
                                     <th class="p-4">Gender</th>
-                                    <th class="p-4">Pattern</th>
                                     <th class="p-4 text-center">Status</th>
                                 </tr>
                             </thead>
@@ -1815,7 +1814,6 @@
                         <td class="p-4 text-gray-800">${s.name}</td>
                         <td class="p-4 text-xs font-bold text-gray-500">${s.class || ''} ${s.section || ''}</td>
                         <td class="p-4 text-xs">${s.gender || '-'}</td>
-                        <td class="p-4 text-xs font-mono text-blue-500">${s.pattern_name || '-'}</td>
                         <td class="p-4 text-center">
                             <span class="px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wide ${getStatusColor(s.order_status, s.is_packed)}">
                                 ${s.order_status || (s.is_packed ? 'PACKED' : 'PENDING')}
@@ -1926,6 +1924,7 @@
                     <tr class="hover:bg-gray-50 transition-colors border-b border-gray-50">
                         <td class="p-4 pl-6 font-bold text-gray-700">${s.name} <span class="block text-xs font-mono text-gray-400 font-normal">${s.roll_no || '-'}</span></td>
                         <td class="p-4 text-xs font-bold text-gray-500">${s.class || ''} ${s.section || ''}</td>
+                        <td class="p-4 text-xs">${s.gender || '-'}</td>
                         <td class="p-4 text-xs font-mono text-blue-500 bg-blue-50/30 rounded">${measStr}</td>
                         <td class="p-4 text-xs font-bold text-purple-600 bg-purple-50/30 rounded">${qtyStr}</td>
                         <td class="p-4 text-center">
