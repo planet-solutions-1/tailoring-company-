@@ -608,24 +608,58 @@
                         </div>
                     </div>
                     <!-- Global Filters for this School View -->
-                    <div class="flex gap-4">
+                    <!-- Global Filters for this School View -->
+                    <div class="flex flex-wrap items-center gap-4" id="td-filters-container">
+                        <!-- Search (Range Support) -->
+                        <div class="relative w-full md:w-64">
+                            <span class="absolute left-3 top-3 text-gray-400">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                </svg>
+                            </span>
+                            <input type="text" id="td-filter-search" oninput="renderTdCurrentTab()"
+                                placeholder="Search (e.g. 1-5, A-C, Names...)"
+                                class="clay-input h-10 pl-10 text-sm font-bold w-full bg-white/50 focus:bg-white transition-colors">
+                        </div>
+
+                        <!-- Filters -->
                         <select id="td-filter-class" onchange="renderTdCurrentTab()"
-                            class="clay-input h-10 text-sm font-bold">
+                            class="clay-input h-10 text-sm font-bold w-32">
                             <option value="all">All Classes</option>
                         </select>
                         <select id="td-filter-section" onchange="renderTdCurrentTab()"
-                            class="clay-input h-10 text-sm font-bold">
+                            class="clay-input h-10 text-sm font-bold w-32">
                             <option value="all">All Sections</option>
                         </select>
-                        <!-- Export Button -->
-                        <button onclick="exportTdCurrentData()"
-                            class="clay-btn h-10 px-6 bg-emerald-50 text-emerald-600 font-bold uppercase text-xs hover:bg-emerald-100 flex items-center gap-2">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-                            </svg>
-                            Export Excel
-                        </button>
+                        <select id="td-filter-gender" onchange="renderTdCurrentTab()"
+                            class="clay-input h-10 text-sm font-bold w-32">
+                            <option value="all">All Genders</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                        </select>
+
+                        <!-- Exports -->
+                        <div class="flex items-center gap-2 border-l border-gray-200 pl-4 ml-2">
+                            <button onclick="downloadTdPDF()"
+                                class="clay-btn h-10 w-10 flex items-center justify-center bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-600 transition-colors"
+                                title="Download PDF Report">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 2H7a2 2 0 00-2 2v12a2 2 0 002 2z">
+                                    </path>
+                                </svg>
+                            </button>
+                            <button onclick="exportTdCurrentData()"
+                                class="clay-btn h-10 px-4 bg-emerald-50 text-emerald-600 font-bold uppercase text-xs hover:bg-emerald-100 flex items-center gap-2"
+                                title="Download Filtered Excel">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                                </svg>
+                                <span>Excel</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -1787,6 +1821,37 @@
             // Legacy support or direct link if needed, now directs to openLevel3
             openLevel3(tab);
         }
+        // Helper to parse range queries (e.g. "1-5", "A-C")
+        function parseRange(query) {
+            query = query.toUpperCase().trim();
+            if (!query) return null;
+
+            // Numeric Range: "1-5"
+            // Start of string, digit, dash, digit, end of string (simple)
+            const numRange = query.match(/^(\d+)-(\d+)$/);
+            if (numRange) {
+                const start = parseInt(numRange[1]);
+                const end = parseInt(numRange[2]);
+                if (!isNaN(start) && !isNaN(end)) {
+                    const res = [];
+                    for (let i = Math.min(start, end); i <= Math.max(start, end); i++) res.push(String(i));
+                    return res;
+                }
+            }
+
+            // Alpha Range: "A-C"
+            const charRange = query.match(/^([A-Z])-([A-Z])$/);
+            if (charRange) {
+                const start = charRange[1].charCodeAt(0);
+                const end = charRange[2].charCodeAt(0);
+                const res = [];
+                for (let i = Math.min(start, end); i <= Math.max(start, end); i++) res.push(String.fromCharCode(i));
+                return res;
+            }
+
+            return null; // Not a range
+        }
+
         function renderTdCurrentTab() {
             if (!tdCurrentSchoolId) return;
 
@@ -1796,15 +1861,83 @@
             // 2. Apply Filters
             const cls = document.getElementById('td-filter-class').value;
             const sec = document.getElementById('td-filter-section').value;
+            const gender = document.getElementById('td-filter-gender').value;
+            const search = document.getElementById('td-filter-search').value.trim();
 
             if (cls !== 'all') data = data.filter(st => st.class == cls);
             if (sec !== 'all') data = data.filter(st => st.section == sec);
+            if (gender !== 'all') data = data.filter(st => st.gender === gender);
 
-            // 3. Render Specific Tab
+            // 3. Search Logic (Range + Keyword)
+            if (search) {
+                const rangeFilter = parseRange(search);
+                if (rangeFilter) {
+                    // Try to match Class OR Section
+                    // If range is numeric [1,2,3], likely class.
+                    // If range is alpha [A,B,C], likely section.
+                    // But simpler: Check if Class OR Section is IN the range list.
+                    data = data.filter(st =>
+                        rangeFilter.includes(String(st.class).toUpperCase()) ||
+                        rangeFilter.includes(String(st.section).toUpperCase())
+                    );
+                } else {
+                    // Normal Text Search
+                    const lowerQ = search.toLowerCase();
+                    data = data.filter(st =>
+                        st.name.toLowerCase().includes(lowerQ) ||
+                        (st.roll_no && st.roll_no.toLowerCase().includes(lowerQ))
+                    );
+                }
+            }
+
+            // Store filtered data for Export
+            window.filteredDataForExport = data;
+
+            // 4. Render Specific Tab
             if (tdCurrentTab === 'students') renderTdStudents(data);
             if (tdCurrentTab === 'measurements') renderTdMeasurements(data);
             if (tdCurrentTab === 'patterns-boys') renderTdPatterns(data, 'Male');
             if (tdCurrentTab === 'patterns-girls') renderTdPatterns(data, 'Female');
+        }
+
+        // PDF Export Implementation
+        function downloadTdPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            const data = window.filteredDataForExport || globalStudents.filter(st => st.school_id == tdCurrentSchoolId);
+            const schoolName = document.getElementById('td-school-name').innerText;
+
+            doc.setFontSize(18);
+            doc.text(`${schoolName} - Tailoring Report`, 14, 20);
+            doc.setFontSize(10);
+            doc.text(`Generated on: ${new Date().toLocaleDateString()} • Records: ${data.length}`, 14, 28);
+
+            // AutoTable
+            const headers = [['Roll', 'Name', 'Class', 'Gender', 'U1-U3', 'L1-L3', 'Pattern']];
+            const rows = data.map(s => {
+                const m = getMeasurementsSafe(s); // Assuming helper is available
+                return [
+                    s.roll_no || '-',
+                    s.name,
+                    `${s.class || ''} ${s.section || ''}`,
+                    s.gender,
+                    `${m.u1 || '-'}/${m.u2 || '-'}/${m.u3 || '-'}`,
+                    `${m.l1 || '-'}/${m.l2 || '-'}/${m.l3 || '-'}`,
+                    s.pattern_name || '-'
+                ];
+            });
+
+            doc.autoTable({
+                head: headers,
+                body: rows,
+                startY: 35,
+                theme: 'grid',
+                styles: { fontSize: 8 },
+                headStyles: { fillColor: [59, 130, 246] }
+            });
+
+            doc.save(`${schoolName}_Tailoring_Report.pdf`);
         }
 
         function renderTdStudents(data) {
@@ -2096,10 +2229,22 @@
         }
 
         function downloadExcel() {
-            // Determine Data Source
+            // Priority: Filtered Data -> School View Data -> Global Data
             let data = window.filteredDataForExport || globalStudents;
-            let sheetName = "GlobalData";
+            let filename = "Tailoring_Data_Report";
+
+            // If we are in School Details View but filteredDataForExport is not set (legacy check)
             const isSchoolView = !document.getElementById('view-school-details').classList.contains('hidden');
+            if (isSchoolView && !window.filteredDataForExport && currentSchoolDetails.name) {
+                data = globalStudents.filter(s => s.school_name === currentSchoolDetails.name);
+                filename = `${currentSchoolDetails.name}_Report`;
+            } else if (window.filteredDataForExport) {
+                // If filtered data exists, customize filename if possible
+                if (tdCurrentSchoolId) {
+                    const s = globalSchools.find(x => x.id == tdCurrentSchoolId);
+                    if (s) filename = `${s.name}_Filtered_Report`;
+                }
+            }
 
             // Active Columns
             let cols = window.currentCols || [];
@@ -2107,10 +2252,9 @@
                 cols = ['U1', 'U2', 'U3', 'U4', 'U5', 'U6', 'L1', 'L2', 'L3', 'L4', 'L5'];
             }
 
-            if (isSchoolView && currentSchoolDetails.name) {
-                data = globalStudents.filter(s => s.school_name === currentSchoolDetails.name);
-                sheetName = currentSchoolDetails.name.substring(0, 30); // Max 31 chars for sheet name
-            }
+            // The sheet name for Excel has a max of 31 characters.
+            // We'll use the filename as the base for the sheet name, truncated if necessary.
+            const sheetName = filename.substring(0, 30);
 
             const exportData = data.map(s => {
                 const m = getMeasurementsSafe(s);
