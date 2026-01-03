@@ -1004,7 +1004,8 @@
             <div class="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
                 <div>
                     <h3 class="text-xl font-bold text-gray-700">User Management</h3>
-                    <p class="text-xs text-gray-400">Controls who can access the system.</p>
+                    <p class="text-xs text-gray-400">Controls who can access the system. <button onclick="fixDatabase()"
+                            class="underline text-blue-400 hover:text-blue-600 ml-2">Fix DB</button></p>
                 </div>
                 <button onclick="openSchoolModal()"
                     class="clay-btn clay-primary px-4 py-2 text-xs font-bold shadow-md hover:shadow-lg border-none transition-transform active:scale-95">
@@ -2686,9 +2687,22 @@
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                     body: JSON.stringify({ is_active: active })
                 });
+                const d = await r.json();
                 if (r.ok) fetchUsers();
-                else alert("Failed to update status");
-            } catch (e) { console.error(e); }
+                else alert("❌ Update Failed: " + (d.error || "Unknown Error"));
+            } catch (e) { console.error(e); alert("Network Error"); }
+        }
+
+        async function fixDatabase() {
+            if (!confirm("Attempt to fix database schema issues (missing columns)?")) return;
+            try {
+                const r = await fetch(`${API_BASE}/data/migrate`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const d = await r.json();
+                alert(d.message || d.error);
+            } catch (e) { alert("Migration Failed: " + e.message); }
         }
 
         function updateComplaintCharts(data) {
