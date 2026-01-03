@@ -207,6 +207,28 @@ router.put('/school/:id', authenticateToken, requireRole('company'), (req, res) 
 });
 
 // POST /api/data/migrate - Manual Schema Migration
+// DELETE /api/data/schools/:id - Delete School & Cascade
+router.delete('/schools/:id', authenticateToken, requireRole('company'), (req, res) => {
+    const { id } = req.params;
+
+    // 1. Delete Students (Cascade Measurements/Orders/Patterns via DB or Manual)
+    db.serialize(() => {
+        db.run("DELETE FROM measurements WHERE student_id IN (SELECT id FROM students WHERE school_id = ?)", [id]);
+        db.run("DELETE FROM orders WHERE student_id IN (SELECT id FROM students WHERE school_id = ?)", [id]);
+        db.run("DELETE FROM students WHERE school_id = ?", [id]);
+        db.run("DELETE FROM patterns WHERE school_id = ?", [id]);
+        db.run("DELETE FROM users WHERE school_id = ?", [id]);
+        db.run("DELETE FROM complaints WHERE school_id = ?", [id]);
+        db.run("DELETE FROM access_codes WHERE school_id = ?", [id]);
+
+        db.run("DELETE FROM schools WHERE id = ?", [id], function (err) {
+            if (err) return res.status(500).json({ error: err.message });
+            if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'DELETE_SCHOOL', `Deleted School #${id}`);
+            res.json({ message: "School and all related data deleted successfully" });
+        });
+    });
+});
+
 // POST /api/data/migrate - Manual Schema Migration
 router.post('/migrate', authenticateToken, requireRole('company'), async (req, res) => {
     try {

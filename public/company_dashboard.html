@@ -1590,6 +1590,9 @@
                              <div class="flex gap-2 justify-end">
                                 <button onclick="viewSchoolData('${s.name}', ${s.id})" class="text-xs bg-blue-50 text-blue-600 hover:bg-blue-100 font-bold px-3 py-2 rounded-lg transition-colors shadow-sm">STUDENTS</button>
                                 <button onclick="viewSchoolDetails('${s.name}', ${s.id})" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold px-3 py-2 rounded-lg transition-colors shadow-sm">DETAILS</button>
+                                <button onclick="deleteSchool(${s.id}, '${s.name}')" class="text-xs bg-red-50 hover:bg-red-100 text-red-600 font-bold px-3 py-2 rounded-lg transition-colors shadow-sm" title="Delete School">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                </button>
                              </div>
                         </td>
                     </tr>`).join('') : '';
@@ -1597,6 +1600,28 @@
         }
 
         async function updateSchoolMeta(id, f, v) { await fetch(`${API_BASE}/data/schools/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }, body: JSON.stringify({ [f]: v }) }); }
+
+        async function deleteSchool(id, name) {
+            if (!confirm(`⚠️ DANGER ZONE ⚠️\n\nAre you sure you want to PERMANENTLY DELETE "${name}"?\n\nThis will remove:\n- The School Account\n- All ${name} Students\n- Measurements, Orders, Patterns\n\nThis action cannot be undone.`)) return;
+
+            const verify = prompt(`To confirm deletion, type "DELETE" below:`);
+            if (verify !== 'DELETE') return alert("Deletion Cancelled.");
+
+            try {
+                const r = await fetch(`${API_BASE}/data/schools/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+                const res = await r.json();
+                if (r.ok) {
+                    alert('✅ ' + res.message);
+                    fetchSchoolsManage(); // Refresh List
+                    fetchStats(); // Refresh Stats
+                    fetchAllStudents(); // Refresh Data
+                    // If current view is this school, go back
+                    if (tdCurrentSchoolId === id) switchTab('schools');
+                } else {
+                    alert('❌ Failed: ' + (res.error || 'Unknown Error'));
+                }
+            } catch (e) { alert('Example Error: ' + e.message); }
+        }
 
         async function updateSchoolStatusManual(id) {
             const val = document.getElementById(`status-select-${id}`).value;
