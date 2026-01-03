@@ -2539,6 +2539,97 @@
             });
         }
 
+        // === USER MANAGEMENT FUNCTIONS ===
+        function openSchoolModal() {
+            document.getElementById('school-modal').classList.remove('hidden');
+        }
+
+        function toggleSchoolSelect() {
+            const role = document.getElementById('user-role').value;
+            const schoolSelect = document.getElementById('school-select-wrapper');
+            if (role === 'company') {
+                schoolSelect.classList.add('hidden');
+            } else {
+                schoolSelect.classList.remove('hidden');
+            }
+        }
+
+        async function createUser(e) {
+            e.preventDefault();
+            const form = e.target;
+            const body = {
+                username: form.username.value,
+                password: form.password.value,
+                role: form.role.value,
+                schoolId: (form.role.value !== 'company' && form.school_id) ? form.school_id.value : null
+            };
+
+            try {
+                const r = await fetch(`${API_BASE}/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify(body)
+                });
+                const d = await r.json();
+                if (r.ok) {
+                    alert('✅ User Created Successfully');
+                    form.reset();
+                    fetchUsers();
+                } else {
+                    alert('❌ ' + (d.error || 'Failed to create user'));
+                }
+            } catch (err) { console.error(err); alert('Error creating user'); }
+        }
+
+        async function registerSchool(e) {
+            e.preventDefault();
+            const form = e.target;
+            const body = {
+                name: form.name.value,
+                username: form.username.value,
+                password: form.password.value
+            };
+
+            try {
+                // Server handles both School and Admin User creation in one transaction
+                const r = await fetch(`${API_BASE}/data/schools`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify(body)
+                });
+                const d = await r.json();
+
+                if (r.ok) {
+                    alert('✅ School & Admin Registered Successfully!');
+                    document.getElementById('school-modal').classList.add('hidden');
+                    form.reset();
+                    fetchSchoolsForSelect(); // Refresh dropdowns
+                    fetchSchoolsManage(); // Refresh list
+                    fetchUsers(); // Refresh users
+                } else {
+                    alert('❌ Error: ' + (d.error || 'Failed to register school'));
+                }
+            } catch (err) {
+                console.error(err);
+                alert('❌ Network Error: ' + err.message);
+            }
+        }
+
+        async function toggleUserStatus(id, active, username) {
+            // Note: We need an endpoint to update user status. 
+            // Assuming PUT /api/data/users/:id exists.
+            if (!confirm(`Are you sure you want to ${active ? 'ENABLE' : 'DISABLE'} user ${username}?`)) return;
+            try {
+                const r = await fetch(`${API_BASE}/data/users/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ is_active: active })
+                });
+                if (r.ok) fetchUsers();
+                else alert("Failed to update status");
+            } catch (e) { console.error(e); }
+        }
+
         function updateComplaintCharts(data) {
             // 1. Calculate Aggregates
             const patternCounts = {};
