@@ -1807,8 +1807,8 @@
 
             const grid = document.getElementById('td-school-grid');
             grid.innerHTML = globalSchools.map(s => {
-                // Calc stats
-                const schoolStudents = globalStudents.filter(st => st.school_id === s.id);
+                // Calc stats - Use Name for safer matching if IDs are ambiguous
+                const schoolStudents = globalStudents.filter(st => st.school_name === s.name);
                 const count = schoolStudents.length;
                 const takingMeas = schoolStudents.filter(st => st.measurements && Object.keys(st.measurements).length > 0).length; // Rough check
 
@@ -1853,8 +1853,8 @@
             document.getElementById('td-school-badge').innerText = s.status || 'Pending';
             document.getElementById('td-school-badge').className = `px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${getStatusColor(s.status, false)}`;
 
-            // Reset Filters & Populate Counts
-            const schoolStudents = globalStudents.filter(st => st.school_id == id);
+            // Reset Filters & Populate Counts - Use School Name match
+            const schoolStudents = globalStudents.filter(st => st.school_name === s.name);
             document.getElementById('td-cat-students-count').innerText = `${schoolStudents.length} Students`;
 
             // Pattern Counts
