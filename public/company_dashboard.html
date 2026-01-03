@@ -1000,54 +1000,73 @@
 
     <!-- 3. USER MANAGEMENT -->
     <div id="view-users" class="hidden fade-in space-y-8 w-full">
-        <div class="clay-card p-8 relative w-full">
-            <div class="flex justify-between items-center mb-8 border-b border-gray-100 pb-6">
+        <div class="clay-card p-6 relative w-full">
+            <div class="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
                 <div>
-                    <h3 class="text-2xl font-bold text-gray-700">User Management</h3>
-                    <p class="text-sm text-gray-400">Controls who can access the system.</p>
+                    <h3 class="text-xl font-bold text-gray-700">User Management</h3>
+                    <p class="text-xs text-gray-400">Controls who can access the system.</p>
                 </div>
                 <button onclick="openSchoolModal()"
-                    class="clay-btn clay-primary px-6 py-3 text-sm font-bold shadow-lg hover:shadow-xl border-none active:scale-95 transition-transform">
+                    class="clay-btn clay-primary px-4 py-2 text-xs font-bold shadow-md hover:shadow-lg border-none transition-transform active:scale-95">
                     Register New School
                 </button>
             </div>
 
-            <h4 class="text-sm font-bold text-gray-400 uppercase tracking-wider mb-4">Create New User Account</h4>
-            <form onsubmit="createUser(event)" class="space-y-6">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-400 uppercase mb-2 ml-2">Username</label>
-                        <input type="text" name="username" required class="clay-input">
+            <!-- Collapsible Header -->
+            <div onclick="toggleUserForm()" class="flex justify-between items-center cursor-pointer group mb-4">
+                <h4
+                    class="text-sm font-bold text-gray-500 uppercase tracking-wider group-hover:text-blue-600 transition-colors">
+                    Create New User Account</h4>
+                <div id="user-form-chevron"
+                    class="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition-all transform rotate-180">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </div>
+            </div>
+
+            <div id="user-create-form-container" class="transition-all duration-300 overflow-hidden max-h-[1000px]">
+                <form onsubmit="createUser(event)" class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <label
+                                class="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-2">Username</label>
+                            <input type="text" name="username" required class="clay-input h-10 text-sm">
+                        </div>
+                        <div>
+                            <label
+                                class="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-2">Password</label>
+                            <input type="text" name="password" required class="clay-input h-10 text-sm">
+                        </div>
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-2">Role</label>
+                            <select name="role" id="user-role" onchange="toggleSchoolSelect()"
+                                class="clay-input h-10 text-sm">
+                                <option value="school">School Admin</option>
+                                <option value="tailor">Tailor</option>
+                                <option value="packing">Packing Unit</option>
+                                <option value="company">Company Admin</option>
+                            </select>
+                        </div>
                     </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-400 uppercase mb-2 ml-2">Password</label>
-                        <input type="text" name="password" required class="clay-input">
+
+                    <div id="school-select-wrapper" class="w-full">
+                        <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-2">Assign To
+                            School</label>
+                        <select name="school_id" id="school-select" class="clay-input h-10 text-sm"></select>
                     </div>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-400 uppercase mb-2 ml-2">Role</label>
-                    <select name="role" id="user-role" onchange="toggleSchoolSelect()" class="clay-input">
-                        <option value="school">School Admin</option>
-                        <option value="tailor">Tailor</option>
-                        <option value="packing">Packing Unit</option>
-                        <option value="company">Company Admin</option>
-                    </select>
-                </div>
-                <div id="school-select-wrapper">
-                    <label class="block text-xs font-bold text-gray-400 uppercase mb-2 ml-2">Assign To
-                        School</label>
-                    <select name="school_id" id="school-select" class="clay-input"></select>
-                </div>
-                <button type="submit"
-                    class="w-full clay-btn clay-primary py-4 rounded-xl text-lg font-bold shadow-lg transition-transform active:scale-95">
-                    Create Account
-                </button>
-            </form>
+
+                    <button type="submit"
+                        class="w-full clay-btn clay-primary py-3 rounded-xl text-sm font-bold shadow-md transition-transform active:scale-95">
+                        Create Account
+                    </button>
+                </form>
+            </div>
         </div>
 
         <div class="clay-card p-8">
             <h3 class="text-lg font-bold text-gray-600 mb-6">Existing Accounts</h3>
-            <div class="overflow-x-auto">
+            <div class="overflow-x-auto overflow-y-auto max-h-[600px] custom-scrollbar">
                 <table class="w-full text-sm min-w-[600px]">
                     <thead class="text-gray-400 uppercase text-xs font-bold">
                         <tr>
@@ -2540,6 +2559,22 @@
         }
 
         // === USER MANAGEMENT FUNCTIONS ===
+        function toggleUserForm() {
+            const container = document.getElementById('user-create-form-container');
+            const chevron = document.getElementById('user-form-chevron');
+            if (container.classList.contains('max-h-0')) {
+                // Expand
+                container.classList.remove('max-h-0');
+                container.classList.add('max-h-[1000px]', 'mt-4');
+                chevron.classList.add('rotate-180');
+            } else {
+                // Collapse
+                container.classList.add('max-h-0');
+                container.classList.remove('max-h-[1000px]', 'mt-4');
+                chevron.classList.remove('rotate-180');
+            }
+        }
+
         function openSchoolModal() {
             document.getElementById('school-modal').classList.remove('hidden');
         }
