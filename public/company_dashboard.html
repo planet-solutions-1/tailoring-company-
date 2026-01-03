@@ -737,27 +737,54 @@
 
                     <!-- Filters Relocated Here -->
                     <!-- Filters Relocated Here -->
-                    <div class="flex flex-col xl:flex-row items-start xl:items-center gap-3 bg-gray-50 p-4 rounded-xl border border-gray-100 relative z-50"
-                        id="td-filters-container">
-                        <!-- Search (Range Support) -->
-                        <div class="relative w-full xl:w-64 xl:flex-none">
-                            <span class="absolute left-3 top-3 text-gray-400">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                                </svg>
-                            </span>
-                            <input type="text" id="td-filter-search" oninput="renderTdCurrentTab()"
-                                placeholder="Search (1-5, A-C...)"
-                                class="clay-input h-10 pl-10 text-sm font-bold w-full bg-white/50 focus:bg-white transition-colors">
+                    <!-- Filters Re-Built Layout -->
+                    <div id="td-filters-container"
+                        class="bg-gray-50/50 p-4 rounded-xl border border-gray-100 flex flex-col gap-4">
+                        <!-- Top Row: Search & Desktop Actions -->
+                        <div class="flex flex-col md:flex-row gap-4 items-center">
+                            <!-- Search -->
+                            <div class="relative w-full md:max-w-md">
+                                <span class="absolute left-3 top-3 text-gray-400">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                    </svg>
+                                </span>
+                                <input type="text" id="td-filter-search" oninput="renderTdCurrentTab()"
+                                    placeholder="Search (1-5, A-C...)"
+                                    class="clay-input h-10 pl-10 text-sm font-bold w-full bg-white transition-colors placeholder-gray-400">
+                            </div>
+
+                            <!-- Desktop Export Buttons -->
+                            <div class="hidden md:flex items-center gap-3 ml-auto">
+                                <button onclick="downloadTdPDF()"
+                                    class="clay-btn h-10 px-4 bg-red-50 text-red-600 font-bold uppercase text-xs hover:bg-red-100 flex items-center gap-2"
+                                    title="Download PDF Report">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 2H7a2 2 0 00-2 2v12a2 2 0 002 2z">
+                                        </path>
+                                    </svg>
+                                    <span>PDF</span>
+                                </button>
+                                <button onclick="exportTdCurrentData()"
+                                    class="clay-btn h-10 px-4 bg-emerald-50 text-emerald-600 font-bold uppercase text-xs hover:bg-emerald-100 flex items-center gap-2"
+                                    title="Download Excel">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                                    </svg>
+                                    <span>Excel</span>
+                                </button>
+                            </div>
                         </div>
 
-                        <!-- Filters Row -->
-                        <div class="flex flex-wrap items-center gap-2 w-full xl:w-auto flex-1">
-                            <!-- Class Filter -->
-                            <div class="relative flex-1 min-w-[120px]">
+                        <!-- Bottom Row: Filters Grid & Mobile Actions -->
+                        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                            <!-- Class -->
+                            <div class="relative">
                                 <select id="td-filter-class" onchange="renderTdCurrentTab()"
-                                    class="clay-input h-10 text-sm font-bold w-full pl-3 pr-8 appearance-none border-none focus:ring-0 cursor-pointer hover:bg-white transition-colors bg-white">
+                                    class="clay-input h-10 text-sm font-bold w-full pl-3 pr-8 appearance-none border-none focus:ring-0 cursor-pointer hover:bg-white transition-colors bg-white text-gray-600">
                                     <option value="all">Class</option>
                                 </select>
                                 <div
@@ -768,11 +795,10 @@
                                     </svg>
                                 </div>
                             </div>
-
-                            <!-- Section Filter -->
-                            <div class="relative flex-1 min-w-[120px]">
+                            <!-- Section -->
+                            <div class="relative">
                                 <select id="td-filter-section" onchange="renderTdCurrentTab()"
-                                    class="clay-input h-10 text-sm font-bold w-full pl-3 pr-8 appearance-none border-none focus:ring-0 cursor-pointer hover:bg-white transition-colors bg-white">
+                                    class="clay-input h-10 text-sm font-bold w-full pl-3 pr-8 appearance-none border-none focus:ring-0 cursor-pointer hover:bg-white transition-colors bg-white text-gray-600">
                                     <option value="all">Section</option>
                                 </select>
                                 <div
@@ -783,11 +809,10 @@
                                     </svg>
                                 </div>
                             </div>
-
-                            <!-- Gender Filter -->
-                            <div class="relative flex-1 min-w-[120px]">
+                            <!-- Gender -->
+                            <div class="relative">
                                 <select id="td-filter-gender" onchange="renderTdCurrentTab()"
-                                    class="clay-input h-10 text-sm font-bold w-full pl-3 pr-8 appearance-none border-none focus:ring-0 cursor-pointer hover:bg-white transition-colors bg-white">
+                                    class="clay-input h-10 text-sm font-bold w-full pl-3 pr-8 appearance-none border-none focus:ring-0 cursor-pointer hover:bg-white transition-colors bg-white text-gray-600">
                                     <option value="all">Gender</option>
                                     <option value="Male">Male</option>
                                     <option value="Female">Female</option>
@@ -800,30 +825,25 @@
                                     </svg>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Exports -->
-                        <div
-                            class="flex items-center gap-2 border-t xl:border-t-0 xl:border-l border-gray-200 pt-3 xl:pt-0 pl-0 xl:pl-4 w-full xl:w-auto justify-end">
-                            <button onclick="downloadTdPDF()"
-                                class="clay-btn h-10 px-4 bg-red-50 text-red-600 font-bold uppercase text-xs hover:bg-red-100 flex items-center gap-2"
-                                title="Download PDF Report">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 2H7a2 2 0 00-2 2v12a2 2 0 002 2z">
-                                    </path>
-                                </svg>
-                                <span>PDF</span>
-                            </button>
-                            <button onclick="exportTdCurrentData()"
-                                class="clay-btn h-10 px-4 bg-emerald-50 text-emerald-600 font-bold uppercase text-xs hover:bg-emerald-100 flex items-center gap-2"
-                                title="Download Filtered Excel">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-                                </svg>
-                                <span>Excel</span>
-                            </button>
+                            <!-- Mobile Export Buttons (Visible only on small screens) -->
+                            <div class="md:hidden col-span-2 flex items-center justify-end gap-2 mt-2">
+                                <button onclick="downloadTdPDF()"
+                                    class="clay-btn h-10 w-10 flex items-center justify-center bg-red-50 text-red-600 hover:bg-red-100 rounded-lg">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 2H7a2 2 0 00-2 2v12a2 2 0 002 2z">
+                                        </path>
+                                    </svg>
+                                </button>
+                                <button onclick="exportTdCurrentData()"
+                                    class="clay-btn h-10 w-10 flex items-center justify-center bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                                    </svg>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1764,9 +1784,26 @@
         let tdCurrentSchoolId = null;
         let tdCurrentTab = 'students';
 
+        // HELPER: Reset all visibility to prevent "leaking" views
+        function resetTdViews() {
+            const views = [
+                'td-level-1',
+                'td-level-2',
+                'td-category-grid',
+                'td-view-students',
+                'td-view-measurements',
+                'td-view-patterns-boys',
+                'td-view-patterns-girls'
+            ];
+            views.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.classList.add('hidden');
+            });
+        }
+
         function renderTailoringData() {
+            resetTdViews();
             document.getElementById('td-level-1').classList.remove('hidden');
-            document.getElementById('td-level-2').classList.add('hidden');
 
             const grid = document.getElementById('td-school-grid');
             grid.innerHTML = globalSchools.map(s => {
@@ -1808,11 +1845,9 @@
             const s = globalSchools.find(x => x.id == id);
             if (!s) return;
 
-            document.getElementById('td-level-1').classList.add('hidden');
+            resetTdViews();
             document.getElementById('td-level-2').classList.remove('hidden');
-            // Show Category Grid, Hide all views
             document.getElementById('td-category-grid').classList.remove('hidden');
-            document.querySelectorAll('div[id^="td-view-"]').forEach(d => d.classList.add('hidden'));
 
             document.getElementById('td-school-name').innerText = s.name;
             document.getElementById('td-school-badge').innerText = s.status || 'Pending';
@@ -1833,10 +1868,8 @@
             const sections = [...new Set(schoolStudents.map(st => st.section).filter(Boolean))].sort();
             const genders = [...new Set(schoolStudents.map(st => st.gender).filter(Boolean))].sort();
 
-            document.getElementById('td-filter-class').innerHTML = '<option value="all">All Classes</option>' + classes.map(c => `<option value="${c}">${c}</option>`).join('');
-            document.getElementById('td-filter-section').innerHTML = '<option value="all">All Sections</option>' + sections.map(c => `<option value="${c}">${c}</option>`).join('');
-
-            // switchTdTab('students'); // Default tab - REMOVED, now uses category grid
+            document.getElementById('td-filter-class').innerHTML = '<option value="all">Class</option>' + classes.map(c => `<option value="${c}">${c}</option>`).join('');
+            document.getElementById('td-filter-section').innerHTML = '<option value="all">Section</option>' + sections.map(c => `<option value="${c}">${c}</option>`).join('');
         }
 
         function closeSchoolDetails() {
@@ -1846,7 +1879,8 @@
 
         // Level 2 -> Level 3 Transition
         function openLevel3(category) {
-            document.getElementById('td-category-grid').classList.add('hidden');
+            resetTdViews();
+            document.getElementById('td-level-2').classList.remove('hidden'); // Header remains visible
             const view = document.getElementById(`td-view-${category}`);
             if (view) {
                 view.classList.remove('hidden');
