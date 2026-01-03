@@ -754,20 +754,52 @@
 
                         <!-- Filters Row -->
                         <div class="flex flex-wrap items-center gap-2 w-full xl:w-auto flex-1">
-                            <select id="td-filter-class" onchange="renderTdCurrentTab()"
-                                class="clay-input h-10 text-sm font-bold flex-1 min-w-[170px] border-none focus:ring-0 cursor-pointer hover:bg-white transition-colors">
-                                <option value="all">Class: All</option>
-                            </select>
-                            <select id="td-filter-section" onchange="renderTdCurrentTab()"
-                                class="clay-input h-10 text-sm font-bold flex-1 min-w-[170px] border-none focus:ring-0 cursor-pointer hover:bg-white transition-colors">
-                                <option value="all">Section: All</option>
-                            </select>
-                            <select id="td-filter-gender" onchange="renderTdCurrentTab()"
-                                class="clay-input h-10 text-sm font-bold flex-1 min-w-[170px] border-none focus:ring-0 cursor-pointer hover:bg-white transition-colors">
-                                <option value="all">Gender: All</option>
-                                <option value="Male">Male</option>
-                                <option value="Female">Female</option>
-                            </select>
+                            <!-- Class Filter -->
+                            <div class="relative flex-1 min-w-[120px]">
+                                <select id="td-filter-class" onchange="renderTdCurrentTab()"
+                                    class="clay-input h-10 text-sm font-bold w-full pl-3 pr-8 appearance-none border-none focus:ring-0 cursor-pointer hover:bg-white transition-colors bg-white">
+                                    <option value="all">Class</option>
+                                </select>
+                                <div
+                                    class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M19 9l-7 7-7-7"></path>
+                                    </svg>
+                                </div>
+                            </div>
+
+                            <!-- Section Filter -->
+                            <div class="relative flex-1 min-w-[120px]">
+                                <select id="td-filter-section" onchange="renderTdCurrentTab()"
+                                    class="clay-input h-10 text-sm font-bold w-full pl-3 pr-8 appearance-none border-none focus:ring-0 cursor-pointer hover:bg-white transition-colors bg-white">
+                                    <option value="all">Section</option>
+                                </select>
+                                <div
+                                    class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M19 9l-7 7-7-7"></path>
+                                    </svg>
+                                </div>
+                            </div>
+
+                            <!-- Gender Filter -->
+                            <div class="relative flex-1 min-w-[120px]">
+                                <select id="td-filter-gender" onchange="renderTdCurrentTab()"
+                                    class="clay-input h-10 text-sm font-bold w-full pl-3 pr-8 appearance-none border-none focus:ring-0 cursor-pointer hover:bg-white transition-colors bg-white">
+                                    <option value="all">Gender</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                </select>
+                                <div
+                                    class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M19 9l-7 7-7-7"></path>
+                                    </svg>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Exports -->
