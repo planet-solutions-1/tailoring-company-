@@ -173,24 +173,43 @@ router.post('/schools', authenticateToken, requireRole('company'), async (req, r
         const hash = await bcrypt.hash(password, 10);
 
         // 1. Create School
-        db.run("INSERT INTO schools (name, username, password_hash) VALUES (?, ?, ?)", [name, username, hash], function (err) {
-            if (err) return res.status(500).json({ error: err.message });
+        if (db.execute) {
+            // MySQL
+            const [schoolRes] = await db.execute("INSERT INTO schools (name, username, password_hash) VALUES (?, ?, ?)", [name, username, hash]);
+            const schoolId = schoolRes.insertId;
 
-            const schoolId = this.lastID;
+            // 2. Create School Admin User automatically
+            await db.execute("INSERT INTO users (username, password_hash, role, school_id) VALUES (?, ?, 'school', ?)", [username, hash, schoolId]);
 
-            // 2. Create User for School Admin
-            db.run("INSERT INTO users (username, password_hash, role, school_id) VALUES (?, ?, ?, ?)",
-                [username, hash, 'school', schoolId], function (err2) {
-                    if (err2) {
-                        return res.status(500).json({ error: "School created but User failed: " + err2.message });
-                    }
+            res.json({ message: "School and Admin User created successfully", id: schoolId });
+        } else {
+            // SQLite
+            db.run("INSERT INTO schools (name, username, password_hash) VALUES (?, ?, ?)", [name, username, hash], function (err) {
+                if (err) return res.status(500).json({ error: err.message });
+                const schoolId = this.lastID;
 
-                    // 3. Log
-                    if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'CREATE_SCHOOL', `Created school: ${name}`);
-
-                    res.json({ id: schoolId, message: "School and User created" });
+                // 2. Create School Admin User automatically (SQLite)
+                db.run("INSERT INTO users (username, password_hash, role, school_id) VALUES (?, ?, 'school', ?)", [username, hash, schoolId], (err) => {
+                    if (err) console.error("Auto-User Creation Failed", err);
                 });
-        });
+
+                res.json({ message: "School created successfully", id: schoolId });
+            });
+        }
+
+        // 2. Create User for School Admin
+        db.run("INSERT INTO users (username, password_hash, role, school_id) VALUES (?, ?, ?, ?)",
+            [username, hash, 'school', schoolId], function (err2) {
+                if (err2) {
+                    return res.status(500).json({ error: "School created but User failed: " + err2.message });
+                }
+
+                // 3. Log
+                if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'CREATE_SCHOOL', `Created school: ${name}`);
+
+                res.json({ id: schoolId, message: "School and User created" });
+            });
+    });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
@@ -631,6 +650,27 @@ router.get('/users', authenticateToken, requireRole('company'), (req, res) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json(rows);
     });
+});
+
+// PUT /api/data/users/:id - Update User Status
+router.put('/users/:id', authenticateToken, requireRole('company'), async (req, res) => {
+    const { id } = req.params;
+    const { is_active } = req.body;
+    const val = is_active ? 1 : 0;
+
+    try {
+        if (db.execute) {
+            // MySQL
+            await db.execute("UPDATE users SET is_active = ? WHERE id = ?", [val, id]);
+            res.json({ message: "User status updated" });
+        } else if (db.run) {
+            // SQLite
+            db.run("UPDATE users SET is_active = ? WHERE id = ?", [val, id], (err) => {
+                if (err) return res.status(500).json({ error: err.message });
+                res.json({ message: "User status updated" });
+            });
+        }
+    } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
 // PUT /api/data/access_codes/:id/toggle - Toggle Status

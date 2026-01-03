@@ -2683,22 +2683,18 @@
             if (!confirm(`Are you sure you want to ${active ? 'ENABLE' : 'DISABLE'} user ${username}?`)) return;
             try {
                 const r = await fetch(`${API_BASE}/data/users/${id}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                    body: JSON.stringify({ is_active: active })
-                });
-                const d = await r.json();
-                if (r.ok) fetchUsers();
+```
+                if(r.ok) fetchUsers();
                 else alert("❌ Update Failed: " + (d.error || "Unknown Error"));
-            } catch (e) { console.error(e); alert("Network Error"); }
+            } catch(e) { console.error(e); alert("Client Error: " + e.message); }
         }
 
         async function fixDatabase() {
             if (!confirm("Attempt to fix database schema issues (missing columns)?")) return;
             try {
-                const r = await fetch(`${API_BASE}/data/migrate`, {
+                const r = await fetch(`${ API_BASE } / data / migrate`, {
                     method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}` }
+                    headers: { 'Authorization': `Bearer ${ token }` }
                 });
                 const d = await r.json();
                 alert(d.message || d.error);
@@ -2738,10 +2734,10 @@
             const topIssue = Object.entries(issueCounts).sort((a, b) => b[1] - a[1])[0] || ['-', 0];
 
             document.getElementById('c-top-pattern').innerText = topPattern[0];
-            document.getElementById('c-top-pattern-count').innerText = `${topPattern[1]} complaints`;
+            document.getElementById('c-top-pattern-count').innerText = `${ topPattern[1]} complaints`;
 
             document.getElementById('c-top-issue').innerText = topIssue[0];
-            document.getElementById('c-top-issue-count').innerText = `${topIssue[1]} occurrences`;
+            document.getElementById('c-top-issue-count').innerText = `${ topIssue[1]} occurrences`;
 
 
             // 3. Render Chart 1: Top 10 Patterns (Horizontal Bar)
@@ -2793,7 +2789,7 @@
 
         function openSchoolComplaints(schoolData) {
             document.getElementById('tm-school-name').innerText = schoolData.name;
-            document.getElementById('tm-school-stats').innerText = `${schoolData.open} Active • ${schoolData.resolved} Resolved`;
+            document.getElementById('tm-school-stats').innerText = `${ schoolData.open } Active • ${ schoolData.resolved } Resolved`;
 
             const list = document.getElementById('tm-list');
             list.innerHTML = schoolData.tickets.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).map(c => {
@@ -2802,7 +2798,7 @@
                 try { images = JSON.parse(c.image_url || '[]'); } catch (e) { if (c.image_url) images = [c.image_url]; }
 
                 return `
-                    <div class="clay-card p-6 mb-4 animate-in slide-in-from-bottom-2 duration-300">
+                < div class= "clay-card p-6 mb-4 animate-in slide-in-from-bottom-2 duration-300" >
                          <div class="flex justify-between items-start mb-4">
                              <div>
                                  <span class="text-[10px] bg-gray-100 text-gray-400 px-2 py-1 rounded uppercase font-bold tracking-wider">${new Date(c.created_at).toLocaleDateString()}</span>
@@ -2817,7 +2813,7 @@
                              </div>
                          </div>
                          
-                         <!-- Issue Specs -->
+                         <!--Issue Specs-- >
                          <div class="bg-gray-50/50 p-4 rounded-xl border border-white/50 mb-4 text-xs">
                              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                   <div>
@@ -2833,16 +2829,16 @@
 
                          <p class="text-gray-600 text-sm mb-4 leading-relaxed">"${c.comment}"</p>
                          
-                         <!-- Images -->
-                         ${images.length > 0 ? `<div class="flex gap-2 overflow-x-auto pb-2">${images.map(u => `<img src="${u}" onclick="window.open('${u}')" class="h-16 w-16 rounded-lg object-cover shadow-sm cursor-pointer hover:shadow-md transition-shadow">`).join('')}</div>` : ''}
-    
-                         <!-- Actions -->
-                         <div class="border-t border-white/50 pt-4 mt-2">
-                             ${c.reply ? `<div class="p-3 bg-blue-50/50 rounded-lg border border-blue-100"><p class="text-xs text-blue-800 font-medium"><span class="font-bold uppercase text-[10px] mr-2">Admin Reply:</span> ${c.reply}</p></div>` : `<button onclick="openReplyModal(${c.id}, '${c.school_name}')" class="text-xs font-bold text-rose-500 hover:text-rose-600 uppercase tracking-wider flex items-center gap-1">Reply to School</button>`}
-                             
-                         </div>
-                    </div>
-                 `;
+                         <!--Images -->
+                ${ images.length > 0 ? `<div class="flex gap-2 overflow-x-auto pb-2">${images.map(u => `<img src="${u}" onclick="window.open('${u}')" class="h-16 w-16 rounded-lg object-cover shadow-sm cursor-pointer hover:shadow-md transition-shadow">`).join('')}</div>` : '' }
+
+                < !--Actions -->
+                <div class="border-t border-white/50 pt-4 mt-2">
+                    ${c.reply ? `<div class="p-3 bg-blue-50/50 rounded-lg border border-blue-100"><p class="text-xs text-blue-800 font-medium"><span class="font-bold uppercase text-[10px] mr-2">Admin Reply:</span> ${c.reply}</p></div>` : `<button onclick="openReplyModal(${c.id}, '${c.school_name}')" class="text-xs font-bold text-rose-500 hover:text-rose-600 uppercase tracking-wider flex items-center gap-1">Reply to School</button>`}
+
+                </div>
+                    </div >
+                    `;
             }).join('');
 
             document.getElementById('ticketModal').showModal();
@@ -2879,18 +2875,18 @@
             doc.setFontSize(18);
             doc.text("Planetsolutions - Complaint Report", 14, 20);
             doc.setFontSize(10);
-            doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 26);
+            doc.text(`Generated: ${ new Date().toLocaleString() } `, 14, 26);
 
             // Stats
             const total = document.getElementById('c-stat-total')?.innerText || '0';
             const open = document.getElementById('c-stat-open')?.innerText || '0';
-            doc.text(`Total: ${total} | Open: ${open}`, 14, 32);
+            doc.text(`Total: ${ total } | Open: ${ open } `, 14, 32);
 
             // Table Data
             const tableRows = filteredComplaints.map(c => [
                 new Date(c.created_at).toLocaleDateString(),
                 c.school_name,
-                c.student_name + ` (${c.student_reg_no || '-'})`,
+                c.student_name + ` (${ c.student_reg_no || '-' })`,
                 c.gender,
                 (c.pattern_name || '-').substring(0, 30),
                 (c.issue_type || '-').substring(0, 30),
@@ -2906,7 +2902,7 @@
                 styles: { fontSize: 8 },
             });
 
-            doc.save(`complaints_report_${new Date().toISOString().slice(0, 10)}.pdf`);
+            doc.save(`complaints_report_${ new Date().toISOString().slice(0, 10) }.pdf`);
         }
 
         function downloadComplaintsExcel() {
@@ -2929,12 +2925,12 @@
             const wscols = Object.keys(excelData[0] || {}).map(k => ({ wch: 20 }));
             ws['!cols'] = wscols;
             XLSX.utils.book_append_sheet(wb, ws, "Complaints");
-            XLSX.writeFile(wb, `complaints_report_${new Date().toISOString().slice(0, 10)}.xlsx`);
+            XLSX.writeFile(wb, `complaints_report_${ new Date().toISOString().slice(0, 10) }.xlsx`);
         }
 
         function openReplyModal(id, schoolName) {
             currentComplaintId = id;
-            document.getElementById('reply-school-name').innerText = `Replying to: ${schoolName}`;
+            document.getElementById('reply-school-name').innerText = `Replying to: ${ schoolName } `;
             document.getElementById('reply-text').value = '';
 
             // Force close ticket modal to fix stacking
@@ -2957,20 +2953,20 @@
             if (!text.trim()) return alert("Please write a reply.");
 
             try {
-                const res = await fetch(`${API_BASE}/data/complaints/${currentComplaintId}/reply`, {
-                    method: 'PUT',
+                const res = await fetch(`${ API_BASE } /data/complaints / ${ currentComplaintId }/reply`, {
+                method: 'PUT',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                    body: JSON.stringify({ reply: text })
-                });
+                body: JSON.stringify({ reply: text })
+            });
 
-                if (res.ok) {
-                    alert("Reply Sent!");
-                    closeReplyModal();
-                    fetchComplaints();
-                } else {
-                    alert("Failed to send reply");
-                }
-            } catch (e) { alert(e.message); }
+            if (res.ok) {
+                alert("Reply Sent!");
+                closeReplyModal();
+                fetchComplaints();
+            } else {
+                alert("Failed to send reply");
+            }
+        } catch (e) { alert(e.message); }
         }
 
         document.getElementById('nav-overview').classList.add('active'); init().then(() => {
