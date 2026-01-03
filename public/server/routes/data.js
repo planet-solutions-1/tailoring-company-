@@ -50,33 +50,51 @@ router.get('/debug_full', async (req, res) => {
 });
 
 // GET /api/data/stats - High level metrics
-router.get('/stats', authenticateToken, requireRole('company'), (req, res) => {
-    db.get("SELECT COUNT(*) as total_schools FROM schools", [], (err, r1) => {
-        if (err) return res.status(500).json({ error: err.message });
-
-        db.get("SELECT COUNT(*) as total_students FROM students WHERE is_active = 1", [], (err, r2) => {
-            if (err) return res.status(500).json({ error: err.message });
-
-            db.get("SELECT COUNT(*) as packed_count FROM orders WHERE is_packed = 1", [], (err, r3) => {
-                if (err) return res.status(500).json({ error: err.message });
-
-                res.json({
-                    schools: r1.total_schools,
-                    students: r2.total_students,
-                    packed: r3.packed_count,
-                    pending: r2.total_students - r3.packed_count
-                });
+// GET /api/data/stats - High level metrics
+router.get('/stats', authenticateToken, requireRole('company'), async (req, res) => {
+    const getCount = (sql) => new Promise((resolve, reject) => {
+        if (db.execute) {
+            // MySQL
+            db.execute(sql).then(([rows]) => resolve(rows[0].count)).catch(reject);
+        } else {
+            // SQLite
+            db.get(sql, [], (err, row) => {
+                if (err) reject(err);
+                else resolve(row ? row.count : 0);
             });
-        });
+        }
     });
+
+    try {
+        const [schools, students, packed] = await Promise.all([
+            getCount("SELECT COUNT(*) as count FROM schools"),
+            getCount("SELECT COUNT(*) as count FROM students WHERE is_active = 1"),
+            getCount("SELECT COUNT(*) as count FROM orders WHERE is_packed = 1")
+        ]);
+
+        res.json({
+            schools,
+            students,
+            packed,
+            pending: students - packed
+        });
+    } catch (e) {
+        console.error("Stats Error:", e);
+        res.status(500).json({ error: e.message });
+    }
 });
 
 // GET /api/data/schools - List all schools
+// GET /api/data/schools - List all schools
 router.get('/schools', authenticateToken, requireRole('company'), (req, res) => {
-    db.all("SELECT * FROM schools", [], (err, rows) => {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json(rows);
-    });
+    if (db.execute) {
+        db.execute("SELECT * FROM schools").then(([rows]) => res.json(rows)).catch(err => res.status(500).json({ error: err.message }));
+    } else {
+        db.all("SELECT * FROM schools", [], (err, rows) => {
+            if (err) return res.status(500).json({ error: err.message });
+            res.json(rows);
+        });
+    }
 });
 
 // PUT /api/data/schools/:id - Update School Metadata (Priority/Status)
@@ -214,25 +232,46 @@ router.put('/school/:id', authenticateToken, requireRole('company'), (req, res) 
 
 // POST /api/data/migrate - Manual Schema Migration
 // DELETE /api/data/schools/:id - Delete School & Cascade
-router.delete('/schools/:id', authenticateToken, requireRole('company'), (req, res) => {
+// DELETE /api/data/schools/:id - Delete School & Cascade
+router.delete('/schools/:id', authenticateToken, requireRole('company'), async (req, res) => {
     const { id } = req.params;
 
-    // 1. Delete Students (Cascade Measurements/Orders/Patterns via DB or Manual)
-    db.serialize(() => {
-        db.run("DELETE FROM measurements WHERE student_id IN (SELECT id FROM students WHERE school_id = ?)", [id]);
-        db.run("DELETE FROM orders WHERE student_id IN (SELECT id FROM students WHERE school_id = ?)", [id]);
-        db.run("DELETE FROM students WHERE school_id = ?", [id]);
-        db.run("DELETE FROM patterns WHERE school_id = ?", [id]);
-        db.run("DELETE FROM users WHERE school_id = ?", [id]);
-        db.run("DELETE FROM complaints WHERE school_id = ?", [id]);
-        db.run("DELETE FROM access_codes WHERE school_id = ?", [id]);
+    if (db.execute) {
+        // MySQL Cascade Delete
+        try {
+            await db.execute("DELETE FROM measurements WHERE student_id IN (SELECT id FROM students WHERE school_id = ?)", [id]);
+            await db.execute("DELETE FROM orders WHERE student_id IN (SELECT id FROM students WHERE school_id = ?)", [id]);
+            await db.execute("DELETE FROM patterns WHERE school_id = ?", [id]);
+            await db.execute("DELETE FROM users WHERE school_id = ?", [id]);
+            await db.execute("DELETE FROM complaints WHERE school_id = ?", [id]);
+            await db.execute("DELETE FROM access_codes WHERE school_id = ?", [id]);
+            await db.execute("DELETE FROM students WHERE school_id = ?", [id]);
+            await db.execute("DELETE FROM schools WHERE id = ?", [id]);
 
-        db.run("DELETE FROM schools WHERE id = ?", [id], function (err) {
-            if (err) return res.status(500).json({ error: err.message });
             if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'DELETE_SCHOOL', `Deleted School #${id}`);
             res.json({ message: "School and all related data deleted successfully" });
+        } catch (e) {
+            console.error("Delete Error", e);
+            res.status(500).json({ error: e.message });
+        }
+    } else {
+        // SQLite
+        db.serialize(() => {
+            db.run("DELETE FROM measurements WHERE student_id IN (SELECT id FROM students WHERE school_id = ?)", [id]);
+            db.run("DELETE FROM orders WHERE student_id IN (SELECT id FROM students WHERE school_id = ?)", [id]);
+            db.run("DELETE FROM students WHERE school_id = ?", [id]);
+            db.run("DELETE FROM patterns WHERE school_id = ?", [id]);
+            db.run("DELETE FROM users WHERE school_id = ?", [id]);
+            db.run("DELETE FROM complaints WHERE school_id = ?", [id]);
+            db.run("DELETE FROM access_codes WHERE school_id = ?", [id]);
+
+            db.run("DELETE FROM schools WHERE id = ?", [id], function (err) {
+                if (err) return res.status(500).json({ error: err.message });
+                if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'DELETE_SCHOOL', `Deleted School #${id}`);
+                res.json({ message: "School and all related data deleted successfully" });
+            });
         });
-    });
+    }
 });
 
 // POST /api/data/migrate - Manual Schema Migration
