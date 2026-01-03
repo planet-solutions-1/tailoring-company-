@@ -171,9 +171,7 @@ router.put('/schools/:id', authenticateToken, requireRole('company'), (req, res)
             if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'UPDATE_SCHOOL', `Updated School #${id}`);
             res.json({ message: "School Updated" });
         });
-    });
     }
-});
 });
 
 // POST /api/data/schools - Create new school
@@ -183,7 +181,6 @@ router.post('/schools', authenticateToken, requireRole('company'), async (req, r
     try {
         const hash = await bcrypt.hash(password, 10);
 
-        // 1. Create School
         // 1. Create School
         if (db.execute) {
             // MySQL
