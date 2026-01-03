@@ -1987,7 +1987,9 @@
             if (!tdCurrentSchoolId) return;
 
             // 1. Get Base Data
-            let data = globalStudents.filter(st => st.school_id == tdCurrentSchoolId);
+            // 1. Get Base Data (Use Name for consistency with other fixes)
+            const schoolName = document.getElementById('td-school-name').innerText;
+            let data = globalStudents.filter(st => st.school_name === schoolName);
 
             // 2. Apply Filters
             const cls = document.getElementById('td-filter-class').value;
@@ -1997,7 +1999,7 @@
 
             if (cls !== 'all') data = data.filter(st => st.class == cls);
             if (sec !== 'all') data = data.filter(st => st.section == sec);
-            if (gender !== 'all') data = data.filter(st => st.gender === gender);
+            if (gender !== 'all') data = data.filter(st => st.gender && st.gender.toLowerCase() === gender.toLowerCase());
 
             // 3. Search Logic (Range + Keyword)
             if (search) {
