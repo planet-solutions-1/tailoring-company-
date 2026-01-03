@@ -1632,12 +1632,18 @@
                 const r = await fetch(`${API_BASE}/data/schools`, { headers: { 'Authorization': `Bearer ${token}` } });
                 const d = await r.json();
                 document.getElementById('school-list-body').innerHTML = Array.isArray(d) ? d.map(s => `
-                    <tr class="hover:bg-gray-50/50 group border-b border-gray-50">
-                        <td class="p-4 font-bold text-gray-700">${s.name}</td>
+                    <tr class="hover:bg-gray-50/50 group border-b border-gray-50 ${s.priority === 'Urgent' ? 'bg-red-50/30' : ''}">
+                        <td class="p-4 font-bold text-gray-700 flex items-center gap-2">
+                            ${s.name}
+                            ${s.priority === 'Urgent' ? '<span class="animate-pulse text-xl" title="Urgent Production">🔥</span>' : ''}
+                            ${s.priority === 'High' ? '<span class="text-lg" title="High Priority">⚠️</span>' : ''}
+                        </td>
                         <td class="p-4">
-                            <select onchange="updateSchoolMeta(${s.id},'priority',this.value)" class="clay-input h-8 py-1 px-2 text-xs font-bold uppercase ${s.priority === 'High' ? 'text-rose-500' : 'text-gray-500'}">
+                            <select onchange="updateSchoolMeta(${s.id},'priority',this.value); if(this.value==='Urgent') alert('⚠️ Marked as URGENT! Production team will be notified.'); fetchSchoolsManage();" 
+                                class="clay-input h-8 py-1 px-2 text-xs font-bold uppercase ${s.priority === 'Urgent' ? 'text-red-600 bg-red-100 border-red-200' : (s.priority === 'High' ? 'text-orange-500' : 'text-gray-500')}">
                                 <option value="Normal" ${s.priority === 'Normal' ? 'selected' : ''}>Normal Priority</option>
                                 <option value="High" ${s.priority === 'High' ? 'selected' : ''}>High Priority</option>
+                                <option value="Urgent" ${s.priority === 'Urgent' ? 'selected' : ''}>Urgent (Rush)</option>
                                 <option value="Low" ${s.priority === 'Low' ? 'selected' : ''}>Low Priority</option>
                             </select>
                         </td>
