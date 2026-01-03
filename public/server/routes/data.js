@@ -100,24 +100,32 @@ router.get('/schools', authenticateToken, requireRole('company'), (req, res) => 
 // PUT /api/data/schools/:id - Update School Metadata (Priority/Status)
 router.put('/schools/:id', authenticateToken, requireRole('company'), (req, res) => {
     const { id } = req.params;
-    // Ensure undefined values become null for SQL binding
-    const priority = req.body.priority === undefined ? null : req.body.priority;
-    const status = req.body.status === undefined ? null : req.body.status;
+    const { priority, status, start_date, deadline } = req.body;
 
-    const sql = "UPDATE schools SET priority = COALESCE(?, priority), status = COALESCE(?, status) WHERE id = ?";
+    // Dynamic Update Query
+    const fields = [];
+    const params = [];
 
-    // Use db.execute if available (MySQL), otherwise db.run (SQLite)
+    if (priority !== undefined) { fields.push("priority = ?"); params.push(priority); }
+    if (status !== undefined) { fields.push("status = ?"); params.push(status); }
+    if (start_date !== undefined) { fields.push("start_date = ?"); params.push(start_date || null); }
+    if (deadline !== undefined) { fields.push("deadline = ?"); params.push(deadline || null); }
+
+    if (fields.length === 0) return res.json({ message: "No fields to update." });
+
+    const sql = `UPDATE schools SET ${fields.join(', ')} WHERE id = ?`;
+    params.push(id);
+
     // Use db.execute if available (MySQL), otherwise db.run (SQLite)
     if (db.execute) {
-        db.execute(sql, [priority, status, id])
+        db.execute(sql, params)
             .then(([result]) => {
                 const affected = result ? result.affectedRows : 'N/A';
-                const changed = result ? result.changedRows : 'N/A';
-                console.log(`[UPDATE DEBUG] ID: ${id}, Prio: ${priority}, Status: ${status} -> Affected: ${affected}, Changed: ${changed}`);
+                console.log(`[UPDATE DEBUG] ID: ${id} -> Fields: ${fields.length}`);
 
                 // CASCADE UPDATE: If status changed, update ALL Active students for this school
                 if (status) {
-                    // 1. Backfill missing order rows (Optimized LEFT JOIN for performance)
+                    // 1. Backfill missing order rows
                     const backfillSql = `
                         INSERT INTO orders (student_id, status) 
                         SELECT s.id, ? 
@@ -128,33 +136,20 @@ router.put('/schools/:id', authenticateToken, requireRole('company'), (req, res)
                     // 2. Update existing rows
                     const updateSql = "UPDATE orders SET status = ? WHERE student_id IN (SELECT id FROM students WHERE school_id = ? AND is_active = 1)";
 
-                    if (db.execute) {
-                        // MySQL
-                        db.execute(backfillSql, [status, id])
-                            .then(() => db.execute(updateSql, [status, id]))
-                            .then(() => console.log(`[BULK UPDATE] School ${id} -> ${status}: Orders synced (Backfilled + Updated).`))
-                            .catch(err => console.error("[BULK UPDATE ERROR]", err));
-                    } else {
-                        // SQLite Fallback
-                        db.run(backfillSql, [status, id], (err) => {
-                            if (err && !err.message.includes('UNIQUE')) console.error("[BULK BACKFILL ERROR]", err);
-                            db.run(updateSql, [status, id], (err) => {
-                                if (err) console.error("[BULK UPDATE ERROR]", err);
-                                else console.log(`[BULK UPDATE] School ${id} -> ${status}: Orders synced.`);
-                            });
-                        });
-                    }
+                    db.execute(backfillSql, [status, id])
+                        .then(() => db.execute(updateSql, [status, id]))
+                        .catch(err => console.error("[BULK UPDATE ERROR]", err));
                 }
 
-                if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'UPDATE_SCHOOL', `Updated School #${id} Priority/Status`);
-                res.json({ message: "School & Students Updated", debug: { affected, changed } });
+                if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'UPDATE_SCHOOL', `Updated School #${id}`);
+                res.json({ message: "School Updated", debug: { affected } });
             })
             .catch(err => {
                 console.error("[UPDATE ERROR]", err);
                 res.status(500).json({ error: err.message });
             });
     } else {
-        db.run(sql, [priority, status, id], function (err) {
+        db.run(sql, params, function (err) {
             if (err) return res.status(500).json({ error: err.message });
 
             // CASCADE UPDATE (SQLite)
@@ -168,19 +163,17 @@ router.put('/schools/:id', authenticateToken, requireRole('company'), (req, res)
                  `;
                 const updateSql = "UPDATE orders SET status = ? WHERE student_id IN (SELECT id FROM students WHERE school_id = ? AND is_active = 1)";
 
-                db.run(backfillSql, [status, id], (err) => {
-                    // Ignore unique errors if race condition
-                    db.run(updateSql, [status, id], (err) => {
-                        if (err) console.error("[BULK UPDATE ERROR]", err);
-                        else console.log(`[BULK UPDATE] School ${id} -> ${status}: Orders synced (SQLite).`);
-                    });
+                db.run(backfillSql, [status, id], () => {
+                    db.run(updateSql, [status, id]);
                 });
             }
 
-            if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'UPDATE_SCHOOL', `Updated School #${id} Priority/Status`);
+            if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'UPDATE_SCHOOL', `Updated School #${id}`);
             res.json({ message: "School Updated" });
         });
+    });
     }
+});
 });
 
 // POST /api/data/schools - Create new school
@@ -191,9 +184,13 @@ router.post('/schools', authenticateToken, requireRole('company'), async (req, r
         const hash = await bcrypt.hash(password, 10);
 
         // 1. Create School
+        // 1. Create School
         if (db.execute) {
             // MySQL
-            const [schoolRes] = await db.execute("INSERT INTO schools (name, username, password_hash) VALUES (?, ?, ?)", [name, username, hash]);
+            const [schoolRes] = await db.execute(
+                "INSERT INTO schools (name, username, password_hash, start_date, deadline) VALUES (?, ?, ?, ?, ?)",
+                [name, username, hash, req.body.start_date || null, req.body.deadline || null]
+            );
             const schoolId = schoolRes.insertId;
 
             // 2. Create School Admin User automatically
@@ -1085,7 +1082,9 @@ router.post('/fix_db', authenticateToken, requireRole('company'), (req, res) => 
         { label: "Add 'is_absent' to measurements", sql: "ALTER TABLE measurements ADD COLUMN is_absent TINYINT DEFAULT 0" },
         { label: "Add 'is_absent' to measurements", sql: "ALTER TABLE measurements ADD COLUMN is_absent TINYINT DEFAULT 0" },
         { label: "Add 'item_quantities' to measurements", sql: "ALTER TABLE measurements ADD COLUMN item_quantities TEXT" },
-        { label: "Add 'description' to patterns", sql: "ALTER TABLE patterns ADD COLUMN description TEXT" }
+        { label: "Add 'description' to patterns", sql: "ALTER TABLE patterns ADD COLUMN description TEXT" },
+        { label: "Add 'start_date' to schools", sql: "ALTER TABLE schools ADD COLUMN start_date DATETIME" },
+        { label: "Add 'deadline' to schools", sql: "ALTER TABLE schools ADD COLUMN deadline DATETIME" }
     ];
 
     // Helper to run sequential
