@@ -197,19 +197,6 @@ router.post('/schools', authenticateToken, requireRole('company'), async (req, r
             });
         }
 
-        // 2. Create User for School Admin
-        db.run("INSERT INTO users (username, password_hash, role, school_id) VALUES (?, ?, ?, ?)",
-            [username, hash, 'school', schoolId], function (err2) {
-                if (err2) {
-                    return res.status(500).json({ error: "School created but User failed: " + err2.message });
-                }
-
-                // 3. Log
-                if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'CREATE_SCHOOL', `Created school: ${name}`);
-
-                res.json({ id: schoolId, message: "School and User created" });
-            });
-    });
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
