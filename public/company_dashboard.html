@@ -1575,7 +1575,18 @@
                 }
             } catch (e) { console.error("Student Fetch Error", e); globalStudents = []; }
         }
-        async function fetchGlobalPatterns() { try { const r = await fetch(`${API_BASE}/data/patterns/all`, { headers: { 'Authorization': `Bearer ${token}` } }); const d = await r.json(); globalPatterns = Array.isArray(d) ? d : []; document.getElementById('filter-pattern').innerHTML = '<option value="all">All Patterns</option>' + globalPatterns.map(p => `<option value="${p.id}">${p.name} (${p.school_name})</option>`).join(''); } catch (e) { console.error("Patterns Error", e); globalPatterns = []; } }
+        async function fetchGlobalPatterns() {
+            try {
+                const r = await fetch(`${API_BASE}/data/patterns/all`, { headers: { 'Authorization': `Bearer ${token}` } });
+                const d = await r.json();
+                globalPatterns = Array.isArray(d) ? d : [];
+
+                const filterEl = document.getElementById('filter-pattern');
+                if (filterEl) {
+                    filterEl.innerHTML = '<option value="all">All Patterns</option>' + globalPatterns.map(p => `<option value="${p.id}">${p.name} (${p.school_name})</option>`).join('');
+                }
+            } catch (e) { console.error("Patterns Error", e); globalPatterns = []; }
+        }
         async function fetchSchoolsForSelect() { try { const r = await fetch(`${API_BASE}/data/schools`, { headers: { 'Authorization': `Bearer ${token}` } }); const d = await r.json(); globalSchools = Array.isArray(d) ? d : []; if (globalSchools.length > 0) { const o = globalSchools.map(s => `<option value="${s.id}">${s.name}</option>`).join(''); document.getElementById('school-select').innerHTML = o; document.getElementById('access-school-select').innerHTML = o; } } catch (e) { console.error("Schools Error", e); globalSchools = []; } }
 
         async function fetchUsers() { try { const r = await fetch(`${API_BASE}/data/users`, { headers: { 'Authorization': `Bearer ${token}` } }); const u = await r.json(); if (!Array.isArray(u)) return; document.getElementById('user-list-body').innerHTML = u.map(x => `<tr class="hover:bg-gray-50/50 group border-b border-gray-50"><td class="p-4 font-bold text-gray-700">${x.username}</td><td class="p-4"><span class="px-3 py-1 rounded-full text-xs bg-gray-100/80 uppercase font-bold text-gray-500 shadow-inner">${x.role}</span></td><td class="p-4 text-gray-500">${x.school_name || '-'}</td><td class="p-4 text-center"><span class="px-3 py-1 rounded-full text-xs font-bold shadow-sm ${x.is_active !== false ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}">${x.is_active !== false ? 'Active' : 'Disabled'}</span></td><td class="p-4 text-right text-xs"><button onclick="toggleUserStatus(${x.id},${!(x.is_active !== false)},'${x.username}')" class="opacity-0 group-hover:opacity-100 transition-opacity px-4 py-2 rounded-lg font-bold shadow-sm ${x.is_active !== false ? 'text-red-500 bg-red-50 hover:bg-red-100' : 'text-green-500 bg-green-50 hover:bg-green-100'}">${x.is_active !== false ? 'Disable' : 'Enable'}</button></td></tr>`).join(''); } catch (e) { console.error(e) } }
@@ -1675,7 +1686,7 @@
         async function viewSchoolData(schoolName, schoolId) {
             switchTab('data');
             // Ensure options populated
-            if (document.getElementById('filter-school').options.length <= 1) populateDynamicFilters();
+            populateDynamicFilters();
 
             // If ID provided, use new Detail View directly
             if (schoolId) {
@@ -1685,10 +1696,9 @@
                 const s = globalSchools.find(x => x.name === schoolName);
                 if (s) openSchoolDetails(s.id);
                 else {
-                    document.getElementById('filter-school').value = schoolName;
-                    // renderGlobalTable(); // REMOVED OBSOLETE CALL
-                    renderTailoringData(); // Show grid filtered? No, grid doesn't filter by school input yet. 
-                    // Just show grid. User can click.
+                    const fs = document.getElementById('filter-school');
+                    if (fs) fs.value = schoolName;
+                    renderTailoringData();
                 }
             }
         }
@@ -1795,35 +1805,32 @@
             }
         }
         function populateDynamicFilters() {
+            // Get unique values from Global Students
             const c = [...new Set(globalStudents.map(s => s.class).filter(Boolean))].sort();
             const se = [...new Set(globalStudents.map(s => s.section).filter(Boolean))].sort();
-            const h = [...new Set(globalStudents.map(s => s.house).filter(Boolean))].sort();
 
-            // Dynamic Item Population
-            const itemSet = new Set();
-            globalStudents.forEach(s => {
-                const iq = getItemQuantitiesSafe(s);
-                Object.keys(iq).forEach(k => itemSet.add(k));
-            });
-            const dbItems = Array.from(itemSet).sort();
+            // Populate Class Filter (New ID: td-filter-class)
+            const classSelect = document.getElementById('td-filter-class');
+            if (classSelect) {
+                const current = classSelect.value;
+                classSelect.innerHTML = '<option value="all">Class</option>' + c.map(x => `<option value="${x}">${x}</option>`).join('');
+                if (c.includes(current)) classSelect.value = current;
+            }
 
-            // Schools from globalSchools or students
-            let schools = [];
-            if (globalSchools.length > 0) schools = globalSchools.map(s => s.name).sort();
-            else schools = [...new Set(globalStudents.map(s => s.school_name).filter(Boolean))].sort();
+            // Populate Section Filter (New ID: td-filter-section)
+            const sectionSelect = document.getElementById('td-filter-section');
+            if (sectionSelect) {
+                const current = sectionSelect.value;
+                sectionSelect.innerHTML = '<option value="all">Section</option>' + se.map(x => `<option value="${x}">${x}</option>`).join('');
+                if (se.includes(current)) sectionSelect.value = current;
+            }
 
-
-            document.getElementById('list-class').innerHTML = c.map(x => `<option value="${x}">`).join('');
-            document.getElementById('list-section').innerHTML = se.map(x => `<option value="${x}">`).join('');
-            document.getElementById('list-house').innerHTML = h.map(x => `<option value="${x}">`).join('');
-            document.getElementById('filter-item').innerHTML = '<option value="all">-- Select Item --</option>' + dbItems.map(i => `<option value="${i}">${i}</option>`).join('');
-
-            // Populate School Filter
+            // Populate School Filter (if exists in sidebar or elsewhere)
             const schoolSelect = document.getElementById('filter-school');
-            const currentSchool = schoolSelect.value;
-            schoolSelect.innerHTML = '<option value="all">All Schools</option>' + schools.map(s => `<option value="${s.replace(/"/g, '&quot;')}">${s}</option>`).join('');
-            if (currentSchool && schools.includes(currentSchool)) schoolSelect.value = currentSchool;
-
+            if (schoolSelect) {
+                const schools = globalSchools.length > 0 ? globalSchools.map(s => s.name).sort() : [...new Set(globalStudents.map(s => s.school_name).filter(Boolean))].sort();
+                schoolSelect.innerHTML = '<option value="all">All Schools</option>' + schools.map(s => `<option value="${s.replace(/"/g, '&quot;')}">${s}</option>`).join('');
+            }
         }
         // === NEW TAILORING DATA LOGIC (School-Centric) ===
         let tdCurrentSchoolId = null;
