@@ -503,6 +503,7 @@ router.get('/all_students', authenticateToken, requireRole('company'), (req, res
         LEFT JOIN measurements m ON st.id = m.student_id
         LEFT JOIN patterns p ON st.pattern_id = p.id
         WHERE st.is_active = 1
+        GROUP BY st.id
         ORDER BY sc.name ASC, st.class ASC, st.roll_no ASC
     `;
 
