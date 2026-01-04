@@ -1137,9 +1137,16 @@
     <!-- 5. SCHOOLS -->
     <div id="view-schools" class="hidden fade-in space-y-8 w-full">
         <div class="clay-card p-8">
-            <div class="mb-6 border-b border-white/50 pb-4">
-                <h3 class="text-2xl font-bold text-gray-700">School Metadata</h3>
-                <p class="text-gray-400 text-sm mt-1">Manage priority and production status for each school.</p>
+            <div class="flex items-center justify-between mb-6 border-b border-white/50 pb-4">
+                <div>
+                    <h3 class="text-2xl font-bold text-gray-700">School Metadata</h3>
+                    <p class="text-gray-400 text-sm mt-1">Manage priority and production status for each school.</p>
+                </div>
+                <!-- Repair Button -->
+                <button onclick="fixDatabase()"
+                    class="bg-blue-50 hover:bg-blue-100 text-blue-600 px-4 py-2 rounded-lg font-bold text-xs uppercase shadow-sm flex items-center gap-2 transition-colors border border-blue-200">
+                    <span class="text-lg">🔧</span> Repair Database
+                </button>
             </div>
 
             <div class="overflow-x-auto">
