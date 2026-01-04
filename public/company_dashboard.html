@@ -1732,7 +1732,24 @@
             fetchActivityLogs();
             if (window.renderUrgentDeadlines) renderUrgentDeadlines();
         }
-        function switchTab(viewId) {
+        function switchTab(clickedId) {
+            // Map Button IDs to View IDs
+            const map = {
+                'overview': 'view-overview',
+                'schools': 'view-manage-schools',
+                'data': 'view-school-data',
+                'tailoring': 'view-manage-tailoring-data',
+                'users': 'view-manage-users',
+                // 'access': 'view-access-codes', // Note: 'access' might map to view-access-codes
+                'access': 'view-access-codes',
+                'complaints': 'view-support',
+                'reports': 'view-reports',
+                'settings': 'view-settings'
+            };
+
+            // Allow calling with either short ID or full ID (fallback)
+            const viewId = map[clickedId] || clickedId;
+
             // Hide all views
             const views = ['view-overview', 'view-manage-schools', 'view-school-data', 'view-manage-tailoring-data', 'view-manage-users', 'view-access-codes', 'view-support', 'view-reports', 'view-settings'];
             views.forEach(id => {
