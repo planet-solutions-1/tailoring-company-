@@ -1437,17 +1437,25 @@
                         <option value="">-- Select School --</option>
                     </select>
                     <button onclick="downloadReport('school', 'xls')"
-                        class="w-full clay-btn py-3 text-sm font-bold text-emerald-500">Download Excel</button>
-                </div>
-                <!-- User Data -->
-                <div class="clay-card p-6">
-                    <h4 class="font-bold text-gray-700 text-lg mb-2">👥 User Registry</h4>
-                    <p class="text-xs text-gray-400 mb-4">All System Users & Roles</p>
-                    <button onclick="downloadReport('users', 'xls')"
-                        class="w-full clay-btn py-3 text-sm font-bold text-blue-500 mt-10">Download User List</button>
+                        class="w-full clay-btn py-3 text-sm font-bold text-emerald-500">Download Student Data</button>
+                    <div class="mt-6 pt-6 border-t border-gray-100">
+                        <h5 class="font-bold text-gray-600 text-sm mb-2">My Schools List</h5>
+                        <p class="text-xs text-gray-400 mb-3">Download metadata of all registered schools.</p>
+                        <button onclick="downloadReport('schools_list', 'xls')"
+                            class="w-full clay-btn py-2 text-xs font-bold text-indigo-500 hover:bg-indigo-50">Download
+                            Schools Registry</button>
+                    </div>
                 </div>
             </div>
+            <!-- User Data -->
+            <div class="clay-card p-6">
+                <h4 class="font-bold text-gray-700 text-lg mb-2">👥 User Registry</h4>
+                <p class="text-xs text-gray-400 mb-4">All System Users & Roles</p>
+                <button onclick="downloadReport('users', 'xls')"
+                    class="w-full clay-btn py-3 text-sm font-bold text-blue-500 mt-10">Download User List</button>
+            </div>
         </div>
+    </div>
 
     </div>
 
@@ -3600,6 +3608,17 @@
                 const a = document.createElement('a');
                 a.href = url;
                 a.download = `User_Registry.csv`;
+                a.click();
+            }
+            if (type === 'schools_list') {
+                if (!globalSchools || globalSchools.length === 0) return alert("No school data loaded.");
+                let csv = "ID,School Name,Username,Priority,Status,Start Date,Deadline\n";
+                globalSchools.forEach(s => csv += `${s.id},${s.name},${s.username},${s.priority},${s.status},${s.start_date || ''},${s.deadline || ''}\n`);
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Registered_Schools_Registry.csv`;
                 a.click();
             }
         }
