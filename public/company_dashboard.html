@@ -3432,7 +3432,8 @@
 
             // Fetch
             try {
-                const r = await fetch(`${API_BASE}/logs?${params}`, { headers: { 'Authorization': `Bearer ${token}` } });
+                // FIXED: API Path was missing /data
+                const r = await fetch(`${API_BASE}/data/logs?${params}`, { headers: { 'Authorization': `Bearer ${token}` } });
                 const data = await r.json();
                 globalLogs = data.error ? [] : data;
 
@@ -3524,7 +3525,8 @@
         async function cleanupLogs() {
             if (!confirm("Are you sure? This will delete all logs older than 7 days.")) return;
             try {
-                const r = await fetch(`${API_BASE}/logs/cleanup`, {
+                // FIXED: API Path was missing /data
+                const r = await fetch(`${API_BASE}/data/logs/cleanup`, {
                     method: 'POST',
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
@@ -3542,7 +3544,8 @@
                 const schoolId = document.getElementById('rp-export-school-select').value;
                 if (!schoolId) return alert("Please select a school first.");
 
-                const r = await fetch(`${API_BASE}/schools/${schoolId}/export`, { headers: { 'Authorization': `Bearer ${token}` } });
+                // FIXED: API Path was missing /data
+                const r = await fetch(`${API_BASE}/data/schools/${schoolId}/export`, { headers: { 'Authorization': `Bearer ${token}` } });
                 const students = await r.json();
                 if (students.length === 0) return alert("No data found for this school.");
 
@@ -3578,7 +3581,8 @@
 
             // 2. USER REGISTRY
             if (type === 'users') {
-                const r = await fetch(`${API_BASE}/users_report`, { headers: { 'Authorization': `Bearer ${token}` } });
+                // FIXED: API Path was missing /data
+                const r = await fetch(`${API_BASE}/data/users_report`, { headers: { 'Authorization': `Bearer ${token}` } });
                 const users = await r.json();
 
                 if (format === 'xls') {
