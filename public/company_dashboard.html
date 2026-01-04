@@ -1738,16 +1738,15 @@
             if (window.renderUrgentDeadlines) renderUrgentDeadlines();
         }
         function switchTab(clickedId) {
-            // Map Button IDs to View IDs
+            // Map Button IDs to View IDs (Corrected to match HTML)
             const map = {
                 'overview': 'view-overview',
-                'schools': 'view-manage-schools',
-                'data': 'view-school-data',
-                'tailoring': 'view-manage-tailoring-data',
-                'users': 'view-manage-users',
-                // 'access': 'view-access-codes', // Note: 'access' might map to view-access-codes
-                'access': 'view-access-codes',
-                'complaints': 'view-support',
+                'schools': 'view-schools',
+                'data': 'view-data',
+                'tailoring': 'view-data',
+                'users': 'view-users',
+                'access': 'view-access',
+                'complaints': 'view-complaints',
                 'reports': 'view-reports',
                 'settings': 'view-settings'
             };
@@ -1755,8 +1754,19 @@
             // Allow calling with either short ID or full ID (fallback)
             const viewId = map[clickedId] || clickedId;
 
-            // Hide all views
-            const views = ['view-overview', 'view-manage-schools', 'view-school-data', 'view-manage-tailoring-data', 'view-manage-users', 'view-access-codes', 'view-support', 'view-reports', 'view-settings'];
+            // Hide all views (including School Details)
+            const views = [
+                'view-overview',
+                'view-schools',
+                'view-data',
+                'view-users',
+                'view-access',
+                'view-complaints',
+                'view-reports',
+                'view-settings',
+                'view-school-details' // Ensure this is hidden when switching main tabs
+            ];
+
             views.forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.classList.add('hidden');
@@ -1764,30 +1774,34 @@
 
             // Show selected
             const target = document.getElementById(viewId);
-            if (target) target.classList.remove('hidden');
+            if (target) {
+                target.classList.remove('hidden');
+            } else {
+                console.warn(`View ID '${viewId}' not found in HTML.`);
+            }
 
             const titles = {
                 'view-overview': 'Overview',
-                'view-manage-schools': 'Schools',
-                'view-school-data': 'School Data',
-                'view-manage-tailoring-data': 'Tailoring Data',
-                'view-manage-users': 'User Management',
-                'view-access-codes': 'Access Codes',
-                'view-support': 'Complaints',
+                'view-schools': 'Schools',
+                'view-data': 'Tailoring Data',
+                'view-users': 'User Management',
+                'view-access': 'Access Codes',
+                'view-complaints': 'Complaints',
                 'view-reports': 'Reports',
                 'view-settings': 'Settings'
             };
-            document.getElementById('page-title').innerText = titles[viewId] || 'Overview';
+            const titleEl = document.getElementById('page-title');
+            if (titleEl) titleEl.innerText = titles[viewId] || 'Overview';
 
             if (sidebarOpen && window.innerWidth < 768) toggleSidebar();
 
             // Auto-Fetch Logic
-            if (viewId === 'view-manage-schools') fetchSchoolsManage();
-            if (viewId === 'view-manage-users') { fetchSchoolsForSelect(); fetchUsers(); }
-            if (viewId === 'view-access-codes') fetchAccessCodes();
-            if (viewId === 'view-support') fetchComplaints();
+            if (viewId === 'view-schools') fetchSchoolsManage();
+            if (viewId === 'view-users') { fetchSchoolsForSelect(); fetchUsers(); }
+            if (viewId === 'view-access') fetchAccessCodes();
+            if (viewId === 'view-complaints') fetchComplaints();
             if (viewId === 'view-reports') {
-                fetchSchoolsManage().then(() => initReports()); // Ensure schools are loaded first!
+                fetchSchoolsManage().then(() => { if (window.initReports) initReports(); });
             }
         }
         function animateValue(obj, start, end, duration) { let startTimestamp = null; const step = (timestamp) => { if (!startTimestamp) startTimestamp = timestamp; const progress = Math.min((timestamp - startTimestamp) / duration, 1); obj.innerText = Math.floor(progress * (end - start) + start); if (progress < 1) { window.requestAnimationFrame(step); } }; window.requestAnimationFrame(step); }
