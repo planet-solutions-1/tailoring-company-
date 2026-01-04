@@ -1310,123 +1310,141 @@
         </div>
     </div>
 
-    <!-- 6. REPORTS & LOGS CENTER -->
-    <div id="view-reports" class="hidden fade-in w-full space-y-8">
+    <!-- 6. SMART REPORTS HUB -->
+    <div id="view-reports" class="hidden fade-in w-full space-y-6">
 
-        <!-- A. Data Exports -->
-        <h3 class="font-bold text-2xl text-gray-700 px-2">Data Reports</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <!-- 1. School Data Export -->
-            <div class="clay-card p-6">
-                <div class="flex items-center gap-4 mb-6">
-                    <div
-                        class="w-12 h-12 rounded-xl bg-indigo-100 flex items-center justify-center text-indigo-500 font-bold text-xl">
-                        🏫</div>
-                    <div>
-                        <h4 class="font-bold text-gray-700 text-lg">School Data</h4>
-                        <p class="text-xs text-gray-400">Export students & measurements for a specific school.</p>
-                    </div>
-                </div>
-                <div class="space-y-4">
-                    <label class="block text-xs font-bold text-gray-400 uppercase ml-1">Select School</label>
-                    <select id="report-school-select" class="clay-input w-full">
-                        <option value="">-- Choose School --</option>
-                        <!-- Populated by JS -->
-                    </select>
-                    <div class="flex gap-3">
-                        <button onclick="downloadReport('school', 'pdf')"
-                            class="flex-1 clay-btn py-3 text-sm font-bold text-rose-500 hover:bg-rose-50">Download
-                            PDF</button>
-                        <button onclick="downloadReport('school', 'xls')"
-                            class="flex-1 clay-btn py-3 text-sm font-bold text-emerald-500 hover:bg-emerald-50">Download
-                            Excel</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 2. User Data Export -->
-            <div class="clay-card p-6">
-                <div class="flex items-center gap-4 mb-6">
-                    <div
-                        class="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center text-purple-500 font-bold text-xl">
-                        👥</div>
-                    <div>
-                        <h4 class="font-bold text-gray-700 text-lg">User Registry</h4>
-                        <p class="text-xs text-gray-400">Export list of all system users and roles.</p>
-                    </div>
-                </div>
-                <div class="space-y-4 mt-8">
-                    <button onclick="downloadReport('users', 'xls')"
-                        class="w-full clay-btn py-3 text-sm font-bold text-blue-500 hover:bg-blue-50 flex items-center justify-center gap-2">
-                        <span>📥</span> Download User Registry (XLS)
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- B. Activity Logs -->
-        <div class="flex justify-between items-end px-2 pt-8 border-t border-gray-200/50">
+        <!-- Top Controls -->
+        <div class="flex flex-col md:flex-row justify-between items-center gap-4">
             <div>
-                <h3 class="font-bold text-2xl text-gray-700">Activity Logs</h3>
-                <p class="text-sm text-gray-400 mt-1">System events retained for 7 days.</p>
+                <h3 class="font-bold text-2xl text-gray-700">Smart Reports Hub</h3>
+                <p class="text-sm text-gray-400">AI-Integrated Analytics & Logging System</p>
             </div>
-            <button onclick="cleanupLogs()"
-                class="text-xs font-bold text-red-400 hover:text-red-500 hover:underline">🗑️ Force Cleanup Now</button>
+            <div class="flex gap-2">
+                <button onclick="cleanupLogs()"
+                    class="clay-btn px-4 py-2 text-xs font-bold text-red-400 hover:text-red-500">🗑️ Force
+                    Cleanup</button>
+                <button onclick="downloadLogsXls()"
+                    class="clay-btn px-4 py-2 text-xs font-bold text-green-500 hover:text-green-600">💾 Export
+                    CSV</button>
+            </div>
         </div>
 
-        <!-- Log Filters -->
-        <div class="clay-card p-4 flex flex-col md:flex-row gap-4 items-end">
-            <div class="flex-1 w-full">
-                <label class="block text-[10px] font-bold text-gray-400 uppercase mb-2 ml-2">Log Context</label>
-                <select id="log-filter-role" onchange="fetchLogs()" class="clay-input">
-                    <option value="">All Contexts</option>
-                    <option value="company">Company Admin</option>
-                    <option value="school">School Dashboards</option>
-                    <option value="pattern">Pattern Managers</option>
-                </select>
-            </div>
-            <div class="flex-1 w-full">
-                <label class="block text-[10px] font-bold text-gray-400 uppercase mb-2 ml-2">Specific School</label>
-                <select id="log-filter-school" onchange="fetchLogs()" class="clay-input">
-                    <option value="">All Schools</option>
-                    <!-- Populated -->
-                </select>
-            </div>
-            <div class="flex-1 w-full">
-                <label class="block text-[10px] font-bold text-gray-400 uppercase mb-2 ml-2">Time Range</label>
-                <select id="log-filter-days" onchange="fetchLogs()" class="clay-input">
-                    <option value="7">Last 7 Days</option>
-                    <option value="1">Last 24 Hours</option>
-                    <option value="30">Last 30 Days</option>
-                </select>
-            </div>
-            <button onclick="fetchLogs()" class="clay-btn px-6 py-3 font-bold text-blue-500">Refresh</button>
-            <button onclick="downloadLogsXls()" class="clay-btn px-4 py-3 font-bold text-green-600"
-                title="Download Logs">💾</button>
+        <!-- Tabs -->
+        <div class="flex gap-6 border-b border-gray-100 overflow-x-auto">
+            <button onclick="switchReportTab('overview')" id="rt-overview"
+                class="pb-3 border-b-2 border-blue-500 text-blue-600 font-bold text-sm transition-colors whitespace-nowrap">📊
+                Overview & AI</button>
+            <button onclick="switchReportTab('school')" id="rt-school"
+                class="pb-3 border-b-2 border-transparent text-gray-400 font-bold text-sm hover:text-gray-600 transition-colors whitespace-nowrap">🏫
+                School Logs</button>
+            <button onclick="switchReportTab('user')" id="rt-user"
+                class="pb-3 border-b-2 border-transparent text-gray-400 font-bold text-sm hover:text-gray-600 transition-colors whitespace-nowrap">👤
+                User Activity</button>
+            <button onclick="switchReportTab('exports')" id="rt-exports"
+                class="pb-3 border-b-2 border-transparent text-gray-400 font-bold text-sm hover:text-gray-600 transition-colors whitespace-nowrap">📥
+                Data Exports</button>
         </div>
 
-        <!-- Log Visuals -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 h-64">
-            <div class="clay-card p-4 flex flex-col">
-                <h4 class="font-bold text-gray-600 mb-2 text-sm">Activity Volume</h4>
-                <div class="flex-1 relative"><canvas id="chart-logs-volume"></canvas></div>
+        <!-- 1. OVERVIEW TAB -->
+        <div id="rp-view-overview" class="space-y-6 fade-in">
+            <!-- AI Insights Widget -->
+            <div
+                class="clay-card p-6 bg-gradient-to-br from-indigo-50/50 to-white relative overflow-hidden border border-indigo-50">
+                <div class="flex items-center gap-3 mb-6">
+                    <span
+                        class="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 font-bold">✨</span>
+                    <h4 class="font-bold text-indigo-900 text-lg">AI Smart Insights</h4>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="ai-insights-grid">
+                    <!-- Loading State -->
+                    <div class="animate-pulse flex space-x-4">
+                        <div class="rounded-full bg-gray-200 h-10 w-10"></div>
+                        <div class="flex-1 space-y-2 py-1">
+                            <div class="h-2 bg-gray-200 rounded"></div>
+                            <div class="h-2 bg-gray-200 rounded w-5/6"></div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="clay-card p-4 flex flex-col lg:col-span-2">
-                <h4 class="font-bold text-gray-600 mb-2 text-sm">Recent Events</h4>
-                <div class="flex-1 overflow-auto">
-                    <table class="w-full text-xs text-left">
-                        <thead class="text-gray-400 font-bold border-b border-gray-100">
-                            <tr>
-                                <th class="p-2">Time</th>
-                                <th class="p-2">User</th>
-                                <th class="p-2">Action</th>
-                                <th class="p-2">Details</th>
-                            </tr>
-                        </thead>
-                        <tbody id="logs-table-body" class="divide-y divide-gray-50 text-gray-600 font-medium">
-                            <!-- Rows -->
-                        </tbody>
-                    </table>
+
+            <!-- Charts -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 h-80">
+                <div class="clay-card p-6 flex flex-col">
+                    <h5 class="font-bold text-gray-600 mb-4 text-xs uppercase tracking-wider">Activity Volume (7 Days)
+                    </h5>
+                    <div class="flex-1 relative"><canvas id="chart-logs-volume"></canvas></div>
+                </div>
+                <div class="clay-card p-6 flex flex-col">
+                    <h5 class="font-bold text-gray-600 mb-4 text-xs uppercase tracking-wider">Actions by Role</h5>
+                    <div class="flex-1 relative"><canvas id="chart-logs-role"></canvas></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. SCHOOL LOGS TAB -->
+        <div id="rp-view-school" class="hidden fade-in space-y-6">
+            <div class="clay-card p-4 flex items-center gap-4">
+                <label class="text-xs font-bold text-gray-400 uppercase">Select School:</label>
+                <select id="rp-school-select" onchange="fetchReportLogs('school')" class="clay-input flex-1 max-w-xs">
+                    <option value="">-- All Schools --</option>
+                </select>
+            </div>
+            <div class="clay-card p-0 overflow-hidden">
+                <table class="w-full text-xs text-left">
+                    <thead class="bg-gray-50 text-gray-500 font-bold uppercase tracking-wider">
+                        <tr>
+                            <th class="p-4">Time</th>
+                            <th class="p-4">User</th>
+                            <th class="p-4">Action</th>
+                            <th class="p-4">Details</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rp-school-table" class="divide-y divide-gray-100 text-gray-600 font-medium"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 3. USER LOGS TAB -->
+        <div id="rp-view-user" class="hidden fade-in space-y-6">
+            <div class="clay-card p-4 flex items-center gap-4">
+                <label class="text-xs font-bold text-gray-400 uppercase">Search User:</label>
+                <input type="text" id="rp-user-search" onkeyup="debounceLogFetch()" placeholder="Type username..."
+                    class="clay-input flex-1 max-w-xs">
+            </div>
+            <div class="clay-card p-0 overflow-hidden">
+                <table class="w-full text-xs text-left">
+                    <thead class="bg-gray-50 text-gray-500 font-bold uppercase tracking-wider">
+                        <tr>
+                            <th class="p-4">Time</th>
+                            <th class="p-4">Role</th>
+                            <th class="p-4">Action</th>
+                            <th class="p-4">Details</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rp-user-table" class="divide-y divide-gray-100 text-gray-600 font-medium"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 4. EXPORTS TAB (Moved here) -->
+        <div id="rp-view-exports" class="hidden fade-in space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- School Data -->
+                <div class="clay-card p-6">
+                    <h4 class="font-bold text-gray-700 text-lg mb-2">🏫 School Data</h4>
+                    <p class="text-xs text-gray-400 mb-4">Students, Measurements, & Order Status</p>
+                    <select id="rp-export-school-select" class="clay-input w-full mb-4">
+                        <option value="">-- Select School --</option>
+                    </select>
+                    <button onclick="downloadReport('school', 'xls')"
+                        class="w-full clay-btn py-3 text-sm font-bold text-emerald-500">Download Excel</button>
+                </div>
+                <!-- User Data -->
+                <div class="clay-card p-6">
+                    <h4 class="font-bold text-gray-700 text-lg mb-2">👥 User Registry</h4>
+                    <p class="text-xs text-gray-400 mb-4">All System Users & Roles</p>
+                    <button onclick="downloadReport('users', 'xls')"
+                        class="w-full clay-btn py-3 text-sm font-bold text-blue-500 mt-10">Download User List</button>
                 </div>
             </div>
         </div>
@@ -3391,83 +3409,143 @@
             }
         }
 
-        // === REPORTS CENTER LOGIC ===
+        // === SMART REPORTS LOGIC ===
         let globalLogs = [];
-        let logChart = null;
+        let charts = { vol: null, role: null };
+        let debounceTimer;
 
         function initReports() {
-            // Populate School Dropdown
-            const sel = document.getElementById('report-school-select');
-            const logSel = document.getElementById('log-filter-school');
+            // Populate School Dropdowns
+            const opts = globalSchools.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+            document.querySelectorAll('#rp-school-select, #rp-export-school-select').forEach(s => {
+                s.innerHTML = `<option value="">-- All Schools --</option>` + opts;
+            });
 
-            if (sel && globalSchools.length > 0) {
-                const opts = globalSchools.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
-                sel.innerHTML = `<option value="">-- Choose School --</option>` + opts;
-                logSel.innerHTML = `<option value="">All Schools</option>` + opts;
-            }
-            fetchLogs();
+            // Initial Fetch (Overview)
+            fetchReportLogs('overview');
         }
 
-        async function fetchLogs() {
-            const schoolId = document.getElementById('log-filter-school').value;
-            const role = document.getElementById('log-filter-role').value;
-            const days = document.getElementById('log-filter-days').value;
+        function switchReportTab(tab) {
+            ['overview', 'school', 'user', 'exports'].forEach(t => {
+                document.getElementById(`rt-${t}`).classList.replace('border-blue-500', 'border-transparent');
+                document.getElementById(`rt-${t}`).classList.replace('text-blue-600', 'text-gray-400');
+                document.getElementById(`rp-view-${t}`).classList.add('hidden');
+            });
+            document.getElementById(`rt-${tab}`).classList.replace('border-transparent', 'border-blue-500');
+            document.getElementById(`rt-${tab}`).classList.replace('text-gray-400', 'text-blue-600');
+            document.getElementById(`rp-view-${tab}`).classList.remove('hidden');
 
-            const params = new URLSearchParams({ days });
-            if (schoolId) params.append('school_id', schoolId);
-            if (role) params.append('role', role);
+            if (tab === 'school') fetchReportLogs('school');
+            if (tab === 'user') fetchReportLogs('user');
+        }
 
+        function debounceLogFetch() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => fetchReportLogs('user'), 500);
+        }
+
+        async function fetchReportLogs(context) {
+            const params = new URLSearchParams({ days: 7 }); // Default 7
+
+            if (context === 'school') {
+                const sid = document.getElementById('rp-school-select').value;
+                if (sid) params.append('school_id', sid);
+                else params.append('role', 'school'); // Show all school logs if no specific selected
+            }
+            if (context === 'user') {
+                const uname = document.getElementById('rp-user-search').value;
+                if (uname) params.append('username', uname);
+            }
+
+            // Fetch
             try {
                 const r = await fetch(`${API_BASE}/logs?${params}`, { headers: { 'Authorization': `Bearer ${token}` } });
                 const data = await r.json();
                 globalLogs = data.error ? [] : data;
-                renderLogs();
+
+                if (context === 'overview') renderAnalytics();
+                else if (context === 'school') renderLogTable('rp-school-table', globalLogs);
+                else if (context === 'user') renderLogTable('rp-user-table', globalLogs);
+
             } catch (e) { console.error("Log Fetch Error", e); }
         }
 
-        function renderLogs() {
-            const tbody = document.getElementById('logs-table-body');
-            tbody.innerHTML = globalLogs.map(l => `
-                <tr class="hover:bg-gray-50 border-b border-gray-50">
-                    <td class="p-2 whitespace-nowrap text-gray-400 text-[10px]">${timeAgo(l.created_at)}</td>
-                    <td class="p-2 font-bold text-gray-600">${l.username || 'System'}</td>
-                    <td class="p-2"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-gray-100 text-gray-500">${l.action}</span></td>
-                    <td class="p-2 text-gray-500 truncate max-w-xs" title="${l.details}">${l.details}</td>
-                </tr>
-            `).join('');
+        function renderAnalytics() {
+            // 1. AI Insights
+            const stats = {
+                total: globalLogs.length,
+                topAction: {},
+                topUser: {},
+                roles: {}
+            };
 
-            // Chart
-            const ctx = document.getElementById('chart-logs-volume').getContext('2d');
-
-            // Aggregation: Count per day (or hour based on range)
-            // For simplicity: Count per Action Type
-            const counts = {};
             globalLogs.forEach(l => {
-                counts[l.action] = (counts[l.action] || 0) + 1;
+                stats.topAction[l.action] = (stats.topAction[l.action] || 0) + 1;
+                stats.topUser[l.username] = (stats.topUser[l.username] || 0) + 1;
+                stats.roles[l.role || 'unknown'] = (stats.roles[l.role || 'unknown'] || 0) + 1;
             });
 
-            if (logChart) logChart.destroy();
-            logChart = new Chart(ctx, {
+            const topA = Object.entries(stats.topAction).sort((a, b) => b[1] - a[1])[0] || ['None', 0];
+            const topU = Object.entries(stats.topUser).sort((a, b) => b[1] - a[1])[0] || ['None', 0];
+
+            document.getElementById('ai-insights-grid').innerHTML = `
+                <div class="flex items-center gap-4 bg-white p-4 rounded-xl border border-indigo-100 shadow-sm">
+                    <div class="text-2xl">📈</div>
+                    <div><p class="text-[10px] bg-gray-100 px-2 rounded-full font-bold uppercase text-gray-500 mb-1 w-fit">Total Events</p><p class="font-bold text-gray-700">${stats.total} <span class="text-xs font-normal text-gray-400">last 7 days</span></p></div>
+                </div>
+                <div class="flex items-center gap-4 bg-white p-4 rounded-xl border border-indigo-100 shadow-sm">
+                    <div class="text-2xl">⚡</div>
+                    <div><p class="text-[10px] bg-blue-100 px-2 rounded-full font-bold uppercase text-blue-500 mb-1 w-fit">Top Action</p><p class="font-bold text-gray-700 truncate w-32" title="${topA[0]}">${topA[0]}</p></div>
+                </div>
+                <div class="flex items-center gap-4 bg-white p-4 rounded-xl border border-indigo-100 shadow-sm">
+                    <div class="text-2xl">👑</div>
+                    <div><p class="text-[10px] bg-amber-100 px-2 rounded-full font-bold uppercase text-amber-600 mb-1 w-fit">Most Active User</p><p class="font-bold text-gray-700">${topU[0]}</p></div>
+                </div>
+            `;
+
+            // 2. Volume Chart (Bar)
+            const dates = {};
+            globalLogs.forEach(l => {
+                const d = new Date(l.created_at).toLocaleDateString();
+                dates[d] = (dates[d] || 0) + 1;
+            });
+
+            if (charts.vol) charts.vol.destroy();
+            charts.vol = new Chart(document.getElementById('chart-logs-volume'), {
                 type: 'bar',
                 data: {
-                    labels: Object.keys(counts),
-                    datasets: [{
-                        label: 'Events',
-                        data: Object.values(counts),
-                        backgroundColor: '#60a5fa',
-                        borderRadius: 4
-                    }]
+                    labels: Object.keys(dates),
+                    datasets: [{ label: 'Events', data: Object.values(dates), backgroundColor: '#818cf8', borderRadius: 4 }]
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { beginAtZero: true, grid: { display: false } },
-                        x: { grid: { display: false } }
-                    }
-                }
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { display: false } } }
             });
+
+            // 3. Role Chart (Pie)
+            if (charts.role) charts.role.destroy();
+            charts.role = new Chart(document.getElementById('chart-logs-role'), {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(stats.roles),
+                    datasets: [{ data: Object.values(stats.roles), backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'], borderWidth: 0 }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
+            });
+        }
+
+        function renderLogTable(id, logs) {
+            const tbody = document.getElementById(id);
+            if (logs.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-gray-400 italic">No logs found matching criteria.</td></tr>`;
+                return;
+            }
+            tbody.innerHTML = logs.map(l => `
+                <tr class="hover:bg-gray-50 border-b border-gray-50">
+                    <td class="p-4 whitespace-nowrap text-gray-400 text-[10px] font-mono">${new Date(l.created_at).toLocaleString()}</td>
+                    <td class="p-4 font-bold text-gray-700 text-xs">${l.username} <span class="text-[9px] text-gray-400 font-normal">(${l.role || '-'})</span></td>
+                    <td class="p-4"><span class="px-2 py-1 rounded text-[10px] font-bold bg-gray-100 text-gray-600 border border-gray-200">${l.action}</span></td>
+                    <td class="p-4 text-xs text-gray-500 truncate max-w-xs" title="${l.details}">${l.details}</td>
+                </tr>
+            `).join('');
         }
 
         async function cleanupLogs() {
@@ -3479,7 +3557,7 @@
                 });
                 const d = await r.json();
                 showToast(d.message);
-                fetchLogs();
+                fetchReportLogs('overview'); // Refresh
             } catch (e) { showToast("Cleanup failed", true); }
         }
 

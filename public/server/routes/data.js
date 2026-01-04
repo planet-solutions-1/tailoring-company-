@@ -1127,12 +1127,13 @@ router.post('/fix_db', authenticateToken, requireRole('company'), (req, res) => 
 
 // Logs & Reports
 router.get('/logs', authenticateToken, requireRole('company'), (req, res) => {
-    const { school_id, role, type, days } = req.query;
+    const { school_id, role, username, type, days } = req.query;
     let sql = "SELECT * FROM activity_logs WHERE 1=1";
     const params = [];
 
     if (school_id) { sql += " AND school_id = ?"; params.push(school_id); }
     if (role) { sql += " AND role = ?"; params.push(role); }
+    if (username) { sql += " AND username = ?"; params.push(username); }
     if (days) {
         if (db.execute) sql += " AND created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)";
         else sql += " AND created_at >= date('now', '-' || ? || ' days')";
