@@ -326,4 +326,22 @@ app.get('/debug-fs', (req, res) => {
 // Start Server
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
+
+    // Auto-Cleanup Logs Every 24 Hours
+    setInterval(() => {
+        console.log("Running Auto-Cleanup for Logs > 7 Days...");
+        const days = 7;
+        let sql;
+        if (db.execute) sql = "DELETE FROM activity_logs WHERE created_at < DATE_SUB(NOW(), INTERVAL ? DAY)";
+        else sql = "DELETE FROM activity_logs WHERE created_at < date('now', '-' || ? || ' days')";
+
+        if (db.execute) {
+            db.execute(sql, [days]).then(() => console.log("Auto-Cleanup Done")).catch(e => console.error("Auto-Cleanup Error", e));
+        } else {
+            db.run(sql, [days], (err) => {
+                if (err) console.error("Auto-Cleanup Error", err);
+                else console.log("Auto-Cleanup Done");
+            });
+        }
+    }, 24 * 60 * 60 * 1000); // 24 Hours
 });

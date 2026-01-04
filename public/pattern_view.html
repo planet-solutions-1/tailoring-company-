@@ -254,6 +254,15 @@
                 class="mr-2 text-xs font-bold text-blue-500 hover:text-blue-700 uppercase tracking-wide">
                 Refresh Cloud Data
             </button>
+            <button onclick="openLogs()"
+                class="mr-2 text-xs font-bold text-indigo-500 hover:text-indigo-700 uppercase tracking-wide flex items-center gap-1">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="23 4 23 10 17 10"></polyline>
+                    <polyline points="1 20 1 14 7 14"></polyline>
+                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                </svg>
+                Logs
+            </button>
             <input type="file" id="fileInput" accept=".xlsx, .xls" class="hidden" onchange="handleFileUpload(event)" />
 
             <div class="flex gap-2 order-1 sm:order-2 w-full sm:w-auto justify-center">
@@ -1452,6 +1461,89 @@
             closeExportModal();
         }
 
+    </script>
+
+    <!-- LOGS MODAL -->
+    <div id="logs-modal"
+        class="fixed inset-0 bg-black/50 hidden z-[70] flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl h-[80vh] flex flex-col overflow-hidden">
+            <div class="p-4 bg-stone-900 text-white flex justify-between items-center">
+                <h3 class="font-brand font-bold text-lg">My Activity Logs</h3>
+                <button onclick="document.getElementById('logs-modal').classList.add('hidden')"
+                    class="text-stone-400 hover:text-white">✕</button>
+            </div>
+            <div class="p-4 border-b flex justify-between bg-stone-50">
+                <p class="text-xs text-stone-500 font-bold uppercase tracking-wider mt-2">Retention: 7 Days</p>
+                <div class="flex gap-2">
+                    <button onclick="fetchUserLogs()"
+                        class="px-3 py-1 bg-white border rounded text-xs font-bold hover:bg-stone-50">Refresh</button>
+
+                </div>
+            </div>
+            <div class="flex-1 overflow-auto p-4">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-stone-100 border-b border-stone-200">
+                            <th class="p-3 text-xs font-bold text-stone-500 uppercase">Time</th>
+                            <th class="p-3 text-xs font-bold text-stone-500 uppercase">Action</th>
+                            <th class="p-3 text-xs font-bold text-stone-500 uppercase">Details</th>
+                        </tr>
+                    </thead>
+                    <tbody id="userLogsBody" class="divide-y divide-stone-100">
+                        <tr>
+                            <td colspan="3" class="p-8 text-center text-stone-400">Loading...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // LOGS LOGIC
+        const API_BASE = '/api'; // Ensure API_BASE is available if not already
+
+        function openLogs() {
+            document.getElementById('logs-modal').classList.remove('hidden');
+            fetchUserLogs();
+        }
+
+        async function fetchUserLogs() {
+            const token = sessionStorage.getItem('token');
+            const tbody = document.getElementById('userLogsBody');
+            tbody.innerHTML = '<tr><td colspan="3" class="p-8 text-center text-stone-400">Loading...</td></tr>';
+            try {
+                const res = await fetch(`${API_BASE}/data/logs?days=7`, { headers: { 'Authorization': `Bearer ${token}` } });
+                const data = await res.json();
+                if (res.ok && Array.isArray(data)) {
+                    if (data.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="3" class="p-8 text-center text-stone-400">No logs found.</td></tr>';
+                    } else {
+                        tbody.innerHTML = data.map(l => `
+                                <tr>
+                                    <td class="p-3 text-xs font-mono text-stone-500">${new Date(l.created_at).toLocaleString()}</td>
+                                    <td class="p-3 text-xs font-bold text-stone-700">${l.action}</td>
+                                    <td class="p-3 text-xs text-stone-600">${l.details}</td>
+                                </tr>
+                            `).join('');
+                    }
+                    window.currentUserLogs = data;
+                } else {
+                    tbody.innerHTML = '<tr><td colspan="3" class="p-8 text-center text-rose-500">Error loading logs.</td></tr>';
+                }
+            } catch (e) { tbody.innerHTML = '<tr><td colspan="3" class="p-8 text-center text-rose-500">Connection Failed.</td></tr>'; }
+        }
+
+        function downloadUserLogs(fmt) {
+            const data = window.currentUserLogs || [];
+            if (data.length === 0) return alert("No data.");
+            let csv = "Time,Action,Details\n";
+            data.forEach(l => csv += `"${new Date(l.created_at).toLocaleString()}","${l.username}","${l.action}","${(l.details || '').replace(/"/g, '""')}"\n`);
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = 'My_Logs.csv'; a.click();
+        }
     </script>
 </body>
 

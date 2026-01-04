@@ -1126,19 +1126,38 @@ router.post('/fix_db', authenticateToken, requireRole('company'), (req, res) => 
 });
 
 // Logs & Reports
-router.get('/logs', authenticateToken, requireRole('company'), (req, res) => {
-    const { school_id, role, username, type, days } = req.query;
+// Logs & Reports
+router.get('/logs', authenticateToken, (req, res) => {
+    // Role-Based Access Control logic
+    const userRole = req.user.role;
+    const userSchoolId = req.user.school_id;
+    const userUsername = req.user.username;
+
+    let { school_id, role, username, days } = req.query;
+
+    // ENFORCE FILTERS based on Role
+    if (userRole === 'company') {
+        // Company can see all, respect query params
+    } else if (userRole === 'school') {
+        // School can ONLY see their own school's logs
+        school_id = userSchoolId; // Override query
+    } else {
+        // Tailors/Pattern/Others can ONLY see their own logs
+        username = userUsername; // Override query
+    }
+
     let sql = "SELECT * FROM activity_logs WHERE 1=1";
     const params = [];
 
     if (school_id) { sql += " AND school_id = ?"; params.push(school_id); }
     if (role) { sql += " AND role = ?"; params.push(role); }
     if (username) { sql += " AND username = ?"; params.push(username); }
-    if (days) {
-        if (db.execute) sql += " AND created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)";
-        else sql += " AND created_at >= date('now', '-' || ? || ' days')";
-        params.push(days);
-    }
+
+    // Default to 7 days if not specified, or respect 'days' param
+    const retentionDays = days || 7;
+    if (db.execute) sql += " AND created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)";
+    else sql += " AND created_at >= date('now', '-' || ? || ' days')";
+    params.push(retentionDays);
 
     sql += " ORDER BY created_at DESC LIMIT 500";
 
