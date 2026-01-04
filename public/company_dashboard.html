@@ -462,498 +462,508 @@
                 </div>
             </div>
 
-            <!-- Charts Row (Restored) -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 h-96">
-                <!-- Chart 1: Schools Distribution -->
-                <div class="clay-card p-6 flex flex-col justify-between lg:col-span-2 relative overflow-hidden">
-                    <div class="flex justify-between items-start z-10">
-                        <div>
-                            <h3 class="font-extrabold text-lg text-slate-700">School Distribution</h3>
-                            <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">Student
-                                Capacity &
-                                Enrollment</p>
-                        </div>
-                        <span class="p-2 rounded-xl bg-purple-50 text-purple-500 shadow-sm">
+        </div>
+
+        <!-- URGENT DEADLINES WIDGET -->
+        <div class="mt-8 animate-in slide-in-from-bottom-4 duration-500 delay-150">
+            <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                <span class="text-2xl animate-pulse">⏳</span> Upcoming Deadlines & Priority
+            </h3>
+            <div id="urgent-deadlines-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="clay-card p-6 flex items-center justify-center text-gray-400 italic">
+                    No upcoming deadlines set.
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row (Restored) -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 h-96">
+            <!-- Chart 1: Schools Distribution -->
+            <div class="clay-card p-6 flex flex-col justify-between lg:col-span-2 relative overflow-hidden">
+                <div class="flex justify-between items-start z-10">
+                    <div>
+                        <h3 class="font-extrabold text-lg text-slate-700">School Distribution</h3>
+                        <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">Student
+                            Capacity &
+                            Enrollment</p>
+                    </div>
+                    <span class="p-2 rounded-xl bg-purple-50 text-purple-500 shadow-sm">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+                            </path>
+                        </svg>
+                    </span>
+                </div>
+                <div class="flex-1 w-full mt-4 relative">
+                    <canvas id="chart-schools"></canvas>
+                </div>
+            </div>
+
+            <!-- Chart 2: Packing Status -->
+            <div class="clay-card p-6 flex flex-col justify-between relative overflow-hidden">
+                <div class="flex justify-between items-start z-10">
+                    <div>
+                        <h3 class="font-extrabold text-lg text-slate-700">Order Status</h3>
+                        <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">Completion
+                            Rate
+                        </p>
+                    </div>
+                    <div class="flex -space-x-2">
+                        <!-- Decor -->
+                    </div>
+                </div>
+                <div class="flex-1 w-full mt-4 relative flex items-center justify-center">
+                    <canvas id="chart-packing"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Smart Insights Row (New) -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+            <!-- 1. Performance Leaderboard -->
+            <div class="clay-card p-6 flex flex-col lg:col-span-1 h-[450px]">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-lg font-bold text-gray-700 flex items-center gap-2">
+                        <span class="p-2 rounded-lg bg-yellow-100 text-yellow-600">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
-                                </path>
+                                    d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
                             </svg>
                         </span>
-                    </div>
-                    <div class="flex-1 w-full mt-4 relative">
-                        <canvas id="chart-schools"></canvas>
-                    </div>
+                        Leaderboard
+                    </h3>
+                    <span class="text-[10px] font-bold uppercase text-gray-400 tracking-wider">Top Efficiency</span>
                 </div>
 
-                <!-- Chart 2: Packing Status -->
-                <div class="clay-card p-6 flex flex-col justify-between relative overflow-hidden">
-                    <div class="flex justify-between items-start z-10">
-                        <div>
-                            <h3 class="font-extrabold text-lg text-slate-700">Order Status</h3>
-                            <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">Completion
-                                Rate
-                            </p>
-                        </div>
-                        <div class="flex -space-x-2">
-                            <!-- Decor -->
-                        </div>
-                    </div>
-                    <div class="flex-1 w-full mt-4 relative flex items-center justify-center">
-                        <canvas id="chart-packing"></canvas>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Smart Insights Row (New) -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-                <!-- 1. Performance Leaderboard -->
-                <div class="clay-card p-6 flex flex-col lg:col-span-1 h-[450px]">
-                    <div class="flex justify-between items-center mb-6">
-                        <h3 class="text-lg font-bold text-gray-700 flex items-center gap-2">
-                            <span class="p-2 rounded-lg bg-yellow-100 text-yellow-600">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
-                                </svg>
-                            </span>
-                            Leaderboard
-                        </h3>
-                        <span class="text-[10px] font-bold uppercase text-gray-400 tracking-wider">Top Efficiency</span>
-                    </div>
-
-                    <div class="overflow-y-auto pr-2 custom-scrollbar flex-1 space-y-4" id="leaderboard-list">
-                        <!-- Injected via JS -->
-                        <div class="animate-pulse flex space-x-4">
-                            <div class="rounded-full bg-gray-200 h-10 w-10"></div>
-                            <div class="flex-1 space-y-2 py-1">
-                                <div class="h-2 bg-gray-200 rounded"></div>
-                                <div class="space-y-3">
-                                    <div class="grid grid-cols-3 gap-4">
-                                        <div class="h-2 bg-gray-200 rounded col-span-2"></div>
-                                        <div class="h-2 bg-gray-200 rounded col-span-1"></div>
-                                    </div>
+                <div class="overflow-y-auto pr-2 custom-scrollbar flex-1 space-y-4" id="leaderboard-list">
+                    <!-- Injected via JS -->
+                    <div class="animate-pulse flex space-x-4">
+                        <div class="rounded-full bg-gray-200 h-10 w-10"></div>
+                        <div class="flex-1 space-y-2 py-1">
+                            <div class="h-2 bg-gray-200 rounded"></div>
+                            <div class="space-y-3">
+                                <div class="grid grid-cols-3 gap-4">
+                                    <div class="h-2 bg-gray-200 rounded col-span-2"></div>
+                                    <div class="h-2 bg-gray-200 rounded col-span-1"></div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-
-                <!-- 2. Live Activity Feed -->
-                <div class="clay-card p-6 flex flex-col lg:col-span-2 h-[450px]">
-                    <div class="flex justify-between items-center mb-6">
-                        <h3 class="text-lg font-bold text-gray-700 flex items-center gap-2">
-                            <span class="p-2 rounded-lg bg-blue-100 text-blue-600">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                            </span>
-                            Live Activity
-                        </h3>
-                        <span class="text-[10px] font-bold uppercase text-gray-400 tracking-wider">Real-time
-                            Updates</span>
-                    </div>
-
-                    <div class="overflow-y-auto pr-4 custom-scrollbar flex-1 relative" id="activity-feed">
-                        <!-- Timeline Line -->
-                        <div class="absolute left-6 top-4 bottom-4 w-0.5 bg-gray-100"></div>
-                        <!-- Injected Items -->
-                    </div>
-                </div>
-
-            </div>
-        </div>
-
-        <!-- 2. TAILORING DATA (Restructured) -->
-        <div id="view-data" class="hidden space-y-6 fade-in min-h-screen">
-
-            <!-- LEVEL 1: SCHOOL SELECTION GRID -->
-            <div id="td-level-1" class="animate-in slide-in-from-left-4 duration-300">
-                <div class="flex justify-between items-center mb-8">
-                    <div>
-                        <h2 class="text-3xl font-extrabold text-gray-800">Tailoring Data</h2>
-                        <p class="text-gray-400 font-medium mt-1">Select a school to view details, measurements, and
-                            patterns.</p>
-                    </div>
-                </div>
-
-                <div id="td-school-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    <!-- School Cards Injected Here -->
-                </div>
             </div>
 
-            <!-- LEVEL 2: SCHOOL DETAILS -->
-            <div id="td-level-2" class="hidden animate-in slide-in-from-right-4 duration-300">
-                <!-- Header & Back -->
-                <div
-                    class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
-                    <div class="flex items-center gap-4">
-                        <button onclick="closeSchoolDetails()"
-                            class="w-10 h-10 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 flex items-center justify-center transition-colors">
+            <!-- 2. Live Activity Feed -->
+            <div class="clay-card p-6 flex flex-col lg:col-span-2 h-[450px]">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-lg font-bold text-gray-700 flex items-center gap-2">
+                        <span class="p-2 rounded-lg bg-blue-100 text-blue-600">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                             </svg>
-                        </button>
-                        <div>
-                            <h2 class="text-2xl font-extrabold text-gray-800 flex items-center gap-3">
-                                <span id="td-school-name">School Name</span>
-                                <span id="td-school-badge"
-                                    class="px-3 py-1 rounded-full text-xs bg-blue-100 text-blue-600 font-bold uppercase tracking-wider">Loading</span>
-                            </h2>
-                            <p class="text-xs text-gray-400 font-bold uppercase tracking-wider mt-1"
-                                id="td-school-meta">0 Students • 0 Patterns</p>
-                        </div>
-                    </div>
-                    <!-- Global Filters for this School View -->
-                    <!-- Global Filters for this School View -->
-
+                        </span>
+                        Live Activity
+                    </h3>
+                    <span class="text-[10px] font-bold uppercase text-gray-400 tracking-wider">Real-time
+                        Updates</span>
                 </div>
 
-            </div>
-
-            <!-- LEVEL 2: CATEGORY GRID (Replaces Tabs) -->
-            <div id="td-category-grid" class="hidden grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                <!-- Students Card -->
-                <div onclick="openLevel3('students')"
-                    class="clay-card p-8 flex items-center justify-between cursor-pointer hover:scale-[1.02] transition-transform group">
-                    <div>
-                        <div
-                            class="w-12 h-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center mb-4 text-2xl">
-                            <i class="fas fa-users"></i> <!-- Using FontAwesome classes or SVG -->
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z">
-                                </path>
-                            </svg>
-                        </div>
-                        <h3 class="text-xl font-extrabold text-gray-700 group-hover:text-blue-600 transition-colors">
-                            Student Details</h3>
-                        <p class="text-sm text-gray-400 font-bold mt-1" id="td-cat-students-count">Loading...</p>
-                    </div>
-                    <div
-                        class="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-300 group-hover:bg-blue-600 group-hover:text-white transition-all">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7">
-                            </path>
-                        </svg>
-                    </div>
+                <div class="overflow-y-auto pr-4 custom-scrollbar flex-1 relative" id="activity-feed">
+                    <!-- Timeline Line -->
+                    <div class="absolute left-6 top-4 bottom-4 w-0.5 bg-gray-100"></div>
+                    <!-- Injected Items -->
                 </div>
-
-                <!-- Measurements Card -->
-                <div onclick="openLevel3('measurements')"
-                    class="clay-card p-8 flex items-center justify-between cursor-pointer hover:scale-[1.02] transition-transform group">
-                    <div>
-                        <div
-                            class="w-12 h-12 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center mb-4">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10">
-                                </path>
-                            </svg>
-                        </div>
-                        <h3 class="text-xl font-extrabold text-gray-700 group-hover:text-purple-600 transition-colors">
-                            Measurements</h3>
-                        <p class="text-sm text-gray-400 font-bold mt-1">Full Matrix View</p>
-                    </div>
-                    <div
-                        class="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-300 group-hover:bg-purple-600 group-hover:text-white transition-all">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7">
-                            </path>
-                        </svg>
-                    </div>
-                </div>
-
-                <!-- Pattern Boys Card -->
-                <div onclick="openLevel3('patterns-boys')"
-                    class="clay-card p-8 flex items-center justify-between cursor-pointer hover:scale-[1.02] transition-transform group">
-                    <div>
-                        <div
-                            class="w-12 h-12 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center mb-4">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z">
-                                </path>
-                            </svg>
-                        </div>
-                        <h3 class="text-xl font-extrabold text-gray-700 group-hover:text-indigo-600 transition-colors">
-                            Boys Patterns</h3>
-                        <p class="text-sm text-gray-400 font-bold mt-1" id="td-cat-boys-count">Loading...</p>
-                    </div>
-                    <div
-                        class="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-300 group-hover:bg-indigo-600 group-hover:text-white transition-all">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7">
-                            </path>
-                        </svg>
-                    </div>
-                </div>
-
-                <!-- Pattern Girls Card -->
-                <div onclick="openLevel3('patterns-girls')"
-                    class="clay-card p-8 flex items-center justify-between cursor-pointer hover:scale-[1.02] transition-transform group">
-                    <div>
-                        <div
-                            class="w-12 h-12 rounded-xl bg-pink-100 text-pink-500 flex items-center justify-center mb-4">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z">
-                                </path>
-                            </svg>
-                        </div>
-                        <h3 class="text-xl font-extrabold text-gray-700 group-hover:text-pink-500 transition-colors">
-                            Girls Patterns</h3>
-                        <p class="text-sm text-gray-400 font-bold mt-1" id="td-cat-girls-count">Loading...</p>
-                    </div>
-                    <div
-                        class="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-300 group-hover:bg-pink-500 group-hover:text-white transition-all">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7">
-                            </path>
-                        </svg>
-                    </div>
-                </div>
-            </div>
-
-            <!-- LEVEL 3: DATA VIEWS (Students, Measurements, Patterns Grid) -->
-            <!-- Each View now has a Header with Back Button -->
-
-            <!-- 1. STUDENTS LIST -->
-            <div id="td-view-students" class="hidden space-y-6">
-                <div class="flex flex-col gap-6">
-                    <div class="flex items-center gap-4">
-                        <button onclick="closeLevel3()"
-                            class="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500 hover:text-blue-600 bg-white shadow-sm border border-gray-100">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-                            </svg>
-                        </button>
-                        <h3 class="text-xl font-extrabold text-gray-800">Student List</h3>
-                    </div>
-
-                    <!-- Filters Relocated Here -->
-                    <!-- Filters Relocated Here -->
-                    <!-- Filters Re-Built Layout -->
-                    <div id="td-filters-container"
-                        class="bg-gray-50/50 p-4 rounded-xl border border-gray-100 flex flex-col gap-4">
-                        <!-- Top Row: Search & Desktop Actions -->
-                        <div class="flex flex-col md:flex-row gap-4 items-center">
-                            <!-- Search -->
-                            <div class="relative w-full md:max-w-md">
-                                <span class="absolute left-3 top-3 text-gray-400">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                                    </svg>
-                                </span>
-                                <input type="text" id="td-filter-search" oninput="renderTdCurrentTab()"
-                                    placeholder="Search (1-5, A-C...)"
-                                    class="clay-input h-10 pl-10 text-sm font-bold w-full bg-white transition-colors placeholder-gray-400">
-                            </div>
-
-                            <!-- Desktop Export Buttons -->
-                            <div class="hidden md:flex items-center gap-3 ml-auto">
-                                <button onclick="downloadTdPDF()"
-                                    class="clay-btn h-10 px-4 bg-red-50 text-red-600 font-bold uppercase text-xs hover:bg-red-100 flex items-center gap-2"
-                                    title="Download PDF Report">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 2H7a2 2 0 00-2 2v12a2 2 0 002 2z">
-                                        </path>
-                                    </svg>
-                                    <span>PDF</span>
-                                </button>
-                                <button onclick="exportTdCurrentData()"
-                                    class="clay-btn h-10 px-4 bg-emerald-50 text-emerald-600 font-bold uppercase text-xs hover:bg-emerald-100 flex items-center gap-2"
-                                    title="Download Excel">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-                                    </svg>
-                                    <span>Excel</span>
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Bottom Row: Filters Grid & Mobile Actions -->
-                        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
-                            <!-- Class -->
-                            <div class="relative">
-                                <select id="td-filter-class" onchange="renderTdCurrentTab()"
-                                    class="clay-input h-12 py-3 text-sm font-bold w-full pl-3 pr-8 appearance-none border-none focus:ring-0 cursor-pointer hover:bg-white transition-colors bg-white text-gray-700 leading-tight">
-                                    <option value="all">Class</option>
-                                </select>
-                                <div
-                                    class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
-                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M19 9l-7 7-7-7"></path>
-                                    </svg>
-                                </div>
-                            </div>
-                            <!-- Section -->
-                            <div class="relative">
-                                <select id="td-filter-section" onchange="renderTdCurrentTab()"
-                                    class="clay-input h-12 py-3 text-sm font-bold w-full pl-3 pr-8 appearance-none border-none focus:ring-0 cursor-pointer hover:bg-white transition-colors bg-white text-gray-700 leading-tight">
-                                    <option value="all">Section</option>
-                                </select>
-                                <div
-                                    class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
-                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M19 9l-7 7-7-7"></path>
-                                    </svg>
-                                </div>
-                            </div>
-                            <!-- Gender -->
-                            <div class="relative">
-                                <select id="td-filter-gender" onchange="renderTdCurrentTab()"
-                                    class="clay-input h-12 py-3 text-sm font-bold w-full pl-3 pr-8 appearance-none border-none focus:ring-0 cursor-pointer hover:bg-white transition-colors bg-white text-gray-700 leading-tight">
-                                    <option value="all">Gender</option>
-                                    <option value="Male">Male</option>
-                                    <option value="Female">Female</option>
-                                </select>
-                                <div
-                                    class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
-                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M19 9l-7 7-7-7"></path>
-                                    </svg>
-                                </div>
-                            </div>
-
-                            <!-- Mobile Export Buttons (Visible only on small screens) -->
-                            <div class="md:hidden col-span-2 flex items-center justify-end gap-2 mt-2">
-                                <button onclick="downloadTdPDF()"
-                                    class="clay-btn h-10 w-10 flex items-center justify-center bg-red-50 text-red-600 hover:bg-red-100 rounded-lg">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 2H7a2 2 0 00-2 2v12a2 2 0 002 2z">
-                                        </path>
-                                    </svg>
-                                </button>
-                                <button onclick="exportTdCurrentData()"
-                                    class="clay-btn h-10 w-10 flex items-center justify-center bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="bg-white rounded-2xl p-1 min-h-[500px] shadow-sm border border-gray-100">
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left border-collapse">
-                            <thead>
-                                <tr
-                                    class="text-xs font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100">
-                                    <th class="p-4">Roll No</th>
-                                    <th class="p-4">Name</th>
-                                    <th class="p-4">Class</th>
-                                    <th class="p-4">Gender</th>
-                                    <th class="p-4 text-center">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody id="td-list-students"
-                                class="text-sm font-medium text-gray-600 divide-y divide-gray-50">
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 2. MEASUREMENTS -->
-            <div id="td-view-measurements" class="hidden space-y-6">
-                <div class="flex items-center gap-4">
-                    <button onclick="closeLevel3()"
-                        class="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500 hover:text-blue-600 bg-white shadow-sm border border-gray-100">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-                        </svg>
-                    </button>
-                    <h3 class="text-xl font-extrabold text-gray-800">Full Measurements Matrix</h3>
-                </div>
-                <div class="bg-white rounded-2xl p-1 min-h-[500px] shadow-sm border border-gray-100">
-                    <div class="overflow-x-auto custom-scrollbar pb-4">
-                        <table class="w-full text-left whitespace-nowrap border-collapse">
-                            <thead class="bg-gray-50/50 sticky top-0 z-10">
-                                <tr
-                                    class="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider border-b border-gray-200">
-                                    <th
-                                        class="p-3 sticky left-0 bg-white z-20 border-r border-gray-100 shadow-[4px_0_8px_-4px_rgba(0,0,0,0.05)]">
-                                        Student Identity</th>
-                                    <!-- U1-U8 -->
-                                    <th class="p-2 text-center text-orange-600 bg-orange-50/30">U1</th>
-                                    <th class="p-2 text-center text-orange-600 bg-orange-50/30">U2</th>
-                                    <th class="p-2 text-center text-orange-600 bg-orange-50/30">U3</th>
-                                    <th class="p-2 text-center text-orange-600 bg-orange-50/30">U4</th>
-                                    <th class="p-2 text-center text-orange-600 bg-orange-50/30">U5</th>
-                                    <th class="p-2 text-center text-orange-600 bg-orange-50/30">U6</th>
-                                    <th class="p-2 text-center text-orange-600 bg-orange-50/30">U7</th>
-                                    <th class="p-2 text-center text-orange-600 bg-orange-50/30">U8</th>
-                                    <!-- L1-L8 -->
-                                    <th
-                                        class="p-2 text-center text-indigo-600 bg-indigo-50/30 border-l border-gray-100">
-                                        L1</th>
-                                    <th class="p-2 text-center text-indigo-600 bg-indigo-50/30">L2</th>
-                                    <th class="p-2 text-center text-indigo-600 bg-indigo-50/30">L3</th>
-                                    <th class="p-2 text-center text-indigo-600 bg-indigo-50/30">L4</th>
-                                    <th class="p-2 text-center text-indigo-600 bg-indigo-50/30">L5</th>
-                                    <th class="p-2 text-center text-indigo-600 bg-indigo-50/30">L6</th>
-                                    <th class="p-2 text-center text-indigo-600 bg-indigo-50/30">L7</th>
-                                    <th class="p-2 text-center text-indigo-600 bg-indigo-50/30">L8</th>
-                                    <th
-                                        class="p-3 text-center bg-purple-50/30 text-purple-600 border-l border-gray-100">
-                                        Qty</th>
-                                    <th class="p-3 text-center">Remarks</th>
-                                </tr>
-                            </thead>
-                            <tbody id="td-list-measurements"
-                                class="text-xs font-mono text-gray-600 divide-y divide-gray-50">
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- 3. PATTERN BOYS GRID (Level 3) -->
-            <div id="td-view-patterns-boys" class="hidden space-y-6">
-                <div class="flex items-center gap-4">
-                    <button onclick="closeLevel3()"
-                        class="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500 hover:text-blue-600 bg-white shadow-sm border border-gray-100">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-                        </svg>
-                    </button>
-                    <h3 class="text-xl font-extrabold text-gray-800">Boys Pattern Groups</h3>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="td-list-patterns-boys"></div>
-            </div>
-
-            <!-- 4. PATTERN GIRLS GRID (Level 3) -->
-            <div id="td-view-patterns-girls" class="hidden space-y-6">
-                <div class="flex items-center gap-4">
-                    <button onclick="closeLevel3()"
-                        class="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500 hover:text-blue-600 bg-white shadow-sm border border-gray-100">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-                        </svg>
-                    </button>
-                    <h3 class="text-xl font-extrabold text-gray-800">Girls Pattern Groups</h3>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="td-list-patterns-girls"></div>
             </div>
 
         </div>
+    </div>
+
+    <!-- 2. TAILORING DATA (Restructured) -->
+    <div id="view-data" class="hidden space-y-6 fade-in min-h-screen">
+
+        <!-- LEVEL 1: SCHOOL SELECTION GRID -->
+        <div id="td-level-1" class="animate-in slide-in-from-left-4 duration-300">
+            <div class="flex justify-between items-center mb-8">
+                <div>
+                    <h2 class="text-3xl font-extrabold text-gray-800">Tailoring Data</h2>
+                    <p class="text-gray-400 font-medium mt-1">Select a school to view details, measurements, and
+                        patterns.</p>
+                </div>
+            </div>
+
+            <div id="td-school-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <!-- School Cards Injected Here -->
+            </div>
+        </div>
+
+        <!-- LEVEL 2: SCHOOL DETAILS -->
+        <div id="td-level-2" class="hidden animate-in slide-in-from-right-4 duration-300">
+            <!-- Header & Back -->
+            <div
+                class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+                <div class="flex items-center gap-4">
+                    <button onclick="closeSchoolDetails()"
+                        class="w-10 h-10 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 flex items-center justify-center transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                        </svg>
+                    </button>
+                    <div>
+                        <h2 class="text-2xl font-extrabold text-gray-800 flex items-center gap-3">
+                            <span id="td-school-name">School Name</span>
+                            <span id="td-school-badge"
+                                class="px-3 py-1 rounded-full text-xs bg-blue-100 text-blue-600 font-bold uppercase tracking-wider">Loading</span>
+                        </h2>
+                        <p class="text-xs text-gray-400 font-bold uppercase tracking-wider mt-1" id="td-school-meta">0
+                            Students • 0 Patterns</p>
+                    </div>
+                </div>
+                <!-- Global Filters for this School View -->
+                <!-- Global Filters for this School View -->
+
+            </div>
+
+        </div>
+
+        <!-- LEVEL 2: CATEGORY GRID (Replaces Tabs) -->
+        <div id="td-category-grid" class="hidden grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <!-- Students Card -->
+            <div onclick="openLevel3('students')"
+                class="clay-card p-8 flex items-center justify-between cursor-pointer hover:scale-[1.02] transition-transform group">
+                <div>
+                    <div
+                        class="w-12 h-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center mb-4 text-2xl">
+                        <i class="fas fa-users"></i> <!-- Using FontAwesome classes or SVG -->
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z">
+                            </path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-extrabold text-gray-700 group-hover:text-blue-600 transition-colors">
+                        Student Details</h3>
+                    <p class="text-sm text-gray-400 font-bold mt-1" id="td-cat-students-count">Loading...</p>
+                </div>
+                <div
+                    class="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-300 group-hover:bg-blue-600 group-hover:text-white transition-all">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7">
+                        </path>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Measurements Card -->
+            <div onclick="openLevel3('measurements')"
+                class="clay-card p-8 flex items-center justify-between cursor-pointer hover:scale-[1.02] transition-transform group">
+                <div>
+                    <div
+                        class="w-12 h-12 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10">
+                            </path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-extrabold text-gray-700 group-hover:text-purple-600 transition-colors">
+                        Measurements</h3>
+                    <p class="text-sm text-gray-400 font-bold mt-1">Full Matrix View</p>
+                </div>
+                <div
+                    class="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-300 group-hover:bg-purple-600 group-hover:text-white transition-all">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7">
+                        </path>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Pattern Boys Card -->
+            <div onclick="openLevel3('patterns-boys')"
+                class="clay-card p-8 flex items-center justify-between cursor-pointer hover:scale-[1.02] transition-transform group">
+                <div>
+                    <div
+                        class="w-12 h-12 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z">
+                            </path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-extrabold text-gray-700 group-hover:text-indigo-600 transition-colors">
+                        Boys Patterns</h3>
+                    <p class="text-sm text-gray-400 font-bold mt-1" id="td-cat-boys-count">Loading...</p>
+                </div>
+                <div
+                    class="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-300 group-hover:bg-indigo-600 group-hover:text-white transition-all">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7">
+                        </path>
+                    </svg>
+                </div>
+            </div>
+
+            <!-- Pattern Girls Card -->
+            <div onclick="openLevel3('patterns-girls')"
+                class="clay-card p-8 flex items-center justify-between cursor-pointer hover:scale-[1.02] transition-transform group">
+                <div>
+                    <div class="w-12 h-12 rounded-xl bg-pink-100 text-pink-500 flex items-center justify-center mb-4">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z">
+                            </path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-extrabold text-gray-700 group-hover:text-pink-500 transition-colors">
+                        Girls Patterns</h3>
+                    <p class="text-sm text-gray-400 font-bold mt-1" id="td-cat-girls-count">Loading...</p>
+                </div>
+                <div
+                    class="w-10 h-10 rounded-full bg-gray-50 flex items-center justify-center text-gray-300 group-hover:bg-pink-500 group-hover:text-white transition-all">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7">
+                        </path>
+                    </svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- LEVEL 3: DATA VIEWS (Students, Measurements, Patterns Grid) -->
+        <!-- Each View now has a Header with Back Button -->
+
+        <!-- 1. STUDENTS LIST -->
+        <div id="td-view-students" class="hidden space-y-6">
+            <div class="flex flex-col gap-6">
+                <div class="flex items-center gap-4">
+                    <button onclick="closeLevel3()"
+                        class="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500 hover:text-blue-600 bg-white shadow-sm border border-gray-100">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                        </svg>
+                    </button>
+                    <h3 class="text-xl font-extrabold text-gray-800">Student List</h3>
+                </div>
+
+                <!-- Filters Relocated Here -->
+                <!-- Filters Relocated Here -->
+                <!-- Filters Re-Built Layout -->
+                <div id="td-filters-container"
+                    class="bg-gray-50/50 p-4 rounded-xl border border-gray-100 flex flex-col gap-4">
+                    <!-- Top Row: Search & Desktop Actions -->
+                    <div class="flex flex-col md:flex-row gap-4 items-center">
+                        <!-- Search -->
+                        <div class="relative w-full md:max-w-md">
+                            <span class="absolute left-3 top-3 text-gray-400">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                                </svg>
+                            </span>
+                            <input type="text" id="td-filter-search" oninput="renderTdCurrentTab()"
+                                placeholder="Search (1-5, A-C...)"
+                                class="clay-input h-10 pl-10 text-sm font-bold w-full bg-white transition-colors placeholder-gray-400">
+                        </div>
+
+                        <!-- Desktop Export Buttons -->
+                        <div class="hidden md:flex items-center gap-3 ml-auto">
+                            <button onclick="downloadTdPDF()"
+                                class="clay-btn h-10 px-4 bg-red-50 text-red-600 font-bold uppercase text-xs hover:bg-red-100 flex items-center gap-2"
+                                title="Download PDF Report">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 2H7a2 2 0 00-2 2v12a2 2 0 002 2z">
+                                    </path>
+                                </svg>
+                                <span>PDF</span>
+                            </button>
+                            <button onclick="exportTdCurrentData()"
+                                class="clay-btn h-10 px-4 bg-emerald-50 text-emerald-600 font-bold uppercase text-xs hover:bg-emerald-100 flex items-center gap-2"
+                                title="Download Excel">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                                </svg>
+                                <span>Excel</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Bottom Row: Filters Grid & Mobile Actions -->
+                    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                        <!-- Class -->
+                        <div class="relative">
+                            <select id="td-filter-class" onchange="renderTdCurrentTab()"
+                                class="clay-input h-12 py-3 text-sm font-bold w-full pl-3 pr-8 appearance-none border-none focus:ring-0 cursor-pointer hover:bg-white transition-colors bg-white text-gray-700 leading-tight">
+                                <option value="all">Class</option>
+                            </select>
+                            <div
+                                class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        <!-- Section -->
+                        <div class="relative">
+                            <select id="td-filter-section" onchange="renderTdCurrentTab()"
+                                class="clay-input h-12 py-3 text-sm font-bold w-full pl-3 pr-8 appearance-none border-none focus:ring-0 cursor-pointer hover:bg-white transition-colors bg-white text-gray-700 leading-tight">
+                                <option value="all">Section</option>
+                            </select>
+                            <div
+                                class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        <!-- Gender -->
+                        <div class="relative">
+                            <select id="td-filter-gender" onchange="renderTdCurrentTab()"
+                                class="clay-input h-12 py-3 text-sm font-bold w-full pl-3 pr-8 appearance-none border-none focus:ring-0 cursor-pointer hover:bg-white transition-colors bg-white text-gray-700 leading-tight">
+                                <option value="all">Gender</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                            </select>
+                            <div
+                                class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 9l-7 7-7-7"></path>
+                                </svg>
+                            </div>
+                        </div>
+
+                        <!-- Mobile Export Buttons (Visible only on small screens) -->
+                        <div class="md:hidden col-span-2 flex items-center justify-end gap-2 mt-2">
+                            <button onclick="downloadTdPDF()"
+                                class="clay-btn h-10 w-10 flex items-center justify-center bg-red-50 text-red-600 hover:bg-red-100 rounded-lg">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 2H7a2 2 0 00-2 2v12a2 2 0 002 2z">
+                                    </path>
+                                </svg>
+                            </button>
+                            <button onclick="exportTdCurrentData()"
+                                class="clay-btn h-10 w-10 flex items-center justify-center bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-2xl p-1 min-h-[500px] shadow-sm border border-gray-100">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr
+                                class="text-xs font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100">
+                                <th class="p-4">Roll No</th>
+                                <th class="p-4">Name</th>
+                                <th class="p-4">Class</th>
+                                <th class="p-4">Gender</th>
+                                <th class="p-4 text-center">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="td-list-students" class="text-sm font-medium text-gray-600 divide-y divide-gray-50">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 2. MEASUREMENTS -->
+        <div id="td-view-measurements" class="hidden space-y-6">
+            <div class="flex items-center gap-4">
+                <button onclick="closeLevel3()"
+                    class="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500 hover:text-blue-600 bg-white shadow-sm border border-gray-100">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg>
+                </button>
+                <h3 class="text-xl font-extrabold text-gray-800">Full Measurements Matrix</h3>
+            </div>
+            <div class="bg-white rounded-2xl p-1 min-h-[500px] shadow-sm border border-gray-100">
+                <div class="overflow-x-auto custom-scrollbar pb-4">
+                    <table class="w-full text-left whitespace-nowrap border-collapse">
+                        <thead class="bg-gray-50/50 sticky top-0 z-10">
+                            <tr
+                                class="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider border-b border-gray-200">
+                                <th
+                                    class="p-3 sticky left-0 bg-white z-20 border-r border-gray-100 shadow-[4px_0_8px_-4px_rgba(0,0,0,0.05)]">
+                                    Student Identity</th>
+                                <!-- U1-U8 -->
+                                <th class="p-2 text-center text-orange-600 bg-orange-50/30">U1</th>
+                                <th class="p-2 text-center text-orange-600 bg-orange-50/30">U2</th>
+                                <th class="p-2 text-center text-orange-600 bg-orange-50/30">U3</th>
+                                <th class="p-2 text-center text-orange-600 bg-orange-50/30">U4</th>
+                                <th class="p-2 text-center text-orange-600 bg-orange-50/30">U5</th>
+                                <th class="p-2 text-center text-orange-600 bg-orange-50/30">U6</th>
+                                <th class="p-2 text-center text-orange-600 bg-orange-50/30">U7</th>
+                                <th class="p-2 text-center text-orange-600 bg-orange-50/30">U8</th>
+                                <!-- L1-L8 -->
+                                <th class="p-2 text-center text-indigo-600 bg-indigo-50/30 border-l border-gray-100">
+                                    L1</th>
+                                <th class="p-2 text-center text-indigo-600 bg-indigo-50/30">L2</th>
+                                <th class="p-2 text-center text-indigo-600 bg-indigo-50/30">L3</th>
+                                <th class="p-2 text-center text-indigo-600 bg-indigo-50/30">L4</th>
+                                <th class="p-2 text-center text-indigo-600 bg-indigo-50/30">L5</th>
+                                <th class="p-2 text-center text-indigo-600 bg-indigo-50/30">L6</th>
+                                <th class="p-2 text-center text-indigo-600 bg-indigo-50/30">L7</th>
+                                <th class="p-2 text-center text-indigo-600 bg-indigo-50/30">L8</th>
+                                <th class="p-3 text-center bg-purple-50/30 text-purple-600 border-l border-gray-100">
+                                    Qty</th>
+                                <th class="p-3 text-center">Remarks</th>
+                            </tr>
+                        </thead>
+                        <tbody id="td-list-measurements"
+                            class="text-xs font-mono text-gray-600 divide-y divide-gray-50">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- 3. PATTERN BOYS GRID (Level 3) -->
+        <div id="td-view-patterns-boys" class="hidden space-y-6">
+            <div class="flex items-center gap-4">
+                <button onclick="closeLevel3()"
+                    class="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500 hover:text-blue-600 bg-white shadow-sm border border-gray-100">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg>
+                </button>
+                <h3 class="text-xl font-extrabold text-gray-800">Boys Pattern Groups</h3>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="td-list-patterns-boys"></div>
+        </div>
+
+        <!-- 4. PATTERN GIRLS GRID (Level 3) -->
+        <div id="td-view-patterns-girls" class="hidden space-y-6">
+            <div class="flex items-center gap-4">
+                <button onclick="closeLevel3()"
+                    class="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500 hover:text-blue-600 bg-white shadow-sm border border-gray-100">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg>
+                </button>
+                <h3 class="text-xl font-extrabold text-gray-800">Girls Pattern Groups</h3>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="td-list-patterns-girls"></div>
+        </div>
+
+    </div>
     </div>
     </div>
 
@@ -1776,11 +1786,38 @@
             // Notification Logic (Simple Toast) for Urgent items
             const veryUrgent = urgent.filter(s => s.days <= 3 && s.days >= 0);
             if (veryUrgent.length > 0 && !window.hasNotifiedUrgent) {
-                // We could add a toast here, but user asked for "give notification".
-                // A simple top banner might be annoying if persistent, so one-time alert or toast is better.
-                // I'll skip the intrusive alert and rely on the Main Dashboard Widget as the "Notification Center".
                 window.hasNotifiedUrgent = true;
+                showToast(`⚠️ Action Required: ${veryUrgent.length} school(s) have deadlines approaching in < 3 days.`, 'error');
             }
+        }
+
+        function showToast(msg, type = 'info') {
+            let container = document.getElementById('toast-container');
+            if (!container) {
+                container = document.createElement('div');
+                container.id = 'toast-container';
+                container.className = "fixed top-4 right-4 z-[9999] flex flex-col gap-3 pointer-events-none";
+                document.body.appendChild(container); // Append to body, not inside a hidden view
+            }
+
+            const el = document.createElement('div');
+            // Colors based on type
+            const colors = type === 'error' ? 'bg-red-50 text-red-600 border-red-200' : 'bg-blue-50 text-blue-600 border-blue-200';
+            const icon = type === 'error' ? '🔥' : 'ℹ️';
+
+            el.className = `clay-card p-4 rounded-xl shadow-2xl border ${colors} pointer-events-auto flex items-center gap-3 animate-in slide-in-from-right duration-300 max-w-sm`;
+            el.innerHTML = `
+                <span class="text-xl">${icon}</span>
+                <p class="text-sm font-bold">${msg}</p>
+                <button onclick="this.parentElement.remove()" class="ml-auto text-gray-400 hover:text-gray-600">✕</button>
+            `;
+
+            container.appendChild(el);
+            // Auto remove after 6s
+            setTimeout(() => {
+                el.classList.add('opacity-0', 'translate-x-full');
+                setTimeout(() => el.remove(), 500);
+            }, 6000);
         }
 
 
