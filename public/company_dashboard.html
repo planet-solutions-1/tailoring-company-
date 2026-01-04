@@ -289,6 +289,16 @@
                 </svg>
                 Complaints
             </button>
+            <button onclick="switchTab('settings')" id="nav-settings"
+                class="nav-item clay-btn w-full flex items-center gap-4 px-6 py-4 rounded-xl text-sm mb-1 text-gray-600 hover:text-blue-600 transition-all">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path
+                        d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+                    </path>
+                </svg>
+                Settings
+            </button>
 
             <div class="h-px bg-gray-300/50 mx-4 my-2"></div>
 
@@ -1436,6 +1446,38 @@
 
     </div>
 
+    <!-- 8. SETTINGS -->
+    <div id="view-settings" class="hidden fade-in w-full max-w-4xl mx-auto">
+        <div class="clay-card p-8">
+            <h3 class="text-xl font-bold text-gray-700 mb-6 flex items-center gap-3">
+                <span class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path
+                            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+                        </path>
+                    </svg>
+                </span>
+                Notification Preferences
+            </h3>
+
+            <div class="flex items-center justify-between p-4 bg-gray-50/50 rounded-xl border border-gray-100">
+                <div>
+                    <h4 class="font-bold text-gray-800">Urgent Deadline Alerts</h4>
+                    <p class="text-sm text-gray-500">Show popup notification when schools have deadlines < 3 days
+                            away.</p>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                    <input type="checkbox" id="setting-notify" onchange="toggleNotificationSetting(this.checked)"
+                        class="sr-only peer">
+                    <div
+                        class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600">
+                    </div>
+                </label>
+            </div>
+        </div>
+    </div>
+
     <!-- 8. TICKET DETAIL MODAL -->
     <dialog id="ticketModal" class="bg-transparent z-50">
         <div class="fixed inset-0 bg-gray-500/30 backdrop-blur-sm flex items-center justify-center p-4">
@@ -1593,7 +1635,8 @@
                 'access': ['Access Codes', 'Generate temporary access links for schools'],
                 'schools': ['School Management', 'Configure school priority and status'],
                 'reports': ['System Reports', 'Download global data and analytics'],
-                'complaints': ['Complaint Tracker', 'Monitor and resolve school issues']
+                'complaints': ['Complaint Tracker', 'Monitor and resolve school issues'],
+                'settings': ['System Settings', 'Configure notifications and preferences']
             };
             if (titles[id]) {
                 document.getElementById('page-title').innerText = titles[id][0];
@@ -1786,9 +1829,24 @@
             // Notification Logic (Simple Toast) for Urgent items
             const veryUrgent = urgent.filter(s => s.days <= 3 && s.days >= 0);
             if (veryUrgent.length > 0 && !window.hasNotifiedUrgent) {
-                window.hasNotifiedUrgent = true;
-                showToast(`⚠️ Action Required: ${veryUrgent.length} school(s) have deadlines approaching in < 3 days.`, 'error');
+                // Check setting: default to valid (true) if null
+                const enabled = localStorage.getItem('notification_enabled') !== 'false';
+                if (enabled) {
+                    window.hasNotifiedUrgent = true;
+                    showToast(`⚠️ Action Required: ${veryUrgent.length} school(s) have deadlines approaching in < 3 days.`, 'error');
+                }
             }
+        }
+
+        // Initialize Toggle
+        document.addEventListener("DOMContentLoaded", () => {
+            const setting = document.getElementById('setting-notify');
+            if (setting) setting.checked = localStorage.getItem('notification_enabled') !== 'false';
+        });
+
+        function toggleNotificationSetting(val) {
+            localStorage.setItem('notification_enabled', val);
+            showToast(`Notifications ${val ? 'Enabled' : 'Disabled'}`, 'info');
         }
 
         function showToast(msg, type = 'info') {
