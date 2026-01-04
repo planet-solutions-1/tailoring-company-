@@ -1464,8 +1464,8 @@
             <div class="flex items-center justify-between p-4 bg-gray-50/50 rounded-xl border border-gray-100">
                 <div>
                     <h4 class="font-bold text-gray-800">Urgent Deadline Alerts</h4>
-                    <p class="text-sm text-gray-500">Show popup notification when schools have deadlines < 3 days
-                            away.</p>
+                    <p class="text-sm text-gray-500">Show popup & browser notifications when schools have deadlines < 3
+                            days away.</p>
                 </div>
                 <label class="relative inline-flex items-center cursor-pointer">
                     <input type="checkbox" id="setting-notify" onchange="toggleNotificationSetting(this.checked)"
@@ -1833,7 +1833,13 @@
                 const enabled = localStorage.getItem('notification_enabled') !== 'false';
                 if (enabled) {
                     window.hasNotifiedUrgent = true;
-                    showToast(`⚠️ Action Required: ${veryUrgent.length} school(s) have deadlines approaching in < 3 days.`, 'error');
+                    const msg = `⚠️ Action Required: ${veryUrgent.length} school(s) have deadlines approaching in < 3 days.`;
+                    showToast(msg, 'error');
+
+                    // Native Browser Notification
+                    if (Notification.permission === 'granted') {
+                        new Notification("Planet Solutions Urgent", { body: `Action Required: ${veryUrgent.length} school(s) are near deadline!`, icon: 'https://cdn-icons-png.flaticon.com/512/564/564619.png' });
+                    }
                 }
             }
         }
@@ -1846,7 +1852,19 @@
 
         function toggleNotificationSetting(val) {
             localStorage.setItem('notification_enabled', val);
-            showToast(`Notifications ${val ? 'Enabled' : 'Disabled'}`, 'info');
+
+            if (val && Notification.permission !== 'granted') {
+                Notification.requestPermission().then(p => {
+                    if (p === 'granted') {
+                        showToast("Browser Notifications Enabled!", 'success');
+                        new Notification("Planet Solutions", { body: "Browser notifications are now active." });
+                    } else {
+                        showToast("Browser Notifications Blocked. Check site settings.", 'error');
+                    }
+                });
+            } else {
+                showToast(`Notifications ${val ? 'Enabled' : 'Disabled'}`, 'info');
+            }
         }
 
         function showToast(msg, type = 'info') {
