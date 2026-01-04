@@ -1621,11 +1621,27 @@
             if (window.renderUrgentDeadlines) renderUrgentDeadlines();
         }
         function switchTab(id) {
-            document.querySelectorAll('div[id^="view-"]').forEach(d => d.classList.add('hidden'));
-            document.getElementById(`view-${id}`).classList.remove('hidden');
+            const views = ['view-overview', 'view-data', 'view-users', 'view-access', 'view-schools', 'view-school-details', 'view-reports', 'view-complaints', 'view-settings'];
+            views.forEach(v => {
+                const el = document.getElementById(v);
+                if (el) el.classList.add('hidden');
+            });
+
+            const target = document.getElementById(`view-${id}`);
+            if (target) target.classList.remove('hidden');
+
             document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-            document.getElementById(`nav-${id}`).classList.add('active');
+            const nav = document.getElementById(`nav-${id}`);
+            if (nav) nav.classList.add('active');
+
             if (window.innerWidth < 768 && sidebarOpen) toggleSidebar();
+
+            // Allow fetch triggers
+            if (id === 'schools') fetchSchoolsManage();
+            if (id === 'complaints') renderComplaintDash();
+            if (id === 'access') fetchAccessCodes();
+            if (id === 'users') fetchUsers();
+            if (id === 'data') renderTailoringData();
 
             // Update Header Titles
             const titles = {
@@ -1639,15 +1655,11 @@
                 'settings': ['System Settings', 'Configure notifications and preferences']
             };
             if (titles[id]) {
-                document.getElementById('page-title').innerText = titles[id][0];
-                document.getElementById('page-subtitle').innerText = titles[id][1];
+                const titleEl = document.getElementById('page-title');
+                const subEl = document.getElementById('page-subtitle');
+                if (titleEl) titleEl.innerText = titles[id][0];
+                if (subEl) subEl.innerText = titles[id][1];
             }
-
-            if (id === 'access') fetchAccessCodes();
-            if (id === 'users') fetchUsers();
-            if (id === 'complaints') fetchComplaints();
-            if (id === 'schools') fetchSchoolsManage();
-            if (id === 'data') renderTailoringData();
         }
         function animateValue(obj, start, end, duration) { let startTimestamp = null; const step = (timestamp) => { if (!startTimestamp) startTimestamp = timestamp; const progress = Math.min((timestamp - startTimestamp) / duration, 1); obj.innerText = Math.floor(progress * (end - start) + start); if (progress < 1) { window.requestAnimationFrame(step); } }; window.requestAnimationFrame(step); }
         async function fetchStats() { try { const r = await fetch(`${API_BASE}/data/stats`, { headers: { 'Authorization': `Bearer ${token}` } }); const d = await r.json(); animateValue(document.getElementById('stat-students'), parseInt(document.getElementById('stat-students').innerText) || 0, d.students || 0, 1500); animateValue(document.getElementById('stat-schools'), parseInt(document.getElementById('stat-schools').innerText) || 0, d.schools || 0, 1500); animateValue(document.getElementById('stat-packed'), parseInt(document.getElementById('stat-packed').innerText) || 0, d.packed || 0, 1500); animateValue(document.getElementById('stat-pending'), parseInt(document.getElementById('stat-pending').innerText) || 0, d.pending || 0, 1500); } catch (e) { console.error("Stats Error", e) } }
