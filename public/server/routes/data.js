@@ -141,7 +141,7 @@ router.put('/schools/:id', authenticateToken, requireRole('company'), (req, res)
                         .catch(err => console.error("[BULK UPDATE ERROR]", err));
                 }
 
-                if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'UPDATE_SCHOOL', `Updated School #${id}`);
+                if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'UPDATE_SCHOOL', `Updated School #${id}`, req.user.school_id, req.user.role);
                 res.json({ message: "School Updated", debug: { affected } });
             })
             .catch(err => {
@@ -168,7 +168,7 @@ router.put('/schools/:id', authenticateToken, requireRole('company'), (req, res)
                 });
             }
 
-            if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'UPDATE_SCHOOL', `Updated School #${id}`);
+            if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'UPDATE_SCHOOL', `Updated School #${id}`, req.user.school_id, req.user.role);
             res.json({ message: "School Updated" });
         });
     }
@@ -219,7 +219,7 @@ router.put('/school/:id', authenticateToken, requireRole('company'), (req, res) 
 
     db.run("UPDATE schools SET priority = ?, status = ? WHERE id = ?", [priority, status, id], (err) => {
         if (err) return res.status(500).json({ error: err.message });
-        if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'UPDATE_SCHOOL', `Updated School #${id} -> ${priority} / ${status}`);
+        if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'UPDATE_SCHOOL', `Updated School #${id} -> ${priority} / ${status}`, req.user.school_id, req.user.role);
         res.json({ message: "School updated" });
     });
 });
@@ -1118,11 +1118,104 @@ router.post('/fix_db', authenticateToken, requireRole('company'), (req, res) => 
     });
 
     chain.then(() => {
-        if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'FIX_DB', 'Ran schema repair.');
+        if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'FIX_DB', 'Ran schema repair.', req.user.school_id, req.user.role);
         res.json({ message: "Repair Report:\n" + logs.join("\n") });
     }).catch(e => {
         res.status(500).json({ error: "Fatal Repair Error: " + e.message });
     });
+});
+
+// Logs & Reports
+router.get('/logs', authenticateToken, requireRole('company'), (req, res) => {
+    const { school_id, role, type, days } = req.query;
+    let sql = "SELECT * FROM activity_logs WHERE 1=1";
+    const params = [];
+
+    if (school_id) { sql += " AND school_id = ?"; params.push(school_id); }
+    if (role) { sql += " AND role = ?"; params.push(role); }
+    if (days) {
+        if (db.execute) sql += " AND created_at >= DATE_SUB(NOW(), INTERVAL ? DAY)";
+        else sql += " AND created_at >= date('now', '-' || ? || ' days')";
+        params.push(days);
+    }
+
+    sql += " ORDER BY created_at DESC LIMIT 500";
+
+    if (db.execute) {
+        db.execute(sql, params).then(([rows]) => res.json(rows)).catch(e => res.status(500).json({ error: e.message }));
+    } else {
+        db.all(sql, params, (err, rows) => {
+            if (err) return res.status(500).json({ error: err.message });
+            res.json(rows);
+        });
+    }
+});
+
+router.post('/logs/cleanup', authenticateToken, requireRole('company'), (req, res) => {
+    const days = 7;
+    let sql;
+    if (db.execute) sql = "DELETE FROM activity_logs WHERE created_at < DATE_SUB(NOW(), INTERVAL ? DAY)";
+    else sql = "DELETE FROM activity_logs WHERE created_at < date('now', '-' || ? || ' days')";
+
+    if (db.execute) {
+        db.execute(sql, [days]).then(([resHeader]) => {
+            res.json({ message: `Cleanup Complete. Deleted logs older than ${days} days.`, affected: resHeader.affectedRows });
+        }).catch(e => res.status(500).json({ error: e.message }));
+    } else {
+        db.run(sql, [days], function (err) {
+            if (err) return res.status(500).json({ error: err.message });
+            res.json({ message: `Cleanup Complete.`, affected: this.changes });
+        });
+    }
+});
+
+router.get('/users_report', authenticateToken, requireRole('company'), (req, res) => {
+    const sql = `
+        SELECT u.id, u.username, u.role, u.created_at, s.name as school_name 
+        FROM users u 
+        LEFT JOIN schools s ON u.school_id = s.id 
+        ORDER BY u.role, s.name
+    `;
+    if (db.execute) {
+        db.execute(sql).then(([rows]) => res.json(rows)).catch(e => res.status(500).json({ error: e.message }));
+    } else {
+        db.all(sql, [], (err, rows) => {
+            if (err) return res.status(500).json({ error: err.message });
+            res.json(rows);
+        });
+    }
+});
+
+router.get('/schools/:id/export', authenticateToken, requireRole('company'), async (req, res) => {
+    const { id } = req.params;
+    try {
+        let students = [];
+        if (db.execute) {
+            const [rows] = await db.execute("SELECT * FROM students WHERE school_id = ?", [id]);
+            students = rows;
+        } else {
+            students = await new Promise((resolve, reject) => {
+                db.all("SELECT * FROM students WHERE school_id = ?", [id], (err, rows) => {
+                    if (err) reject(err); else resolve(rows);
+                });
+            });
+        }
+
+        // Fetch measurements for these students? 
+        // For simple export, maybe just student data is enough, or we need to join?
+        // Let's get measurements too.
+        for (let s of students) {
+            if (db.execute) {
+                const [m] = await db.execute("SELECT * FROM measurements WHERE student_id = ?", [s.id]);
+                s.measurements = m[0] || null;
+            } else {
+                s.measurements = await new Promise(r => db.get("SELECT * FROM measurements WHERE student_id = ?", [s.id], (e, row) => r(row)));
+            }
+        }
+        res.json(students);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
 });
 
 module.exports = router;

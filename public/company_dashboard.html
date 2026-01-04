@@ -10,6 +10,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link
         href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap"
         rel="stylesheet">
@@ -1309,28 +1310,127 @@
         </div>
     </div>
 
-    <!-- 6. REPORTS -->
-    <div id="view-reports" class="hidden fade-in w-full">
+    <!-- 6. REPORTS & LOGS CENTER -->
+    <div id="view-reports" class="hidden fade-in w-full space-y-8">
+
+        <!-- A. Data Exports -->
+        <h3 class="font-bold text-2xl text-gray-700 px-2">Data Reports</h3>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div class="clay-card p-10 text-center hover:scale-105 transition-transform cursor-pointer group"
-                onclick="downloadPDF()">
-                <div
-                    class="w-20 h-20 bg-red-100/50 text-red-500 mx-auto rounded-full flex items-center justify-center mb-6 shadow-sm group-hover:bg-red-100 transition-colors">
-                    <span class="text-2xl font-bold">PDF</span>
+            <!-- 1. School Data Export -->
+            <div class="clay-card p-6">
+                <div class="flex items-center gap-4 mb-6">
+                    <div
+                        class="w-12 h-12 rounded-xl bg-indigo-100 flex items-center justify-center text-indigo-500 font-bold text-xl">
+                        🏫</div>
+                    <div>
+                        <h4 class="font-bold text-gray-700 text-lg">School Data</h4>
+                        <p class="text-xs text-gray-400">Export students & measurements for a specific school.</p>
+                    </div>
                 </div>
-                <h3 class="font-bold text-xl text-gray-700">Download PDF Report</h3>
-                <p class="text-sm text-gray-400 mt-2">Full system summary formatted for printing.</p>
+                <div class="space-y-4">
+                    <label class="block text-xs font-bold text-gray-400 uppercase ml-1">Select School</label>
+                    <select id="report-school-select" class="clay-input w-full">
+                        <option value="">-- Choose School --</option>
+                        <!-- Populated by JS -->
+                    </select>
+                    <div class="flex gap-3">
+                        <button onclick="downloadReport('school', 'pdf')"
+                            class="flex-1 clay-btn py-3 text-sm font-bold text-rose-500 hover:bg-rose-50">Download
+                            PDF</button>
+                        <button onclick="downloadReport('school', 'xls')"
+                            class="flex-1 clay-btn py-3 text-sm font-bold text-emerald-500 hover:bg-emerald-50">Download
+                            Excel</button>
+                    </div>
+                </div>
             </div>
-            <div class="clay-card p-10 text-center hover:scale-105 transition-transform cursor-pointer group"
-                onclick="downloadExcel()">
-                <div
-                    class="w-20 h-20 bg-green-100/50 text-emerald-500 mx-auto rounded-full flex items-center justify-center mb-6 shadow-sm group-hover:bg-green-100 transition-colors">
-                    <span class="text-2xl font-bold">XLS</span>
+
+            <!-- 2. User Data Export -->
+            <div class="clay-card p-6">
+                <div class="flex items-center gap-4 mb-6">
+                    <div
+                        class="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center text-purple-500 font-bold text-xl">
+                        👥</div>
+                    <div>
+                        <h4 class="font-bold text-gray-700 text-lg">User Registry</h4>
+                        <p class="text-xs text-gray-400">Export list of all system users and roles.</p>
+                    </div>
                 </div>
-                <h3 class="font-bold text-xl text-gray-700">Export Excel Data</h3>
-                <p class="text-sm text-gray-400 mt-2">Raw data export of all students and measurements.</p>
+                <div class="space-y-4 mt-8">
+                    <button onclick="downloadReport('users', 'xls')"
+                        class="w-full clay-btn py-3 text-sm font-bold text-blue-500 hover:bg-blue-50 flex items-center justify-center gap-2">
+                        <span>📥</span> Download User Registry (XLS)
+                    </button>
+                </div>
             </div>
         </div>
+
+        <!-- B. Activity Logs -->
+        <div class="flex justify-between items-end px-2 pt-8 border-t border-gray-200/50">
+            <div>
+                <h3 class="font-bold text-2xl text-gray-700">Activity Logs</h3>
+                <p class="text-sm text-gray-400 mt-1">System events retained for 7 days.</p>
+            </div>
+            <button onclick="cleanupLogs()"
+                class="text-xs font-bold text-red-400 hover:text-red-500 hover:underline">🗑️ Force Cleanup Now</button>
+        </div>
+
+        <!-- Log Filters -->
+        <div class="clay-card p-4 flex flex-col md:flex-row gap-4 items-end">
+            <div class="flex-1 w-full">
+                <label class="block text-[10px] font-bold text-gray-400 uppercase mb-2 ml-2">Log Context</label>
+                <select id="log-filter-role" onchange="fetchLogs()" class="clay-input">
+                    <option value="">All Contexts</option>
+                    <option value="company">Company Admin</option>
+                    <option value="school">School Dashboards</option>
+                    <option value="pattern">Pattern Managers</option>
+                </select>
+            </div>
+            <div class="flex-1 w-full">
+                <label class="block text-[10px] font-bold text-gray-400 uppercase mb-2 ml-2">Specific School</label>
+                <select id="log-filter-school" onchange="fetchLogs()" class="clay-input">
+                    <option value="">All Schools</option>
+                    <!-- Populated -->
+                </select>
+            </div>
+            <div class="flex-1 w-full">
+                <label class="block text-[10px] font-bold text-gray-400 uppercase mb-2 ml-2">Time Range</label>
+                <select id="log-filter-days" onchange="fetchLogs()" class="clay-input">
+                    <option value="7">Last 7 Days</option>
+                    <option value="1">Last 24 Hours</option>
+                    <option value="30">Last 30 Days</option>
+                </select>
+            </div>
+            <button onclick="fetchLogs()" class="clay-btn px-6 py-3 font-bold text-blue-500">Refresh</button>
+            <button onclick="downloadLogsXls()" class="clay-btn px-4 py-3 font-bold text-green-600"
+                title="Download Logs">💾</button>
+        </div>
+
+        <!-- Log Visuals -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 h-64">
+            <div class="clay-card p-4 flex flex-col">
+                <h4 class="font-bold text-gray-600 mb-2 text-sm">Activity Volume</h4>
+                <div class="flex-1 relative"><canvas id="chart-logs-volume"></canvas></div>
+            </div>
+            <div class="clay-card p-4 flex flex-col lg:col-span-2">
+                <h4 class="font-bold text-gray-600 mb-2 text-sm">Recent Events</h4>
+                <div class="flex-1 overflow-auto">
+                    <table class="w-full text-xs text-left">
+                        <thead class="text-gray-400 font-bold border-b border-gray-100">
+                            <tr>
+                                <th class="p-2">Time</th>
+                                <th class="p-2">User</th>
+                                <th class="p-2">Action</th>
+                                <th class="p-2">Details</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logs-table-body" class="divide-y divide-gray-50 text-gray-600 font-medium">
+                            <!-- Rows -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <!-- 7. COMPLAINTS OVERHAUL -->
@@ -1642,6 +1742,7 @@
             if (id === 'access') fetchAccessCodes();
             if (id === 'users') fetchUsers();
             if (id === 'data') renderTailoringData();
+            if (id === 'reports') initReports();
 
             // Update Header Titles
             const titles = {
@@ -3289,8 +3390,157 @@
                 alert("Repair Error: " + e.message);
             }
         }
-    </script>
 
+        // === REPORTS CENTER LOGIC ===
+        let globalLogs = [];
+        let logChart = null;
+
+        function initReports() {
+            // Populate School Dropdown
+            const sel = document.getElementById('report-school-select');
+            const logSel = document.getElementById('log-filter-school');
+
+            if (sel && globalSchools.length > 0) {
+                const opts = globalSchools.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+                sel.innerHTML = `<option value="">-- Choose School --</option>` + opts;
+                logSel.innerHTML = `<option value="">All Schools</option>` + opts;
+            }
+            fetchLogs();
+        }
+
+        async function fetchLogs() {
+            const schoolId = document.getElementById('log-filter-school').value;
+            const role = document.getElementById('log-filter-role').value;
+            const days = document.getElementById('log-filter-days').value;
+
+            const params = new URLSearchParams({ days });
+            if (schoolId) params.append('school_id', schoolId);
+            if (role) params.append('role', role);
+
+            try {
+                const r = await fetch(`${API_BASE}/logs?${params}`, { headers: { 'Authorization': `Bearer ${token}` } });
+                const data = await r.json();
+                globalLogs = data.error ? [] : data;
+                renderLogs();
+            } catch (e) { console.error("Log Fetch Error", e); }
+        }
+
+        function renderLogs() {
+            const tbody = document.getElementById('logs-table-body');
+            tbody.innerHTML = globalLogs.map(l => `
+                <tr class="hover:bg-gray-50 border-b border-gray-50">
+                    <td class="p-2 whitespace-nowrap text-gray-400 text-[10px]">${timeAgo(l.created_at)}</td>
+                    <td class="p-2 font-bold text-gray-600">${l.username || 'System'}</td>
+                    <td class="p-2"><span class="px-2 py-0.5 rounded text-[10px] font-bold bg-gray-100 text-gray-500">${l.action}</span></td>
+                    <td class="p-2 text-gray-500 truncate max-w-xs" title="${l.details}">${l.details}</td>
+                </tr>
+            `).join('');
+
+            // Chart
+            const ctx = document.getElementById('chart-logs-volume').getContext('2d');
+
+            // Aggregation: Count per day (or hour based on range)
+            // For simplicity: Count per Action Type
+            const counts = {};
+            globalLogs.forEach(l => {
+                counts[l.action] = (counts[l.action] || 0) + 1;
+            });
+
+            if (logChart) logChart.destroy();
+            logChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(counts),
+                    datasets: [{
+                        label: 'Events',
+                        data: Object.values(counts),
+                        backgroundColor: '#60a5fa',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, grid: { display: false } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        async function cleanupLogs() {
+            if (!confirm("Are you sure? This will delete all logs older than 7 days.")) return;
+            try {
+                const r = await fetch(`${API_BASE}/logs/cleanup`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const d = await r.json();
+                showToast(d.message);
+                fetchLogs();
+            } catch (e) { showToast("Cleanup failed", true); }
+        }
+
+        async function downloadReport(type, format) {
+            if (type === 'school') {
+                const schoolId = document.getElementById('report-school-select').value;
+                if (!schoolId) return alert("Please select a school first.");
+
+                if (format === 'xls') {
+                    // Fetch Specific Data
+                    const r = await fetch(`${API_BASE}/schools/${schoolId}/export`, { headers: { 'Authorization': `Bearer ${token}` } });
+                    const students = await r.json();
+                    if (students.length === 0) return alert("No data found for this school.");
+
+                    // Simple CSV Export
+                    let csv = "Admission No,Name,Class,Section,Gender,Measurements\n";
+                    students.forEach(s => {
+                        const m = s.measurements || {};
+                        // Flatten measurements for CSV? Or JSON string? 
+                        // Let's do a basic Flatten
+                        csv += `${s.admission_no},${s.name},${s.class},${s.section},${s.gender},"${JSON.stringify(m).replace(/"/g, '""')}"\n`;
+                    });
+                    const blob = new Blob([csv], { type: 'text/csv' });
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `School_Data_${schoolId}.csv`;
+                    a.click();
+                } else {
+                    alert("PDF Generation for School Data coming soon! (Use System Print for now)");
+                }
+            }
+            if (type === 'users') {
+                const r = await fetch(`${API_BASE}/users_report`, { headers: { 'Authorization': `Bearer ${token}` } });
+                const users = await r.json();
+                let csv = "ID,Username,Role,School,Created At\n";
+                users.forEach(u => csv += `${u.id},${u.username},${u.role},${u.school_name || 'N/A'},${u.created_at}\n`);
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `User_Registry.csv`;
+                a.click();
+            }
+        }
+
+        function downloadLogsXls() {
+            if (globalLogs.length === 0) return alert("No logs to download.");
+            let csv = "Time,User,Role,School ID,Action,Details\n";
+            globalLogs.forEach(l => {
+                csv += `${l.created_at},${l.username},${l.role || ''},${l.school_id || ''},${l.action},"${l.details.replace(/"/g, '""')}"\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `System_Logs.csv`;
+            a.click();
+        }
+    </script>
 </body>
 
 </html>
+```

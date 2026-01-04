@@ -65,10 +65,10 @@ if (process.env.RAILWAY_ENVIRONMENT || process.env.NODE_ENV === 'production') {
                 if (callback) callback.call({ lastID: result.insertId, changes: result.affectedRows }, null);
             } catch (e) { console.error("DB RUN Error:", e.message); if (callback) callback(e); }
         },
-        logActivity: (userId, username, action, details) => {
+        logActivity: (userId, username, action, details, schoolId = null, role = null) => {
             // FIRE AND FORGET - Don't crash
             if (promisePool) {
-                promisePool.query("INSERT INTO activity_logs (user_id, username, action, details) VALUES (?, ?, ?, ?)", [userId, username, action, details])
+                promisePool.query("INSERT INTO activity_logs (user_id, username, action, details, school_id, role) VALUES (?, ?, ?, ?, ?, ?)", [userId, username, action, details, schoolId, role])
                     .catch(e => console.error("Log failed", e.message));
             }
         },
@@ -221,6 +221,10 @@ if (process.env.RAILWAY_ENVIRONMENT || process.env.NODE_ENV === 'production') {
             // PATTERNS MIGRATION (Ensure description exists if table was old)
             try { await promisePool.execute("ALTER TABLE patterns ADD COLUMN description TEXT"); } catch (e) { }
 
+            // LOGS MIGRATION
+            try { await promisePool.execute("ALTER TABLE activity_logs ADD COLUMN school_id INT"); } catch (e) { }
+            try { await promisePool.execute("ALTER TABLE activity_logs ADD COLUMN role VARCHAR(50)"); } catch (e) { }
+
 
             console.log("MySQL Tables Initialized.");
 
@@ -278,10 +282,11 @@ if (process.env.RAILWAY_ENVIRONMENT || process.env.NODE_ENV === 'production') {
     });
 
     db = sqliteDb;
-    db.logActivity = (userId, username, action, details) => {
-        sqliteDb.run("INSERT INTO activity_logs (user_id, username, action, details) VALUES (?, ?, ?, ?)", [userId, username, action, details], (err) => {
-            if (err) console.error("Log Error:", err);
-        });
+    db.logActivity = (userId, username, action, details, schoolId = null, role = null) => {
+        sqliteDb.run("INSERT INTO activity_logs (user_id, username, action, details, school_id, role) VALUES (?, ?, ?, ?, ?, ?)",
+            [userId, username, action, details, schoolId, role], (err) => {
+                if (err) console.error("Log Error:", err);
+            });
     };
 }
 
@@ -357,7 +362,9 @@ function initSqliteDb(database) {
             username TEXT,
             action TEXT,
             details TEXT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            school_id INTEGER,
+            role TEXT
         );
         CREATE TABLE IF NOT EXISTS complaints (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -416,6 +423,10 @@ function initSqliteDb(database) {
             ['student_name', 'student_reg_no', 'pattern_name', 'gender', 'issue_type', 'class', 'section', 'house'].forEach(col => {
                 database.run(`ALTER TABLE complaints ADD COLUMN ${col} TEXT`, () => { });
             });
+
+            // Activity Logs Migration
+            database.run("ALTER TABLE activity_logs ADD COLUMN school_id INTEGER", () => { });
+            database.run("ALTER TABLE activity_logs ADD COLUMN role TEXT", () => { });
 
             database.get("SELECT count(*) as count FROM users", (err, row) => {
                 if (row && row.count == 0) {
