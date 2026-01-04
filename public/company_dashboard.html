@@ -1732,46 +1732,40 @@
             fetchActivityLogs();
             if (window.renderUrgentDeadlines) renderUrgentDeadlines();
         }
-        function switchTab(id) {
-            const views = ['view-overview', 'view-data', 'view-users', 'view-access', 'view-schools', 'view-school-details', 'view-reports', 'view-complaints', 'view-settings'];
-            views.forEach(v => {
-                const el = document.getElementById(v);
+        function switchTab(viewId) {
+            // Hide all views
+            const views = ['view-overview', 'view-manage-schools', 'view-school-data', 'view-manage-tailoring-data', 'view-manage-users', 'view-access-codes', 'view-support', 'view-reports', 'view-settings'];
+            views.forEach(id => {
+                const el = document.getElementById(id);
                 if (el) el.classList.add('hidden');
             });
 
-            const target = document.getElementById(`view-${id}`);
+            // Show selected
+            const target = document.getElementById(viewId);
             if (target) target.classList.remove('hidden');
 
-            document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-            const nav = document.getElementById(`nav-${id}`);
-            if (nav) nav.classList.add('active');
-
-            if (window.innerWidth < 768 && sidebarOpen) toggleSidebar();
-
-            // Allow fetch triggers
-            if (id === 'schools') fetchSchoolsManage();
-            if (id === 'complaints') renderComplaintDash();
-            if (id === 'access') fetchAccessCodes();
-            if (id === 'users') fetchUsers();
-            if (id === 'data') renderTailoringData();
-            if (id === 'reports') initReports();
-
-            // Update Header Titles
             const titles = {
-                'overview': ['System Overview', 'Manage Planet Solutions tailors & operations'],
-                'data': ['Tailoring Data', 'Manage students, measurements, and patterns'],
-                'users': ['User Management', 'Control access and manage execution roles'],
-                'access': ['Access Codes', 'Generate temporary access links for schools'],
-                'schools': ['School Management', 'Configure school priority and status'],
-                'reports': ['System Reports', 'Download global data and analytics'],
-                'complaints': ['Complaint Tracker', 'Monitor and resolve school issues'],
-                'settings': ['System Settings', 'Configure notifications and preferences']
+                'view-overview': 'Overview',
+                'view-manage-schools': 'Schools',
+                'view-school-data': 'School Data',
+                'view-manage-tailoring-data': 'Tailoring Data',
+                'view-manage-users': 'User Management',
+                'view-access-codes': 'Access Codes',
+                'view-support': 'Complaints',
+                'view-reports': 'Reports',
+                'view-settings': 'Settings'
             };
-            if (titles[id]) {
-                const titleEl = document.getElementById('page-title');
-                const subEl = document.getElementById('page-subtitle');
-                if (titleEl) titleEl.innerText = titles[id][0];
-                if (subEl) subEl.innerText = titles[id][1];
+            document.getElementById('page-title').innerText = titles[viewId] || 'Overview';
+
+            if (sidebarOpen && window.innerWidth < 768) toggleSidebar();
+
+            // Auto-Fetch Logic
+            if (viewId === 'view-manage-schools') fetchSchoolsManage();
+            if (viewId === 'view-manage-users') { fetchSchoolsForSelect(); fetchUsers(); }
+            if (viewId === 'view-access-codes') fetchAccessCodes();
+            if (viewId === 'view-support') fetchComplaints();
+            if (viewId === 'view-reports') {
+                fetchSchoolsManage().then(() => initReports()); // Ensure schools are loaded first!
             }
         }
         function animateValue(obj, start, end, duration) { let startTimestamp = null; const step = (timestamp) => { if (!startTimestamp) startTimestamp = timestamp; const progress = Math.min((timestamp - startTimestamp) / duration, 1); obj.innerText = Math.floor(progress * (end - start) + start); if (progress < 1) { window.requestAnimationFrame(step); } }; window.requestAnimationFrame(step); }
