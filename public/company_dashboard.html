@@ -419,7 +419,7 @@
                                     <th class="p-4 text-left">Role</th>
                                     <th class="p-4 text-left">School</th>
                                     <th class="p-4 text-center">Status</th>
-                                    <th class="p-4 text-right rounded-r-xl">Created</th>
+                                    <th class="p-4 text-right rounded-r-xl">Actions</th>
                                 </tr>
                             </thead>
                             <tbody id="user-list-body" class="divide-y divide-gray-100"></tbody>
@@ -797,6 +797,10 @@
                             Data Explorer</p>
                     </div>
                     <div class="flex gap-2">
+                        <button id="btn-lock-school" onclick="toggleSchoolLock()"
+                            class="hidden clay-btn px-4 py-2 text-xs font-bold text-gray-500 uppercase flex items-center gap-2 hover:bg-gray-100 transition-colors">
+                            <span>🔒</span> <span id="lbl-lock-school">Lock Data</span>
+                        </button>
                         <button onclick="downloadPDF()"
                             class="clay-btn px-4 py-2 text-xs font-bold text-rose-500 uppercase flex items-center gap-2">
                             Export PDF
@@ -2627,6 +2631,9 @@
             currentSchoolDetails = { name: schoolName, id: schoolId };
             document.getElementById('sd-school-name').innerText = schoolName;
 
+            // Fetch Lock Status
+            if (schoolId) fetchAndSetLockStatus(schoolId);
+
             // Ensure data is loaded
             if (globalStudents.length === 0) await fetchAllStudents();
             if (globalPatterns.length === 0) await fetchGlobalPatterns();
@@ -2635,6 +2642,9 @@
             switchSchoolTab('students');
             renderSchoolDetails();
         }
+
+        // Alias for compatibility
+        const openSchoolDetails = viewSchoolDetails;
 
         function switchSchoolTab(t) {
             const tabs = ['students', 'measurements', 'patterns'];
@@ -4379,6 +4389,101 @@
     <!-- LOGGING SCRIPTS -->
     <script src="js/logger.js"></script>
     <script src="js/company_logging.js"></script>
+    <script>
+        // === SECURITY FEATURES ===
+
+        // 1. Password Reset
+        async function resetUserPassword(userId, username) {
+            const newPwd = prompt(`Enter NEW PASSWORD for user '${username}':`);
+            if (!newPwd) return;
+            if (newPwd.length < 4) return alert("Password must be at least 4 characters.");
+
+            if (!confirm(`Are you sure you want to reset password for ${username}?`)) return;
+
+            try {
+                const res = await fetch(`${API_BASE}/data/users/${userId}/reset-password`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ new_password: newPwd })
+                });
+
+                const d = await res.json();
+                if (res.ok) {
+                    alert('✅ ' + d.message);
+                } else {
+                    alert('❌ Failed: ' + (d.error || 'Unknown error'));
+                }
+            } catch (e) {
+                alert("Error: " + e.message);
+            }
+        }
+
+        // 2. School Data Lock
+        let currentSchoolLocked = false;
+
+        async function fetchAndSetLockStatus(schoolId) {
+            const btn = document.getElementById('btn-lock-school');
+            const lbl = document.getElementById('lbl-lock-school');
+
+            // Allow button to show while loading?
+            if (btn) btn.classList.remove('hidden');
+
+            try {
+                const res = await fetch(`${API_BASE}/schools/${schoolId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+
+                if (data && typeof data.is_locked !== 'undefined') {
+                    currentSchoolLocked = (data.is_locked === 1 || data.is_locked === true);
+                    updateLockUI();
+                }
+            } catch (e) {
+                console.error("Failed to fetch lock status", e);
+            }
+        }
+
+        function updateLockUI() {
+            const btn = document.getElementById('btn-lock-school');
+            const lbl = document.getElementById('lbl-lock-school');
+            if (!btn || !lbl) return;
+
+            if (currentSchoolLocked) {
+                btn.className = "clay-btn px-4 py-2 text-xs font-bold text-rose-500 bg-rose-50 uppercase flex items-center gap-2 border border-rose-200 shadow-inner";
+                lbl.innerText = "Data Locked";
+                btn.title = "Click to Unlock";
+            } else {
+                btn.className = "clay-btn px-4 py-2 text-xs font-bold text-gray-500 bg-white uppercase flex items-center gap-2 hover:bg-gray-50";
+                lbl.innerText = "Lock Data";
+                btn.title = "Click to Lock (Read-Only Mode)";
+            }
+        }
+
+        async function toggleSchoolLock() {
+            if (!currentSchoolDetails.id) return;
+
+            const action = currentSchoolLocked ? "UNLOCK" : "LOCK";
+            if (!confirm(`Are you sure you want to ${action} this school?\n\n${currentSchoolLocked ? 'Teachers will be able to edit data again.' : 'Teachers will be BLOCKED from editing data.'}`)) return;
+
+            try {
+                const res = await fetch(`${API_BASE}/data/schools/${currentSchoolDetails.id}/lock`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
+                });
+                const d = await res.json();
+
+                if (res.ok) {
+                    currentSchoolLocked = !currentSchoolLocked; // Toggle local state
+                    updateLockUI();
+                    showToast(`School ${action}ED successfully`, 'success');
+                } else {
+                    alert("Failed: " + (d.error || "Unknown"));
+                }
+            } catch (e) {
+                alert("Error: " + e.message);
+            }
+        }
+    </script>
 </body>
 
 </html>
