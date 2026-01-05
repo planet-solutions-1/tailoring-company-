@@ -437,6 +437,436 @@
                 </div>
             </div>
 
+            <!-- UNIVERSAL VIEW CONTAINER (Relocated Sections) -->
+
+            <!-- 4. ACCESS CODES -->
+            <div id="view-access" class="hidden fade-in space-y-8 w-full">
+                <div class="clay-card p-8">
+                    <h3 class="text-xl font-bold text-gray-700 mb-6">Generate Secure Link</h3>
+                    <div class="flex flex-col md:flex-row gap-6 items-end">
+                        <div class="w-full md:flex-1">
+                            <label class="block text-xs font-bold text-gray-400 uppercase mb-2 ml-2">Target
+                                School</label>
+                            <select id="access-school-select" class="clay-input"></select>
+                        </div>
+                        <div class="w-full md:w-48">
+                            <label class="block text-xs font-bold text-gray-400 uppercase mb-2 ml-2">Role Type</label>
+                            <select id="access-type" class="clay-input">
+                                <option value="tailor">Tailor (Measurements)</option>
+                                <option value="packing">Packing (Status)</option>
+                            </select>
+                        </div>
+                        <div class="w-full md:w-32">
+                            <label class="block text-xs font-bold text-gray-400 uppercase mb-2 ml-2">Expires In</label>
+                            <select id="access-expiry" class="clay-input">
+                                <option value="24">24 Hours</option>
+                                <option value="48">48 Hours</option>
+                                <option value="168">7 Days</option>
+                            </select>
+                        </div>
+                        <button onclick="generateCode()"
+                            class="w-full md:w-auto clay-btn clay-primary px-8 py-3 rounded-xl font-bold uppercase text-sm shadow-xl transition-transform active:scale-95">
+                            Generate
+                        </button>
+                    </div>
+                </div>
+
+                <div class="clay-card p-8">
+                    <h3 class="text-lg font-bold text-gray-600 mb-4">Active & Inactive Codes</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm min-w-[600px]">
+                            <thead>
+                                <tr class="border-b border-white/50 text-gray-400 font-bold uppercase text-xs">
+                                    <th class="text-left pb-3">School</th>
+                                    <th class="text-left pb-3">Code</th>
+                                    <th class="text-left pb-3">Type</th>
+                                    <th class="text-center pb-3">Status</th>
+                                    <th class="text-right pb-3">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="access-code-list" class="divide-y divide-gray-50"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5. SCHOOLS -->
+            <div id="view-schools" class="hidden fade-in space-y-8 w-full">
+                <div class="clay-card p-8">
+                    <div class="flex items-center justify-between mb-6 border-b border-white/50 pb-4">
+                        <div>
+                            <div>
+                                <!-- Header -->
+                            </div>
+                        </div>
+                        <button onclick="fixDatabase()"
+                            class="bg-blue-50 hover:bg-blue-100 text-blue-600 px-4 py-2 rounded-lg font-bold text-xs uppercase shadow-sm flex items-center gap-2 transition-colors border border-blue-200">
+                            <span class="text-lg">🔧</span> Repair Database
+                        </button>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm min-w-[800px]">
+                            <thead class="bg-gray-50/50 text-gray-500 uppercase text-xs font-bold rounded-lg">
+                                <tr>
+                                    <th class="p-3 text-left">School Name</th>
+                                    <th class="p-3 text-left w-48">Priority</th>
+                                    <th class="p-3 text-left w-48">Status</th>
+                                    <th class="p-3 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="school-list-body" class="divide-y divide-gray-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 5.5 SCHOOL DETAILS -->
+            <div id="view-school-details" class="hidden fade-in max-w-7xl mx-auto space-y-6">
+                <!-- Header -->
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <button onclick="switchTab('schools')"
+                            class="text-xs font-bold text-gray-400 hover:text-blue-500 uppercase flex items-center gap-1 mb-2 group">
+                            <svg class="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none"
+                                stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15 19l-7-7 7-7">
+                                </path>
+                            </svg>
+                            Back to Schools List
+                        </button>
+                        <h3 class="text-3xl font-extrabold text-gray-700" id="sd-school-name">-</h3>
+                        <p class="text-sm text-gray-400 font-bold uppercase tracking-wider" id="sd-school-meta">School
+                            Data Explorer</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="downloadPDF()"
+                            class="clay-btn px-4 py-2 text-xs font-bold text-rose-500 uppercase flex items-center gap-2">
+                            Export PDF
+                        </button>
+                        <button onclick="downloadExcel()"
+                            class="clay-btn px-4 py-2 text-xs font-bold text-emerald-500 uppercase flex items-center gap-2">
+                            Export Excel
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Tabs -->
+                <div class="flex gap-4 border-b border-gray-200/50 pb-1 overflow-x-auto">
+                    <button onclick="switchSchoolTab('students')" id="tab-sd-students"
+                        class="clay-btn text-sm text-gray-500 hover:text-gray-700">Students List</button>
+                    <button onclick="switchSchoolTab('measurements')" id="tab-sd-measurements"
+                        class="clay-btn text-sm text-gray-500 hover:text-gray-700">Measurements Data</button>
+                    <button onclick="switchSchoolTab('patterns')" id="tab-sd-patterns"
+                        class="clay-btn text-sm active bg-blue-50 text-blue-600 border-blue-100">Patterns &
+                        Consumption</button>
+                </div>
+
+                <!-- Content: Students -->
+                <div id="sd-view-students" class="hidden fade-in">
+                    <div class="clay-card p-6">
+                        <div class="overflow-x-auto h-[650px] custom-scrollbar">
+                            <table class="w-full text-sm text-left whitespace-nowrap">
+                                <thead
+                                    class="sticky top-0 bg-white z-10 text-xs font-extrabold text-gray-400 uppercase tracking-wider shadow-sm">
+                                    <tr>
+                                        <th class="p-4 border-b">Roll No</th>
+                                        <th class="p-4 border-b">Student Name</th>
+                                        <th class="p-4 border-b">Class / Section</th>
+                                        <th class="p-4 border-b">Gender</th>
+                                        <th class="p-4 border-b">Pattern Assigned</th>
+                                        <th class="p-4 border-b text-center">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="sd-list-students" class="divide-y divide-gray-50"></tbody>
+                            </table>
+                        </div>
+                        <p class="text-right text-xs text-gray-400 mt-4 px-2" id="sd-count-students">0 records</p>
+                    </div>
+                </div>
+
+                <!-- Content: Measurements -->
+                <div id="sd-view-measurements" class="hidden fade-in">
+                    <div class="clay-card p-6">
+                        <p
+                            class="text-xs text-sky-500 font-bold mb-4 uppercase tracking-wider bg-sky-50 inline-block px-3 py-1 rounded-lg">
+                            Showing All Measurement Data</p>
+                        <div class="overflow-x-auto h-[650px] custom-scrollbar">
+                            <table class="w-full text-sm text-left whitespace-nowrap font-mono">
+                                <thead
+                                    class="sticky top-0 bg-white z-10 text-xs font-extrabold text-gray-400 uppercase tracking-wider shadow-sm">
+                                    <tr>
+                                        <th class="p-3 border-b bg-gray-50/80 sticky left-0 z-20">Name</th>
+                                        <th class="p-3 border-b text-center">Pattern</th>
+                                        <th class="p-3 border-b text-center text-orange-400">U1</th>
+                                        <th class="p-3 border-b text-center text-orange-400">U2</th>
+                                        <th class="p-3 border-b text-center text-orange-400">U3</th>
+                                        <th class="p-3 border-b text-center text-orange-400">U4</th>
+                                        <th class="p-3 border-b text-center text-orange-400">U5</th>
+                                        <th class="p-3 border-b text-center text-orange-400">U6</th>
+                                        <th class="p-3 border-b text-center text-indigo-400">L1</th>
+                                        <th class="p-3 border-b text-center text-indigo-400">L2</th>
+                                        <th class="p-3 border-b text-center text-indigo-400">L3</th>
+                                        <th class="p-3 border-b text-center text-indigo-400">L4</th>
+                                        <th class="p-3 border-b text-center text-indigo-400">L5</th>
+                                        <th class="p-3 border-b text-center text-purple-600 bg-purple-50">Items Qty</th>
+                                        <th class="p-3 border-b pl-6">Remarks</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="sd-list-measurements" class="divide-y divide-gray-50"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Content: Patterns -->
+                <div id="sd-view-patterns" class="hidden fade-in">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="sd-list-patterns"></div>
+                    <p id="sd-no-patterns" class="hidden text-center text-gray-400 py-12 italic">No patterns found.</p>
+                </div>
+            </div>
+
+            <!-- 6. REPORTS -->
+            <div id="view-reports" class="hidden fade-in w-full space-y-10">
+                <div class="flex flex-col md:flex-row justify-between items-end gap-4 border-b border-gray-100 pb-4">
+                    <div>
+                        <div></div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="cleanupLogs()"
+                            class="clay-btn px-4 py-2 text-xs font-bold text-red-400 hover:text-red-500">🗑️ Cleanup
+                            Logs</button>
+                    </div>
+                </div>
+
+                <!-- SECTION 1: DATA EXPORTS -->
+                <div class="space-y-4">
+                    <h4 class="font-bold text-gray-600 uppercase text-xs tracking-wider ml-1">Data Exports</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <!-- Schools -->
+                        <div
+                            class="clay-card p-6 flex flex-col items-center text-center hover:scale-[1.01] transition-transform relative overflow-hidden">
+                            <div
+                                class="absolute top-0 right-0 p-4 opacity-5 text-9xl font-bold text-indigo-500 pointer-events-none">
+                                🏫</div>
+                            <div
+                                class="w-16 h-16 rounded-2xl bg-indigo-100 flex items-center justify-center text-3xl mb-4 relative z-10">
+                                🏫</div>
+                            <h4 class="font-bold text-gray-700 text-lg relative z-10">Registered Schools</h4>
+                            <p class="text-xs text-gray-400 mt-2 mb-6 relative z-10">Download complete registry.</p>
+                            <div class="flex gap-2 w-full mt-auto relative z-10">
+                                <button onclick="downloadReport('schools_list', 'xls')"
+                                    class="flex-1 clay-btn py-3 text-sm font-bold text-indigo-600 hover:bg-indigo-50">CSV</button>
+                                <button onclick="downloadReport('schools_list', 'pdf')"
+                                    class="flex-1 clay-btn py-3 text-sm font-bold text-red-500 hover:bg-red-50">PDF</button>
+                            </div>
+                        </div>
+
+                        <!-- Students -->
+                        <div
+                            class="clay-card p-6 flex flex-col items-center text-center hover:scale-[1.01] transition-transform">
+                            <div
+                                class="w-16 h-16 rounded-2xl bg-emerald-100 flex items-center justify-center text-3xl mb-4">
+                                🎓</div>
+                            <h4 class="font-bold text-gray-700 text-lg">Student Data</h4>
+                            <p class="text-xs text-gray-400 mt-2 mb-4">Export students for a specific school.</p>
+                            <select id="rp-export-school-select" class="clay-input w-full text-xs mb-4">
+                                <option value="">-- Select School --</option>
+                            </select>
+                            <div class="flex gap-2 w-full mt-auto">
+                                <button onclick="downloadReport('school', 'xls')"
+                                    class="flex-1 clay-btn py-3 text-sm font-bold text-emerald-600 hover:bg-emerald-50">Excel</button>
+                                <button onclick="downloadReport('school', 'pdf')"
+                                    class="flex-1 clay-btn py-3 text-sm font-bold text-red-500 hover:bg-red-50">PDF</button>
+                            </div>
+                        </div>
+
+                        <!-- Users -->
+                        <div
+                            class="clay-card p-6 flex flex-col items-center text-center hover:scale-[1.01] transition-transform">
+                            <div
+                                class="w-16 h-16 rounded-2xl bg-purple-100 flex items-center justify-center text-3xl mb-4">
+                                👥</div>
+                            <h4 class="font-bold text-gray-700 text-lg">User Registry</h4>
+                            <p class="text-xs text-gray-400 mt-2 mb-6">List of all system users and roles.</p>
+                            <div class="flex gap-2 w-full mt-auto">
+                                <button onclick="downloadReport('users', 'xls')"
+                                    class="flex-1 clay-btn py-3 text-sm font-bold text-purple-600 hover:bg-purple-50">Excel</button>
+                                <button onclick="downloadReport('users', 'pdf')"
+                                    class="flex-1 clay-btn py-3 text-sm font-bold text-red-500 hover:bg-red-50">PDF</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 2: SYSTEM LOGS -->
+                <div class="space-y-4">
+                    <h4 class="font-bold text-gray-600 uppercase text-xs tracking-wider ml-1">System Activity Logs</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6" id="ai-insights-grid"></div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="clay-card p-6 space-y-6">
+                            <div>
+                                <label class="block text-[10px] font-bold text-gray-400 uppercase mb-2">Filter
+                                    Logs</label>
+                                <div class="space-y-3">
+                                    <select id="rp-school-select" onchange="fetchReportLogs('overview')"
+                                        class="clay-input w-full">
+                                        <option value="">All Schools</option>
+                                    </select>
+                                    <input type="text" id="rp-user-search" onkeyup="debounceLogFetch()"
+                                        placeholder="Search User..." class="clay-input w-full">
+                                </div>
+                            </div>
+                            <div class="pt-4 border-t border-gray-100">
+                                <h5 class="font-bold text-gray-600 mb-4 text-xs">Activity Volume</h5>
+                                <div class="h-32 relative"><canvas id="chart-logs-volume"></canvas></div>
+                            </div>
+                            <div class="pt-4 border-t border-gray-100">
+                                <h5 class="font-bold text-gray-600 mb-4 text-xs">Role Distribution</h5>
+                                <div class="h-32 relative"><canvas id="chart-logs-role"></canvas></div>
+                            </div>
+                        </div>
+
+                        <div class="clay-card p-0 lg:col-span-2 overflow-hidden flex flex-col h-[500px]">
+                            <div class="p-4 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
+                                <span class="font-bold text-gray-500 text-xs">Recent Events</span>
+                                <button onclick="downloadLogsXls()"
+                                    class="text-green-500 hover:text-green-600 text-xs font-bold">Download CSV</button>
+                            </div>
+                            <div class="flex-1 overflow-auto">
+                                <table class="w-full text-xs text-left">
+                                    <thead class="bg-white text-gray-400 font-bold sticky top-0 shadow-sm z-10">
+                                        <tr>
+                                            <th class="p-4">Time</th>
+                                            <th class="p-4">User</th>
+                                            <th class="p-4">Action</th>
+                                            <th class="p-4">Details</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="rp-school-table"
+                                        class="divide-y divide-gray-50 text-gray-600 font-medium"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 7. COMPLAINTS -->
+            <div id="view-complaints" class="hidden fade-in w-full space-y-8">
+                <!-- Analytics Header -->
+                <div class="grid grid-cols-1 md:grid-cols-6 gap-6">
+                    <div class="md:col-span-2 grid grid-cols-3 gap-4">
+                        <div class="clay-card p-4 flex flex-col justify-center items-center text-center">
+                            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Total</p>
+                            <p class="text-3xl font-extrabold text-gray-700 mt-1" id="c-stat-total">0</p>
+                        </div>
+                        <div
+                            class="clay-card p-4 flex flex-col justify-center items-center text-center relative overflow-hidden">
+                            <div class="absolute top-0 left-0 w-1 h-full bg-orange-400"></div>
+                            <p class="text-[10px] text-orange-500 font-bold uppercase tracking-widest">Open</p>
+                            <p class="text-3xl font-extrabold text-gray-700 mt-1" id="c-stat-open">0</p>
+                        </div>
+                        <div
+                            class="clay-card p-4 flex flex-col justify-center items-center text-center relative overflow-hidden">
+                            <div class="absolute top-0 left-0 w-1 h-full bg-emerald-400"></div>
+                            <p class="text-[10px] text-emerald-500 font-bold uppercase tracking-widest">Done</p>
+                            <p class="text-3xl font-extrabold text-gray-700 mt-1" id="c-stat-resolved">0</p>
+                        </div>
+                    </div>
+                    <div class="clay-card p-4 col-span-2 relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-full h-1 bg-rose-400"></div>
+                        <p class="text-[10px] text-rose-500 font-bold uppercase tracking-widest mb-2">Needs Attention
+                        </p>
+                        <h4 class="font-bold text-gray-800 truncate text-lg" id="c-top-pattern">-</h4>
+                        <p class="text-xs text-gray-400 font-medium" id="c-top-pattern-count">0 complaints</p>
+                    </div>
+                    <div class="clay-card p-4 col-span-2 relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-full h-1 bg-blue-400"></div>
+                        <p class="text-[10px] text-blue-500 font-bold uppercase tracking-widest mb-2">Common Issue</p>
+                        <h4 class="font-bold text-gray-800 truncate text-lg" id="c-top-issue">-</h4>
+                        <p class="text-xs text-gray-400 font-medium" id="c-top-issue-count">0 occurrences</p>
+                    </div>
+                </div>
+
+                <!-- Charts -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 h-96">
+                    <div class="clay-card p-6 flex flex-col">
+                        <h3 class="font-bold text-lg text-gray-600 mb-4">Top Defective Patterns</h3>
+                        <div class="flex-1 relative"><canvas id="chart-patterns"></canvas></div>
+                    </div>
+                    <div class="clay-card p-6 flex flex-col">
+                        <h3 class="font-bold text-lg text-gray-600 mb-4">Common Defect Types</h3>
+                        <div class="flex-1 relative"><canvas id="chart-issues"></canvas></div>
+                    </div>
+                </div>
+
+                <!-- Filters -->
+                <div class="clay-card p-6 flex flex-col md:flex-row gap-4 items-end">
+                    <div class="w-full md:w-auto flex-1">
+                        <label class="block text-[10px] font-bold text-gray-400 uppercase mb-2 ml-2">Search
+                            School</label>
+                        <input type="text" id="c-filter-school" onkeyup="renderComplaintDash()"
+                            placeholder="Type school name..." class="clay-input">
+                    </div>
+                    <div class="w-full md:w-48">
+                        <label class="block text-[10px] font-bold text-gray-400 uppercase mb-2 ml-2">Filter
+                            Pattern</label>
+                        <select id="c-filter-pattern" onchange="renderComplaintDash()" class="clay-input">
+                            <option value="all">All Patterns</option>
+                        </select>
+                    </div>
+                    <div class="w-full md:w-32">
+                        <label class="block text-[10px] font-bold text-gray-400 uppercase mb-2 ml-2">Gender</label>
+                        <select id="c-filter-gender" onchange="renderComplaintDash()" class="clay-input">
+                            <option value="all">All</option>
+                            <option value="Male">Boys</option>
+                            <option value="Female">Girls</option>
+                        </select>
+                    </div>
+                    <div class="flex gap-4">
+                        <button onclick="downloadComplaintsPDF()"
+                            class="clay-btn px-4 py-3 text-xs font-bold uppercase text-rose-500 flex items-center gap-2">PDF</button>
+                        <button onclick="downloadComplaintsExcel()"
+                            class="clay-btn px-4 py-3 text-xs font-bold uppercase text-emerald-500 flex items-center gap-2">Excel</button>
+                    </div>
+                </div>
+
+                <!-- Grid -->
+                <div>
+                    <h3 class="font-bold text-2xl text-gray-700 mb-6 px-2">School Tickets</h3>
+                    <div id="school-complaints-grid"
+                        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
+                    <p id="c-no-data" class="hidden text-center text-gray-400 py-12 italic font-medium">No complaints
+                        match your filters.</p>
+                </div>
+            </div>
+
+            <!-- 8. SETTINGS -->
+            <div id="view-settings" class="hidden fade-in w-full max-w-4xl mx-auto">
+                <div class="clay-card p-8">
+                    <h3 class="text-xl font-bold text-gray-700 mb-6 flex items-center gap-3">Notification Preferences
+                    </h3>
+                    <div class="flex items-center justify-between p-4 bg-gray-50/50 rounded-xl border border-gray-100">
+                        <div>
+                            <h4 class="font-bold text-gray-800">Urgent Deadline Alerts</h4>
+                            <p class="text-sm text-gray-500">Show popup & browser notifications when schools have
+                                deadlines < 3 days away.</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="setting-notify"
+                                onchange="toggleNotificationSetting(this.checked)" class="sr-only peer">
+                            <div
+                                class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600">
+                            </div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+
             <!-- 1. OVERVIEW -->
             <div id="view-overview" class="space-y-8 fade-in">
                 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -1122,495 +1552,7 @@
     <!-- 3. USER MANAGEMENT -->
 
 
-    <!-- 4. ACCESS CODES -->
-    <div id="view-access" class="hidden fade-in space-y-8 w-full">
-        <div class="clay-card p-8">
-            <h3 class="text-xl font-bold text-gray-700 mb-6">Generate Secure Link</h3>
-            <div class="flex flex-col md:flex-row gap-6 items-end">
-                <div class="w-full md:flex-1">
-                    <label class="block text-xs font-bold text-gray-400 uppercase mb-2 ml-2">Target School</label>
-                    <select id="access-school-select" class="clay-input"></select>
-                </div>
-                <div class="w-full md:w-48">
-                    <label class="block text-xs font-bold text-gray-400 uppercase mb-2 ml-2">Role Type</label>
-                    <select id="access-type" class="clay-input">
-                        <option value="tailor">Tailor (Measurements)</option>
-                        <option value="packing">Packing (Status)</option>
-                    </select>
-                </div>
-                <div class="w-full md:w-32">
-                    <label class="block text-xs font-bold text-gray-400 uppercase mb-2 ml-2">Expires In</label>
-                    <select id="access-expiry" class="clay-input">
-                        <option value="24">24 Hours</option>
-                        <option value="48">48 Hours</option>
-                        <option value="168">7 Days</option>
-                    </select>
-                </div>
-                <button onclick="generateCode()"
-                    class="w-full md:w-auto clay-btn clay-primary px-8 py-3 rounded-xl font-bold uppercase text-sm shadow-xl transition-transform active:scale-95">
-                    Generate
-                </button>
-            </div>
-        </div>
 
-        <div class="clay-card p-8">
-            <h3 class="text-lg font-bold text-gray-600 mb-4">Active & Inactive Codes</h3>
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm min-w-[600px]">
-                    <thead>
-                        <tr class="border-b border-white/50 text-gray-400 font-bold uppercase text-xs">
-                            <th class="text-left pb-3">School</th>
-                            <th class="text-left pb-3">Code</th>
-                            <th class="text-left pb-3">Type</th>
-                            <th class="text-center pb-3">Status</th>
-                            <th class="text-right pb-3">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="access-code-list" class="divide-y divide-gray-50"></tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- 5. SCHOOLS -->
-    <div id="view-schools" class="hidden fade-in space-y-8 w-full">
-        <div class="clay-card p-8">
-            <div class="flex items-center justify-between mb-6 border-b border-white/50 pb-4">
-                <div>
-                    <div>
-                        <!-- Header Removed: Handled globally -->
-                    </div>
-                </div>
-                <!-- Repair Button -->
-                <button onclick="fixDatabase()"
-                    class="bg-blue-50 hover:bg-blue-100 text-blue-600 px-4 py-2 rounded-lg font-bold text-xs uppercase shadow-sm flex items-center gap-2 transition-colors border border-blue-200">
-                    <span class="text-lg">🔧</span> Repair Database
-                </button>
-            </div>
-
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm min-w-[800px]">
-                    <thead class="bg-gray-50/50 text-gray-500 uppercase text-xs font-bold rounded-lg">
-                        <tr>
-                            <th class="p-3 text-left">School Name</th>
-                            <th class="p-3 text-left w-48">Priority</th>
-                            <th class="p-3 text-left w-48">Status</th>
-                            <th class="p-3 text-right">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="school-list-body" class="divide-y divide-gray-100"></tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-
-    <!-- 5.5 SCHOOL DETAILS VIEW -->
-    <div id="view-school-details" class="hidden fade-in max-w-7xl mx-auto space-y-6">
-        <!-- Header -->
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div>
-                <button onclick="switchTab('schools')"
-                    class="text-xs font-bold text-gray-400 hover:text-blue-500 uppercase flex items-center gap-1 mb-2 group">
-                    <svg class="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none"
-                        stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7">
-                        </path>
-                    </svg>
-                    Back to Schools List
-                </button>
-                <h3 class="text-3xl font-extrabold text-gray-700" id="sd-school-name">-</h3>
-                <p class="text-sm text-gray-400 font-bold uppercase tracking-wider" id="sd-school-meta">School Data
-                    Explorer</p>
-            </div>
-            <!-- Export for this school? -->
-            <div class="flex gap-2">
-                <button onclick="downloadPDF()"
-                    class="clay-btn px-4 py-2 text-xs font-bold text-rose-500 uppercase flex items-center gap-2">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                        <polyline points="14 2 14 8 20 8"></polyline>
-                        <line x1="16" y1="13" x2="8" y2="13"></line>
-                        <line x1="16" y1="17" x2="8" y2="17"></line>
-                        <polyline points="10 9 9 9 8 9"></polyline>
-                    </svg>
-                    Export PDF
-                </button>
-                <button onclick="downloadExcel()"
-                    class="clay-btn px-4 py-2 text-xs font-bold text-emerald-500 uppercase flex items-center gap-2">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                        <line x1="16" y1="8" x2="8" y2="8"></line>
-                        <line x1="16" y1="16" x2="8" y2="16"></line>
-                        <line x1="10" y1="12" x2="3" y2="12"></line>
-                    </svg>
-                    Export Excel
-                </button>
-            </div>
-        </div>
-
-        <!-- Tabs -->
-        <div class="flex gap-4 border-b border-gray-200/50 pb-1 overflow-x-auto">
-            <button onclick="switchSchoolTab('students')" id="tab-sd-students"
-                class="clay-btn text-sm text-gray-500 hover:text-gray-700">Students List</button>
-            <button onclick="switchSchoolTab('measurements')" id="tab-sd-measurements"
-                class="clay-btn text-sm text-gray-500 hover:text-gray-700">Measurements Data</button>
-            <button onclick="switchSchoolTab('patterns')" id="tab-sd-patterns"
-                class="clay-btn text-sm active bg-blue-50 text-blue-600 border-blue-100">Patterns &
-                Consumption</button>
-        </div>
-
-        <!-- Tab Content: Students -->
-        <div id="sd-view-students" class="hidden fade-in">
-            <div class="clay-card p-6">
-                <div class="overflow-x-auto h-[650px] custom-scrollbar">
-                    <table class="w-full text-sm text-left whitespace-nowrap">
-                        <thead
-                            class="sticky top-0 bg-white z-10 text-xs font-extrabold text-gray-400 uppercase tracking-wider shadow-sm">
-                            <tr>
-                                <th class="p-4 border-b">Roll No</th>
-                                <th class="p-4 border-b">Student Name</th>
-                                <th class="p-4 border-b">Class / Section</th>
-                                <th class="p-4 border-b">Gender</th>
-                                <th class="p-4 border-b">Pattern Assigned</th>
-                                <th class="p-4 border-b text-center">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="sd-list-students" class="divide-y divide-gray-50"></tbody>
-                    </table>
-                </div>
-                <p class="text-right text-xs text-gray-400 mt-4 px-2" id="sd-count-students">0 records</p>
-            </div>
-        </div>
-
-        <!-- Tab Content: Measurements -->
-        <div id="sd-view-measurements" class="hidden fade-in">
-            <div class="clay-card p-6">
-                <p
-                    class="text-xs text-sky-500 font-bold mb-4 uppercase tracking-wider bg-sky-50 inline-block px-3 py-1 rounded-lg">
-                    Showing All Measurement Data</p>
-                <div class="overflow-x-auto h-[650px] custom-scrollbar">
-                    <table class="w-full text-sm text-left whitespace-nowrap font-mono selection:bg-purple-100">
-                        <thead
-                            class="sticky top-0 bg-white z-10 text-xs font-extrabold text-gray-400 uppercase tracking-wider shadow-sm">
-                            <tr>
-                                <th class="p-3 border-b bg-gray-50/80 sticky left-0 z-20">Name</th>
-                                <th class="p-3 border-b text-center">Pattern</th>
-                                <!-- Standard Unified Columns -->
-                                <th class="p-3 border-b text-center text-orange-400">U1</th>
-                                <th class="p-3 border-b text-center text-orange-400">U2</th>
-                                <th class="p-3 border-b text-center text-orange-400">U3</th>
-                                <th class="p-3 border-b text-center text-orange-400">U4</th>
-                                <th class="p-3 border-b text-center text-orange-400">U5</th>
-                                <th class="p-3 border-b text-center text-orange-400">U6</th>
-                                <th class="p-3 border-b text-center text-indigo-400">L1</th>
-                                <th class="p-3 border-b text-center text-indigo-400">L2</th>
-                                <th class="p-3 border-b text-center text-indigo-400">L3</th>
-                                <th class="p-3 border-b text-center text-indigo-400">L4</th>
-                                <th class="p-3 border-b text-center text-indigo-400">L5</th>
-                                <th class="p-3 border-b text-center text-purple-600 bg-purple-50">Items Qty</th>
-                                <th class="p-3 border-b pl-6">Remarks</th>
-                            </tr>
-                        </thead>
-                        <tbody id="sd-list-measurements" class="divide-y divide-gray-50"></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- Tab Content: Patterns -->
-        <div id="sd-view-patterns" class="hidden fade-in">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="sd-list-patterns">
-                <!-- Cards Injected Here -->
-            </div>
-            <p id="sd-no-patterns" class="hidden text-center text-gray-400 py-12 italic">No patterns found for this
-                school.</p>
-        </div>
-    </div>
-
-    <!-- 6. REPORTS CENTER -->
-    <div id="view-reports" class="hidden fade-in w-full space-y-10">
-
-        <div class="flex flex-col md:flex-row justify-between items-end gap-4 border-b border-gray-100 pb-4">
-            <div>
-                <div>
-                    <!-- Header Removed: Handled globally -->
-                </div>
-            </div>
-            <div class="flex gap-2">
-                <button onclick="cleanupLogs()"
-                    class="clay-btn px-4 py-2 text-xs font-bold text-red-400 hover:text-red-500">🗑️ Cleanup
-                    Logs</button>
-            </div>
-        </div>
-
-        <!-- SECTION 1: DATA EXPORTS -->
-        <div class="space-y-4">
-            <h4 class="font-bold text-gray-600 uppercase text-xs tracking-wider ml-1">Data Exports</h4>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <!-- 1. Registered Schools (Primary) -->
-                <div
-                    class="clay-card p-6 flex flex-col items-center text-center hover:scale-[1.01] transition-transform relative overflow-hidden">
-                    <div
-                        class="absolute top-0 right-0 p-4 opacity-5 text-9xl font-bold text-indigo-500 pointer-events-none">
-                        🏫</div>
-                    <div
-                        class="w-16 h-16 rounded-2xl bg-indigo-100 flex items-center justify-center text-3xl mb-4 relative z-10">
-                        🏫</div>
-                    <h4 class="font-bold text-gray-700 text-lg relative z-10">Registered Schools</h4>
-                    <p class="text-xs text-gray-400 mt-2 mb-6 relative z-10">Download complete registry of all
-                        schools.
-                    </p>
-                    <div class="flex gap-2 w-full mt-auto relative z-10">
-                        <button onclick="downloadReport('schools_list', 'xls')"
-                            class="flex-1 clay-btn py-3 text-sm font-bold text-indigo-600 hover:bg-indigo-50">CSV</button>
-                        <button onclick="downloadReport('schools_list', 'pdf')"
-                            class="flex-1 clay-btn py-3 text-sm font-bold text-red-500 hover:bg-red-50">PDF</button>
-                    </div>
-                </div>
-
-                <!-- 2. Student Data -->
-                <div
-                    class="clay-card p-6 flex flex-col items-center text-center hover:scale-[1.01] transition-transform">
-                    <div class="w-16 h-16 rounded-2xl bg-emerald-100 flex items-center justify-center text-3xl mb-4">
-                        🎓
-                    </div>
-                    <h4 class="font-bold text-gray-700 text-lg">Student Data</h4>
-                    <p class="text-xs text-gray-400 mt-2 mb-4">Export students for a specific school.</p>
-                    <select id="rp-export-school-select" class="clay-input w-full text-xs mb-4">
-                        <option value="">-- Select School --</option>
-                    </select>
-                    <div class="flex gap-2 w-full mt-auto">
-                        <button onclick="downloadReport('school', 'xls')"
-                            class="flex-1 clay-btn py-3 text-sm font-bold text-emerald-600 hover:bg-emerald-50">Excel</button>
-                        <button onclick="downloadReport('school', 'pdf')"
-                            class="flex-1 clay-btn py-3 text-sm font-bold text-red-500 hover:bg-red-50">PDF</button>
-                    </div>
-                </div>
-
-                <!-- 3. User Registry -->
-                <div
-                    class="clay-card p-6 flex flex-col items-center text-center hover:scale-[1.01] transition-transform">
-                    <div class="w-16 h-16 rounded-2xl bg-purple-100 flex items-center justify-center text-3xl mb-4">
-                        👥
-                    </div>
-                    <h4 class="font-bold text-gray-700 text-lg">User Registry</h4>
-                    <p class="text-xs text-gray-400 mt-2 mb-6">List of all system users and roles.</p>
-                    <div class="flex gap-2 w-full mt-auto">
-                        <button onclick="downloadReport('users', 'xls')"
-                            class="flex-1 clay-btn py-3 text-sm font-bold text-purple-600 hover:bg-purple-50">Excel</button>
-                        <button onclick="downloadReport('users', 'pdf')"
-                            class="flex-1 clay-btn py-3 text-sm font-bold text-red-500 hover:bg-red-50">PDF</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- SECTION 2: SYSTEM LOGS -->
-        <div class="space-y-4">
-            <h4 class="font-bold text-gray-600 uppercase text-xs tracking-wider ml-1">System Activity Logs</h4>
-
-            <!-- AI Highlights -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6" id="ai-insights-grid">
-                <!-- JS Injected -->
-            </div>
-
-            <!-- Log Filters & Visuals -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <!-- Filters & Volume -->
-                <div class="clay-card p-6 space-y-6">
-                    <div>
-                        <label class="block text-[10px] font-bold text-gray-400 uppercase mb-2">Filter Logs</label>
-                        <div class="space-y-3">
-                            <select id="rp-school-select" onchange="fetchReportLogs('overview')"
-                                class="clay-input w-full">
-                                <option value="">All Schools</option>
-                            </select>
-                            <input type="text" id="rp-user-search" onkeyup="debounceLogFetch()"
-                                placeholder="Search User..." class="clay-input w-full">
-                        </div>
-                    </div>
-                    <div class="pt-4 border-t border-gray-100">
-                        <h5 class="font-bold text-gray-600 mb-4 text-xs">Activity Volume</h5>
-                        <div class="h-32 relative"><canvas id="chart-logs-volume"></canvas></div>
-                    </div>
-                    <div class="pt-4 border-t border-gray-100">
-                        <h5 class="font-bold text-gray-600 mb-4 text-xs">Role Distribution</h5>
-                        <div class="h-32 relative"><canvas id="chart-logs-role"></canvas></div>
-                    </div>
-                </div>
-
-                <!-- Log Table -->
-                <div class="clay-card p-0 lg:col-span-2 overflow-hidden flex flex-col h-[500px]">
-                    <div class="p-4 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
-                        <span class="font-bold text-gray-500 text-xs">Recent Events</span>
-                        <button onclick="downloadLogsXls()"
-                            class="text-green-500 hover:text-green-600 text-xs font-bold">Download CSV</button>
-                    </div>
-                    <div class="flex-1 overflow-auto">
-                        <table class="w-full text-xs text-left">
-                            <thead class="bg-white text-gray-400 font-bold sticky top-0 shadow-sm z-10">
-                                <tr>
-                                    <th class="p-4">Time</th>
-                                    <th class="p-4">User</th>
-                                    <th class="p-4">Action</th>
-                                    <th class="p-4">Details</th>
-                                </tr>
-                            </thead>
-                            <tbody id="rp-school-table" class="divide-y divide-gray-50 text-gray-600 font-medium">
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-    </div>
-
-    <!-- 7. COMPLAINTS OVERHAUL -->
-    <div id="view-complaints" class="hidden fade-in w-full space-y-8">
-
-        <!-- A. Analytics Header & Hotspots -->
-        <div class="grid grid-cols-1 md:grid-cols-6 gap-6">
-            <!-- Basic Counts -->
-            <div class="md:col-span-2 grid grid-cols-3 gap-4">
-                <div class="clay-card p-4 flex flex-col justify-center items-center text-center">
-                    <p class="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Total</p>
-                    <p class="text-3xl font-extrabold text-gray-700 mt-1" id="c-stat-total">0</p>
-                </div>
-                <div
-                    class="clay-card p-4 flex flex-col justify-center items-center text-center relative overflow-hidden">
-                    <div class="absolute top-0 left-0 w-1 h-full bg-orange-400"></div>
-                    <p class="text-[10px] text-orange-500 font-bold uppercase tracking-widest">Open</p>
-                    <p class="text-3xl font-extrabold text-gray-700 mt-1" id="c-stat-open">0</p>
-                </div>
-                <div
-                    class="clay-card p-4 flex flex-col justify-center items-center text-center relative overflow-hidden">
-                    <div class="absolute top-0 left-0 w-1 h-full bg-emerald-400"></div>
-                    <p class="text-[10px] text-emerald-500 font-bold uppercase tracking-widest">Done</p>
-                    <p class="text-3xl font-extrabold text-gray-700 mt-1" id="c-stat-resolved">0</p>
-                </div>
-            </div>
-
-            <!-- Insight Cards -->
-            <div class="clay-card p-4 col-span-2 relative overflow-hidden">
-                <div class="absolute top-0 left-0 w-full h-1 bg-rose-400"></div>
-                <p class="text-[10px] text-rose-500 font-bold uppercase tracking-widest mb-2">Needs Attention (Top
-                    Pattern)</p>
-                <h4 class="font-bold text-gray-800 truncate text-lg" id="c-top-pattern">-</h4>
-                <p class="text-xs text-gray-400 font-medium" id="c-top-pattern-count">0 complaints</p>
-            </div>
-            <div class="clay-card p-4 col-span-2 relative overflow-hidden">
-                <div class="absolute top-0 left-0 w-full h-1 bg-blue-400"></div>
-                <p class="text-[10px] text-blue-500 font-bold uppercase tracking-widest mb-2">Common Issue</p>
-                <h4 class="font-bold text-gray-800 truncate text-lg" id="c-top-issue">-</h4>
-                <p class="text-xs text-gray-400 font-medium" id="c-top-issue-count">0 occurrences</p>
-            </div>
-        </div>
-
-        <!-- B. Charts & Trends -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 h-96">
-            <div class="clay-card p-6 flex flex-col">
-                <h3 class="font-bold text-lg text-gray-600 mb-4">Top Defective Patterns</h3>
-                <div class="flex-1 relative"><canvas id="chart-patterns"></canvas></div>
-            </div>
-            <div class="clay-card p-6 flex flex-col">
-                <h3 class="font-bold text-lg text-gray-600 mb-4">Common Defect Types</h3>
-                <div class="flex-1 relative"><canvas id="chart-issues"></canvas></div>
-            </div>
-        </div>
-
-        <!-- C. Filters & Controls -->
-        <div class="clay-card p-6 flex flex-col md:flex-row gap-4 items-end">
-            <div class="w-full md:w-auto flex-1">
-                <label class="block text-[10px] font-bold text-gray-400 uppercase mb-2 ml-2">Search School</label>
-                <input type="text" id="c-filter-school" onkeyup="renderComplaintDash()"
-                    placeholder="Type school name..." class="clay-input">
-            </div>
-            <div class="w-full md:w-48">
-                <label class="block text-[10px] font-bold text-gray-400 uppercase mb-2 ml-2">Filter Pattern</label>
-                <select id="c-filter-pattern" onchange="renderComplaintDash()" class="clay-input">
-                    <option value="all">All Patterns</option>
-                    <!-- Populated JS -->
-                </select>
-            </div>
-            <div class="w-full md:w-32">
-                <label class="block text-[10px] font-bold text-gray-400 uppercase mb-2 ml-2">Gender</label>
-                <select id="c-filter-gender" onchange="renderComplaintDash()" class="clay-input">
-                    <option value="all">All</option>
-                    <option value="Male">Boys</option>
-                    <option value="Female">Girls</option>
-                </select>
-            </div>
-            <div class="flex gap-4">
-                <button onclick="downloadComplaintsPDF()"
-                    class="clay-btn px-4 py-3 text-xs font-bold uppercase text-rose-500 flex items-center gap-2">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                        <polyline points="14 2 14 8 20 8"></polyline>
-                        <line x1="16" y1="13" x2="8" y2="13"></line>
-                        <line x1="16" y1="17" x2="8" y2="17"></line>
-                        <polyline points="10 9 9 9 8 9"></polyline>
-                    </svg>
-                    PDF
-                </button>
-                <button onclick="downloadComplaintsExcel()"
-                    class="clay-btn px-4 py-3 text-xs font-bold uppercase text-emerald-500 flex items-center gap-2">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                        <line x1="16" y1="8" x2="8" y2="8"></line>
-                        <line x1="16" y1="16" x2="8" y2="16"></line>
-                        <line x1="10" y1="12" x2="3" y2="12"></line>
-                    </svg>
-                    Excel
-                </button>
-            </div>
-        </div>
-
-        <!-- D. Schools Grid (Grouped) -->
-        <div>
-            <h3 class="font-bold text-2xl text-gray-700 mb-6 px-2">School Tickets</h3>
-            <div id="school-complaints-grid"
-                class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                <!-- Dynamic School Cards -->
-            </div>
-            <p id="c-no-data" class="hidden text-center text-gray-400 py-12 italic font-medium">No complaints match
-                your filters.</p>
-        </div>
-
-    </div>
-
-    <!-- 8. SETTINGS -->
-    <div id="view-settings" class="hidden fade-in w-full max-w-4xl mx-auto">
-        <div class="clay-card p-8">
-            <h3 class="text-xl font-bold text-gray-700 mb-6 flex items-center gap-3">
-                <span class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="3"></circle>
-                        <path
-                            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
-                        </path>
-                    </svg>
-                </span>
-                Notification Preferences
-            </h3>
-
-            <div class="flex items-center justify-between p-4 bg-gray-50/50 rounded-xl border border-gray-100">
-                <div>
-                    <h4 class="font-bold text-gray-800">Urgent Deadline Alerts</h4>
-                    <p class="text-sm text-gray-500">Show popup & browser notifications when schools have deadlines
-                        < 3 days away.</p>
-                </div>
-                <label class="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" id="setting-notify" onchange="toggleNotificationSetting(this.checked)"
-                        class="sr-only peer">
-                    <div
-                        class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600">
-                    </div>
-                </label>
-            </div>
-        </div>
-    </div>
 
     </div><!-- End Vertical Enforcer -->
 
