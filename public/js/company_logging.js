@@ -240,6 +240,117 @@ function downloadLogsPDF() {
         });
 }
 
+// === NEW: SCHOOL REPORT PDF ===
+async function downloadSchoolReportPDF() {
+    const schoolId = document.getElementById('report-school-select').value;
+    if (!schoolId) return alert("Please select a school first.");
+
+    const btn = document.activeElement;
+    const originalText = btn ? btn.innerText : '';
+    if (btn) btn.innerText = '...';
+
+    try {
+        const r = await fetch(`${API_BASE}/data/students/${schoolId}`, { headers: { 'Authorization': `Bearer ${token}` } });
+        const students = await r.json();
+
+        if (!students || students.length === 0) {
+            if (btn) btn.innerText = originalText;
+            return alert("No student data found for this school.");
+        }
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+
+        const schoolName = globalSchools.find(s => s.id == schoolId)?.name || `School #${schoolId}`;
+
+        doc.setFontSize(18);
+        doc.text("School Student Report", 14, 20);
+        doc.setFontSize(12);
+        doc.text(schoolName, 14, 28);
+        doc.setFontSize(10);
+        doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 36);
+
+        const headers = [['Roll No', 'Name', 'Class', 'Gender', 'Pattern', 'Status']];
+        const data = students.map(s => [
+            s.roll_no || '-',
+            s.name,
+            `${s.class_name || ''} ${s.section || ''}`,
+            s.gender,
+            s.pattern_name || '-',
+            s.status || 'Pending'
+        ]);
+
+        doc.autoTable({
+            head: headers,
+            body: data,
+            startY: 42,
+            theme: 'grid',
+            styles: { fontSize: 9, cellPadding: 2 },
+            headStyles: { fillColor: [13, 148, 136], textColor: 255 } // Teal
+        });
+
+        doc.save(`Student_Report_${schoolName.replace(/\s+/g, '_')}.pdf`);
+        Logger.log('REPORT_DOWNLOAD', `Downloaded PDF Report using jsPDF for ${schoolName}`);
+
+    } catch (e) {
+        console.error(e);
+        alert("Failed to download PDF.");
+    } finally {
+        if (btn) btn.innerText = originalText;
+    }
+}
+
+// === NEW: USER REPORT PDF ===
+async function downloadUserReportPDF() {
+    const btn = document.activeElement;
+    const originalText = btn ? btn.innerText : '';
+    if (btn) btn.innerText = '...';
+
+    try {
+        const r = await fetch(`${API_BASE}/data/users`, { headers: { 'Authorization': `Bearer ${token}` } });
+        const users = await r.json();
+
+        if (!users || users.length === 0) {
+            if (btn) btn.innerText = originalText;
+            return alert("No users found.");
+        }
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+
+        doc.setFontSize(18);
+        doc.text("User Registry Report", 14, 20);
+        doc.setFontSize(10);
+        doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 28);
+
+        const headers = [['ID', 'Username', 'Role', 'School ID']];
+        const data = users.map(u => [
+            u.id,
+            u.username,
+            u.role,
+            u.school_id || '-'
+        ]);
+
+        doc.autoTable({
+            head: headers,
+            body: data,
+            startY: 35,
+            theme: 'striped',
+            styles: { fontSize: 10, cellPadding: 3 },
+            headStyles: { fillColor: [249, 115, 22], textColor: 255 } // Orange
+        });
+
+        doc.save(`User_List_Report.pdf`);
+        Logger.log('REPORT_DOWNLOAD', `Downloaded PDF User Report`);
+
+    } catch (e) {
+        console.error(e);
+        alert("Failed to download PDF.");
+    } finally {
+        if (btn) btn.innerText = originalText;
+    }
+}
+
 // Update initReports to populate School Select for Reports too
 const originalInitReports = initReports;
 initReports = async function () {
