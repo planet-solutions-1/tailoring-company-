@@ -1027,78 +1027,69 @@
     </div>
 
     <!-- 3. USER MANAGEMENT -->
-    <div id="view-users" class="hidden fade-in space-y-8 w-full">
-        <div class="clay-card p-6 relative w-full">
-            <div class="flex justify-end items-center mb-6">
+    <div id="view-users" class="hidden fade-in space-y-8 w-full px-8 pb-8">
+
+        <!-- A. REGISTRATION FORM (Always Visible) -->
+        <div class="clay-card p-8 w-full">
+            <div class="flex justify-between items-center mb-8 border-b border-gray-100 pb-4">
+                <div>
+                    <h3 class="text-xl font-bold text-gray-700">Account Registration</h3>
+                    <p class="text-sm text-gray-400">Add new administrators or staff members.</p>
+                </div>
                 <button onclick="openSchoolModal()"
                     class="clay-btn clay-primary px-4 py-2 text-xs font-bold shadow-md hover:shadow-lg border-none transition-transform active:scale-95">
                     Register New School
                 </button>
             </div>
 
-            <!-- Collapsible Header -->
-            <div onclick="toggleUserForm()" class="flex justify-between items-center cursor-pointer group mb-4">
-                <h4
-                    class="text-sm font-bold text-gray-500 uppercase tracking-wider group-hover:text-blue-600 transition-colors">
-                    Create New User Account</h4>
-                <div id="user-form-chevron"
-                    class="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-blue-50 group-hover:text-blue-600 transition-all transform rotate-180">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                    </svg>
+            <form onsubmit="createUser(event)" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 uppercase mb-2 ml-2">Username</label>
+                        <input type="text" name="username" required class="clay-input w-full p-3 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 uppercase mb-2 ml-2">Password</label>
+                        <input type="text" name="password" required class="clay-input w-full p-3 text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 uppercase mb-2 ml-2">Role</label>
+                        <select name="role" id="user-role" onchange="toggleSchoolSelect()"
+                            class="clay-input w-full p-3 text-sm">
+                            <option value="school">School Admin</option>
+                            <option value="tailor">Tailor</option>
+                            <option value="packing">Packing Unit</option>
+                            <option value="company">Company Admin</option>
+                        </select>
+                    </div>
                 </div>
-            </div>
 
-            <div id="user-create-form-container" class="transition-all duration-300 overflow-hidden max-h-[1000px]">
-                <form onsubmit="createUser(event)" class="space-y-4">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                            <label
-                                class="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-2">Username</label>
-                            <input type="text" name="username" required class="clay-input !py-2 !px-4 text-sm">
-                        </div>
-                        <div>
-                            <label
-                                class="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-2">Password</label>
-                            <input type="text" name="password" required class="clay-input !py-2 !px-4 text-sm">
-                        </div>
-                        <div>
-                            <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-2">Role</label>
-                            <select name="role" id="user-role" onchange="toggleSchoolSelect()"
-                                class="clay-input !py-2 !px-4 text-sm">
-                                <option value="school">School Admin</option>
-                                <option value="tailor">Tailor</option>
-                                <option value="packing">Packing Unit</option>
-                                <option value="company">Company Admin</option>
-                            </select>
-                        </div>
-                    </div>
+                <div id="school-select-wrapper" class="w-full">
+                    <label class="block text-xs font-bold text-gray-400 uppercase mb-2 ml-2">Assign To School</label>
+                    <select name="school_id" id="school-select" class="clay-input w-full p-3 text-sm"></select>
+                </div>
 
-                    <div id="school-select-wrapper" class="w-full">
-                        <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-2">Assign To
-                            School</label>
-                        <select name="school_id" id="school-select" class="clay-input !py-2 !px-4 text-sm"></select>
-                    </div>
-
+                <div class="flex justify-end pt-4">
                     <button type="submit"
-                        class="w-full clay-btn clay-primary py-3 rounded-xl text-sm font-bold shadow-md transition-transform active:scale-95">
+                        class="clay-btn clay-primary px-10 py-3 rounded-xl text-sm font-bold shadow-md transition-transform active:scale-95">
                         Create Account
                     </button>
-                </form>
-            </div>
+                </div>
+            </form>
         </div>
 
-        <div class="clay-card p-8">
+        <!-- B. EXISTING USERS TABLE -->
+        <div class="clay-card p-8 w-full">
             <h3 class="text-lg font-bold text-gray-600 mb-6">Existing Accounts</h3>
-            <div class="overflow-x-auto overflow-y-auto max-h-[600px] custom-scrollbar">
+            <div class="overflow-x-auto custom-scrollbar">
                 <table class="w-full text-sm min-w-[600px]">
-                    <thead class="text-gray-400 uppercase text-xs font-bold">
+                    <thead class="text-gray-400 uppercase text-xs font-bold bg-gray-50/50">
                         <tr>
-                            <th class="p-3 text-left">User</th>
-                            <th class="p-3 text-left">Role</th>
-                            <th class="p-3 text-left">School</th>
-                            <th class="p-3 text-center">Status</th>
-                            <th class="p-3 text-right">Created</th>
+                            <th class="p-4 text-left rounded-l-xl">User</th>
+                            <th class="p-4 text-left">Role</th>
+                            <th class="p-4 text-left">School</th>
+                            <th class="p-4 text-center">Status</th>
+                            <th class="p-4 text-right rounded-r-xl">Created</th>
                         </tr>
                     </thead>
                     <tbody id="user-list-body" class="divide-y divide-gray-100"></tbody>
