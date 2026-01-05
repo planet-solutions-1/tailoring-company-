@@ -492,6 +492,7 @@
 
             <!-- 5. SCHOOLS -->
             <div id="view-schools" class="hidden fade-in space-y-8 w-full">
+                <!-- Content Preserved -->
                 <div class="clay-card p-8">
                     <div class="flex items-center justify-between mb-6 border-b border-white/50 pb-4">
                         <div>
@@ -517,6 +518,120 @@
                             </thead>
                             <tbody id="school-list-body" class="divide-y divide-gray-100"></tbody>
                         </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 6. COMPLAINTS -->
+            <div id="view-complaints" class="hidden fade-in space-y-8 w-full">
+                <div class="clay-card p-8">
+                    <h3 class="text-xl font-bold text-gray-700 mb-6">School Issues & Complaints</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm min-w-[800px]">
+                            <thead>
+                                <tr
+                                    class="text-xs font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100">
+                                    <th class="p-3 text-left">School</th>
+                                    <th class="p-3 text-left">Student / Issue</th>
+                                    <th class="p-3 text-left">Priority</th>
+                                    <th class="p-3 text-center">Status</th>
+                                    <th class="p-3 text-right">Date</th>
+                                </tr>
+                            </thead>
+                            <tbody id="complaints-list-body" class="divide-y divide-gray-50">
+                                <!-- Populated via JS -->
+                            </tbody>
+                        </table>
+                        <p id="no-complaints-msg" class="text-center text-gray-400 py-8 hidden">No complaints found.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 7. REPORTS (LOGGING SYSTEM) -->
+            <div id="view-reports" class="hidden fade-in space-y-6 w-full px-8 pb-8">
+                <!-- Filters -->
+                <div class="clay-card p-6 flex flex-wrap gap-4 items-end">
+                    <div class="flex-1 min-w-[200px]">
+                        <label class="block text-xs font-bold text-gray-400 uppercase mb-2 ml-2">School</label>
+                        <select id="log-filter-school" class="clay-input w-full">
+                            <option value="All">All Schools</option>
+                        </select>
+                    </div>
+                    <div class="flex-1 min-w-[200px]">
+                        <label class="block text-xs font-bold text-gray-400 uppercase mb-2 ml-2">User</label>
+                        <select id="log-filter-user" class="clay-input w-full">
+                            <option value="All">All Users</option>
+                        </select>
+                    </div>
+                    <div class="w-40">
+                        <label class="block text-xs font-bold text-gray-400 uppercase mb-2 ml-2">Date Range</label>
+                        <input type="date" id="log-filter-date" class="clay-input w-full">
+                    </div>
+                    <button onclick="fetchActivityLogs()"
+                        class="clay-btn clay-primary px-6 py-3 rounded-xl font-bold uppercase text-sm shadow-md transition-transform active:scale-95">
+                        Filter Logs
+                    </button>
+                    <button onclick="downloadLogsCSV()"
+                        class="clay-btn bg-emerald-50 text-emerald-600 hover:bg-emerald-100 px-6 py-3 rounded-xl font-bold uppercase text-sm shadow-md transition-transform active:scale-95 flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                        </svg>
+                        Download CSV
+                    </button>
+                </div>
+
+                <!-- Logs Table -->
+                <div class="clay-card p-0 overflow-hidden">
+                    <div class="bg-gray-50/50 p-4 border-b border-gray-100 flex justify-between items-center">
+                        <h3 class="text-sm font-bold text-gray-600 uppercase tracking-wide">System Activity Log (7 Days
+                            Retention)</h3>
+                        <span class="text-xs text-gray-400 font-mono">Auto-Clean: Enabled</span>
+                    </div>
+                    <div class="overflow-x-auto max-h-[600px] custom-scrollbar">
+                        <table class="w-full text-sm text-left whitespace-nowrap">
+                            <thead class="sticky top-0 bg-white z-10 shadow-sm">
+                                <tr class="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                                    <th class="p-4 bg-gray-50/30">Timestamp</th>
+                                    <th class="p-4 bg-gray-50/30">User</th>
+                                    <th class="p-4 bg-gray-50/30">Role</th>
+                                    <th class="p-4 bg-gray-50/30">School</th>
+                                    <th class="p-4 bg-gray-50/30">Action</th>
+                                    <th class="p-4 bg-gray-50/30">Details</th>
+                                </tr>
+                            </thead>
+                            <tbody id="logs-list-body" class="divide-y divide-gray-50 font-mono text-xs">
+                                <!-- Logs Injected -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <p id="logs-loading" class="text-center py-8 text-gray-400 italic hidden">Loading logs...</p>
+                    <p id="logs-empty" class="text-center py-8 text-gray-400 italic hidden">No logs found for selection.
+                    </p>
+                </div>
+            </div>
+
+            <!-- 8. SETTINGS -->
+            <div id="view-settings" class="hidden fade-in space-y-8 w-full px-8 pb-8">
+                <div class="clay-card p-8 max-w-2xl mx-auto">
+                    <h3 class="text-xl font-bold text-gray-700 mb-6">System Preferences</h3>
+
+                    <div class="flex items-center justify-between py-4 border-b border-gray-50">
+                        <div>
+                            <p class="font-bold text-gray-700">Browser Notifications</p>
+                            <p class="text-xs text-gray-400">Get alerts for urgent deadlines (3 days left)</p>
+                        </div>
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" id="setting-notify" class="sr-only peer"
+                                onchange="toggleNotificationSetting(this.checked)">
+                            <div
+                                class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600">
+                            </div>
+                        </label>
+                    </div>
+
+                    <div class="mt-8 text-center">
+                        <p class="text-xs text-gray-300 uppercase font-bold">Planet Solutions v5.1.0 (Log Update)</p>
                     </div>
                 </div>
             </div>
@@ -2062,6 +2177,8 @@
                 });
                 if (!r.ok) throw new Error("Update failed");
                 if (typeof fetchSchoolsManage === 'function') fetchSchoolsManage();
+                // LOGGING
+                Logger.log('UPDATE_SCHOOL', `Updated School ${id} ${f} to ${v}`);
             } catch (e) {
                 console.error(e);
                 alert("Failed to save changes. Please try again.");
@@ -2079,6 +2196,7 @@
                 const res = await r.json();
                 if (r.ok) {
                     alert('✅ ' + res.message);
+                    Logger.log('DELETE_SCHOOL', `Deleted School: ${name} (ID: ${id})`);
                     fetchSchoolsManage(); // Refresh List
                     fetchStats(); // Refresh Stats
                     fetchAllStudents(); // Refresh Data
@@ -3688,6 +3806,9 @@
             a.click();
         }
     </script>
+    <!-- LOGGING SCRIPTS -->
+    <script src="js/logger.js"></script>
+    <script src="js/company_logging.js"></script>
 </body>
 
 </html>

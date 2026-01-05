@@ -1545,6 +1545,13 @@
             a.href = url; a.download = 'My_Logs.csv'; a.click();
         }
     </script>
+    <script src="js/logger.js"></script>
+    <script>
+        window.addEventListener('load', () => {
+            const u = sessionStorage.getItem('username');
+            if (u && Logger) Logger.log('PATTERN_DASHBOARD_LOAD', `Loaded by ${u}`);
+        });
+    </script>
 </body>
 
 </html>

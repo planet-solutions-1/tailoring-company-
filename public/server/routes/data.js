@@ -356,11 +356,55 @@ router.put('/users/:id/reset-password', authenticateToken, requireRole('company'
 });
 
 // GET /api/data/logs - Activity Logs
+// GET /api/data/logs - Activity Logs with Filters
 router.get('/logs', authenticateToken, requireRole('company'), (req, res) => {
-    db.all("SELECT * FROM activity_logs ORDER BY created_at DESC LIMIT 100", [], (err, rows) => {
+    const { school_id, user_id, role, start_date, end_date, limit } = req.query;
+
+    let sql = "SELECT * FROM activity_logs WHERE 1=1";
+    const params = [];
+
+    // Filters
+    if (school_id && school_id !== 'All') {
+        sql += " AND school_id = ?";
+        params.push(school_id);
+    }
+    if (user_id && user_id !== 'All') {
+        sql += " AND user_id = ?";
+        params.push(user_id);
+    }
+    if (role && role !== 'All') {
+        sql += " AND role = ?";
+        params.push(role);
+    }
+    if (start_date) {
+        sql += " AND created_at >= ?";
+        params.push(`${start_date} 00:00:00`);
+    }
+    if (end_date) {
+        sql += " AND created_at <= ?";
+        params.push(`${end_date} 23:59:59`);
+    }
+
+    sql += " ORDER BY created_at DESC";
+
+    // If 'limit' is 'none' (for export), don't limit. Else default to 100.
+    if (limit !== 'none') {
+        sql += " LIMIT 200";
+    }
+
+    db.all(sql, params, (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json(rows);
     });
+});
+
+// POST /api/data/logs - Client-side Logging (Authenticated)
+router.post('/logs', authenticateToken, (req, res) => {
+    const { action, details } = req.body;
+    if (db.logActivity) {
+        db.logActivity(req.user.id, req.user.username, action, details || '', req.user.schoolId, req.user.role);
+    }
+    res.json({ success: true });
 });
 
 // === SCHOOL / EDITOR routes ===

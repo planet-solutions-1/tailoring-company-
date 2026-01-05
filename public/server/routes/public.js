@@ -109,4 +109,30 @@ router.get('/students', (req, res) => {
     });
 });
 
+// POST /api/public/logs - Public Logging (e.g. Login Page)
+router.post('/logs', (req, res) => {
+    const { username, action, details, school_id } = req.body;
+    // Basic validation
+    if (!action) return res.status(400).json({ error: "Action required" });
+
+    // Directly insert since we don't have user object yet
+    const query = "INSERT INTO activity_logs (username, action, details, school_id, role, created_at) VALUES (?, ?, ?, ?, 'public', CURRENT_TIMESTAMP)";
+
+    // Use db.run/execute based on available method (Helper check)
+    // We need to require db again or assume it's properly imported at top
+    // db is imported at line 3.
+
+    // Safe execution to handle both SQLite and MySQL abstraction if needed
+    // But public.js treats 'db' as the imported module which usually has .run or .execute wrapper
+    if (db.execute) {
+        db.execute(query, [username || 'Guest', action, details || '', school_id || null])
+            .then(() => res.json({ success: true }))
+            .catch(e => res.json({ success: false })); // Don't crash public
+    } else {
+        db.run(query, [username || 'Guest', action, details || '', school_id || null], () => {
+            res.json({ success: true });
+        });
+    }
+});
+
 module.exports = router;
