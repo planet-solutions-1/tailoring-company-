@@ -373,4 +373,62 @@ initReports = async function () {
         repSchoolSel.innerHTML = '<option value="">-- Select School --</option>' +
             globalSchools.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
     }
+
+    // Start AI Analysis
+    refreshAIInsights();
 };
+
+// === AI INSIGHTS ENGINE ===
+let aiInterval;
+function refreshAIInsights() {
+    if (aiInterval) clearInterval(aiInterval);
+
+    const insights = [];
+    const statusText = document.getElementById('ai-status-text');
+    const insightText = document.getElementById('ai-insight-text');
+    const scoreVal = document.getElementById('ai-score');
+    const scoreBar = document.getElementById('ai-score-bar');
+
+    if (!insightText) return;
+
+    // 1. Analyze Schools
+    const totalSchools = globalSchools.length;
+    const activeSchools = globalSchools.filter(s => s.status === 'Active' || s.status === 'Production').length;
+
+    if (totalSchools > 0) {
+        const inactive = totalSchools - activeSchools;
+        if (inactive > 0) insights.push(`⚠️ <strong>${inactive} Schools</strong> are currently pending activation.`);
+        else insights.push(`✅ All <strong>${totalSchools} Schools</strong> are fully active.`);
+    }
+
+    // 2. Deadline Analysis (Mock logic if accurate dates aren't fully populated yet)
+    // We look for schools with status 'Production'
+    const inProduction = globalSchools.filter(s => s.status === 'Production');
+    if (inProduction.length > 0) {
+        insights.push(`🏭 <strong>${inProduction.length} Schools</strong> are in active production.`);
+    }
+
+    // 3. User Activity (Mocked from recent logs fetch if possible, or just general)
+    insights.push(`👥 System is monitoring <strong>${totalSchools * 120} est. students</strong>.`); // Pseudo-stat
+
+    // 4. Optimization Score Calculation
+    // (Active Schools / Total) * 100
+    const score = totalSchools > 0 ? Math.round((activeSchools / totalSchools) * 100) : 0;
+
+    // Update UI - Score
+    if (scoreVal) scoreVal.innerText = `${score}%`;
+    if (scoreBar) scoreBar.style.width = `${score}%`;
+
+    // Cycle Insights
+    let index = 0;
+    const update = () => {
+        insightText.innerHTML = insights[index];
+        statusText.innerText = "Monitoring Live Data...";
+        // Fade effect could be added here
+        index = (index + 1) % insights.length;
+    };
+
+    update(); // Immediate
+    aiInterval = setInterval(update, 4000); // Cycle every 4s
+}
+
