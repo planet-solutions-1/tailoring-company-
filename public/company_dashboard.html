@@ -322,7 +322,7 @@
         </div>
     </aside>
 
-    <div class="flex-1 flex flex-col relative md:ml-80 transition-all duration-300 isolate">
+    <div class="flex-1 flex flex-col relative md:ml-96 transition-all duration-300 isolate">
         <!-- Background Decor (Watercolor Effect) -->
         <div class="absolute inset-0 overflow-hidden pointer-events-none -z-10">
             <!-- Top Right Organic Blob -->
@@ -1793,6 +1793,29 @@
             if (titleEl) titleEl.innerText = titles[viewId] || 'Overview';
 
             if (sidebarOpen && window.innerWidth < 768) toggleSidebar();
+
+            // Update Navigation Highlights
+            document.querySelectorAll('.nav-item').forEach(el => {
+                // Reset to default style (gray-600) and remove active (bg-blue-50 text-blue-600 etc)
+                el.classList.remove('bg-blue-50', 'text-blue-600', 'border-r-4', 'border-blue-600');
+                el.classList.add('text-gray-600');
+            });
+
+            // Map viewId back to navId or use clickedId logic
+            let navSuffix = clickedId;
+            if (viewId === 'view-data') navSuffix = 'data';
+            if (viewId === 'view-schools') navSuffix = 'schools';
+            if (viewId === 'view-users') navSuffix = 'users'; // Explicit check
+
+            const navId = 'nav-' + navSuffix;
+            const activeNav = document.getElementById(navId);
+            if (activeNav) {
+                activeNav.classList.remove('text-gray-600');
+                activeNav.classList.add('bg-blue-50', 'text-blue-600', 'border-r-4', 'border-blue-600');
+            }
+
+            // Scroll to Top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
 
             // Auto-Fetch Logic
             if (viewId === 'view-schools') fetchSchoolsManage();
