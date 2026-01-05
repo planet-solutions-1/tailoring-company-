@@ -37,13 +37,15 @@ async function fetchActivityLogs() {
 
     const schoolId = document.getElementById('log-filter-school')?.value || 'All';
     const userId = document.getElementById('log-filter-user')?.value || 'All';
-    const date = document.getElementById('log-filter-date')?.value;
+    const startDate = document.getElementById('log-filter-start-date')?.value;
+    const endDate = document.getElementById('log-filter-end-date')?.value;
 
     // Build Query
     let query = `?limit=200`; // Default limit for view
     if (schoolId !== 'All') query += `&school_id=${schoolId}`;
     if (userId !== 'All') query += `&user_id=${userId}`;
-    if (date) query += `&start_date=${date}&end_date=${date}`;
+    if (startDate) query += `&start_date=${startDate}`;
+    if (endDate) query += `&end_date=${endDate}`;
 
     try {
         const r = await fetch(`${API_BASE}/data/logs${query}`, { headers: { 'Authorization': `Bearer ${token}` } });
@@ -58,45 +60,52 @@ async function fetchActivityLogs() {
 
         if (tbody) {
             tbody.innerHTML = logs.map(l => `
-                        <tr class="hover:bg-gray-50 transition-colors border-b border-gray-50">
-                            <td class="p-4 text-gray-500 font-bold">${new Date(l.created_at).toLocaleString()}</td>
-                            <td class="p-4 font-bold text-gray-700">${l.username}</td>
-                            <td class="p-4"><span class="px-2 py-1 rounded text-[10px] font-bold uppercase bg-gray-100 text-gray-500 border border-gray-200">${l.role}</span></td>
-                            <td class="p-4 text-gray-500">${l.school_id ? (globalSchools.find(s => s.id == l.school_id)?.name || 'ID: ' + l.school_id) : '-'}</td>
-                            <td class="p-4 font-bold text-blue-600">${l.action}</td>
-                            <td class="p-4 text-gray-400 italic truncate max-w-xs" title="${l.details}">${l.details || '-'}</td>
-                        </tr>
-                    `).join('');
+                <tr class="hover:bg-blue-50/50 transition-colors border-b border-gray-50 last:border-none group">
+                    <td class="p-4 text-xs font-bold text-gray-500 whitespace-nowrap">${new Date(l.created_at).toLocaleString()}</td>
+                    <td class="p-4 font-bold text-blue-600">${l.username}</td>
+                    <td class="p-4 uppercase text-[10px] font-bold tracking-wider text-gray-400">${l.role}</td>
+                    <td class="p-4 text-gray-500">${l.school_id || '-'}</td>
+                    <td class="p-4 font-bold text-gray-700">${l.action}</td>
+                    <td class="p-4 text-gray-400 font-mono text-[10px] max-w-[200px] truncate group-hover:whitespace-normal group-hover:break-words group-hover:max-w-none" title="${l.details}">${l.details || ''}</td>
+                </tr>
+            `).join('');
         }
-
     } catch (e) {
         console.error("Log Fetch Error", e);
-        if (loading) loading.classList.add('hidden');
-        alert("Failed to fetch logs.");
+        if (loading) loading.innerText = "Error loading logs";
     }
 }
 
-async function downloadLogsCSV() {
+// === NEW: LOGS CSV EXPORT ===
+function downloadLogsCSV() {
     const schoolId = document.getElementById('log-filter-school')?.value || 'All';
     const userId = document.getElementById('log-filter-user')?.value || 'All';
-    const date = document.getElementById('log-filter-date')?.value;
+    const startDate = document.getElementById('log-filter-start-date')?.value;
+    const endDate = document.getElementById('log-filter-end-date')?.value;
 
-    // Build Query with limit=none
-    let query = `?limit=none`;
-    if (schoolId !== 'All') query += `&school_id=${schoolId}`;
-    if (userId !== 'All') query += `&user_id=${userId}`;
-    if (date) query += `&start_date=${date}&end_date=${date}`;
+    const query = `?limit=none` +
+        (schoolId !== 'All' ? `&school_id=${schoolId}` : '') +
+        (userId !== 'All' ? `&user_id=${userId}` : '') +
+        (startDate ? `&start_date=${startDate}` : '') +
+        (endDate ? `&end_date=${endDate}` : '');
 
+    fetch(`${API_BASE}/data/logs${query}`, { headers: { 'Authorization': `Bearer ${token}` } })
+        .then(r => r.json())
+        .then(logs => {
+            if (!Array.isArray(logs) || logs.length === 0) return alert("No logs to export.");
+            exportLogsToCSV(logs);
+        })
+        .catch(e => {
+            console.error(e);
+            alert("Error exporting CSV.");
+        });
+}
+
+function exportLogsToCSV(logs) {
     try {
-        const r = await fetch(`${API_BASE}/data/logs${query}`, { headers: { 'Authorization': `Bearer ${token}` } });
-        const logs = await r.json();
-
-        if (!Array.isArray(logs) || logs.length === 0) return alert("No logs to download for current filters.");
-
-        // Convert to CSV
-        const header = ['Timestamp', 'Username', 'Role', 'School ID', 'Action', 'Details'];
+        const header = ["Timestamp", "User", "Role", "School ID", "Action", "Details"];
         const rows = logs.map(l => [
-            new Date(l.created_at).toLocaleString().replace(/,/g, ''), // Remove commas for CSV safety
+            new Date(l.created_at).toLocaleString(),
             l.username,
             l.role,
             l.school_id || '',
@@ -182,7 +191,8 @@ function downloadLogsPDF() {
 
     const schoolId = document.getElementById('log-filter-school')?.value || 'All';
     const userId = document.getElementById('log-filter-user')?.value || 'All';
-    const date = document.getElementById('log-filter-date')?.value;
+    const startDate = document.getElementById('log-filter-start-date')?.value;
+    const endDate = document.getElementById('log-filter-end-date')?.value;
 
     // UI Feedback
     const btn = document.activeElement;
@@ -192,7 +202,8 @@ function downloadLogsPDF() {
     const query = `?limit=none` +
         (schoolId !== 'All' ? `&school_id=${schoolId}` : '') +
         (userId !== 'All' ? `&user_id=${userId}` : '') +
-        (date ? `&start_date=${date}&end_date=${date}` : '');
+        (startDate ? `&start_date=${startDate}` : '') +
+        (endDate ? `&end_date=${endDate}` : '');
 
     fetch(`${API_BASE}/data/logs${query}`, { headers: { 'Authorization': `Bearer ${token}` } })
         .then(r => r.json())
@@ -210,7 +221,7 @@ function downloadLogsPDF() {
 
             doc.setFontSize(10);
             doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 28);
-            doc.text(`Filters: School=${schoolId}, User=${userId}, Date=${date || 'All'}`, 14, 34);
+            doc.text(`Filters: School=${schoolId}, User=${userId}, Range=${startDate || '*'} to ${endDate || '*'}`, 14, 34);
 
             const headers = [['Time', 'User', 'Role', 'Action', 'Details']];
             const data = logs.map(l => [

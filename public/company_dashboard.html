@@ -699,17 +699,29 @@
                                 <option value="All">All Users</option>
                             </select>
                         </div>
-                        <div class="w-40">
-                            <label class="block text-xs font-bold text-gray-400 uppercase mb-2 ml-2">Date Range</label>
-                            <input type="date" id="log-filter-date" class="clay-input w-full">
-                        </div>
-                        <button onclick="fetchActivityLogs()"
-                            class="clay-btn clay-primary px-6 py-3 rounded-xl font-bold uppercase text-sm shadow-md transition-transform active:scale-95">
-                            Filter Logs
-                        </button>
+
+                        <!-- Date Range -->
                         <div class="flex gap-2">
+                            <div class="w-32">
+                                <label class="block text-xs font-bold text-gray-400 uppercase mb-2 ml-2">Start
+                                    Date</label>
+                                <input type="date" id="log-filter-start-date" class="clay-input w-full p-2 text-xs">
+                            </div>
+                            <div class="w-32">
+                                <label class="block text-xs font-bold text-gray-400 uppercase mb-2 ml-2">End
+                                    Date</label>
+                                <input type="date" id="log-filter-end-date" class="clay-input w-full p-2 text-xs">
+                            </div>
+                        </div>
+
+                        <button onclick="fetchActivityLogs()"
+                            class="clay-btn clay-primary px-6 py-3 rounded-xl font-bold uppercase text-sm shadow-md transition-transform active:scale-95 h-[42px] mt-auto">
+                            Filter
+                        </button>
+
+                        <div class="flex gap-2 h-[42px] mt-auto">
                             <button onclick="downloadLogsPDF()"
-                                class="clay-btn bg-red-50 text-red-600 hover:bg-red-100 px-6 py-3 rounded-xl font-bold uppercase text-sm shadow-md transition-transform active:scale-95 flex items-center gap-2">
+                                class="clay-btn bg-red-50 text-red-600 hover:bg-red-100 px-4 py-3 rounded-xl font-bold uppercase text-sm shadow-md transition-transform active:scale-95 flex items-center gap-2">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 2H7a2 2 0 00-2 2v12a2 2 0 002 2z">
@@ -718,7 +730,7 @@
                                 PDF
                             </button>
                             <button onclick="downloadLogsCSV()"
-                                class="clay-btn bg-emerald-50 text-emerald-600 hover:bg-emerald-100 px-6 py-3 rounded-xl font-bold uppercase text-sm shadow-md transition-transform active:scale-95 flex items-center gap-2">
+                                class="clay-btn bg-emerald-50 text-emerald-600 hover:bg-emerald-100 px-4 py-3 rounded-xl font-bold uppercase text-sm shadow-md transition-transform active:scale-95 flex items-center gap-2">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                         d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
@@ -728,13 +740,31 @@
                         </div>
                     </div>
 
+                    <!-- Auto-Delete Alert -->
+                    <div
+                        class="bg-amber-50 border border-amber-100 text-amber-800 px-4 py-3 rounded-xl text-xs font-bold flex items-center gap-3 mb-6 shadow-sm">
+                        <div
+                            class="w-8 h-8 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center flex-shrink-0">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <span class="uppercase tracking-wider text-[10px] text-amber-500 block mb-1">Data Retention
+                                Policy</span>
+                            System logs are automatically deleted after <span class="text-amber-600 underline">7
+                                days</span> to maintain performance. Download reports regularly for long-term records.
+                        </div>
+                    </div>
+
                     <!-- Logs Table -->
                     <div class="clay-card p-0 overflow-hidden">
                         <div class="bg-gray-50/50 p-4 border-b border-gray-100 flex justify-between items-center">
-                            <h3 class="text-sm font-bold text-gray-600 uppercase tracking-wide">System Activity Log (7
-                                Days
-                                Retention)</h3>
-                            <span class="text-xs text-gray-400 font-mono">Auto-Clean: Enabled</span>
+                            <h3 class="text-sm font-bold text-gray-600 uppercase tracking-wide">System Activity Log</h3>
+                            <span
+                                class="text-xs text-gray-400 font-mono bg-white px-2 py-1 rounded border border-gray-200">Live
+                                Data</span>
                         </div>
                         <div class="overflow-x-auto max-h-[600px] custom-scrollbar">
                             <table class="w-full text-sm text-left whitespace-nowrap">
