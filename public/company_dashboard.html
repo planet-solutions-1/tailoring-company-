@@ -548,66 +548,193 @@
             </div>
 
             <!-- 7. REPORTS (LOGGING SYSTEM) -->
-            <div id="view-reports" class="hidden fade-in space-y-6 w-full px-8 pb-8">
-                <!-- Filters -->
-                <div class="clay-card p-6 flex flex-wrap gap-4 items-end">
-                    <div class="flex-1 min-w-[200px]">
-                        <label class="block text-xs font-bold text-gray-400 uppercase mb-2 ml-2">School</label>
-                        <select id="log-filter-school" class="clay-input w-full">
-                            <option value="All">All Schools</option>
-                        </select>
+            <div id="view-reports" class="hidden fade-in space-y-10 w-full px-8 pb-8">
+
+                <!-- SECTION 1: GLOBAL REPORTS -->
+                <div>
+                    <h2 class="font-ink text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                        <span class="text-emerald-600">●</span> General Reports
+                    </h2>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+
+                        <!-- 1. School Data Report -->
+                        <div class="clay-card p-6 flex flex-col gap-4 group hover:scale-[1.02] transition-transform">
+                            <div class="flex items-center gap-4">
+                                <div
+                                    class="w-12 h-12 rounded-xl bg-cyan-100 text-cyan-600 flex items-center justify-center">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4">
+                                        </path>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-gray-700 text-lg">School Data</h3>
+                                    <p class="text-xs text-gray-400 font-bold uppercase">Student Lists & Measurements
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="mt-auto pt-4 border-t border-gray-100 flex flex-col gap-2">
+                                <label class="text-[10px] font-bold text-gray-400 uppercase">Select School</label>
+                                <select id="report-school-select"
+                                    class="w-full text-sm font-bold text-gray-600 bg-gray-50 border-none rounded-lg p-2 focus:ring-2 focus:ring-cyan-500/20">
+                                    <option value="">Loading Schools...</option>
+                                </select>
+                                <button onclick="downloadSchoolReport()"
+                                    class="w-full py-2 bg-cyan-50 text-cyan-600 font-bold uppercase text-xs rounded-lg hover:bg-cyan-100 transition-colors flex items-center justify-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                                    </svg>
+                                    Download Excel
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 2. User List Report -->
+                        <div class="clay-card p-6 flex flex-col gap-4 group hover:scale-[1.02] transition-transform">
+                            <div class="flex items-center gap-4">
+                                <div
+                                    class="w-12 h-12 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z">
+                                        </path>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-gray-700 text-lg">User Management</h3>
+                                    <p class="text-xs text-gray-400 font-bold uppercase">System Access Registry</p>
+                                </div>
+                            </div>
+                            <div class="mt-auto pt-4 border-t border-gray-100">
+                                <button onclick="downloadUserReport()"
+                                    class="w-full py-2 bg-orange-50 text-orange-600 font-bold uppercase text-xs rounded-lg hover:bg-orange-100 transition-colors flex items-center justify-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                                        </path>
+                                    </svg>
+                                    Export User List
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 3. AI Insights -->
+                        <div
+                            class="clay-card p-6 flex flex-col gap-4 group hover:scale-[1.02] transition-transform relative overflow-hidden">
+                            <!-- Background Chart Effect -->
+                            <svg class="absolute bottom-0 right-0 w-32 h-32 text-gray-50 opacity-50 pointer-events-none"
+                                viewBox="0 0 100 100" preserveAspectRatio="none">
+                                <path d="M0 100 L20 60 L40 80 L60 40 L80 50 L100 10 V100 Z" fill="currentColor" />
+                            </svg>
+
+                            <div class="flex items-center gap-4 relative z-10">
+                                <div
+                                    class="w-12 h-12 rounded-xl bg-violet-100 text-violet-600 flex items-center justify-center">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                    </svg>
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-gray-700 text-lg">AI Insights</h3>
+                                    <p class="text-xs text-gray-400 font-bold uppercase">Automated Analysis</p>
+                                </div>
+                            </div>
+                            <div class="mt-auto pt-4 border-t border-gray-100 relative z-10">
+                                <div class="flex justify-between items-end mb-2">
+                                    <span class="text-sm font-bold text-gray-500">System Health</span>
+                                    <span class="text-xl font-black text-emerald-500">98%</span>
+                                </div>
+                                <div class="w-full bg-gray-100 rounded-full h-2">
+                                    <div class="bg-emerald-500 h-2 rounded-full" style="width: 98%"></div>
+                                </div>
+                                <p class="text-[10px] text-gray-400 mt-2 font-mono">Based on error rates & latency</p>
+                            </div>
+                        </div>
                     </div>
-                    <div class="flex-1 min-w-[200px]">
-                        <label class="block text-xs font-bold text-gray-400 uppercase mb-2 ml-2">User</label>
-                        <select id="log-filter-user" class="clay-input w-full">
-                            <option value="All">All Users</option>
-                        </select>
-                    </div>
-                    <div class="w-40">
-                        <label class="block text-xs font-bold text-gray-400 uppercase mb-2 ml-2">Date Range</label>
-                        <input type="date" id="log-filter-date" class="clay-input w-full">
-                    </div>
-                    <button onclick="fetchActivityLogs()"
-                        class="clay-btn clay-primary px-6 py-3 rounded-xl font-bold uppercase text-sm shadow-md transition-transform active:scale-95">
-                        Filter Logs
-                    </button>
-                    <button onclick="downloadLogsCSV()"
-                        class="clay-btn bg-emerald-50 text-emerald-600 hover:bg-emerald-100 px-6 py-3 rounded-xl font-bold uppercase text-sm shadow-md transition-transform active:scale-95 flex items-center gap-2">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-                        </svg>
-                        Download CSV
-                    </button>
                 </div>
 
-                <!-- Logs Table -->
-                <div class="clay-card p-0 overflow-hidden">
-                    <div class="bg-gray-50/50 p-4 border-b border-gray-100 flex justify-between items-center">
-                        <h3 class="text-sm font-bold text-gray-600 uppercase tracking-wide">System Activity Log (7 Days
-                            Retention)</h3>
-                        <span class="text-xs text-gray-400 font-mono">Auto-Clean: Enabled</span>
+                <!-- SECTION 2: ACTIVITY LOGS -->
+                <div>
+                    <h2 class="font-ink text-2xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                        <span class="text-blue-600">●</span> Activity Logs
+                    </h2>
+
+                    <!-- Filters -->
+                    <div class="clay-card p-6 flex flex-wrap gap-4 items-end mb-8">
+                        <div class="flex-1 min-w-[200px]">
+                            <label class="block text-xs font-bold text-gray-400 uppercase mb-2 ml-2">School</label>
+                            <select id="log-filter-school" class="clay-input w-full">
+                                <option value="All">All Schools</option>
+                            </select>
+                        </div>
+                        <div class="flex-1 min-w-[200px]">
+                            <label class="block text-xs font-bold text-gray-400 uppercase mb-2 ml-2">User</label>
+                            <select id="log-filter-user" class="clay-input w-full">
+                                <option value="All">All Users</option>
+                            </select>
+                        </div>
+                        <div class="w-40">
+                            <label class="block text-xs font-bold text-gray-400 uppercase mb-2 ml-2">Date Range</label>
+                            <input type="date" id="log-filter-date" class="clay-input w-full">
+                        </div>
+                        <button onclick="fetchActivityLogs()"
+                            class="clay-btn clay-primary px-6 py-3 rounded-xl font-bold uppercase text-sm shadow-md transition-transform active:scale-95">
+                            Filter Logs
+                        </button>
+                        <div class="flex gap-2">
+                            <button onclick="downloadLogsPDF()"
+                                class="clay-btn bg-red-50 text-red-600 hover:bg-red-100 px-6 py-3 rounded-xl font-bold uppercase text-sm shadow-md transition-transform active:scale-95 flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 2H7a2 2 0 00-2 2v12a2 2 0 002 2z">
+                                    </path>
+                                </svg>
+                                PDF
+                            </button>
+                            <button onclick="downloadLogsCSV()"
+                                class="clay-btn bg-emerald-50 text-emerald-600 hover:bg-emerald-100 px-6 py-3 rounded-xl font-bold uppercase text-sm shadow-md transition-transform active:scale-95 flex items-center gap-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                                </svg>
+                                CSV
+                            </button>
+                        </div>
                     </div>
-                    <div class="overflow-x-auto max-h-[600px] custom-scrollbar">
-                        <table class="w-full text-sm text-left whitespace-nowrap">
-                            <thead class="sticky top-0 bg-white z-10 shadow-sm">
-                                <tr class="text-xs font-bold text-gray-400 uppercase tracking-wider">
-                                    <th class="p-4 bg-gray-50/30">Timestamp</th>
-                                    <th class="p-4 bg-gray-50/30">User</th>
-                                    <th class="p-4 bg-gray-50/30">Role</th>
-                                    <th class="p-4 bg-gray-50/30">School</th>
-                                    <th class="p-4 bg-gray-50/30">Action</th>
-                                    <th class="p-4 bg-gray-50/30">Details</th>
-                                </tr>
-                            </thead>
-                            <tbody id="logs-list-body" class="divide-y divide-gray-50 font-mono text-xs">
-                                <!-- Logs Injected -->
-                            </tbody>
-                        </table>
+
+                    <!-- Logs Table -->
+                    <div class="clay-card p-0 overflow-hidden">
+                        <div class="bg-gray-50/50 p-4 border-b border-gray-100 flex justify-between items-center">
+                            <h3 class="text-sm font-bold text-gray-600 uppercase tracking-wide">System Activity Log (7
+                                Days
+                                Retention)</h3>
+                            <span class="text-xs text-gray-400 font-mono">Auto-Clean: Enabled</span>
+                        </div>
+                        <div class="overflow-x-auto max-h-[600px] custom-scrollbar">
+                            <table class="w-full text-sm text-left whitespace-nowrap">
+                                <thead class="sticky top-0 bg-white z-10 shadow-sm">
+                                    <tr class="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                                        <th class="p-4 bg-gray-50/30">Timestamp</th>
+                                        <th class="p-4 bg-gray-50/30">User</th>
+                                        <th class="p-4 bg-gray-50/30">Role</th>
+                                        <th class="p-4 bg-gray-50/30">School</th>
+                                        <th class="p-4 bg-gray-50/30">Action</th>
+                                        <th class="p-4 bg-gray-50/30">Details</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="logs-list-body" class="divide-y divide-gray-50 font-mono text-xs">
+                                    <!-- Logs Injected -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <p id="logs-loading" class="text-center py-8 text-gray-400 italic hidden">Loading logs...</p>
+                        <p id="logs-empty" class="text-center py-8 text-gray-400 italic hidden">No logs found for
+                            selection.
+                        </p>
                     </div>
-                    <p id="logs-loading" class="text-center py-8 text-gray-400 italic hidden">Loading logs...</p>
-                    <p id="logs-empty" class="text-center py-8 text-gray-400 italic hidden">No logs found for selection.
-                    </p>
                 </div>
             </div>
 

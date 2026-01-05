@@ -124,3 +124,131 @@ async function downloadLogsCSV() {
 
 // Logger Integration for Company Dashboard Actions
 // We will call Logger.log() in key functions
+
+// === NEW: GENERAL REPORTS LOGIC ===
+
+async function downloadSchoolReport() {
+    const schoolId = document.getElementById('report-school-select').value;
+    if (!schoolId) return alert("Please select a school first.");
+
+    try {
+        const r = await fetch(`${API_BASE}/data/students/${schoolId}`, { headers: { 'Authorization': `Bearer ${token}` } });
+        const students = await r.json();
+
+        if (!students || students.length === 0) return alert("No student data found for this school.");
+
+        // Export (Simplified)
+        const ws = XLSX.utils.json_to_sheet(students);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Students");
+        XLSX.writeFile(wb, `School_Data_${schoolId}.xlsx`);
+
+        Logger.log('REPORT_DOWNLOAD', `Downloaded Student Report for School ${schoolId}`);
+
+    } catch (e) {
+        console.error(e);
+        alert("Failed to download report.");
+    }
+}
+
+async function downloadUserReport() {
+    try {
+        const r = await fetch(`${API_BASE}/data/users`, { headers: { 'Authorization': `Bearer ${token}` } });
+        const users = await r.json();
+
+        if (!users || users.length === 0) return alert("No users found.");
+
+        const ws = XLSX.utils.json_to_sheet(users.map(u => ({
+            ID: u.id, Username: u.username, Role: u.role, SchoolID: u.school_id || 'N/A'
+        })));
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Users");
+        XLSX.writeFile(wb, `User_List_Report.xlsx`);
+
+        Logger.log('REPORT_DOWNLOAD', `Downloaded System User Report`);
+
+    } catch (e) {
+        console.error(e);
+        alert("Failed to download user report.");
+    }
+}
+
+// === NEW: LOGS PDF EXPORT ===
+
+function downloadLogsPDF() {
+    // Re-fetch current logs or use cache? We don't have a global cache of current logs in this file except inside fetchActivityLogs scope.
+    // Let's re-fetch with limit=none based on current filters. 
+    // Actually, `downloadLogsCSV` logic is good, let's adapt it.
+
+    const schoolId = document.getElementById('log-filter-school')?.value || 'All';
+    const userId = document.getElementById('log-filter-user')?.value || 'All';
+    const date = document.getElementById('log-filter-date')?.value;
+
+    // UI Feedback
+    const btn = document.activeElement;
+    const originalText = btn ? btn.innerText : '';
+    if (btn) btn.innerText = 'Generating...';
+
+    const query = `?limit=none` +
+        (schoolId !== 'All' ? `&school_id=${schoolId}` : '') +
+        (userId !== 'All' ? `&user_id=${userId}` : '') +
+        (date ? `&start_date=${date}&end_date=${date}` : '');
+
+    fetch(`${API_BASE}/data/logs${query}`, { headers: { 'Authorization': `Bearer ${token}` } })
+        .then(r => r.json())
+        .then(logs => {
+            if (!Array.isArray(logs) || logs.length === 0) {
+                if (btn) btn.innerText = originalText;
+                return alert("No logs to export.");
+            }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            doc.setFontSize(18);
+            doc.text("System Activity Log", 14, 20);
+
+            doc.setFontSize(10);
+            doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 28);
+            doc.text(`Filters: School=${schoolId}, User=${userId}, Date=${date || 'All'}`, 14, 34);
+
+            const headers = [['Time', 'User', 'Role', 'Action', 'Details']];
+            const data = logs.map(l => [
+                new Date(l.created_at).toLocaleString(),
+                l.username,
+                l.role,
+                l.action,
+                l.details || ''
+            ]);
+
+            doc.autoTable({
+                head: headers,
+                body: data,
+                startY: 40,
+                theme: 'grid',
+                styles: { fontSize: 8, cellPadding: 2 },
+                headStyles: { fillColor: [41, 128, 185], textColor: 255 }
+            });
+
+            doc.save('Activity_Log_Report.pdf');
+            if (btn) btn.innerText = originalText;
+        })
+        .catch(e => {
+            console.error(e);
+            alert("Error exporting PDF.");
+            if (btn) btn.innerText = originalText;
+        });
+}
+
+// Update initReports to populate School Select for Reports too
+const originalInitReports = initReports;
+initReports = async function () {
+    await originalInitReports(); // Call original
+
+    // Populate Report School Select
+    const repSchoolSel = document.getElementById('report-school-select');
+    if (repSchoolSel && globalSchools.length > 0) {
+        repSchoolSel.innerHTML = '<option value="">-- Select School --</option>' +
+            globalSchools.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+    }
+};
