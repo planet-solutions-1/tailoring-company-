@@ -1166,9 +1166,12 @@
                                 <div>
                                     <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1 ml-1">Support
                                         Email</label>
-                                    <input type="email" id="set-email" placeholder="support@planet.com"
-                                        class="clay-input w-full font-medium"
-                                        onchange="localStorage.setItem('ps_support_email', this.value)">
+                                    <div class="flex gap-2">
+                                        <input type="email" id="set-email" placeholder="support@planet.com"
+                                            class="clay-input w-full font-medium">
+                                        <button onclick="saveSupportEmail()"
+                                            class="clay-btn px-4 text-xs font-bold text-blue-600 uppercase">Save</button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -1177,13 +1180,13 @@
                         <div class="clay-card p-6">
                             <h3 class="text-sm font-bold text-gray-700 mb-4 uppercase tracking-wider">Appearance</h3>
                             <div class="flex gap-4">
-                                <div
+                                <div id="theme-btn-light" onclick="setTheme('light')"
                                     class="flex-1 p-3 rounded-xl bg-blue-50 border-2 border-blue-500 cursor-pointer flex justify-center flex-col items-center gap-2 shadow-sm">
                                     <div class="w-6 h-6 rounded-full bg-white border border-blue-200"></div>
                                     <span class="text-[10px] font-bold text-blue-700 uppercase">Light</span>
                                 </div>
-                                <div
-                                    class="flex-1 p-3 rounded-xl bg-gray-50 border border-gray-100 cursor-not-allowed opacity-60 flex justify-center flex-col items-center gap-2 grayscale">
+                                <div id="theme-btn-dark" onclick="setTheme('dark')"
+                                    class="flex-1 p-3 rounded-xl bg-gray-50 border border-gray-100 cursor-pointer opacity-60 flex justify-center flex-col items-center gap-2 grayscale hover:opacity-100 transition-opacity">
                                     <div class="w-6 h-6 rounded-full bg-slate-800"></div>
                                     <span class="text-[10px] font-bold text-gray-400 uppercase">Dark (Pro)</span>
                                 </div>
@@ -4175,8 +4178,74 @@
             } catch (e) { showToast("Cleanup failed", true); }
         }
 
+        // === SETTINGS LOGIC ===
+        async function initSettings() {
+            // 1. Load Support Email
+            const email = localStorage.getItem('ps_support_email');
+            if (email) {
+                const el = document.getElementById('set-email');
+                if (el) el.value = email;
+            }
+
+            // 2. Load Notification Preferences
+            const nUrgent = localStorage.getItem('ps_notify_urgent') !== 'false';
+            const nComplaint = localStorage.getItem('ps_notify_complaint') !== 'false';
+            const nError = localStorage.getItem('ps_notify_error') !== 'false';
+
+            setCheck('setting-notify', nUrgent);
+            setCheck('setting-notify-complaint', nComplaint);
+            setCheck('setting-notify-error', nError);
+
+            // 3. Load Theme
+            const theme = localStorage.getItem('ps_theme') || 'light';
+            toggleThemeUI(theme);
+        }
+
+        function setCheck(id, val) {
+            const el = document.getElementById(id);
+            if (el) el.checked = val;
+        }
+
+        function toggleNotificationSetting(checked, type = 'urgent') {
+            localStorage.setItem(`ps_notify_${type}`, checked);
+            showToast(`${type.charAt(0).toUpperCase() + type.slice(1)} alerts ${checked ? 'enabled' : 'disabled'}`, 'info');
+        }
+
+        function saveSupportEmail() {
+            const email = document.getElementById('set-email').value;
+            if (!email) return alert("Please enter an email");
+            localStorage.setItem('ps_support_email', email);
+            showToast("Support email saved!", "success");
+        }
+
+        function setTheme(mode) {
+            localStorage.setItem('ps_theme', mode);
+            toggleThemeUI(mode);
+            showToast(`Theme set to ${mode.toUpperCase()}`, 'success');
+        }
+
+        function toggleThemeUI(mode) {
+            const lightBtn = document.getElementById('theme-btn-light');
+            const darkBtn = document.getElementById('theme-btn-dark');
+
+            if (mode === 'light') {
+                if (lightBtn) lightBtn.className = "flex-1 p-3 rounded-xl bg-blue-50 border-2 border-blue-500 cursor-pointer flex justify-center flex-col items-center gap-2 shadow-sm";
+                if (darkBtn) darkBtn.className = "flex-1 p-3 rounded-xl bg-gray-50 border border-gray-100 cursor-pointer opacity-60 flex justify-center flex-col items-center gap-2 grayscale hover:opacity-100 transition-opacity";
+                document.documentElement.classList.remove('dark');
+            } else {
+                if (lightBtn) lightBtn.className = "flex-1 p-3 rounded-xl bg-gray-50 border border-gray-100 cursor-pointer opacity-60 flex justify-center flex-col items-center gap-2 grayscale hover:opacity-100 transition-opacity";
+                if (darkBtn) darkBtn.className = "flex-1 p-3 rounded-xl bg-slate-800 border-2 border-slate-600 cursor-pointer flex justify-center flex-col items-center gap-2 shadow-sm text-white";
+                document.documentElement.classList.add('dark');
+            }
+        }
+
         async function downloadReport(type, format) {
             const { jsPDF } = window.jspdf;
+
+            // 0. SYSTEM OVERVIEW LOGS (New Case)
+            if (type === 'overview') {
+                return downloadLogsPDF(); // Use shared function from company_logging.js
+            }
 
             // 1. SCHOOL SPECIFIC DATA
             if (type === 'school') {
