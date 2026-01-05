@@ -1797,9 +1797,10 @@
             if (sidebarOpen && window.innerWidth < 768) toggleSidebar();
 
             // Update Navigation Highlights
+            // Update Navigation Highlights
             document.querySelectorAll('.nav-item').forEach(el => {
-                // Reset to default style (gray-600) and remove active (bg-blue-50 text-blue-600 etc)
-                el.classList.remove('bg-blue-50', 'text-blue-600', 'border-r-4', 'border-blue-600', 'active', 'shadow-inner');
+                // Remove all possible active variations to be safe
+                el.classList.remove('!bg-blue-50', '!text-blue-600', '!border-r-4', '!border-blue-600', 'active', '!shadow-inner', 'bg-blue-50', 'text-blue-600', 'border-r-4', 'border-blue-600', 'shadow-inner');
                 el.classList.add('text-gray-600');
             });
 
@@ -1813,7 +1814,8 @@
             const activeNav = document.getElementById(navId);
             if (activeNav) {
                 activeNav.classList.remove('text-gray-600');
-                activeNav.classList.add('bg-blue-50', 'text-blue-600', 'border-r-4', 'border-blue-600');
+                // Force styles with !important equivalents (Tailwind) and add pressed shadow
+                activeNav.classList.add('!bg-blue-50', '!text-blue-600', '!border-r-4', '!border-blue-600', '!shadow-inner');
             }
 
             // Scroll to Top
