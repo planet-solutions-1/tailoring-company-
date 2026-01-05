@@ -3553,49 +3553,98 @@
             list.innerHTML = schoolData.tickets.sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).map(c => {
                 const isResolved = c.status === 'Resolved';
                 let images = [];
-                try { images = JSON.parse(c.image_url || '[]'); } catch (e) { if (c.image_url) images = [c.image_url]; }
+                // Handle various image formats (JSON string, single string, or empty)
+                try {
+                    if (c.image_url && c.image_url.startsWith('[')) {
+                        images = JSON.parse(c.image_url);
+                    } else if (c.image_url) {
+                        images = [c.image_url];
+                    }
+                } catch (e) { images = []; }
+
+                // Ensure basic image path correction if needed (assuming relative uploads/)
+                images = images.map(img => img.startsWith('http') ? img : (img.startsWith('/') ? img : `/${img}`));
 
                 return `
-                < div class= "clay-card p-6 mb-4 animate-in slide-in-from-bottom-2 duration-300" >
+                <div class="clay-card p-6 mb-6 animate-in slide-in-from-bottom-2 duration-500 border border-white/60 bg-white/80 backdrop-blur-sm shadow-lg rounded-2xl group hover:border-blue-200 transition-colors">
                          <div class="flex justify-between items-start mb-4">
-                             <div>
-                                 <span class="text-[10px] bg-gray-100 text-gray-400 px-2 py-1 rounded uppercase font-bold tracking-wider">${new Date(c.created_at).toLocaleDateString()}</span>
-                                 <div class="mt-2 text-sm text-gray-800 font-bold">${c.student_name || 'Generic Ticket'} <span class="text-gray-400 font-normal">(${c.student_reg_no || '-'})</span></div>
-                                 <div class="text-xs text-gray-400 font-medium">${c.class || ''} ${c.section || ''} ${c.house ? '• ' + c.house : ''} ${c.gender ? '• ' + c.gender : ''}</div>
+                             <div class="flex gap-4">
+                                 <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shadow-inner ${c.gender === 'Female' ? 'bg-pink-50 text-pink-500' : 'bg-blue-50 text-blue-500'}">
+                                     ${c.student_name ? c.student_name.charAt(0) : '?'}
+                                 </div>
+                                 <div>
+                                     <div class="flex items-center gap-2">
+                                         <span class="text-sm font-bold text-gray-800">${c.student_name || 'Generic Ticket'}</span>
+                                         <span class="text-xs text-gray-400 font-mono bg-gray-50 px-1.5 rounded">${c.student_reg_no || '-'}</span>
+                                     </div>
+                                     <div class="text-[10px] text-gray-400 font-bold uppercase tracking-wide mt-0.5">
+                                         ${new Date(c.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                                         ${c.class ? ` • ${c.class}` : ''} ${c.section ? `-${c.section}` : ''}
+                                     </div>
+                                 </div>
                              </div>
-                             <div class="text-right">
-                                 <select onchange="updateTicketStatus(${c.id}, this.value)" class="clay-input text-[10px] h-8 py-1 font-bold uppercase ${isResolved ? 'text-emerald-500' : 'text-rose-500'}">
+                             
+                             <div class="flex flex-col items-end gap-2">
+                                 <select onchange="updateTicketStatus(${c.id}, this.value)" 
+                                     class="clay-input text-[10px] h-8 py-0 pl-2 pr-6 font-bold uppercase rounded-lg border-none shadow-sm cursor-pointer ${isResolved ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'} hover:scale-105 transition-transform">
                                      <option value="Open" ${!isResolved ? 'selected' : ''}>Open</option>
                                      <option value="Resolved" ${isResolved ? 'selected' : ''}>Resolved</option>
                                  </select>
                              </div>
                          </div>
                          
-                         <!--Issue Specs-- >
-                         <div class="bg-gray-50/50 p-4 rounded-xl border border-white/50 mb-4 text-xs">
-                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                  <div>
-                                     <span class="block font-bold text-gray-400 uppercase text-[10px] mb-1">Patterns</span>
-                                     <span class="text-gray-700 font-medium">${c.pattern_name || '-'}</span>
-                                  </div>
-                                  <div>
-                                     <span class="block font-bold text-gray-400 uppercase text-[10px] mb-1">Issues</span>
-                                     <span class="text-gray-700 font-medium">${c.issue_type || '-'}</span>
-                                  </div>
-                             </div>
+                         <!-- Issue Specs -->
+                         <div class="bg-gray-50/80 p-4 rounded-xl border border-gray-100 mb-4 grid grid-cols-2 gap-4">
+                              <div class="border-r border-gray-200 pr-4">
+                                 <span class="block font-bold text-gray-400 uppercase text-[9px] tracking-widest mb-1">Defective Pattern</span>
+                                 <div class="flex items-center gap-2">
+                                     <span class="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
+                                     <span class="text-xs font-bold text-indigo-900 truncate">${c.pattern_name || 'N/A'}</span>
+                                 </div>
+                              </div>
+                              <div class="pl-2">
+                                 <span class="block font-bold text-gray-400 uppercase text-[9px] tracking-widest mb-1">Issue Type</span>
+                                 <div class="flex items-center gap-2">
+                                     <span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span>
+                                     <span class="text-xs font-bold text-rose-900 truncate">${c.issue_type || 'General'}</span>
+                                 </div>
+                              </div>
                          </div>
 
-                         <p class="text-gray-600 text-sm mb-4 leading-relaxed">"${c.comment}"</p>
+                         <div class="mb-4 pl-1 border-l-2 border-gray-200">
+                            <p class="text-gray-600 text-sm leading-relaxed italic">"${c.comment}"</p>
+                         </div>
                          
-                         <!--Images -->
-                ${images.length > 0 ? `<div class="flex gap-2 overflow-x-auto pb-2">${images.map(u => `<img src="${u}" onclick="window.open('${u}')" class="h-16 w-16 rounded-lg object-cover shadow-sm cursor-pointer hover:shadow-md transition-shadow">`).join('')}</div>` : ''}
+                         <!-- Images -->
+                         ${images.length > 0 ? `
+                             <div class="flex gap-3 overflow-x-auto pb-2 scrollbar-hide mb-4">
+                                 ${images.map(u => `
+                                     <div class="relative group/img cursor-pointer" onclick="window.open('${u}')">
+                                         <img src="${u}" class="h-20 w-20 rounded-xl object-cover shadow-sm border border-white hover:shadow-lg hover:scale-105 transition-all">
+                                         <div class="absolute inset-0 bg-black/0 group-hover/img:bg-black/10 rounded-xl transition-colors"></div>
+                                     </div>
+                                 `).join('')}
+                             </div>` : ''}
 
-                < !--Actions -->
-                <div class="border-t border-white/50 pt-4 mt-2">
-                    ${c.reply ? `<div class="p-3 bg-blue-50/50 rounded-lg border border-blue-100"><p class="text-xs text-blue-800 font-medium"><span class="font-bold uppercase text-[10px] mr-2">Admin Reply:</span> ${c.reply}</p></div>` : `<button onclick="openReplyModal(${c.id}, '${c.school_name}')" class="text-xs font-bold text-rose-500 hover:text-rose-600 uppercase tracking-wider flex items-center gap-1">Reply to School</button>`}
-
-                </div>
-                    </div >
+                        <!-- Actions -->
+                        <div class="border-t border-gray-100 pt-4 mt-2">
+                            ${c.reply ? `
+                                <div class="p-4 bg-blue-50/80 rounded-xl border border-blue-100 flex gap-3">
+                                    <div class="mt-1"><svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path></svg></div>
+                                    <div>
+                                        <p class="text-[10px] font-bold text-blue-400 uppercase tracking-wider mb-1">Company Response</p>
+                                        <p class="text-xs text-blue-900 font-medium leading-relaxed">${c.reply}</p>
+                                    </div>
+                                </div>`
+                        : `
+                                <button onclick="openReplyModal(${c.id}, '${c.school_name}')" 
+                                    class="w-full py-2 bg-gray-50 hover:bg-white border border-dashed border-gray-300 hover:border-rose-300 text-gray-400 hover:text-rose-500 text-xs font-bold uppercase rounded-xl transition-all flex items-center justify-center gap-2 group/btn">
+                                    <svg class="w-4 h-4 group-hover/btn:-translate-y-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path></svg>
+                                    Reply to Ticket
+                                </button>`
+                    }
+                        </div>
+                    </div>
                     `;
             }).join('');
 
