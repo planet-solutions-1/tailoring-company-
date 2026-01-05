@@ -1027,11 +1027,7 @@
     <!-- 3. USER MANAGEMENT -->
     <div id="view-users" class="hidden fade-in space-y-8 w-full">
         <div class="clay-card p-6 relative w-full">
-            <div class="flex justify-between items-center mb-6 border-b border-gray-100 pb-4">
-                <div>
-                    <p class="text-xs text-gray-400">Controls who can access the system. <button onclick="fixDatabase()"
-                            class="underline text-blue-400 hover:text-blue-600 ml-2">Fix DB</button></p>
-                </div>
+            <div class="flex justify-end items-center mb-6">
                 <button onclick="openSchoolModal()"
                     class="clay-btn clay-primary px-4 py-2 text-xs font-bold shadow-md hover:shadow-lg border-none transition-transform active:scale-95">
                     Register New School
@@ -1791,8 +1787,23 @@
                 'view-reports': 'Reports',
                 'view-settings': 'Settings'
             };
+
+            const subtitles = {
+                'view-overview': 'Manage Planet Solutions tailors & operations',
+                'view-schools': 'Manage priority and production status for each school',
+                'view-data': 'Select a school to view details, measurements, and patterns',
+                'view-users': 'Controls who can access the system and manage schools',
+                'view-access': 'Generate and manage access codes for schools',
+                'view-complaints': 'Track and resolve school complaints and issues',
+                'view-reports': 'Download data and view system activity logs',
+                'view-settings': 'Configure system preferences and notifications'
+            };
+
             const titleEl = document.getElementById('page-title');
             if (titleEl) titleEl.innerText = titles[viewId] || 'Overview';
+
+            const subTitleEl = document.getElementById('page-subtitle');
+            if (subTitleEl) subTitleEl.innerText = subtitles[viewId] || 'Manage Planet Solutions tailors & operations';
 
             if (sidebarOpen && window.innerWidth < 768) toggleSidebar();
 
