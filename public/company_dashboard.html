@@ -1092,33 +1092,57 @@
                 </div>
 
                 <!-- Filters -->
-                <div class="clay-card p-6 flex flex-col md:flex-row gap-4 items-end">
-                    <div class="w-full md:w-auto flex-1">
-                        <label class="block text-[10px] font-bold text-gray-400 uppercase mb-2 ml-2">Search
-                            School</label>
+                <div
+                    class="clay-card p-2 flex flex-col md:flex-row gap-2 items-center bg-white/50 backdrop-blur-sm border border-white/60">
+                    <div class="w-full md:w-auto flex-1 relative group">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <svg class="h-4 w-4 text-gray-400 group-focus-within:text-blue-500 transition-colors"
+                                fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </div>
                         <input type="text" id="c-filter-school" onkeyup="renderComplaintDash()"
-                            placeholder="Type school name..." class="clay-input">
+                            placeholder="Search Schools..."
+                            class="clay-input w-full pl-10 bg-white border-transparent focus:border-blue-200 focus:ring-0">
                     </div>
-                    <div class="w-full md:w-48">
-                        <label class="block text-[10px] font-bold text-gray-400 uppercase mb-2 ml-2">Filter
-                            Pattern</label>
-                        <select id="c-filter-pattern" onchange="renderComplaintDash()" class="clay-input">
+
+                    <div class="h-8 w-px bg-gray-200 hidden md:block"></div>
+
+                    <div class="w-full md:w-48 relative">
+                        <select id="c-filter-pattern" onchange="renderComplaintDash()"
+                            class="clay-input w-full bg-white border-transparent focus:border-blue-200 focus:ring-0 text-gray-600 font-bold text-xs uppercase cursor-pointer">
                             <option value="all">All Patterns</option>
                         </select>
                     </div>
-                    <div class="w-full md:w-32">
-                        <label class="block text-[10px] font-bold text-gray-400 uppercase mb-2 ml-2">Gender</label>
-                        <select id="c-filter-gender" onchange="renderComplaintDash()" class="clay-input">
-                            <option value="all">All</option>
+
+                    <div class="w-full md:w-32 relative">
+                        <select id="c-filter-gender" onchange="renderComplaintDash()"
+                            class="clay-input w-full bg-white border-transparent focus:border-blue-200 focus:ring-0 text-gray-600 font-bold text-xs uppercase cursor-pointer">
+                            <option value="all">Gender: All</option>
                             <option value="Male">Boys</option>
                             <option value="Female">Girls</option>
                         </select>
                     </div>
-                    <div class="flex gap-4">
+
+                    <div class="flex gap-2 pl-2">
                         <button onclick="downloadComplaintsPDF()"
-                            class="clay-btn px-4 py-3 text-xs font-bold uppercase text-rose-500 flex items-center gap-2">PDF</button>
+                            class="p-3 rounded-xl text-rose-500 hover:bg-rose-50 hover:scale-110 transition-all shadow-sm"
+                            title="Export PDF">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 2H7a2 2 0 00-2 2v12a2 2 0 002 2z">
+                                </path>
+                            </svg>
+                        </button>
                         <button onclick="downloadComplaintsExcel()"
-                            class="clay-btn px-4 py-3 text-xs font-bold uppercase text-emerald-500 flex items-center gap-2">Excel</button>
+                            class="p-3 rounded-xl text-emerald-500 hover:bg-emerald-50 hover:scale-110 transition-all shadow-sm"
+                            title="Export Excel">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                            </svg>
+                        </button>
                     </div>
                 </div>
 
@@ -3232,19 +3256,58 @@
 
             Object.values(schools).sort((a, b) => b.open - a.open).forEach(s => {
                 const div = document.createElement('div');
-                div.className = "clay-card p-6 rounded-xl hover:shadow-xl transition-all cursor-pointer border hover:border-rose-300 relative group overflow-hidden";
+                const completionRate = Math.round((s.resolved / s.count) * 100) || 0;
+
+                // Dynamic Styles based on Status
+                const isUrgent = s.open > 0;
+                const statusColor = isUrgent ? 'rose' : 'emerald';
+                const statusBg = isUrgent ? 'bg-rose-50' : 'bg-emerald-50';
+                const statusBorder = isUrgent ? 'hover:border-rose-300' : 'hover:border-emerald-300';
+
+                div.className = `clay-card p-6 rounded-2xl hover:shadow-2xl transition-all duration-300 cursor-pointer border border-transparent ${statusBorder} relative group overflow-hidden bg-white`;
                 div.onclick = () => openSchoolComplaints(s);
 
                 div.innerHTML = `
-                    <div class="absolute top-0 right-0 w-24 h-24 bg-rose-50 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 group-hover:bg-rose-100 transition-colors"></div>
-                    <div class="relative z-10 flex justify-between items-start mb-4">
-                        <div class="w-12 h-12 rounded-full bg-white shadow-inner flex items-center justify-center text-rose-500 font-bold text-xl">
-                             ${s.name.charAt(0)}
+                    <!-- Decorative Background Element -->
+                    <div class="absolute top-0 right-0 w-32 h-32 ${statusBg} rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 group-hover:scale-110 transition-transform duration-500 opacity-60"></div>
+                    
+                    <div class="relative z-10">
+                        <div class="flex justify-between items-start mb-6">
+                            <div class="flex items-center gap-3">
+                                <div class="w-12 h-12 rounded-xl bg-white shadow-sm border border-gray-100 flex items-center justify-center text-${statusColor}-500 font-black text-xl">
+                                     ${s.name.charAt(0)}
+                                </div>
+                                <div>
+                                    <h3 class="font-bold text-gray-800 text-lg leading-tight truncate w-40">${s.name}</h3>
+                                    <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">ID: #${s.school_id}</p>
+                                </div>
+                            </div>
+                            ${isUrgent
+                        ? `<span class="bg-rose-500 text-white px-3 py-1 rounded-lg text-[10px] font-extrabold uppercase tracking-wide shadow-lg shadow-rose-200 animate-pulse">Action Req</span>`
+                        : `<span class="bg-emerald-100 text-emerald-600 px-3 py-1 rounded-lg text-[10px] font-extrabold uppercase tracking-wide">All Clear</span>`}
                         </div>
-                        ${s.open > 0 ? `<span class="bg-rose-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-md shadow-rose-200">${s.open} Open</span>` : `<span class="bg-emerald-100 text-emerald-600 px-3 py-1 rounded-full text-xs font-bold shadow-sm">All Good</span>`}
+
+                        <!-- Mini Stats Grid -->
+                        <div class="grid grid-cols-2 gap-2 mb-4">
+                            <div class="bg-gray-50 rounded-lg p-2 text-center group-hover:bg-${statusColor}-50/30 transition-colors">
+                                <p class="text-2xl font-black text-gray-700 group-hover:text-${statusColor}-600 transition-colors">${s.open}</p>
+                                <p class="text-[9px] text-gray-400 font-bold uppercase tracking-wider">Open</p>
+                            </div>
+                            <div class="bg-gray-50 rounded-lg p-2 text-center">
+                                <p class="text-2xl font-black text-gray-400">${s.resolved}</p>
+                                <p class="text-[9px] text-gray-400 font-bold uppercase tracking-wider">Resolved</p>
+                            </div>
+                        </div>
+
+                        <!-- Progress Bar -->
+                        <div class="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                            <div class="bg-${statusColor}-500 h-full rounded-full" style="width: ${completionRate}%"></div>
+                        </div>
+                        <div class="flex justify-between mt-2">
+                             <p class="text-[10px] font-bold text-gray-400 uppercase">Resolution Rate</p>
+                             <p class="text-[10px] font-bold text-${statusColor}-500">${completionRate}%</p>
+                        </div>
                     </div>
-                    <h3 class="relative z-10 font-bold text-xl text-gray-700 mb-1 truncate">${s.name}</h3>
-                    <p class="relative z-10 text-xs text-gray-400 uppercase font-bold tracking-wider">${s.count} Total Items</p>
                 `;
                 grid.appendChild(div);
             });
