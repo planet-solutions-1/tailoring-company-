@@ -281,7 +281,7 @@
                 </svg>
                 Reports
             </button>
-            <button onclick="switchTab('complaints')" id="nav-complaints"
+            <button onclick="switchTab('complaints'); fetchComplaints()" id="nav-complaints"
                 class="nav-item clay-btn w-full flex items-center gap-4 px-6 py-4 rounded-xl text-sm mb-1 text-gray-600 hover:text-blue-600 transition-all">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path
@@ -3671,7 +3671,7 @@
             if (!text.trim()) return alert("Please write a reply.");
 
             try {
-                const res = await fetch(`${API_BASE} /data/complaints / ${currentComplaintId}/reply`, {
+                const res = await fetch(`${API_BASE}/data/complaints/${currentComplaintId}/reply`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                     body: JSON.stringify({ reply: text })
