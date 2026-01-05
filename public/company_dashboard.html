@@ -1217,7 +1217,8 @@
                                     </div>
                                     <label class="relative inline-flex items-center cursor-pointer">
                                         <input type="checkbox" id="setting-notify"
-                                            onchange="toggleNotificationSetting(this.checked)" class="sr-only peer">
+                                            onchange="toggleNotificationSetting(this.checked, 'urgent')"
+                                            class="sr-only peer">
                                         <div
                                             class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 hover:scale-105 transition-transform">
                                         </div>
@@ -1235,9 +1236,11 @@
                                             when a school logs a ticket.</p>
                                     </div>
                                     <label class="relative inline-flex items-center cursor-pointer">
-                                        <input type="checkbox" checked disabled class="sr-only peer">
+                                        <input type="checkbox"
+                                            onchange="toggleNotificationSetting(this.checked, 'complaint')"
+                                            id="setting-notify-complaint" class="sr-only peer">
                                         <div
-                                            class="w-11 h-6 bg-purple-200 rounded-full peer peer-checked:after:translate-x-full after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 peer-checked:bg-purple-500 opacity-60">
+                                            class="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:outline-none peer-checked:after:translate-x-full after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-500 hover:scale-105 transition-transform">
                                         </div>
                                     </label>
                                 </div>
@@ -1253,9 +1256,11 @@
                                             support team.</p>
                                     </div>
                                     <label class="relative inline-flex items-center cursor-pointer">
-                                        <input type="checkbox" class="sr-only peer">
+                                        <input type="checkbox"
+                                            onchange="toggleNotificationSetting(this.checked, 'error')"
+                                            id="setting-notify-error" class="sr-only peer">
                                         <div
-                                            class="w-11 h-6 bg-gray-200 rounded-full peer peer-checked:after:translate-x-full after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 peer-checked:bg-rose-500 hover:scale-105 transition-transform">
+                                            class="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:outline-none peer-checked:after:translate-x-full after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-rose-500 hover:scale-105 transition-transform">
                                         </div>
                                     </label>
                                 </div>
@@ -3919,6 +3924,7 @@
         }
 
         document.getElementById('nav-overview').classList.add('active'); init().then(() => {
+            initSettings(); // LOAD SETTINGS
             // Auto Refresh Pollers
             setInterval(() => { fetchStats(); }, 30000);
             setInterval(() => { if (!document.getElementById('view-complaints').classList.contains('hidden')) fetchComplaints(); }, 15000);
