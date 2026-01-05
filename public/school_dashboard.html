@@ -2151,6 +2151,7 @@
         let undoTimer = null;
 
         function deleteStudent(key) {
+            if (window.isLocked) return alert("School is in READ-ONLY mode. Cannot delete data.");
             if (!confirm("Are you sure you want to delete this student?")) return;
 
             // Find item
@@ -2514,6 +2515,7 @@
         }
 
         function saveStudentEdit() {
+            if (window.isLocked) return alert("School is in READ-ONLY mode. Cannot edit data.");
             const originalAdm = document.getElementById('edit_original_adm').value;
             const idx = allStudents.findIndex(s => String(s.admission_no) === String(originalAdm));
 
@@ -2557,6 +2559,11 @@
         }
 
         async function handleBulkImport(e) {
+            if (window.isLocked) {
+                alert("School is in READ-ONLY mode. Cannot import data.");
+                e.target.value = '';
+                return;
+            }
             const file = e.target.files[0];
             if (!file) return;
 
@@ -3107,6 +3114,7 @@
         }
 
         async function processUpload() {
+            if (window.isLocked) return alert("School is in READ-ONLY mode.");
             if (importQueue.length === 0) return alert("No data to import!");
 
             const btn = document.querySelector('#importModal button[onclick="processUpload()"]');

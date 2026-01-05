@@ -98,6 +98,7 @@ if (process.env.RAILWAY_ENVIRONMENT || process.env.NODE_ENV === 'production') {
                     password_hash VARCHAR(255) NOT NULL,
                     priority VARCHAR(50) DEFAULT 'Normal',
                     status VARCHAR(50) DEFAULT 'Pending',
+                    is_locked BOOLEAN DEFAULT 0,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )`,
                 `CREATE TABLE IF NOT EXISTS users (
@@ -225,6 +226,8 @@ if (process.env.RAILWAY_ENVIRONMENT || process.env.NODE_ENV === 'production') {
             try { await promisePool.execute("ALTER TABLE activity_logs ADD COLUMN school_id INT"); } catch (e) { }
             try { await promisePool.execute("ALTER TABLE activity_logs ADD COLUMN role VARCHAR(50)"); } catch (e) { }
 
+            // SCHOOL LOCK MIGRATION
+            try { await promisePool.execute("ALTER TABLE schools ADD COLUMN is_locked BOOLEAN DEFAULT 0"); } catch (e) { }
 
             console.log("MySQL Tables Initialized.");
 
@@ -298,7 +301,9 @@ function initSqliteDb(database) {
             username TEXT UNIQUE NOT NULL,
             password_hash TEXT NOT NULL,
             priority TEXT DEFAULT 'Normal',
+            priority TEXT DEFAULT 'Normal',
             status TEXT DEFAULT 'Pending',
+            is_locked INTEGER DEFAULT 0,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         );
         CREATE TABLE IF NOT EXISTS users (
@@ -427,6 +432,9 @@ function initSqliteDb(database) {
             // Activity Logs Migration
             database.run("ALTER TABLE activity_logs ADD COLUMN school_id INTEGER", () => { });
             database.run("ALTER TABLE activity_logs ADD COLUMN role TEXT", () => { });
+
+            // SCHOOLS LOCK MIGRATION
+            database.run("ALTER TABLE schools ADD COLUMN is_locked INTEGER DEFAULT 0", () => { });
 
             database.get("SELECT count(*) as count FROM users", (err, row) => {
                 if (row && row.count == 0) {

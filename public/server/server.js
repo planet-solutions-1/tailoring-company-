@@ -56,7 +56,7 @@ app.get('/uploads/:filename', (req, res) => {
 app.get('/api/schools/:id', (req, res) => {
     // Prevent Caching of Status/Priority
     res.set('Cache-Control', 'no-store');
-    db.get("SELECT id, name, username, priority, status FROM schools WHERE id = ?", [req.params.id], (err, row) => {
+    db.get("SELECT id, name, username, priority, status, is_locked FROM schools WHERE id = ?", [req.params.id], (err, row) => {
         if (err) return res.status(500).json({ error: err.message });
         if (row) res.json(row);
         else res.json({ id: req.params.id, name: "Unknown School", address: "N/A", logo: "" });
@@ -159,6 +159,12 @@ app.post('/api/sync', authenticateToken, async (req, res) => {
     if (!schoolId && req.user.role !== 'company') return res.status(403).json({ error: "Unauthorized School ID" });
 
     if (!Array.isArray(students)) return res.status(400).json({ error: "Invalid data format" });
+
+    // CHECK LOCK
+    const checkLock = await new Promise((resolve) => {
+        db.get("SELECT is_locked FROM schools WHERE id = ?", [schoolId], (err, row) => resolve(row));
+    });
+    if (checkLock && checkLock.is_locked) return res.status(403).json({ error: "School Data is Locked by Admin" });
 
     console.log(`Syncing ${students.length} students for School #${schoolId}...`);
 

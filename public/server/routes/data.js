@@ -355,6 +355,29 @@ router.put('/users/:id/reset-password', authenticateToken, requireRole('company'
     }
 });
 
+// PUT /api/data/schools/:id/lock - Toggle Data Lock
+router.put('/schools/:id/lock', authenticateToken, requireRole('company'), async (req, res) => {
+    const { is_locked } = req.body; // Expect boolean or 1/0
+    const val = (is_locked === true || is_locked == 1 || is_locked === 'true') ? 1 : 0;
+
+    try {
+        const id = req.params.id;
+        if (db.execute) {
+            await db.execute("UPDATE schools SET is_locked = ? WHERE id = ?", [val, id]);
+        } else {
+            await new Promise((resolve, reject) => {
+                db.run("UPDATE schools SET is_locked = ? WHERE id = ?", [val, id], (err) => {
+                    if (err) reject(err); else resolve();
+                });
+            });
+        }
+        if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'LOCK_SCHOOL', `School #${id} Lock: ${val}`);
+        res.json({ message: `School ${val ? 'Locked' : 'Unlocked'} Successfully` });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // GET /api/data/logs - Activity Logs
 // GET /api/data/logs - Activity Logs with Filters
 router.get('/logs', authenticateToken, requireRole('company'), (req, res) => {
