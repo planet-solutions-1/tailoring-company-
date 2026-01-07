@@ -191,6 +191,10 @@ if (process.env.RAILWAY_ENVIRONMENT || process.env.NODE_ENV === 'production') {
                     quantities TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     FOREIGN KEY (school_id) REFERENCES schools(id) ON DELETE CASCADE
+                )`,
+                `CREATE TABLE IF NOT EXISTS settings (
+                    key_name VARCHAR(50) PRIMARY KEY,
+                    value TEXT
                 )`
             ];
 

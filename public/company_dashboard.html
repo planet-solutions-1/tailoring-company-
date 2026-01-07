@@ -4628,14 +4628,16 @@
                 if (res.ok) {
                     showToast("Support Email Updated!", 'success');
                 } else {
-                    throw new Error("Save failed");
+                    const errClone = res.clone();
+                    const errText = await errClone.text();
+                    throw new Error("Server Error: " + errText); // Throw actual server error
                 }
 
                 btn.innerText = originalText;
                 btn.disabled = false;
             } catch (e) {
                 console.error(e);
-                alert("Failed to save settings.");
+                alert("Failed to save: " + e.message); // Alert the actual error
             }
         }
 
