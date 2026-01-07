@@ -1058,14 +1058,14 @@
                         <p class="text-xs text-slate-500 leading-relaxed mb-4">
                             Need help? Contact the platform super admin for critical issues.
                         </p>
-                        <a href="mailto:support@clayadmin.com"
+                        <a href="#" id="supportEmailLink"
                             class="flex items-center gap-2 text-indigo-500 text-sm font-bold hover:underline">
                             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                 stroke-width="2">
                                 <rect x="2" y="4" width="20" height="16" rx="2"></rect>
                                 <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
                             </svg>
-                            support@clayadmin.com
+                            <span id="supportEmailText">Loading...</span>
                         </a>
                     </div>
                 </div>
@@ -1698,6 +1698,26 @@
                     });
                 }
             }, 500);
+
+            // Fetch Support Email
+            (async () => {
+                try {
+                    const res = await fetch(`${API_BASE}/data/settings`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    const sets = await res.json();
+                    const email = sets.support_email || 'support@clayadmin.com';
+                    const link = document.getElementById('supportEmailLink');
+                    const text = document.getElementById('supportEmailText');
+
+                    if (link) link.href = `mailto:${email}`;
+                    if (text) text.innerText = email;
+                } catch (e) {
+                    console.error("Support Email fetch failed", e);
+                    const text = document.getElementById('supportEmailText');
+                    if (text) text.innerText = 'support@clayadmin.com';
+                }
+            })();
         }
 
         function saveQrPinSettings() {

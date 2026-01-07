@@ -290,7 +290,7 @@
                 </svg>
                 Complaints
             </button>
-            <button onclick="switchTab('settings')" id="nav-settings"
+            <button onclick="switchTab('settings'); fetchSettings()" id="nav-settings"
                 class="nav-item clay-btn w-full flex items-center gap-4 px-6 py-4 rounded-xl text-sm mb-1 text-gray-600 hover:text-blue-600 transition-all">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <circle cx="12" cy="12" r="3"></circle>
@@ -4593,6 +4593,52 @@
             a.download = `System_Logs.csv`;
             a.click();
         }
+
+        // === SETTINGS LOGIC ===
+        async function fetchSettings() {
+            try {
+                const res = await fetch(`${API_BASE}/data/settings`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const settings = await res.json();
+                if (settings && settings.support_email) {
+                    document.getElementById('set-email').value = settings.support_email;
+                }
+            } catch (e) {
+                console.error("Failed to load settings", e);
+            }
+        }
+
+        async function saveSupportEmail() {
+            const email = document.getElementById('set-email').value;
+            if (!email || !email.includes('@')) return alert("Please enter a valid email.");
+
+            try {
+                const btn = document.querySelector('button[onclick="saveSupportEmail()"]');
+                const originalText = btn.innerText;
+                btn.innerText = "Saving...";
+                btn.disabled = true;
+
+                const res = await fetch(`${API_BASE}/data/settings`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ key: 'support_email', value: email })
+                });
+
+                if (res.ok) {
+                    showToast("Support Email Updated!", 'success');
+                } else {
+                    throw new Error("Save failed");
+                }
+
+                btn.innerText = originalText;
+                btn.disabled = false;
+            } catch (e) {
+                console.error(e);
+                alert("Failed to save settings.");
+            }
+        }
+
     </script>
     <!-- LOGGING SCRIPTS -->
     <script src="js/logger.js"></script>

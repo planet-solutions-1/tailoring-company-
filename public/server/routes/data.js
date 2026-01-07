@@ -25,6 +25,46 @@ const checkLock = async (req, res, schoolId) => {
     });
 };
 
+// === GLOBAL SETTINGS ROUTES ===
+router.get('/settings', authenticateToken, async (req, res) => {
+    try {
+        const sql = "SELECT * FROM settings";
+        if (db.execute) {
+            const [rows] = await db.execute(sql);
+            // Convert to object { key: value }
+            const settings = rows.reduce((acc, row) => ({ ...acc, [row.key_name]: row.value }), {});
+            res.json(settings);
+        } else {
+            db.all(sql, [], (err, rows) => {
+                if (err) return res.status(500).json({ error: err.message });
+                const settings = rows.reduce((acc, row) => ({ ...acc, [row.key_name]: row.value }), {});
+                res.json(settings);
+            });
+        }
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+router.post('/settings', authenticateToken, requireRole('company'), async (req, res) => {
+    const { key, value } = req.body;
+    if (!key) return res.status(400).json({ error: "Key is required" });
+
+    try {
+        const sql = db.execute
+            ? "INSERT INTO settings (key_name, value) VALUES (?, ?) ON DUPLICATE KEY UPDATE value = VALUES(value)"
+            : "INSERT OR REPLACE INTO settings (key_name, value) VALUES (?, ?)";
+
+        if (db.execute) {
+            await db.execute(sql, [key, value]);
+            res.json({ success: true });
+        } else {
+            db.run(sql, [key, value], (err) => {
+                if (err) return res.status(500).json({ error: err.message });
+                res.json({ success: true });
+            });
+        }
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 // === COMPANY ROUTES ===
 
 

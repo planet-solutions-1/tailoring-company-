@@ -113,6 +113,12 @@ app.post('/api/admin/fix-schema', async (req, res) => {
             await db.execute(createMeasurements);
             // Ensure schools has lock_message
             try { await db.execute("ALTER TABLE schools ADD COLUMN lock_message TEXT"); } catch (e) { /* Ignore if exists */ }
+
+            // Settings Table
+            await db.execute(`CREATE TABLE IF NOT EXISTS settings (
+                key_name VARCHAR(50) PRIMARY KEY,
+                value TEXT
+            )`);
             // Also ensure others just in case
             await db.execute(`CREATE TABLE IF NOT EXISTS students (
                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -146,6 +152,12 @@ app.post('/api/admin/fix-schema', async (req, res) => {
                 )`);
                 // Ensure lock_message exists (ignore error if exists)
                 db.run("ALTER TABLE schools ADD COLUMN lock_message TEXT", (err) => { });
+
+                // Settings Table for Dynamic Configuration
+                db.run(`CREATE TABLE IF NOT EXISTS settings (
+                    key_name TEXT PRIMARY KEY,
+                    value TEXT
+                )`);
             });
             res.json({ message: "SQLite Schema Fixed." });
         }
