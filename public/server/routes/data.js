@@ -496,36 +496,54 @@ router.get('/students/:schoolId', authenticateToken, (req, res) => {
 });
 
 // POST /api/data/student - Create/Update single student
+// POST /api/data/student - Create/Update single student
 router.post('/student', authenticateToken, async (req, res) => {
-    const { id, school_id, admission_no, roll_no, name, class: cls, section, house, gender } = req.body;
+    let { id, school_id, admission_no, roll_no, name, class: cls, section, house, gender } = req.body;
 
-    if (req.user.role === 'school' && req.user.schoolId !== school_id) return res.sendStatus(403);
-    if (req.user.role === 'tailor' && req.user.schoolId !== school_id) return res.sendStatus(403);
+    try {
+        // If Update and school_id missing, resolve from DB
+        if (id && !school_id) {
+            const existing = await new Promise((resolve, reject) => {
+                db.get("SELECT school_id FROM students WHERE id = ?", [id], (err, row) => {
+                    if (err) reject(err); else resolve(row);
+                });
+            });
+            if (existing) school_id = existing.school_id;
+        }
 
-    // Lock Check
-    const locked = await checkLock(req, res, school_id);
-    if (locked) return;
+        if (!school_id) return res.status(400).json({ error: "School ID required" });
 
-    if (id) {
-        // Update
-        db.run("UPDATE students SET roll_no=?, name=?, class=?, section=?, house=?, gender=? WHERE id=?",
-            [roll_no, name, cls, section, house, gender, id],
-            function (err) {
-                if (err) return res.status(500).json({ error: err.message });
-                if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'UPDATE_STUDENT', `Updated student: ${name}`);
-                res.json({ message: "Updated" });
-            }
-        );
-    } else {
-        // Insert
-        db.run("INSERT INTO students (school_id, admission_no, roll_no, name, class, section, house, gender) VALUES (?,?,?,?,?,?,?,?)",
-            [school_id, admission_no, roll_no, name, cls, section, house, gender],
-            function (err) {
-                if (err) return res.status(500).json({ error: err.message });
-                if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'CREATE_STUDENT', `Created student: ${name}`);
-                res.json({ id: this.lastID, message: "Created" });
-            }
-        );
+        // RBAC Check
+        if (req.user.role === 'school' && req.user.schoolId !== school_id) return res.sendStatus(403);
+        if (req.user.role === 'tailor' && req.user.schoolId !== school_id) return res.sendStatus(403);
+
+        // Lock Check
+        const locked = await checkLock(req, res, school_id);
+        if (locked) return;
+
+        if (id) {
+            // Update
+            db.run("UPDATE students SET roll_no=?, name=?, class=?, section=?, house=?, gender=? WHERE id=?",
+                [roll_no, name, cls, section, house, gender, id],
+                function (err) {
+                    if (err) return res.status(500).json({ error: err.message });
+                    if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'UPDATE_STUDENT', `Updated student: ${name}`);
+                    res.json({ message: "Updated" });
+                }
+            );
+        } else {
+            // Insert
+            db.run("INSERT INTO students (school_id, admission_no, roll_no, name, class, section, house, gender) VALUES (?,?,?,?,?,?,?,?)",
+                [school_id, admission_no, roll_no, name, cls, section, house, gender],
+                function (err) {
+                    if (err) return res.status(500).json({ error: err.message });
+                    if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'CREATE_STUDENT', `Created student: ${name}`);
+                    res.json({ id: this.lastID, message: "Created" });
+                }
+            );
+        }
+    } catch (e) {
+        res.status(500).json({ error: e.message });
     }
 });
 
@@ -585,54 +603,62 @@ router.delete('/students/:id', authenticateToken, async (req, res) => {
 });
 
 // POST /api/data/measurements
+// POST /api/data/measurements
 router.post('/measurements', authenticateToken, async (req, res) => {
     const { student_id, data, remarks, is_absent, item_quantities } = req.body;
 
-    // Resolve School ID for Lock Check (Need student's school)
-    // Optimization: req.user.schoolId is reliable for 'school' role.
-    // For 'company', we might skipping lock anyway.
-    let sid = req.user.schoolId;
-    if (!sid) {
-        // If company, maybe we don't check lock? 
-        // Or we strictly query student's school.
-        // For safety, let's query.
-    }
+    try {
+        // Resolve School ID from Student ID
+        const student = await new Promise((resolve, reject) => {
+            db.get("SELECT school_id FROM students WHERE id = ?", [student_id], (err, row) => {
+                if (err) reject(err); else resolve(row);
+            });
+        });
 
-    // If user is school/tailor, use session schoolId
-    if (req.user.role !== 'company' && sid) {
-        const locked = await checkLock(req, res, sid);
+        if (!student) return res.status(404).json({ error: "Student not found" });
+
+        // STRICT Lock Check
+        const locked = await checkLock(req, res, student.school_id);
         if (locked) return;
-    }
 
-    db.get("SELECT id FROM measurements WHERE student_id = ?", [student_id], (err, row) => {
-        if (err) return res.status(500).json({ error: err.message });
-
-        const dataStr = JSON.stringify(data);
-        const qtyStr = item_quantities ? JSON.stringify(item_quantities) : null;
-        const absentVal = is_absent ? 1 : 0;
-
-        if (row) {
-            // Update
-            db.run("UPDATE measurements SET data = ?, remarks = ?, is_absent = ?, item_quantities = ?, updated_at = CURRENT_TIMESTAMP WHERE student_id = ?",
-                [dataStr, remarks, absentVal, qtyStr, student_id],
-                (err) => {
-                    if (err) return res.status(500).json({ error: err.message });
-                    if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'UPDATE_MEASUREMENTS', `Updated for student #${student_id}`);
-                    res.json({ message: "Measurements updated" });
-                }
-            );
-        } else {
-            // Insert
-            db.run("INSERT INTO measurements (student_id, data, remarks, is_absent, item_quantities) VALUES (?, ?, ?, ?, ?)",
-                [student_id, dataStr, remarks, absentVal, qtyStr],
-                (err) => {
-                    if (err) return res.status(500).json({ error: err.message });
-                    if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'CREATE_MEASUREMENTS', `Created for student #${student_id}`);
-                    res.json({ message: "Measurements saved" });
-                }
-            );
+        // Verify Ownership if not Company
+        if (req.user.role !== 'company' && req.user.schoolId !== student.school_id) {
+            return res.sendStatus(403);
         }
-    });
+
+        db.get("SELECT id FROM measurements WHERE student_id = ?", [student_id], (err, row) => {
+            if (err) return res.status(500).json({ error: err.message });
+
+            const dataStr = JSON.stringify(data);
+            const qtyStr = item_quantities ? JSON.stringify(item_quantities) : null;
+            const absentVal = is_absent ? 1 : 0;
+
+            if (row) {
+                // Update
+                db.run("UPDATE measurements SET data = ?, remarks = ?, is_absent = ?, item_quantities = ?, updated_at = CURRENT_TIMESTAMP WHERE student_id = ?",
+                    [dataStr, remarks, absentVal, qtyStr, student_id],
+                    (err) => {
+                        if (err) return res.status(500).json({ error: err.message });
+                        if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'UPDATE_MEASUREMENTS', `Updated for student #${student_id}`);
+                        res.json({ message: "Measurements updated" });
+                    }
+                );
+            } else {
+                // Insert
+                db.run("INSERT INTO measurements (student_id, data, remarks, is_absent, item_quantities) VALUES (?, ?, ?, ?, ?)",
+                    [student_id, dataStr, remarks, absentVal, qtyStr],
+                    (err) => {
+                        if (err) return res.status(500).json({ error: err.message });
+                        if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'CREATE_MEASUREMENTS', `Created for student #${student_id}`);
+                        res.json({ message: "Measurements saved" });
+                    }
+                );
+            }
+        });
+
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
 });
 
 // POST /api/data/packing
