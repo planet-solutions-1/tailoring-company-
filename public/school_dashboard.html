@@ -683,7 +683,20 @@
                             <path d="M7 21H5a2 2 0 0 1-2-2v-2"></path>
                             <rect x="7" y="7" width="10" height="10" rx="2"></rect>
                         </svg></button>
-                    <button onclick="window.location.href='scanner_dashboard.html'"
+
+                    <!-- NEW: Batch ID Cards -->
+                    <button onclick="generateBatchIdCards()"
+                        class="p-3 rounded-xl bg-slate-50 hover:bg-white text-slate-500 hover:text-indigo-500 hover:shadow-lg hover:translate-y-[-2px] transition-all shadow-sm"
+                        title="Download Batch ID Cards">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2.5">
+                            <rect x="3" y="4" width="18" height="16" rx="2"></rect>
+                            <circle cx="12" cy="10" r="2"></circle>
+                            <path d="M8 16h8"></path>
+                        </svg>
+                    </button>
+
+                    <button onclick="openScannerModal()"
                         class="p-3 rounded-xl bg-slate-50 hover:bg-white text-slate-500 hover:text-rose-500 hover:shadow-lg hover:translate-y-[-2px] transition-all shadow-sm"
                         title="Open QR Scanner"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"
                             stroke="currentColor" stroke-width="2.5">
@@ -4041,28 +4054,42 @@
     </div>
 
     <!-- Batch QR Modal -->
-    <dialog id="batchQrModal" class="bg-transparent">
+    </dialog>
+
+    <!-- NEW: EMBEDDED SCANNER MODAL -->
+    <dialog id="scannerModal" class="bg-transparent">
         <div class="fixed inset-0 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm z-50">
             <div
-                class="bg-white rounded-3xl shadow-2xl w-full max-w-sm max-h-[85vh] overflow-y-auto animate-in zoom-in-95 duration-200 border-4 border-white p-6 text-center">
-                <h3 class="text-xl font-black text-slate-800 uppercase tracking-tight mb-2">Filtered View QR</h3>
-                <p class="text-xs text-slate-500 mb-6">Scan to open this filtered list on mobile</p>
+                class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200 border-4 border-white">
 
-                <!-- PIN Input Moved to Settings -->
-                <p class="text-xs text-slate-400 mb-4 italic" id="activePinDisplay">Using Default PIN</p>
+                <!-- Scanner UI -->
+                <div class="p-6 text-center space-y-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="text-xl font-black text-slate-800 tracking-tight">SCANNER</h3>
+                        <button onclick="closeScannerModal()"
+                            class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-400 hover:bg-slate-200 hover:text-slate-600 transition-colors">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </button>
+                    </div>
 
-                <div
-                    class="bg-white p-3 rounded-xl shadow-inner border border-slate-100 inline-block mb-4 flex justify-center">
-                    <div id="batchQrContainer"></div>
-                </div>
+                    <!-- Video Container -->
+                    <div
+                        class="relative w-full aspect-square bg-slate-100 rounded-2xl overflow-hidden border-2 border-slate-100">
+                        <div id="reader" style="width: 100%; height: 100%;"></div>
+                        <!-- Overlay Frame for Targeting -->
+                        <div
+                            class="absolute inset-8 border-2 border-white/40 rounded-xl pointer-events-none z-10 flex items-center justify-center">
+                            <div class="w-1 h-1 bg-white/60 rounded-full"></div>
+                        </div>
+                    </div>
 
-                <div id="batchQrInfo" class="text-xs font-mono text-slate-400 mb-6 space-y-1"></div>
-
-                <div class="flex gap-3">
-                    <button onclick="document.getElementById('batchQrModal').close()"
-                        class="flex-1 py-3 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold transition-all">Close</button>
-                    <button onclick="downloadBatchQr()"
-                        class="flex-1 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow-lg shadow-indigo-200 transition-all">Download</button>
+                    <p id="scannerStatus"
+                        class="text-xs font-bold text-slate-400 uppercase tracking-widest animate-pulse">Initializing
+                        Camera...</p>
                 </div>
             </div>
         </div>
@@ -4454,6 +4481,243 @@
             syncLockStatus();
             setInterval(syncLockStatus, 30000); // Check every 30s
         });
+    </script>
+    <!-- SCANNER & BATCH ID LOGIC -->
+    <script>
+        // === NEW: EMBEDDED SCANNER LOGIC ===
+        let scannerObj = null;
+        let isScanning = false;
+
+        async function openScannerModal() {
+            const modal = document.getElementById('scannerModal');
+            modal.showModal();
+
+            // Start Camera
+            const statusEl = document.getElementById('scannerStatus');
+            statusEl.innerText = "Starting Camera...";
+            statusEl.className = "text-xs font-bold text-slate-400 uppercase tracking-widest animate-pulse";
+
+            if (!scannerObj) {
+                scannerObj = new Html5Qrcode("reader");
+            }
+
+            try {
+                await scannerObj.start(
+                    { facingMode: "environment" },
+                    { fps: 10, qrbox: { width: 250, height: 250 } },
+                    onScanSuccess,
+                    onScanFailure
+                );
+                isScanning = true;
+                statusEl.innerText = "Scanning...";
+                statusEl.className = "text-xs font-bold text-emerald-500 uppercase tracking-widest animate-pulse";
+            } catch (err) {
+                console.error("Camera Start Error", err);
+                statusEl.innerText = "Camera Permission Denied";
+                statusEl.className = "text-xs font-bold text-rose-500 uppercase tracking-widest";
+            }
+        }
+
+        async function closeScannerModal() {
+            const modal = document.getElementById('scannerModal');
+            modal.close();
+
+            if (scannerObj && isScanning) {
+                try {
+                    await scannerObj.stop();
+                    isScanning = false;
+                } catch (e) {
+                    console.error("Stop Error", e);
+                }
+            }
+        }
+
+        function onScanSuccess(decodedText, decodedResult) {
+            console.log(`Scan: ${decodedText}`);
+
+            // 1. Filter QR Detected (JSON)
+            try {
+                const data = JSON.parse(decodedText);
+                if (data.f) {
+                    // Update Filters
+                    const cls = data.f.c || '';
+                    const sec = data.f.sec || '';
+                    const house = data.f.h || '';
+
+                    document.getElementById('filterClass').value = cls;
+                    // Trigger section update manually
+                    populateSections();
+
+                    setTimeout(() => {
+                        const secSelect = document.getElementById('filterSection');
+                        if (secSelect) secSelect.value = sec;
+                        if (document.getElementById('filterHouse')) document.getElementById('filterHouse').value = house;
+
+                        renderStudents();
+                        closeScannerModal();
+                        // alert(`Filters Applied!\nClass: ${cls || 'All'}\nSection: ${sec || 'All'}`);
+                        // Use custom toast/banner if available, or just silent success visual?
+                        // For now, silent update + visual refresh is enough.
+                    }, 100);
+                    return;
+                }
+            } catch (e) { }
+
+            // 2. Student URL Detected
+            if (decodedText.includes('student_view.html')) {
+                const url = new URL(decodedText);
+                const params = new URLSearchParams(url.search);
+
+                const filterStr = params.get('filters');
+                if (filterStr) {
+                    try {
+                        const payload = JSON.parse(decodeURIComponent(filterStr));
+
+                        // Apply Filters
+                        document.getElementById('filterClass').value = payload.f?.c || '';
+                        populateSections();
+                        setTimeout(() => {
+                            document.getElementById('filterSection').value = payload.f?.sec || '';
+                            renderStudents();
+                            closeScannerModal();
+                        }, 100);
+                        return;
+                    } catch (e) { }
+                }
+
+                const studentStr = params.get('student');
+                if (studentStr) {
+                    try {
+                        const sData = JSON.parse(decodeURIComponent(studentStr));
+                        const key = sData.id || sData.admission_no;
+                        // Find locally
+                        const student = allStudents.find(s => String(s.admission_no || s.temp_id) === String(key) || String(s.id) === String(key));
+
+                        closeScannerModal();
+
+                        if (student) {
+                            // Find index to pass to existing show function if needed, or use ID
+                            // We have openEditStudentModal (admin) or just show details?
+                            // Let's assume openEditStudentModal(id) exists and works with admission_no or id.
+                            // Checking code... openEditStudentModal uses ID?
+                            // Let's rely on finding internal ID if possible.
+
+                            openEditStudentModal(student.admission_no || student.temp_id);
+                        } else {
+                            alert("Student not found in current list.");
+                        }
+                        return;
+                    } catch (e) { }
+                }
+            }
+
+            // 3. Raw Text Fallback (Admission No?)
+            const directMatch = allStudents.find(s => String(s.admission_no) === decodedText.trim());
+            if (directMatch) {
+                closeScannerModal();
+                openEditStudentModal(directMatch.admission_no);
+                return;
+            }
+        }
+
+        function onScanFailure(error) {
+            // Ignore frame errors
+        }
+
+        // === NEW: BATCH ID CARDS LOGIC ===
+        async function generateBatchIdCards() {
+            if (typeof window.jspdf === 'undefined') return alert("PDF Library loading...");
+            const { jsPDF } = window.jspdf;
+
+            if (currentFilteredList.length === 0) return alert("No students in current view to generate cards for.");
+            if (currentFilteredList.length > 50 && !confirm(`Generate cards for ${currentFilteredList.length} students? This might take a moment.`)) return;
+
+            const doc = new jsPDF();
+            const schoolName = sessionStorage.getItem('schoolName') || 'School Student';
+
+            // Layout Config (Grid 2x2 or 2x3)
+            // A4: 210 x 297 mm
+            // Card: 85 x 54 mm (Standard ID) -> Let's make them slightly bigger: 90 x 60 mm (Landscape)
+
+            const cardW = 90;
+            const cardH = 60;
+            const marginX = 10;
+            const marginY = 10;
+            const gap = 10;
+
+            let x = marginX;
+            let y = marginY;
+            let count = 0;
+
+            const priColor = [99, 102, 241]; // Indigo-500
+
+            for (let i = 0; i < currentFilteredList.length; i++) {
+                const s = currentFilteredList[i];
+
+                // Draw Card Container
+                doc.setDrawColor(203, 213, 225); // Slate-300
+                doc.setLineWidth(0.5);
+                doc.setFillColor(255, 255, 255);
+                doc.roundedRect(x, y, cardW, cardH, 3, 3, 'FD');
+
+                // Header Strip
+                doc.setFillColor(...priColor);
+                doc.rect(x, y, cardW, 14, 'F');
+
+                // School Name
+                doc.setTextColor(255, 255, 255);
+                doc.setFontSize(11);
+                doc.setFont("helvetica", "bold");
+                doc.text(schoolName, x + cardW / 2, y + 9, { align: "center" });
+
+                // Content
+                doc.setTextColor(30, 41, 59); // Slate-800
+
+                // Name
+                doc.setFontSize(14);
+                doc.setFont("helvetica", "bold");
+                doc.text(s.name, x + cardW / 2, y + 28, { align: "center" });
+
+                // Class
+                doc.setFontSize(10);
+                doc.setFont("helvetica", "normal");
+                doc.setTextColor(100, 116, 139); // Slate-500
+                doc.text(`${s.class} - ${s.section}`, x + cardW / 2, y + 36, { align: "center" });
+
+                // Details Grid
+                doc.setFontSize(9);
+                doc.setTextColor(51, 65, 85);
+
+                // Left Col
+                doc.text(`Adm No: ${s.admission_no || s.id}`, x + 8, y + 50);
+                doc.text(`Roll No: ${s.roll_no || '-'}`, x + 8, y + 55);
+
+                // Right Col (Align Right)
+                doc.text(`House: ${s.house || '-'}`, x + cardW - 8, y + 50, { align: "right" });
+                doc.text(`Gen: ${s.gender || '-'}`, x + cardW - 8, y + 55, { align: "right" });
+
+                // Grid Logic
+                count++;
+                // 2 columns per row
+                if (count % 2 === 0) {
+                    x = marginX;
+                    y += cardH + gap;
+                } else {
+                    x += cardW + gap;
+                }
+
+                // 8 cards per page (4 rows)
+                if (count > 0 && count % 8 === 0 && i < currentFilteredList.length - 1) {
+                    doc.addPage();
+                    x = marginX;
+                    y = marginY;
+                }
+            }
+
+            const cls = document.getElementById('filterClass').value || 'All';
+            const sec = document.getElementById('filterSection').value || 'All';
+            doc.save(`ID_Cards_${cls}_${sec}.pdf`);
+        }
     </script>
 </body>
 
