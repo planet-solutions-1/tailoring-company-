@@ -2079,23 +2079,41 @@
                 const dateStr = new Date().toISOString().slice(0, 10);
 
                 if (type === 'excel' || type === 'backup') {
-                    const ws = XLSX.utils.json_to_sheet(dataToExport.map(s => ({
-                        "Admission No": s.admission_no,
-                        "Student Name": s.name,
-                        "Roll No": s.roll_no,
-                        "Class": s.class,
-                        "Section": s.section,
-                        "House": s.house,
-                        "Status": s.order_status || 'Pending',
-                        "Deleted At": s.deleted_at || ''
-                    })));
+
+                    // Helper: Flatten Measurements
+                    const flattenMeasurements = (measObj) => {
+                        const flattened = {};
+                        if (!measObj) return flattened;
+                        for (const [key, val] of Object.entries(measObj)) {
+                            // Clean key names (e.g. "Shirt Length" -> "Meas [Shirt Length]")
+                            flattened[`Meas [${key}]`] = val;
+                        }
+                        return flattened;
+                    };
+
+                    const ws = XLSX.utils.json_to_sheet(dataToExport.map(s => {
+                        const baseData = {
+                            "Admission No": s.admission_no,
+                            "Student Name": s.name,
+                            "Roll No": s.roll_no,
+                            "Gender": s.gender || '', // Added Gender
+                            "Class": s.class,
+                            "Section": s.section,
+                            "House": s.house,
+                            "Status": s.order_status || 'Pending',
+                            "Deleted At": s.deleted_at || ''
+                        };
+
+                        // Merge Flattened Measurements
+                        const measData = flattenMeasurements(s.measurements);
+                        return { ...baseData, ...measData };
+                    }));
+
                     const wb = XLSX.utils.book_new();
                     XLSX.utils.book_append_sheet(wb, ws, "Students");
 
                     const fileName = `${safeSchoolName}_${type === 'backup' ? 'FULL_BACKUP' : 'Student_List'}_${dateStr}.xlsx`;
                     XLSX.writeFile(wb, fileName);
-
-
 
                 } else if (type === 'pdf') {
                     const doc = new jspdf.jsPDF();
