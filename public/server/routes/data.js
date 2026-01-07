@@ -105,6 +105,30 @@ router.get('/stats', authenticateToken, requireRole('company'), async (req, res)
     }
 });
 
+// GET /api/data/schools/:id - Get Single School Details (for Lock Status)
+router.get('/schools/:id', authenticateToken, (req, res) => {
+    const id = req.params.id;
+    // Allow Company or the School itself
+    if (req.user.role !== 'company' && req.user.schoolId != id) {
+        return res.status(403).json({ error: "Unauthorized" });
+    }
+
+    const sql = "SELECT id, name, username, priority, status, is_locked, lock_message FROM schools WHERE id = ?";
+
+    if (db.execute) {
+        db.execute(sql, [id]).then(([rows]) => {
+            if (rows.length > 0) res.json(rows[0]);
+            else res.status(404).json({ error: "School not found" });
+        }).catch(err => res.status(500).json({ error: err.message }));
+    } else {
+        db.get(sql, [id], (err, row) => {
+            if (err) return res.status(500).json({ error: err.message });
+            if (row) res.json(row);
+            else res.status(404).json({ error: "School not found" });
+        });
+    }
+});
+
 // GET /api/data/schools - List all schools
 // GET /api/data/schools - List all schools
 router.get('/schools', authenticateToken, requireRole('company'), (req, res) => {
