@@ -1457,33 +1457,62 @@ router.get('/schools/:id/export', authenticateToken, requireRole('company'), asy
 router.put('/schools/:id/lock', authenticateToken, requireRole('company'), async (req, res) => {
     const { id } = req.params;
     const { message } = req.body; // Optional message
+    const { is_locked } = req.body; // Explicit state
 
     try {
-        // 1. Get Current Status
-        const getCurrent = () => new Promise((resolve, reject) => {
-            if (db.execute) db.execute("SELECT is_locked FROM schools WHERE id = ?", [id]).then(([rows]) => resolve(rows[0])).catch(reject);
-            else db.get("SELECT is_locked FROM schools WHERE id = ?", [id], (err, row) => err ? reject(err) : resolve(row));
-        });
+        const newVal = is_locked ? 1 : 0;
 
-        const current = await getCurrent();
-        if (!current) return res.status(404).json({ error: "School not found" });
-
-        const newStatus = current.is_locked ? 0 : 1;
-        const newMessage = newStatus ? (message || null) : null;
-
-        // 2. Update
+        // Update
         if (db.execute) {
-            await db.execute("UPDATE schools SET is_locked = ?, lock_message = ? WHERE id = ?", [newStatus, newMessage, id]);
+            await db.execute("UPDATE schools SET is_locked = ?, lock_message = ? WHERE id = ?", [newVal, message, id]);
         } else {
             await new Promise((resolve, reject) => {
-                db.run("UPDATE schools SET is_locked = ?, lock_message = ? WHERE id = ?", [newStatus, newMessage, id], (err) => err ? reject(err) : resolve());
+                db.run("UPDATE schools SET is_locked = ?, lock_message = ? WHERE id = ?", [newVal, message, id], (err) => err ? reject(err) : resolve());
             });
         }
-
-        res.json({ message: `School ${newStatus ? 'LOCKED' : 'UNLOCKED'} successfully`, is_locked: !!newStatus, lock_message: newMessage });
-
+        res.json({ message: "Lock Updated", is_locked: !!newVal });
     } catch (e) {
         console.error("Lock Error:", e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// === GLOBAL SETTINGS ===
+router.get('/settings', authenticateToken, async (req, res) => {
+    try {
+        let rows = [];
+        if (db.execute) {
+            const [r] = await db.execute("SELECT * FROM settings");
+            rows = r;
+        } else {
+            rows = await new Promise((resolve) => db.all("SELECT * FROM settings", [], (err, r) => resolve(r || [])));
+        }
+        // Convert array to object
+        const settings = {};
+        rows.forEach(r => settings[r.key_name] = r.value);
+        res.json(settings);
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+router.post('/settings', authenticateToken, requireRole('company'), async (req, res) => {
+    const { key, value } = req.body;
+    if (!key) return res.status(400).json({ error: "Key required" });
+
+    try {
+        if (db.execute) {
+            // MySQL Upsert
+            await db.execute("INSERT INTO settings (key_name, value) VALUES (?, ?) ON DUPLICATE KEY UPDATE value = VALUES(value)", [key, value]);
+        } else {
+            // SQLite Upsert
+            await new Promise((resolve, reject) => {
+                db.run("INSERT OR REPLACE INTO settings (key_name, value) VALUES (?, ?)", [key, value], (err) => err ? reject(err) : resolve());
+            });
+        }
+        res.json({ message: "Saved" });
+    } catch (e) {
+        console.error("Settings Save Error:", e);
         res.status(500).json({ error: e.message });
     }
 });
