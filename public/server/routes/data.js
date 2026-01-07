@@ -153,7 +153,7 @@ router.get('/schools/:id', authenticateToken, (req, res) => {
         return res.status(403).json({ error: "Unauthorized" });
     }
 
-    const sql = "SELECT id, name, username, priority, status, is_locked, lock_message FROM schools WHERE id = ?";
+    const sql = "SELECT id, name, username, priority, status, deadline, is_locked, lock_message FROM schools WHERE id = ?";
 
     if (db.execute) {
         db.execute(sql, [id]).then(([rows]) => {

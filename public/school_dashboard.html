@@ -329,8 +329,23 @@
                         class="hidden px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-slate-100 text-slate-500">
                         --
                     </span>
-                    <p class="text-slate-400 text-sm font-medium mt-1 ml-1 hide-on-mobile">Welcome back, Admin 👋</p>
+                    <!-- Global Search (Header) -->
+                    <div
+                        class="hidden md:flex items-center gap-2 bg-white px-3 py-2 rounded-xl shadow-sm border border-slate-100 focus-within:ring-2 focus-within:ring-indigo-100 transition-all ml-4">
+                        <svg class="text-slate-400" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2.5">
+                            <circle cx="11" cy="11" r="8"></circle>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                        <input type="text" id="headerSearch" placeholder="Quick Student Search..."
+                            class="bg-transparent border-none outline-none text-xs w-48 font-brand font-medium placeholder-slate-400"
+                            onkeyup="handleHeaderSearch(this.value)">
+                    </div>
                 </div>
+                <p class="text-slate-400 text-xs font-medium mt-1 ml-1 hide-on-mobile flex items-center gap-1">
+                    Welcome back, <span id="headerSchoolName" class="text-indigo-500 font-bold">Admin</span> 👋
+                </p>
+            </div>
             </div>
         </header>
 
@@ -345,6 +360,50 @@
     <!-- 1. DASHBOARD VIEW -->
     <template id="view-dashboard">
         <div class="max-w-6xl mx-auto space-y-8">
+            <!-- Deadline / Countdown Widget -->
+            <div id="deadlineCard"
+                class="hidden clay-card p-6 bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-xl shadow-indigo-200 transform hover:scale-[1.01] transition-transform duration-500 relative overflow-hidden">
+                <!-- Decor -->
+                <div
+                    class="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none">
+                </div>
+
+                <div class="flex flex-col md:flex-row justify-between items-center gap-6 relative z-10">
+                    <div class="flex items-center gap-4">
+                        <div
+                            class="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center backdrop-blur-sm shadow-inner">
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                stroke-width="2">
+                                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                <line x1="16" y1="2" x2="16" y2="6"></line>
+                                <line x1="8" y1="2" x2="8" y2="6"></line>
+                                <line x1="3" y1="10" x2="21" y2="10"></line>
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="text-indigo-100 text-xs font-bold uppercase tracking-wider mb-1">Target Delivery
+                            </p>
+                            <h3 class="font-brand text-2xl font-black text-white" id="deadlineDate">--</h3>
+                        </div>
+                    </div>
+
+                    <!-- Countdown -->
+                    <div
+                        class="flex items-center gap-4 bg-white/10 px-6 py-3 rounded-2xl backdrop-blur-md border border-white/10">
+                        <div class="text-center">
+                            <span class="block text-2xl font-black text-white leading-none" id="countdownDays">00</span>
+                            <span class="text-[10px] text-indigo-100 font-bold uppercase">Days</span>
+                        </div>
+                        <div class="h-8 w-px bg-white/20"></div>
+                        <div class="text-center">
+                            <span class="block text-2xl font-black text-white leading-none"
+                                id="countdownHours">00</span>
+                            <span class="text-[10px] text-indigo-100 font-bold uppercase">Hrs</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Status Tracker -->
             <div class="clay-card p-6 md:p-8 bg-white mb-2 transform transition-all hover:scale-[1.01] duration-500">
                 <div class="flex items-center justify-between mb-8">
@@ -1305,6 +1364,8 @@
                         // Update UI immediately if elements exist
                         const el = document.getElementById('userSchoolName');
                         if (el) el.innerText = schoolData.name;
+                        const headerEl = document.getElementById('headerSchoolName'); // New Header Name
+                        if (headerEl) headerEl.innerText = schoolData.name;
                         const setsEl = document.getElementById('settingsSchoolName');
                         if (setsEl) setsEl.innerText = schoolData.name;
 
@@ -1318,6 +1379,14 @@
                             statusEl.className = "px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider shadow-sm transition-all ";
 
                             const s = schoolData.status.toLowerCase();
+
+                            // DEADLINE RENDER
+                            if (schoolData.deadline) {
+                                renderDeadline(schoolData.deadline);
+                            } else {
+                                // Optional: Hide or Mock if no deadline
+                                document.getElementById('deadlineCard')?.classList.add('hidden');
+                            }
                             if (s.includes('measure')) statusEl.classList.add('bg-indigo-100', 'text-indigo-600', 'border', 'border-indigo-200');
                             else if (s.includes('product')) statusEl.classList.add('bg-amber-100', 'text-amber-700', 'border', 'border-amber-200');
                             else if (s.includes('deliver')) statusEl.classList.add('bg-emerald-100', 'text-emerald-700', 'border', 'border-emerald-200');
@@ -2292,6 +2361,56 @@
                 alert("Failed to create PDF. Please try again.");
             } finally {
                 if (btn) btn.innerHTML = originalText;
+            }
+        }
+
+        // === NEW FEATURES ===
+        function renderDeadline(dateStr) {
+            const card = document.getElementById('deadlineCard');
+            if (!card) return;
+
+            const target = new Date(dateStr);
+            if (isNaN(target.getTime())) return; // Invalid date
+
+            card.classList.remove('hidden');
+            document.getElementById('deadlineDate').innerText = target.toLocaleDateString('en-US', {
+                month: 'long', day: 'numeric', year: 'numeric'
+            });
+
+            // Countdown Logic
+            const updateCount = () => {
+                const now = new Date().getTime();
+                const dist = target.getTime() - now;
+
+                if (dist < 0) {
+                    document.getElementById('countdownDays').innerText = "00";
+                    document.getElementById('countdownHours').innerText = "00";
+                    return;
+                }
+
+                const days = Math.floor(dist / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((dist % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+
+                document.getElementById('countdownDays').innerText = String(days).padStart(2, '0');
+                document.getElementById('countdownHours').innerText = String(hours).padStart(2, '0');
+            };
+
+            updateCount();
+            setInterval(updateCount, 60000); // Update every minute
+        }
+
+        function handleHeaderSearch(query) {
+            if (!query) return;
+            // Switch to Students Tab
+            switchTab('students');
+
+            // Set Input Value
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.value = query;
+                // Trigger Render
+                renderStudents();
+                searchInput.focus();
             }
         }
 
