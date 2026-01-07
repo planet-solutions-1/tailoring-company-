@@ -4,6 +4,28 @@ const db = require('../config/db');
 const { authenticateToken, requireRole } = require('../middleware/auth');
 const bcrypt = require('bcryptjs');
 
+// Helper: Check Lock Status
+const checkLock = async (req, res, schoolId) => {
+    // Company overrides lock? (Optional: user wants to block "Teachers")
+    // If strict lock is needed even for Admin, remove this line. 
+    // Usually Admin can override.
+    if (req.user.role === 'company') return false;
+
+    return new Promise((resolve) => {
+        const sql = "SELECT is_locked, lock_message FROM schools WHERE id = ?";
+        const cb = (err, row) => {
+            if (err || !row) resolve(false);
+            else if (row.is_locked || row.is_locked === 1) {
+                res.status(403).json({ error: "School is LOCKED: " + (row.lock_message || "Data modification disabled.") });
+                resolve(true);
+            } else resolve(false);
+        };
+
+        if (db.execute) db.execute(sql, [schoolId]).then(([rows]) => cb(null, rows[0])).catch(e => cb(e));
+        else db.get(sql, [schoolId], cb);
+    });
+};
+
 // === COMPANY ROUTES ===
 
 
@@ -475,11 +497,15 @@ router.get('/students/:schoolId', authenticateToken, (req, res) => {
 });
 
 // POST /api/data/student - Create/Update single student
-router.post('/student', authenticateToken, (req, res) => {
+router.post('/student', authenticateToken, async (req, res) => {
     const { id, school_id, admission_no, roll_no, name, class: cls, section, house, gender } = req.body;
 
     if (req.user.role === 'school' && req.user.schoolId !== school_id) return res.sendStatus(403);
     if (req.user.role === 'tailor' && req.user.schoolId !== school_id) return res.sendStatus(403);
+
+    // Lock Check
+    const locked = await checkLock(req, res, school_id);
+    if (locked) return;
 
     if (id) {
         // Update
@@ -505,21 +531,27 @@ router.post('/student', authenticateToken, (req, res) => {
 });
 
 // DELETE /api/data/students/:id - Delete Student
-router.delete('/students/:id', authenticateToken, (req, res) => {
+router.delete('/students/:id', authenticateToken, async (req, res) => {
     const { id } = req.params;
 
     // Security Check: Find student by ID OR Admission No
-    // Fix: MySQL Crash on "String vs Int" - Only query 'id' if numeric
     let queryFind = "SELECT id, school_id, name FROM students WHERE admission_no = ?";
     let params = [id];
 
-    if (/^\\d+$/.test(id)) {
+    if (/^\d+$/.test(id)) {
         queryFind += " OR id = ?";
         params.push(id);
     }
 
-    db.get(queryFind, params, (err, row) => {
-        if (err) return res.status(500).json({ error: err.message });
+    try {
+        // Promisify db.get to await the result
+        const row = await new Promise((resolve, reject) => {
+            db.get(queryFind, params, (err, r) => {
+                if (err) reject(err);
+                else resolve(r);
+            });
+        });
+
         if (!row) return res.status(404).json({ error: "Student not found" });
 
         // RBAC: School/Tailor can only delete their own students
@@ -527,16 +559,19 @@ router.delete('/students/:id', authenticateToken, (req, res) => {
             return res.status(403).json({ error: "Unauthorized" });
         }
 
-        // Perform Delete using the FOUND internal ID (Safe)
-        // Fix: Manual Cascade Delete (Measurements & Orders first to avoid Foreign Key Error)
+        // Lock Check
+        const locked = await checkLock(req, res, row.school_id);
+        if (locked) return;
+
+        // Perform Delete
         const studentId = row.id;
 
+        // Manual Cascade Delete
+        // Using db.serialize or chained callbacks (Since we are in async, we can just nest or promise)
+        // For simplicity, we keep the callback chain for the deletes as they dont need to return values to us.
         db.run("DELETE FROM measurements WHERE student_id = ?", [studentId], (errMc) => {
             if (errMc) console.error("Warn: Measurement delete failed", errMc.message);
-
             db.run("DELETE FROM orders WHERE student_id = ?", [studentId], (errOrd) => {
-                if (errOrd) console.error("Warn: Order delete failed", errOrd.message);
-
                 db.run("DELETE FROM students WHERE id = ?", [studentId], function (err) {
                     if (err) return res.status(500).json({ error: err.message });
                     if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'DELETE_STUDENT', `Deleted student: ${row.name}`);
@@ -544,12 +579,31 @@ router.delete('/students/:id', authenticateToken, (req, res) => {
                 });
             });
         });
-    });
+
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
 });
 
 // POST /api/data/measurements
-router.post('/measurements', authenticateToken, (req, res) => {
+router.post('/measurements', authenticateToken, async (req, res) => {
     const { student_id, data, remarks, is_absent, item_quantities } = req.body;
+
+    // Resolve School ID for Lock Check (Need student's school)
+    // Optimization: req.user.schoolId is reliable for 'school' role.
+    // For 'company', we might skipping lock anyway.
+    let sid = req.user.schoolId;
+    if (!sid) {
+        // If company, maybe we don't check lock? 
+        // Or we strictly query student's school.
+        // For safety, let's query.
+    }
+
+    // If user is school/tailor, use session schoolId
+    if (req.user.role !== 'company' && sid) {
+        const locked = await checkLock(req, res, sid);
+        if (locked) return;
+    }
 
     db.get("SELECT id FROM measurements WHERE student_id = ?", [student_id], (err, row) => {
         if (err) return res.status(500).json({ error: err.message });
