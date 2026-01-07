@@ -226,7 +226,7 @@ router.put('/schools/:id', authenticateToken, requireRole('company'), (req, res)
                         .catch(err => console.error("[BULK UPDATE ERROR]", err));
                 }
 
-                if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'UPDATE_SCHOOL', `Updated School #${id}`, req.user.school_id, req.user.role);
+                if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'UPDATE_SCHOOL', `Updated School #${id}`, req.user.schoolId, req.user.role);
                 res.json({ message: "School Updated", debug: { affected } });
             })
             .catch(err => {
@@ -253,7 +253,7 @@ router.put('/schools/:id', authenticateToken, requireRole('company'), (req, res)
                 });
             }
 
-            if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'UPDATE_SCHOOL', `Updated School #${id}`, req.user.school_id, req.user.role);
+            if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'UPDATE_SCHOOL', `Updated School #${id}`, req.user.schoolId, req.user.role);
             res.json({ message: "School Updated" });
         });
     }
@@ -304,7 +304,7 @@ router.put('/school/:id', authenticateToken, requireRole('company'), (req, res) 
 
     db.run("UPDATE schools SET priority = ?, status = ? WHERE id = ?", [priority, status, id], (err) => {
         if (err) return res.status(500).json({ error: err.message });
-        if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'UPDATE_SCHOOL', `Updated School #${id} -> ${priority} / ${status}`, req.user.school_id, req.user.role);
+        if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'UPDATE_SCHOOL', `Updated School #${id} -> ${priority} / ${status}`, req.user.schoolId, req.user.role);
         res.json({ message: "School updated" });
     });
 });
@@ -327,7 +327,7 @@ router.delete('/schools/:id', authenticateToken, requireRole('company'), async (
             await db.execute("DELETE FROM students WHERE school_id = ?", [id]);
             await db.execute("DELETE FROM schools WHERE id = ?", [id]);
 
-            if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'DELETE_SCHOOL', `Deleted School #${id}`, req.user.school_id, req.user.role);
+            if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'DELETE_SCHOOL', `Deleted School #${id}`, req.user.schoolId, req.user.role);
             res.json({ message: "School and all related data deleted successfully" });
         } catch (e) {
             console.error("Delete Error", e);
@@ -346,7 +346,7 @@ router.delete('/schools/:id', authenticateToken, requireRole('company'), async (
 
             db.run("DELETE FROM schools WHERE id = ?", [id], function (err) {
                 if (err) return res.status(500).json({ error: err.message });
-                if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'DELETE_SCHOOL', `Deleted School #${id}`, req.user.school_id, req.user.role);
+                if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'DELETE_SCHOOL', `Deleted School #${id}`, req.user.schoolId, req.user.role);
                 res.json({ message: "School and all related data deleted successfully" });
             });
         });
@@ -400,7 +400,7 @@ router.post('/fix_db', authenticateToken, requireRole('company'), async (req, re
 
         }
 
-        if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'MIGRATE_DB', `Triggered manual migration`);
+        if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'MIGRATE_DB', `Triggered manual migration`, req.user.schoolId, req.user.role);
         res.json({ message: "Migration commands sent." });
     } catch (e) {
         console.error(e);
@@ -461,7 +461,7 @@ router.put('/schools/:id/lock', authenticateToken, requireRole('company'), async
                 });
             });
         }
-        if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'LOCK_SCHOOL', `School #${id} Lock: ${val}`, req.user.school_id, req.user.role);
+        if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'LOCK_SCHOOL', `School #${id} Lock: ${val}`, req.user.schoolId, req.user.role);
         res.json({ message: `School ${val ? 'Locked' : 'Unlocked'} Successfully` });
     } catch (e) {
         res.status(500).json({ error: e.message });
@@ -660,7 +660,7 @@ router.delete('/students/:id', authenticateToken, async (req, res) => {
             db.run("DELETE FROM orders WHERE student_id = ?", [studentId], (errOrd) => {
                 db.run("DELETE FROM students WHERE id = ?", [studentId], function (err) {
                     if (err) return res.status(500).json({ error: err.message });
-                    if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'DELETE_STUDENT', `Deleted student: ${row.name}`);
+                    if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'DELETE_STUDENT', `Deleted student: ${row.name}`, studentId && row.school_id ? row.school_id : (req.user.schoolId || req.user.schoolId), req.user.role);
                     res.json({ message: "Student and related data deleted" });
                 });
             });
@@ -708,7 +708,7 @@ router.post('/measurements', authenticateToken, async (req, res) => {
                     [dataStr, remarks, absentVal, qtyStr, student_id],
                     (err) => {
                         if (err) return res.status(500).json({ error: err.message });
-                        if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'UPDATE_MEASUREMENTS', `Updated for student #${student_id}`);
+                        if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'UPDATE_MEASUREMENTS', `Updated for student #${student_id}`, student.school_id, req.user.role);
                         res.json({ message: "Measurements updated" });
                     }
                 );
@@ -718,7 +718,7 @@ router.post('/measurements', authenticateToken, async (req, res) => {
                     [student_id, dataStr, remarks, absentVal, qtyStr],
                     (err) => {
                         if (err) return res.status(500).json({ error: err.message });
-                        if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'CREATE_MEASUREMENTS', `Created for student #${student_id}`);
+                        if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'CREATE_MEASUREMENTS', `Created for student #${student_id}`, student.school_id, req.user.role);
                         res.json({ message: "Measurements saved" });
                     }
                 );
@@ -961,7 +961,7 @@ router.post('/complaints', authenticateToken, (req, res) => {
 
     db.run(sql, params, function (err) {
         if (err) return res.status(500).json({ error: err.message });
-        if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'CREATE_COMPLAINT', `Complaint from School #${schoolId}`);
+        if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'CREATE_COMPLAINT', `Complaint from School #${schoolId}`, schoolId, req.user.role);
         res.json({ id: this.lastID, message: "Complaint Submitted" });
     });
 });
@@ -1019,7 +1019,7 @@ router.put('/complaints/:id/reply', authenticateToken, requireRole('company'), (
 
     db.run("UPDATE complaints SET reply = ?, status = 'Resolved' WHERE id = ?", [reply, id], (err) => {
         if (err) return res.status(500).json({ error: err.message });
-        if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'REPLY_COMPLAINT', `Replied to #${id}`);
+        if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'REPLY_COMPLAINT', `Replied to #${id}`, req.user.schoolId, req.user.role);
         res.json({ message: "Reply sent" });
     });
 });
@@ -1333,7 +1333,7 @@ router.post('/fix_db', authenticateToken, requireRole('company'), (req, res) => 
     });
 
     chain.then(() => {
-        if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'FIX_DB', 'Ran schema repair.', req.user.school_id, req.user.role);
+        if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'FIX_DB', 'Ran schema repair.', req.user.schoolId, req.user.role);
         res.json({ message: "Repair Report:\n" + logs.join("\n") });
     }).catch(e => {
         res.status(500).json({ error: "Fatal Repair Error: " + e.message });
@@ -1345,7 +1345,7 @@ router.post('/fix_db', authenticateToken, requireRole('company'), (req, res) => 
 router.get('/logs', authenticateToken, (req, res) => {
     // Role-Based Access Control logic
     const userRole = req.user.role;
-    const userSchoolId = req.user.school_id;
+    const userSchoolId = req.user.schoolId;
     const userUsername = req.user.username;
 
     let { school_id, role, username, days } = req.query;
