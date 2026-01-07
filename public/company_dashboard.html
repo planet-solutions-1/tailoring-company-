@@ -413,13 +413,22 @@
                     <h3 class="text-lg font-bold text-gray-600 mb-6">Existing Accounts</h3>
                     <div class="overflow-x-auto custom-scrollbar">
                         <table class="w-full text-sm min-w-[600px]">
-                            <thead class="text-gray-400 uppercase text-xs font-bold bg-gray-50/50">
-                                <tr>
-                                    <th class="p-4 text-left rounded-l-xl">User</th>
-                                    <th class="p-4 text-left">Role</th>
-                                    <th class="p-4 text-left">School</th>
-                                    <th class="p-4 text-center">Status</th>
-                                    <th class="p-4 text-right rounded-r-xl">Actions</th>
+                            <thead>
+                                <tr
+                                    class="bg-slate-50/80 border-b border-indigo-100 backdrop-blur-sm sticky top-0 z-10">
+                                    <th
+                                        class="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider text-left pl-6">
+                                        TIMESTAMP</th>
+                                    <th class="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider text-left">
+                                        USER</th>
+                                    <th class="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider text-left">
+                                        ROLE</th>
+                                    <th class="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider text-left">
+                                        SCHOOL</th>
+                                    <th class="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider text-left">
+                                        ACTION</th>
+                                    <th class="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider text-left">
+                                        DETAILS</th>
                                 </tr>
                             </thead>
                             <tbody id="user-list-body" class="divide-y divide-gray-100"></tbody>
@@ -3123,6 +3132,42 @@
                     </tr>
                 `).join('');
             document.getElementById('td-school-meta').innerText = `${data.length} Students Shown`;
+        }
+
+        function renderLogsTable(logs) {
+            const tbody = document.getElementById('logsTableBody');
+            if (tbody) {
+                tbody.innerHTML = logs.map(l => {
+                    const roleBadge = l.role
+                        ? `<span class="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${l.role === 'company' ? 'bg-indigo-100 text-indigo-700' : 'bg-emerald-100 text-emerald-700'}">${l.role}</span>`
+                        : `<span class="text-slate-300 text-xs">-</span>`;
+
+                    const schoolDisplay = l.school_name || l.school_id
+                        ? `<span class="font-medium text-slate-600">${l.school_name || 'ID: ' + l.school_id}</span>`
+                        : `<span class="text-slate-300">-</span>`;
+
+                    return `
+                    <tr class="hover:bg-slate-50 transition-colors border-b border-slate-50">
+                        <td class="p-4 text-xs font-medium text-slate-500 font-mono">${new Date(l.created_at).toLocaleString()}</td>
+                        <td class="p-4">
+                            <div class="flex items-center gap-2">
+                                <div class="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-500">
+                                    ${l.username ? l.username[0].toUpperCase() : '?'}
+                                </div>
+                                <span class="text-sm font-bold text-slate-700">${l.username}</span>
+                            </div>
+                        </td>
+                        <td class="p-4">${roleBadge}</td>
+                        <td class="p-4 text-xs">${schoolDisplay}</td>
+                        <td class="p-4">
+                            <span class="px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-600 border border-slate-200">
+                                ${l.action}
+                            </span>
+                        </td>
+                        <td class="p-4 text-sm text-slate-500 break-all max-w-xs truncate" title="${l.details}">${l.details}</td>
+                    </tr>
+                `}).join('');
+            }
         }
 
         function renderTdMeasurements(data) {

@@ -327,7 +327,7 @@ router.delete('/schools/:id', authenticateToken, requireRole('company'), async (
             await db.execute("DELETE FROM students WHERE school_id = ?", [id]);
             await db.execute("DELETE FROM schools WHERE id = ?", [id]);
 
-            if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'DELETE_SCHOOL', `Deleted School #${id}`);
+            if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'DELETE_SCHOOL', `Deleted School #${id}`, req.user.school_id, req.user.role);
             res.json({ message: "School and all related data deleted successfully" });
         } catch (e) {
             console.error("Delete Error", e);
@@ -346,7 +346,7 @@ router.delete('/schools/:id', authenticateToken, requireRole('company'), async (
 
             db.run("DELETE FROM schools WHERE id = ?", [id], function (err) {
                 if (err) return res.status(500).json({ error: err.message });
-                if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'DELETE_SCHOOL', `Deleted School #${id}`);
+                if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'DELETE_SCHOOL', `Deleted School #${id}`, req.user.school_id, req.user.role);
                 res.json({ message: "School and all related data deleted successfully" });
             });
         });
@@ -461,7 +461,7 @@ router.put('/schools/:id/lock', authenticateToken, requireRole('company'), async
                 });
             });
         }
-        if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'LOCK_SCHOOL', `School #${id} Lock: ${val}`);
+        if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'LOCK_SCHOOL', `School #${id} Lock: ${val}`, req.user.school_id, req.user.role);
         res.json({ message: `School ${val ? 'Locked' : 'Unlocked'} Successfully` });
     } catch (e) {
         res.status(500).json({ error: e.message });
@@ -596,7 +596,7 @@ router.post('/student', authenticateToken, async (req, res) => {
                 [roll_no, name, cls, section, house, gender, id],
                 function (err) {
                     if (err) return res.status(500).json({ error: err.message });
-                    if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'UPDATE_STUDENT', `Updated student: ${name}`);
+                    if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'UPDATE_STUDENT', `Updated student: ${name}`, school_id, req.user.role);
                     res.json({ message: "Updated" });
                 }
             );
@@ -606,7 +606,7 @@ router.post('/student', authenticateToken, async (req, res) => {
                 [school_id, admission_no, roll_no, name, cls, section, house, gender],
                 function (err) {
                     if (err) return res.status(500).json({ error: err.message });
-                    if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'CREATE_STUDENT', `Created student: ${name}`);
+                    if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'CREATE_STUDENT', `Created student: ${name}`, school_id, req.user.role);
                     res.json({ id: this.lastID, message: "Created" });
                 }
             );
