@@ -4181,20 +4181,26 @@
             }
         }
 
-        async function toggleSchoolLock() {
+
+
+        async function toggleSchoolLock(isRetry = false) {
             if (!currentSchoolDetails.id) return;
 
-            const action = currentSchoolLocked ? "UNLOCK" : "LOCK";
-            if (!confirm(`Are you sure you want to ${action} this school?\n\n${currentSchoolLocked ? 'Teachers will be able to edit data again.' : 'Teachers will be BLOCKED from editing data.'}`)) return;
+            // Skipping prompt on retry
+            let action, lockMsg;
+            if (!isRetry) {
+                action = currentSchoolLocked ? "UNLOCK" : "LOCK";
+                if (!confirm(`Are you sure you want to ${action} this school?\n\n${currentSchoolLocked ? 'Teachers will be able to edit data again.' : 'Teachers will be BLOCKED from editing data.'}`)) return;
 
-            let lockMsg = null;
-            if (!currentSchoolLocked) {
-                // LOCKING
-                lockMsg = prompt("Optional: Enter a message for the school (e.g., 'Payment Overdue'). Leave empty for default.");
+                if (!currentSchoolLocked) {
+                    lockMsg = prompt("Optional: Enter a message for the school (e.g., 'Payment Overdue'). Leave empty for default.");
+                }
+            } else {
+                // On retry, just invert current local state which hasn't swapped yet
+                lockMsg = null; // Can't easily persist prompt value on retry without complex refactor, assume empty for auto-retry
             }
 
             try {
-                // FIXED: Send NEW toggle state
                 const res = await fetch(`${API_BASE}/data/schools/${currentSchoolDetails.id}/lock`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
@@ -4203,10 +4209,22 @@
                 const d = await res.json();
 
                 if (res.ok) {
-                    currentSchoolLocked = !currentSchoolLocked; // Toggle local state
+                    currentSchoolLocked = !currentSchoolLocked;
                     updateLockUI();
-                    showToast(`School ${action}ED successfully`, 'success');
+                    showToast(`School ${isRetry ? 'Locked' : action + 'ED'} successfully`, 'success');
                 } else {
+                    // AUTO-FIX: Check for Schema Error
+                    if (d.error && d.error.includes("Unknown column") && d.error.includes("lock_message") && !isRetry) {
+                        const fixRes = await fetch(`${API_BASE}/data/fix_db`, {
+                            method: 'POST',
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+                        if (fixRes.ok) {
+                            showToast("Applying Database Patch...", "info");
+                            await new Promise(r => setTimeout(r, 1000));
+                            return toggleSchoolLock(true); // RETRY ONCE
+                        }
+                    }
                     alert("Failed: " + (d.error || "Unknown"));
                 }
             } catch (e) {
