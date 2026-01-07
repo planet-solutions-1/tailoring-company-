@@ -300,6 +300,26 @@
             class="absolute top-0 right-0 w-96 h-96 bg-rose-200/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none">
         </div>
 
+        <!-- LOCK BANNER (Hidden by default) -->
+        <div id="lockBanner"
+            class="hidden bg-rose-500 text-white px-6 py-3 shadow-lg z-50 flex items-center justify-between shrink-0 animate-in slide-in-from-top-full duration-500">
+            <div class="flex items-center gap-3">
+                <svg class="w-5 h-5 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z">
+                    </path>
+                </svg>
+                <div>
+                    <p class="text-sm font-bold uppercase tracking-wider">Read Only Mode</p>
+                    <p class="text-xs opacity-90 font-mono" id="lockBannerMsg">Data editing is currently disabled by
+                        Admin.</p>
+                </div>
+            </div>
+            <button onclick="alert('Please contact support for more details.')"
+                class="bg-white/20 hover:bg-white/30 text-white text-xs font-bold px-3 py-1 rounded transition-colors uppercase">Contact
+                Support</button>
+        </div>
+
         <!-- Header -->
         <header class="header-clay shrink-0 flex items-center gap-4">
             <button onclick="toggleSidebar()"
@@ -4365,6 +4385,49 @@
                 if (loading) loading.classList.add('hidden');
             }
         }
+
+        // === LOCK STATUS CHECK ===
+        // Poll for lock status to ensure real-time update
+        async function syncLockStatus() {
+            const schoolId = sessionStorage.getItem('schoolId');
+            if (!schoolId) return;
+
+            try {
+                // Determine API endpoint (Assuming reusing existing GET school or specific check)
+                // Since GET /data/schools/:id might be restricted to Company, let's try a safe approach or assume permissions.
+                // If 403, we might need a dedicated endpoint. Let's try /api/data/schools/${id} first.
+                const res = await fetch(`/api/data/schools/${schoolId}`, {
+                    headers: { 'Authorization': `Bearer ${sessionStorage.getItem('token')}` }
+                });
+
+                if (res.ok) {
+                    const data = await res.json();
+                    window.isLocked = !!data.is_locked;
+
+                    const banner = document.getElementById('lockBanner');
+                    const msg = document.getElementById('lockBannerMsg');
+
+                    if (window.isLocked) {
+                        if (banner) banner.classList.remove('hidden');
+                        if (msg && data.lock_message) msg.innerText = data.lock_message;
+                        else if (msg) msg.innerText = "Data editing is disabled by Admin.";
+
+                        // Disable Inputs globally if not already handled
+                        document.querySelectorAll('input, select, button.action-btn').forEach(el => el.disabled = true);
+                    } else {
+                        if (banner) banner.classList.add('hidden');
+                        // Re-enable? Might be complex, but usually reload handles state. 
+                        // For now, just hiding banner is enough visual cue.
+                    }
+                }
+            } catch (e) { console.error("Lock Sync Error", e); }
+        }
+
+        // Run on load
+        window.addEventListener('load', () => {
+            syncLockStatus();
+            setInterval(syncLockStatus, 30000); // Check every 30s
+        });
     </script>
 </body>
 

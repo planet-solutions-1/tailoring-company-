@@ -56,7 +56,7 @@ app.get('/uploads/:filename', (req, res) => {
 app.get('/api/schools/:id', (req, res) => {
     // Prevent Caching of Status/Priority
     res.set('Cache-Control', 'no-store');
-    db.get("SELECT id, name, username, priority, status, is_locked FROM schools WHERE id = ?", [req.params.id], (err, row) => {
+    db.get("SELECT id, name, username, priority, status, is_locked, lock_message FROM schools WHERE id = ?", [req.params.id], (err, row) => {
         if (err) return res.status(500).json({ error: err.message });
         if (row) res.json(row);
         else res.json({ id: req.params.id, name: "Unknown School", address: "N/A", logo: "" });
@@ -111,6 +111,8 @@ app.post('/api/admin/fix-schema', async (req, res) => {
 
         if (process.env.RAILWAY_ENVIRONMENT || process.env.NODE_ENV === 'production') {
             await db.execute(createMeasurements);
+            // Ensure schools has lock_message
+            try { await db.execute("ALTER TABLE schools ADD COLUMN lock_message TEXT"); } catch (e) { /* Ignore if exists */ }
             // Also ensure others just in case
             await db.execute(`CREATE TABLE IF NOT EXISTS students (
                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -142,6 +144,8 @@ app.post('/api/admin/fix-schema', async (req, res) => {
                     item_quantities TEXT,
                     FOREIGN KEY (student_id) REFERENCES students(id)
                 )`);
+                // Ensure lock_message exists (ignore error if exists)
+                db.run("ALTER TABLE schools ADD COLUMN lock_message TEXT", (err) => { });
             });
             res.json({ message: "SQLite Schema Fixed." });
         }

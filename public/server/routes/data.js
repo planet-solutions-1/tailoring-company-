@@ -1305,4 +1305,39 @@ router.get('/schools/:id/export', authenticateToken, requireRole('company'), asy
     }
 });
 
+// PUT /api/data/schools/:id/lock - Toggle School Lock & Set Message
+router.put('/schools/:id/lock', authenticateToken, requireRole('company'), async (req, res) => {
+    const { id } = req.params;
+    const { message } = req.body; // Optional message
+
+    try {
+        // 1. Get Current Status
+        const getCurrent = () => new Promise((resolve, reject) => {
+            if (db.execute) db.execute("SELECT is_locked FROM schools WHERE id = ?", [id]).then(([rows]) => resolve(rows[0])).catch(reject);
+            else db.get("SELECT is_locked FROM schools WHERE id = ?", [id], (err, row) => err ? reject(err) : resolve(row));
+        });
+
+        const current = await getCurrent();
+        if (!current) return res.status(404).json({ error: "School not found" });
+
+        const newStatus = current.is_locked ? 0 : 1;
+        const newMessage = newStatus ? (message || null) : null;
+
+        // 2. Update
+        if (db.execute) {
+            await db.execute("UPDATE schools SET is_locked = ?, lock_message = ? WHERE id = ?", [newStatus, newMessage, id]);
+        } else {
+            await new Promise((resolve, reject) => {
+                db.run("UPDATE schools SET is_locked = ?, lock_message = ? WHERE id = ?", [newStatus, newMessage, id], (err) => err ? reject(err) : resolve());
+            });
+        }
+
+        res.json({ message: `School ${newStatus ? 'LOCKED' : 'UNLOCKED'} successfully`, is_locked: !!newStatus, lock_message: newMessage });
+
+    } catch (e) {
+        console.error("Lock Error:", e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
 module.exports = router;

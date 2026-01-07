@@ -4181,10 +4181,17 @@
             const action = currentSchoolLocked ? "UNLOCK" : "LOCK";
             if (!confirm(`Are you sure you want to ${action} this school?\n\n${currentSchoolLocked ? 'Teachers will be able to edit data again.' : 'Teachers will be BLOCKED from editing data.'}`)) return;
 
+            let lockMsg = null;
+            if (!currentSchoolLocked) {
+                // LOCKING
+                lockMsg = prompt("Optional: Enter a message for the school (e.g., 'Payment Overdue'). Leave empty for default.");
+            }
+
             try {
                 const res = await fetch(`${API_BASE}/data/schools/${currentSchoolDetails.id}/lock`, {
                     method: 'PUT',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ message: lockMsg })
                 });
                 const d = await res.json();
 
