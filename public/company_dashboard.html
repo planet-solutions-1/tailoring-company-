@@ -2319,7 +2319,8 @@
                 'view-access': 'Access Codes',
                 'view-complaints': 'Complaints',
                 'view-reports': 'Reports',
-                'view-settings': 'Settings'
+                'view-settings': 'Settings',
+                'view-school-details': 'School Details'
             };
 
             const subtitles = {
@@ -2330,7 +2331,8 @@
                 'view-access': 'Generate and manage access codes for schools',
                 'view-complaints': 'Track and resolve school complaints and issues',
                 'view-reports': 'Download data and view system activity logs',
-                'view-settings': 'Configure system preferences and notifications'
+                'view-settings': 'Configure system preferences and notifications',
+                'view-school-details': 'Manage locked status and data access'
             };
 
             const titleEl = document.getElementById('page-title');
@@ -2731,7 +2733,7 @@
 
         // MODIFIED: School Details now focuses on Settings/Patterns
         async function viewSchoolDetails(schoolName, schoolId) {
-            switchTab('school-details');
+            switchTab('view-school-details');
             currentSchoolDetails = { name: schoolName, id: schoolId };
             document.getElementById('sd-school-name').innerText = schoolName;
 
