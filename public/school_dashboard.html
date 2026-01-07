@@ -1702,7 +1702,8 @@
             // Fetch Support Email
             (async () => {
                 try {
-                    const res = await fetch(`${API_BASE}/data/settings`, {
+                    const token = sessionStorage.getItem('token');
+                    const res = await fetch(`/api/data/settings`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
                     const sets = await res.json();
