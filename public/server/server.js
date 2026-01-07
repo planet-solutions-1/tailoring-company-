@@ -14,6 +14,36 @@ const { authenticateToken } = require('./middleware/auth');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// === DB INIT ON STARTUP ===
+(async () => {
+    try {
+        if (process.env.RAILWAY_ENVIRONMENT || process.env.NODE_ENV === 'production') {
+            console.log("Checking Schema...");
+            // Ensure Settings Table
+            await db.execute(`CREATE TABLE IF NOT EXISTS settings (
+                key_name VARCHAR(50) PRIMARY KEY,
+                value TEXT
+            )`);
+            // Ensure Lock Message
+            try { await db.execute("ALTER TABLE schools ADD COLUMN lock_message TEXT"); } catch (e) { /* Ignore */ }
+            // Ensure is_locked
+            try { await db.execute("ALTER TABLE schools ADD COLUMN is_locked BOOLEAN DEFAULT 0"); } catch (e) { /* Ignore */ }
+            console.log("Schema Check Complete.");
+        } else {
+            db.serialize(() => {
+                db.run(`CREATE TABLE IF NOT EXISTS settings (
+                    key_name TEXT PRIMARY KEY,
+                    value TEXT
+                )`);
+                db.run("ALTER TABLE schools ADD COLUMN lock_message TEXT", (err) => { });
+                db.run("ALTER TABLE schools ADD COLUMN is_locked INTEGER DEFAULT 0", (err) => { });
+            });
+        }
+    } catch (e) {
+        console.error("Startup Schema Init Failed:", e);
+    }
+})();
+
 // Fix: Increase Body Limit (Fixing 413 Error for Large Syncs)
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
