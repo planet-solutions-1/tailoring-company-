@@ -378,16 +378,17 @@ router.put('/users/:id/reset-password', authenticateToken, requireRole('company'
 
 // PUT /api/data/schools/:id/lock - Toggle Data Lock
 router.put('/schools/:id/lock', authenticateToken, requireRole('company'), async (req, res) => {
-    const { is_locked } = req.body; // Expect boolean or 1/0
+    const { is_locked, message } = req.body; // Expect boolean or 1/0 + message
     const val = (is_locked === true || is_locked == 1 || is_locked === 'true') ? 1 : 0;
+    const msg = message || null;
 
     try {
         const id = req.params.id;
         if (db.execute) {
-            await db.execute("UPDATE schools SET is_locked = ? WHERE id = ?", [val, id]);
+            await db.execute("UPDATE schools SET is_locked = ?, lock_message = ? WHERE id = ?", [val, msg, id]);
         } else {
             await new Promise((resolve, reject) => {
-                db.run("UPDATE schools SET is_locked = ? WHERE id = ?", [val, id], (err) => {
+                db.run("UPDATE schools SET is_locked = ?, lock_message = ? WHERE id = ?", [val, msg, id], (err) => {
                     if (err) reject(err); else resolve();
                 });
             });

@@ -4194,10 +4194,11 @@
             }
 
             try {
+                // FIXED: Send NEW toggle state
                 const res = await fetch(`${API_BASE}/data/schools/${currentSchoolDetails.id}/lock`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                    body: JSON.stringify({ message: lockMsg })
+                    body: JSON.stringify({ is_locked: !currentSchoolLocked, message: lockMsg })
                 });
                 const d = await res.json();
 
