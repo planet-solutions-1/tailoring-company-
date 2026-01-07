@@ -3744,85 +3744,123 @@
                 images = images.map(img => img.startsWith('http') ? img : (img.startsWith('/') ? img : `/${img}`));
 
                 return `
-                <div class="clay-card p-6 mb-6 animate-in slide-in-from-bottom-2 duration-500 border border-white/60 bg-white/80 backdrop-blur-sm shadow-lg rounded-2xl group hover:border-blue-200 transition-colors">
-                         <div class="flex justify-between items-start mb-4">
-                             <div class="flex gap-4">
-                                 <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold shadow-inner ${c.gender === 'Female' ? 'bg-pink-50 text-pink-500' : 'bg-blue-50 text-blue-500'}">
-                                     ${c.student_name ? c.student_name.charAt(0) : '?'}
-                                 </div>
-                                 <div>
-                                     <div class="flex items-center gap-2">
-                                         <span class="text-sm font-bold text-gray-800">${c.student_name || 'Generic Ticket'}</span>
-                                         <span class="text-xs text-gray-400 font-mono bg-gray-50 px-1.5 rounded">${c.student_reg_no || '-'}</span>
-                                     </div>
-                                     <div class="text-[10px] text-gray-400 font-bold uppercase tracking-wide mt-0.5">
-                                         ${new Date(c.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
-                                         ${c.class ? ` • ${c.class}` : ''} ${c.section ? `-${c.section}` : ''}
-                                     </div>
-                                 </div>
-                             </div>
-                             
-                             <div class="flex flex-col items-end gap-2">
-                                 <select onchange="updateTicketStatus(${c.id}, this.value)" 
-                                     class="clay-input text-[10px] h-8 py-0 pl-2 pr-6 font-bold uppercase rounded-lg border-none shadow-sm cursor-pointer ${isResolved ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'} hover:scale-105 transition-transform">
-                                     <option value="Open" ${!isResolved ? 'selected' : ''}>Open</option>
-                                     <option value="Resolved" ${isResolved ? 'selected' : ''}>Resolved</option>
-                                 </select>
-                             </div>
-                         </div>
-                         
-                         <!-- Issue Specs -->
-                         <div class="bg-gray-50/80 p-4 rounded-xl border border-gray-100 mb-4 grid grid-cols-2 gap-4">
-                              <div class="border-r border-gray-200 pr-4">
-                                 <span class="block font-bold text-gray-400 uppercase text-[9px] tracking-widest mb-1">Defective Pattern</span>
-                                 <div class="flex items-center gap-2">
-                                     <span class="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
-                                     <span class="text-xs font-bold text-indigo-900 truncate">${c.pattern_name || 'N/A'}</span>
-                                 </div>
-                              </div>
-                              <div class="pl-2">
-                                 <span class="block font-bold text-gray-400 uppercase text-[9px] tracking-widest mb-1">Issue Type</span>
-                                 <div class="flex items-center gap-2">
-                                     <span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span>
-                                     <span class="text-xs font-bold text-rose-900 truncate">${c.issue_type || 'General'}</span>
-                                 </div>
-                              </div>
-                         </div>
+                <div class="group relative mb-6">
+                    <!-- Premium Glass Card -->
+                    <div class="relative overflow-hidden rounded-2xl bg-white/80 backdrop-blur-xl border border-white/60 shadow-xl hover:shadow-2xl hover:shadow-blue-200/50 transition-all duration-500 hover:-translate-y-1">
 
-                         <div class="mb-4 pl-1 border-l-2 border-gray-200">
-                            <p class="text-gray-600 text-sm leading-relaxed italic">"${c.comment}"</p>
-                         </div>
-                         
-                         <!-- Images -->
-                         ${images.length > 0 ? `
-                             <div class="flex gap-3 overflow-x-auto pb-2 scrollbar-hide mb-4">
-                                 ${images.map(u => `
-                                     <div class="relative group/img cursor-pointer" onclick="window.open('${u}')">
-                                         <img src="${u}" class="h-20 w-20 rounded-xl object-cover shadow-sm border border-white hover:shadow-lg hover:scale-105 transition-all">
-                                         <div class="absolute inset-0 bg-black/0 group-hover/img:bg-black/10 rounded-xl transition-colors"></div>
-                                     </div>
-                                 `).join('')}
-                             </div>` : ''}
+                        <!-- Decoration -->
+                        <div class="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-500/5 to-purple-500/5 rounded-bl-full -mr-10 -mt-10 pointer-events-none"></div>
 
-                        <!-- Actions -->
-                        <div class="border-t border-gray-100 pt-4 mt-2">
-                            ${c.reply ? `
-                                <div class="p-4 bg-blue-50/80 rounded-xl border border-blue-100 flex gap-3">
-                                    <div class="mt-1"><svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path></svg></div>
-                                    <div>
-                                        <p class="text-[10px] font-bold text-blue-400 uppercase tracking-wider mb-1">Company Response</p>
-                                        <p class="text-xs text-blue-900 font-medium leading-relaxed">${c.reply}</p>
+                        <!-- Header Section -->
+                        <div class="p-6 border-b border-gray-100/50 flex justify-between items-start relative z-10">
+                            <div class="flex gap-4">
+                                <!-- Avatar -->
+                                <div class="relative">
+                                    <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-lg font-bold shadow-lg ${c.gender === 'Female' ? 'bg-gradient-to-br from-pink-400 to-rose-500 text-white shadow-rose-200' : 'bg-gradient-to-br from-blue-400 to-indigo-500 text-white shadow-blue-200'}">
+                                        ${c.student_name ? c.student_name.charAt(0) : '?'}
                                     </div>
-                                </div>`
+                                    <div class="absolute -bottom-1 -right-1 bg-white rounded-full p-1 shadow-sm">
+                                        <div class="w-3 h-3 rounded-full ${isResolved ? 'bg-emerald-400' : 'bg-rose-500'} animate-pulse"></div>
+                                    </div>
+                                </div>
+
+                                <!-- Info -->
+                                <div>
+                                    <h4 class="font-black text-gray-800 text-base tracking-tight mb-0.5">${c.student_name || 'Generic Ticket'}</h4>
+                                    <div class="flex items-center gap-2">
+                                        <span class="px-2 py-0.5 rounded-md bg-gray-100/80 text-gray-500 text-[10px] font-bold font-mono tracking-wider border border-gray-200">${c.student_reg_no || 'NO REG'}</span>
+                                        <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wide">
+                                            ${new Date(c.created_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                            ${c.class ? `• ${c.class}` : ''}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Status & Actions -->
+                            <div class="flex items-center gap-3">
+                                <div class="relative">
+                                    <select onchange="updateTicketStatus(${c.id}, this.value)"
+                                        class="appearance-none pl-3 pr-8 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider cursor-pointer border-0 shadow-sm focus:ring-2 transition-all ${isResolved ? 'bg-emerald-50 text-emerald-600 focus:ring-emerald-200' : 'bg-rose-50 text-rose-600 focus:ring-rose-200'}">
+                                        <option value="Open" ${!isResolved ? 'selected' : ''}>Open Issue</option>
+                                        <option value="Resolved" ${isResolved ? 'selected' : ''}>Resolved</option>
+                                    </select>
+                                    <div class="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none">
+                                        <svg class="w-3 h-3 ${isResolved ? 'text-emerald-500' : 'text-rose-500'}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Body Section -->
+                        <div class="p-6 relative z-10">
+
+                            <!-- Issue Details Grid -->
+                            <div class="grid grid-cols-2 gap-4 mb-6">
+                                <div class="bg-indigo-50/50 p-3 rounded-xl border border-indigo-100/50 hover:bg-indigo-50 transition-colors">
+                                    <span class="block text-[9px] font-extrabold text-indigo-400 uppercase tracking-widest mb-1">Defective Pattern</span>
+                                    <div class="flex items-center gap-2">
+                                        <svg class="w-4 h-4 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
+                                        <span class="text-xs font-bold text-indigo-900 truncate">${c.pattern_name || 'N/A'}</span>
+                                    </div>
+                                </div>
+                                <div class="bg-rose-50/50 p-3 rounded-xl border border-rose-100/50 hover:bg-rose-50 transition-colors">
+                                    <span class="block text-[9px] font-extrabold text-rose-400 uppercase tracking-widest mb-1">Issue Type</span>
+                                    <div class="flex items-center gap-2">
+                                        <svg class="w-4 h-4 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                        <span class="text-xs font-bold text-rose-900 truncate">${c.issue_type || 'General'}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Comment Bubble -->
+                            <div class="relative bg-gray-50 p-4 rounded-xl rounded-tl-none border border-gray-100 mb-6">
+                                <div class="absolute -top-2 left-0 w-4 h-4 bg-gray-50 border-t border-l border-gray-100 transform -skew-y-12"></div>
+                                <p class="text-gray-600 text-sm font-medium leading-relaxed italic">"${c.comment}"</p>
+                            </div>
+
+                            <!-- Images Gallery -->
+                            ${images.length > 0 ? `
+                                <div class="mb-6">
+                                    <p class="text-[9px] font-bold text-gray-400 uppercase tracking-widest mb-2">Attached Proof</p>
+                                    <div class="flex gap-3 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-gray-200">
+                                        ${images.map(u => `
+                                            <div class="relative group/img cursor-pointer shrink-0" onclick="window.open('${u}')">
+                                                <img src="${u}" class="h-24 w-24 rounded-xl object-cover shadow-sm border-2 border-white hover:border-blue-400 hover:shadow-md transition-all">
+                                                <div class="absolute inset-0 bg-black/0 group-hover/img:bg-black/10 rounded-xl transition-colors flex items-center justify-center opacity-0 group-hover/img:opacity-100">
+                                                    <svg class="w-6 h-6 text-white drop-shadow-md" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                                                </div>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>` : ''}
+
+                            <!-- Actions / Reply -->
+                            <div class="border-t border-gray-100 pt-5">
+                                ${c.reply ? `
+                                    <div class="flex gap-4 items-start animate-in fade-in duration-500">
+                                        <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center shrink-0 border border-blue-200">
+                                            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+                                        </div>
+                                        <div class="flex-1 bg-blue-50/50 p-4 rounded-2xl rounded-tl-none border border-blue-100">
+                                            <div class="flex justify-between items-center mb-1">
+                                                <span class="text-[9px] font-extrabold text-blue-400 uppercase tracking-widest">Official Response</span>
+                                                <span class="text-[9px] font-bold text-blue-300">Sent just now</span> <!-- Timestamp if avail -->
+                                            </div>
+                                            <p class="text-xs text-blue-900 font-medium leading-relaxed">${c.reply}</p>
+                                        </div>
+                                    </div>`
                         : `
-                                <button onclick="openReplyModal(${c.id}, '${c.school_name}')" 
-                                    class="w-full py-2 bg-gray-50 hover:bg-white border border-dashed border-gray-300 hover:border-rose-300 text-gray-400 hover:text-rose-500 text-xs font-bold uppercase rounded-xl transition-all flex items-center justify-center gap-2 group/btn">
-                                    <svg class="w-4 h-4 group-hover/btn:-translate-y-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path></svg>
-                                    Reply to Ticket
-                                </button>`
+                                    <button onclick="openReplyModal(${c.id}, '${c.school_name}')" 
+                                        class="w-full py-3 bg-gradient-to-r from-gray-50 to-white hover:from-blue-500 hover:to-blue-600 text-gray-500 hover:text-white border border-gray-200 hover:border-transparent rounded-xl text-xs font-bold uppercase tracking-widest shadow-sm hover:shadow-lg hover:shadow-blue-200 transition-all duration-300 flex items-center justify-center gap-2 group/btn">
+                                        <span class="group-hover/btn:-translate-x-1 transition-transform">Write a Reply</span>
+                                        <svg class="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+                                    </button>`
                     }
+                            </div>
                         </div>
                     </div>
+                </div>
                     `;
             }).join('');
 
@@ -3938,7 +3976,7 @@
             if (!text.trim()) return alert("Please write a reply.");
 
             try {
-                const res = await fetch(`${API_BASE}/data/complaints/${currentComplaintId}/reply`, {
+                const res = await fetch(`${API_BASE} /data/complaints / ${currentComplaintId}/reply`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                     body: JSON.stringify({ reply: text })
