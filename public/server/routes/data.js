@@ -289,19 +289,23 @@ router.delete('/schools/:id', authenticateToken, requireRole('company'), async (
     }
 });
 
-// POST /api/data/migrate - Manual Schema Migration
-router.post('/migrate', authenticateToken, requireRole('company'), async (req, res) => {
+// POST /api/data/fix_db - Manual Schema Migration (Renamed from /migrate)
+router.post('/fix_db', authenticateToken, requireRole('company'), async (req, res) => {
     try {
         if (db.execute) {
             // MySQL
             try { await db.execute("ALTER TABLE schools ADD COLUMN priority VARCHAR(50) DEFAULT 'Normal'"); } catch (e) { }
             try { await db.execute("ALTER TABLE schools ADD COLUMN status VARCHAR(50) DEFAULT 'Pending'"); } catch (e) { }
             try { await db.execute("ALTER TABLE users ADD COLUMN is_active BOOLEAN DEFAULT 1"); } catch (e) { }
+            try { await db.execute("ALTER TABLE schools ADD COLUMN lock_message TEXT"); } catch (e) { }
+            try { await db.execute("ALTER TABLE schools ADD COLUMN is_locked BOOLEAN DEFAULT 0"); } catch (e) { }
         } else if (db.run) {
             // SQLite
             db.run("ALTER TABLE schools ADD COLUMN priority TEXT DEFAULT 'Normal'", () => { });
             db.run("ALTER TABLE schools ADD COLUMN status TEXT DEFAULT 'Pending'", () => { });
             db.run("ALTER TABLE users ADD COLUMN is_active BOOLEAN DEFAULT 1", () => { });
+            db.run("ALTER TABLE schools ADD COLUMN lock_message TEXT", () => { });
+            db.run("ALTER TABLE schools ADD COLUMN is_locked BOOLEAN DEFAULT 0", () => { });
             db.run(`CREATE TABLE IF NOT EXISTS complaints (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 school_id INTEGER NOT NULL,
