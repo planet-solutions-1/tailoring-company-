@@ -8,8 +8,7 @@ const bcrypt = require('bcryptjs');
 const checkLock = async (req, res, schoolId) => {
     // Company overrides lock? (Optional: user wants to block "Teachers")
     // If strict lock is needed even for Admin, remove this line. 
-    // Usually Admin can override.
-    if (req.user.role === 'company') return false;
+    // REMOVED: if (req.user.role === 'company') return false; 
 
     return new Promise((resolve) => {
         const sql = "SELECT is_locked, lock_message FROM schools WHERE id = ?";

@@ -2737,6 +2737,10 @@
             currentSchoolDetails = { name: schoolName, id: schoolId };
             document.getElementById('sd-school-name').innerText = schoolName;
 
+            // Reset Lock Status (Fix ghosting issue)
+            currentSchoolLocked = false;
+            updateLockUI();
+
             // Fetch Lock Status
             if (schoolId) fetchAndSetLockStatus(schoolId);
 
