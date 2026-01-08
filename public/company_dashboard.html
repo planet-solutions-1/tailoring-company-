@@ -1623,64 +1623,56 @@
 
                 <!-- Smart Insights Row (New) -->
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-
-                    <!-- NEW WIDGETS: Production & Actions -->
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-
-                        <!-- 1. Production Pipeline Status -->
-                        <div class="clay-card p-6 flex flex-col lg:col-span-2 min-h-[450px]">
-                            <div class="flex justify-between items-center mb-6">
-                                <h3 class="text-lg font-bold text-gray-700 flex items-center gap-2">
-                                    <span class="p-2 rounded-lg bg-indigo-100 text-indigo-600">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
-                                            </path>
-                                        </svg>
-                                    </span>
-                                    Production Pipeline
-                                </h3>
-                                <span class="text-[10px] font-bold uppercase text-gray-400 tracking-wider">Live Status
-                                    Overview</span>
-                            </div>
-
-                            <div class="flex-1 overflow-y-auto custom-scrollbar pr-2" id="production-pipeline-list">
-                                <!-- Injected JS Content -->
-                                <div class="animate-pulse space-y-4">
-                                    <div class="h-12 bg-gray-100 rounded-xl"></div>
-                                    <div class="h-12 bg-gray-100 rounded-xl"></div>
-                                    <div class="h-12 bg-gray-100 rounded-xl"></div>
-                                </div>
-                            </div>
+                    <!-- 1. Production Pipeline Status -->
+                    <div class="clay-card p-6 flex flex-col lg:col-span-2 min-h-[450px]">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-lg font-bold text-gray-700 flex items-center gap-2">
+                                <span class="p-2 rounded-lg bg-indigo-100 text-indigo-600">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+                                        </path>
+                                    </svg>
+                                </span>
+                                Production Pipeline
+                            </h3>
+                            <span class="text-[10px] font-bold uppercase text-gray-400 tracking-wider">Live Status
+                                Overview</span>
                         </div>
 
-                        <!-- 2. Recent Complaints / Quick Actions -->
-                        <div class="clay-card p-6 flex flex-col lg:col-span-1 min-h-[450px]">
-                            <div class="flex justify-between items-center mb-6">
-                                <h3 class="text-lg font-bold text-gray-700 flex items-center gap-2">
-                                    <span class="p-2 rounded-lg bg-rose-100 text-rose-600">
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
-                                            </path>
-                                        </svg>
-                                    </span>
-                                    Recent Issues
-                                </h3>
-                                <button onclick="switchTab('complaints')"
-                                    class="text-[10px] font-bold uppercase text-blue-500 hover:text-blue-700 tracking-wider transition-colors">View
-                                    All</button>
-                            </div>
-
-                            <div class="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-3" id="recent-issues-list">
-                                <div class="text-center text-gray-400 text-xs italic py-10">No recent issues found.
-                                </div>
+                        <div class="flex-1 overflow-y-auto custom-scrollbar pr-2" id="production-pipeline-list">
+                            <!-- Injected JS Content -->
+                            <div class="animate-pulse space-y-4">
+                                <div class="h-12 bg-gray-100 rounded-xl"></div>
+                                <div class="h-12 bg-gray-100 rounded-xl"></div>
+                                <div class="h-12 bg-gray-100 rounded-xl"></div>
                             </div>
                         </div>
-
                     </div>
 
+                    <!-- 2. Recent Complaints / Quick Actions -->
+                    <div class="clay-card p-6 flex flex-col lg:col-span-1 min-h-[450px]">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-lg font-bold text-gray-700 flex items-center gap-2">
+                                <span class="p-2 rounded-lg bg-rose-100 text-rose-600">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
+                                        </path>
+                                    </svg>
+                                </span>
+                                Recent Issues
+                            </h3>
+                            <button onclick="switchTab('complaints')"
+                                class="text-[10px] font-bold uppercase text-blue-500 hover:text-blue-700 tracking-wider transition-colors">View
+                                All</button>
+                        </div>
+
+                        <div class="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-3" id="recent-issues-list">
+                            <div class="text-center text-gray-400 text-xs italic py-10">No recent issues found.
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- 2. TAILORING DATA (Restructured) -->
