@@ -2067,7 +2067,7 @@
     <!-- LOGIC -->
     <script>
         const API_BASE = '/api'; const token = sessionStorage.getItem('token'); if (!token) window.location.href = 'login.html';
-        let globalStudents = [], globalSchools = [], globalPatterns = [], dynamicFilters = {}, sidebarOpen = false;
+        let globalStudents = [], globalSchools = [], globalPatterns = [], globalUsers = [], dynamicFilters = {}, sidebarOpen = false;
         let currentSchoolDetails = {}; // Initialize explicitly
         function toggleSidebar() { sidebarOpen = !sidebarOpen; const s = document.getElementById('sidebar'), b = document.getElementById('sidebar-backdrop'); if (sidebarOpen) { s.classList.remove('-translate-x-[120%]'); b.classList.remove('hidden'); setTimeout(() => b.classList.remove('opacity-0'), 10); } else { s.classList.add('-translate-x-[120%]'); b.classList.add('opacity-0'); setTimeout(() => b.classList.add('hidden'), 300); } }
         const boysItems = [{ name: "BOYS - FORMAL SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Male" }, { name: "BOYS - TRACK T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Male" }, { name: "BOYS - UNIFORM T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Male" }, { name: "BOYS - JERKIN", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Male" }, { name: "BOYS - PULLOVER", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Male" }, { name: "BOYS - FORMAL PANT", cols: ["L1", "L2"], type: "Male" }, { name: "BOYS - TRACK PANT", cols: ["L1", "L2"], type: "Male" }, { name: "BOYS - FORMAL SHORTS", cols: ["L3", "L2"], type: "Male" }, { name: "BOYS - TRACK SHORTS", cols: ["L3", "L2"], type: "Male" }, { name: "BOYS - PANT SPECIAL CASE", cols: ["L1", "L2", "L6", "L7"], type: "Male" }];
@@ -2300,6 +2300,7 @@
                 const r = await fetch(`${API_BASE}/data/users`, { headers: { 'Authorization': `Bearer ${token}` } });
                 const u = await r.json();
                 if (!Array.isArray(u)) return;
+                globalUsers = u; // Populate global variable
                 document.getElementById('user-list-body').innerHTML = u.map(x => `
                     <tr class="hover:bg-gray-50/50 group border-b border-gray-50">
                         <td class="p-4 font-bold text-gray-700">${x.username}</td>
