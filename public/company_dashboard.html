@@ -4556,21 +4556,78 @@
             const barEl = document.getElementById('ai-score-bar');
 
             if (isLoading) {
-                if (statusEl) statusEl.innerText = "SCANNING DATA...";
-                if (insightEl) insightEl.innerText = "Analyzing latest system activities...";
+                if (statusEl) statusEl.innerText = "SCANNING SYSTEM...";
+                if (insightEl) insightEl.innerText = "Running heuristic analysis on system logs...";
                 return;
             }
 
             const total = logs.length || 0;
-            const actions = {};
-            logs.forEach(l => actions[l.action] = (actions[l.action] || 0) + 1);
-            const topAction = Object.entries(actions).sort((a, b) => b[1] - a[1])[0] || ['None', 0];
-            const score = total > 0 ? 98 : 100;
+            if (total === 0) {
+                if (statusEl) statusEl.innerText = "NO DATA";
+                if (insightEl) insightEl.innerText = "Insufficient data for analysis.";
+                return;
+            }
 
-            if (statusEl) statusEl.innerText = "SYSTEM OPTIMAL";
-            if (insightEl) insightEl.innerHTML = `Analyzed <span class="font-bold text-violet-600">${total} events</span>. Most frequent activity: <span class="font-bold">${topAction[0]}</span>.`;
-            if (scoreEl) scoreEl.innerText = `${score}%`;
-            if (barEl) barEl.style.width = `${score}%`;
+            // --- AI ANALYST LOGIC ---
+
+            // 1. Vulnerability Finder (Security Risks)
+            const secKeywords = ['Login Failed', 'Unauthorized', 'Forbidden', 'Access Denied', 'Revoked'];
+            const vulnEvents = logs.filter(l => secKeywords.some(k => (l.action + l.details).includes(k)));
+            const vulnScore = Math.max(0, 100 - (vulnEvents.length * 10)); // -10 per event
+
+            // 2. Bug Finder (System Stability)
+            const bugKeywords = ['Error', 'Exception', 'Failed', '500', 'undefined', 'null'];
+            const bugEvents = logs.filter(l => bugKeywords.some(k => (l.action + l.details).includes(k)));
+            const bugScore = Math.max(0, 100 - (bugEvents.length * 5)); // -5 per bug
+
+            // 3. Data Leakage Finder (Exfiltration Risks)
+            const leakKeywords = ['Export', 'Download', 'Bulk', 'Report', 'All Users'];
+            const leakEvents = logs.filter(l => leakKeywords.some(k => (l.action + l.details).includes(k)));
+            const leakScore = Math.max(0, 100 - (leakEvents.length * 2)); // -2 per export (sensitive)
+
+            // Overall Logic
+            const minScore = Math.min(vulnScore, bugScore, leakScore);
+            const avgScore = Math.floor((vulnScore + bugScore + leakScore) / 3);
+
+            // Insight Generation
+            let status = "SYSTEM OPTIMAL";
+            let statusColor = "text-emerald-500";
+            let insights = [];
+
+            if (minScore < 50) { status = "CRITICAL RISK"; statusColor = "text-red-600"; }
+            else if (minScore < 80) { status = "ATTENTION NEEDED"; statusColor = "text-orange-500"; }
+            else if (minScore < 95) { status = "MINOR ISSUES"; statusColor = "text-blue-500"; }
+
+            if (vulnEvents.length > 0) insights.push(`<span class="text-red-500 font-bold">⚠️ ${vulnEvents.length} Security Alert(s)</span> detected.`);
+            if (bugEvents.length > 0) insights.push(`<span class="text-orange-500 font-bold">🐞 ${bugEvents.length} System Error(s)</span> found.`);
+            if (leakEvents.length > 0) insights.push(`<span class="text-blue-500 font-bold">💾 ${leakEvents.length} Data Export(s)</span> monitored.`);
+
+            if (insights.length === 0) insights.push("No anomalies detected across all vectors.");
+
+            // UI Update
+            if (statusEl) {
+                statusEl.innerText = status;
+                statusEl.className = `text-xs font-bold uppercase tracking-wider ${statusColor}`;
+            }
+
+            if (insightEl) {
+                insightEl.innerHTML = `
+                    <div class="flex flex-col gap-1 mt-1">
+                        <div>${insights.join(' ')}</div>
+                        <div class="grid grid-cols-3 gap-2 mt-2 text-[10px] uppercase font-bold text-gray-400">
+                            <div>Security: <span class="${vulnScore < 80 ? 'text-red-500' : 'text-emerald-500'}">${vulnScore}%</span></div>
+                            <div>Stability: <span class="${bugScore < 80 ? 'text-orange-500' : 'text-emerald-500'}">${bugScore}%</span></div>
+                            <div>Privacy: <span class="${leakScore < 80 ? 'text-blue-500' : 'text-emerald-500'}">${leakScore}%</span></div>
+                        </div>
+                    </div>
+                `;
+            }
+
+            if (scoreEl) scoreEl.innerText = `${avgScore}%`;
+            if (barEl) {
+                barEl.style.width = `${avgScore}%`;
+                barEl.className = `h-full rounded-full transition-all duration-1000 ${avgScore < 70 ? 'bg-red-500' : (avgScore < 90 ? 'bg-orange-400' : 'bg-violet-500')}`;
+            }
         }
 
         function renderAnalytics() {
