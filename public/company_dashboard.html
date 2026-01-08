@@ -4273,6 +4273,7 @@
         }
 
         async function fetchReportLogs() {
+            // ... (existing code matches)
             // Capture Filters Correctly
             const schoolId = document.getElementById('log-filter-school')?.value;
             const userId = document.getElementById('log-filter-user')?.value;
@@ -4297,12 +4298,70 @@
                 globalLogs = data.error ? [] : data;
 
                 renderLogTable('rp-school-table', globalLogs);
-                updateAIComponents(globalLogs, false); // Update AI with real data
+                updateAIComponents(globalLogs, false);
 
             } catch (e) {
                 console.error("Log Fetch Error", e);
                 const tbody = document.getElementById('rp-school-table');
                 if (tbody) tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-red-500">Log Fetch Error: ${e.message}</td></tr>`;
+            }
+        }
+
+        // === DOWNLOAD FUNCTIONS ===
+        function downloadLogsPDF() {
+            if (!globalLogs || globalLogs.length === 0) { alert("No logs to export!"); return; }
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            doc.text("System Activity Logs", 14, 15);
+            doc.setFontSize(10);
+            doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 22);
+
+            const head = [['Timestamp', 'User', 'Role', 'School', 'Action', 'Details']];
+            const body = globalLogs.map(l => [
+                new Date(l.created_at).toLocaleString(),
+                l.username,
+                l.role || '-',
+                l.school_name || l.school_id || '-',
+                l.action,
+                l.details
+            ]);
+
+            doc.autoTable({
+                head: head,
+                body: body,
+                startY: 25,
+                styles: { fontSize: 8 },
+                headStyles: { fillColor: [59, 130, 246] }
+            });
+
+            doc.save("System_Logs.pdf");
+        }
+
+        function downloadLogsCSV() {
+            if (!globalLogs || globalLogs.length === 0) { alert("No logs to export!"); return; }
+
+            const headers = ['Timestamp', 'User', 'Role', 'School', 'Action', 'Details'];
+            const rows = globalLogs.map(l => [
+                `"${new Date(l.created_at).toLocaleString()}"`,
+                `"${l.username}"`,
+                `"${l.role || '-'}"`,
+                `"${l.school_name || l.school_id || '-'}"`,
+                `"${l.action}"`,
+                `"${l.details.replace(/"/g, '""')}"`
+            ]);
+
+            const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            if (link.download !== undefined) {
+                const url = URL.createObjectURL(blob);
+                link.setAttribute("href", url);
+                link.setAttribute("download", "System_Logs.csv");
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
             }
         }
 
