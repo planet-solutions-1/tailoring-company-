@@ -4397,6 +4397,10 @@
 
             // Fetch
             try {
+                // Show Loading
+                const tbody = document.getElementById('rp-school-table');
+                if (tbody) tbody.innerHTML = '<tr><td colspan="5" class="p-8 text-center text-blue-500"><i class="fas fa-spinner fa-spin mr-2"></i>Loading System Logs...</td></tr>';
+
                 // FIXED: API Path was missing /data
                 const r = await fetch(`${API_BASE}/data/logs?${params}`, { headers: { 'Authorization': `Bearer ${token}` } });
                 const data = await r.json();
@@ -4404,9 +4408,18 @@
 
                 // RENDER EVERYTHING
                 renderAnalytics();
-                renderLogTable('rp-school-table', globalLogs);
 
-            } catch (e) { console.error("Log Fetch Error", e); }
+                if (typeof renderLogTable === 'function') {
+                    renderLogTable('rp-school-table', globalLogs);
+                } else {
+                    if (tbody) tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-red-500">Error: renderLogTable function missing</td></tr>';
+                }
+
+            } catch (e) {
+                console.error("Log Fetch Error", e);
+                const tbody = document.getElementById('rp-school-table');
+                if (tbody) tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-red-500">Log Fetch Error: ${e.message}</td></tr>`;
+            }
         }
 
         function renderAnalytics() {
