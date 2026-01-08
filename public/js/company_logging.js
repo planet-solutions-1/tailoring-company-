@@ -1,434 +1,170 @@
 
-// === LOGGING & REPORTS LOGIC ===
-async function initReports() {
-    if (globalSchools.length === 0) await fetchSchoolsForSelect();
-    if (globalStudents.length === 0) await fetchUsers(); // Re-use fetchUsers to get user list if needed
+// === COMPANY DASHBOARD LOGGING & AI INSIGHTS ===
 
-    // Populate Filters
-    const schoolSelect = document.getElementById('log-filter-school');
-    const userSelect = document.getElementById('log-filter-user');
+let aiInterval = null;
 
-    // Populate Schools
-    if (schoolSelect && schoolSelect.options.length <= 1) {
-        schoolSelect.innerHTML = '<option value="All">All Schools</option>' + globalSchools.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
-    }
+async function initAI(logs, stats) {
+    if (!logs || logs.length === 0) return;
 
-    // Populate Users (We need a globalUsers list, assuming fetchUsers populated the DOM but didn't save to global var. Let's fix fetchUsers or just fetch again here)
-    // For now, let's just fetch users specifically for this filter
-    try {
-        const r = await fetch(`${API_BASE}/data/users`, { headers: { 'Authorization': `Bearer ${token}` } });
-        const users = await r.json();
-        if (Array.isArray(users)) {
-            userSelect.innerHTML = '<option value="All">All Users</option>' + users.map(u => `<option value="${u.id}">${u.username} (${u.role})</option>`).join('');
-        }
-    } catch (e) { console.error("User Fetch Log Error", e); }
-
-    fetchActivityLogs();
+    // We can show a small "AI Insight" toast or card based on logs
+    // E.g. "High activity detected in School X"
+    // For now, let's just log to console or update a hidden div
+    console.log("AI Init", logs.length);
 }
 
-async function fetchActivityLogs() {
-    const loading = document.getElementById('logs-loading');
-    const empty = document.getElementById('logs-empty');
-    const tbody = document.getElementById('logs-list-body');
-
-    if (loading) loading.classList.remove('hidden');
-    if (empty) empty.classList.add('hidden');
-    if (tbody) tbody.innerHTML = '';
-
-    const schoolId = document.getElementById('log-filter-school')?.value || 'All';
-    const userId = document.getElementById('log-filter-user')?.value || 'All';
-    const startDate = document.getElementById('log-filter-start-date')?.value;
-    const endDate = document.getElementById('log-filter-end-date')?.value;
-
-    // Build Query
-    let query = `?limit=200`; // Default limit for view
-    if (schoolId !== 'All') query += `&school_id=${schoolId}`;
-    if (userId !== 'All') query += `&user_id=${userId}`;
-    if (startDate) query += `&start_date=${startDate}`;
-    if (endDate) query += `&end_date=${endDate}`;
-
-    try {
-        const r = await fetch(`${API_BASE}/data/logs${query}`, { headers: { 'Authorization': `Bearer ${token}` } });
-        const logs = await r.json();
-
-        if (loading) loading.classList.add('hidden');
-
-        if (!Array.isArray(logs) || logs.length === 0) {
-            if (empty) empty.classList.remove('hidden');
-            return;
-        }
-
-        if (tbody) {
-            tbody.innerHTML = logs.map(l => `
-                <tr class="hover:bg-blue-50/50 transition-colors border-b border-gray-50 last:border-none group">
-                    <td class="p-4 text-xs font-bold text-gray-500 whitespace-nowrap">${new Date(l.created_at).toLocaleString()}</td>
-                    <td class="p-4 font-bold text-blue-600">${l.username}</td>
-                    <td class="p-4 uppercase text-[10px] font-bold tracking-wider text-gray-400">${l.role}</td>
-                    <td class="p-4 text-gray-500">${l.school_id || '-'}</td>
-                    <td class="p-4 font-bold text-gray-700">${l.action}</td>
-                    <td class="p-4 text-gray-400 font-mono text-[10px] max-w-[200px] truncate group-hover:whitespace-normal group-hover:break-words group-hover:max-w-none" title="${l.details}">${l.details || ''}</td>
-                </tr>
-            `).join('');
-        }
-    } catch (e) {
-        console.error("Log Fetch Error", e);
-        if (loading) loading.innerText = "Error loading logs";
-    }
-}
-
-// === NEW: LOGS CSV EXPORT ===
-function downloadLogsCSV() {
-    const schoolId = document.getElementById('log-filter-school')?.value || 'All';
-    const userId = document.getElementById('log-filter-user')?.value || 'All';
-    const startDate = document.getElementById('log-filter-start-date')?.value;
-    const endDate = document.getElementById('log-filter-end-date')?.value;
-
-    const query = `?limit=none` +
-        (schoolId !== 'All' ? `&school_id=${schoolId}` : '') +
-        (userId !== 'All' ? `&user_id=${userId}` : '') +
-        (startDate ? `&start_date=${startDate}` : '') +
-        (endDate ? `&end_date=${endDate}` : '');
-
-    fetch(`${API_BASE}/data/logs${query}`, { headers: { 'Authorization': `Bearer ${token}` } })
-        .then(r => r.json())
-        .then(logs => {
-            if (!Array.isArray(logs) || logs.length === 0) return alert("No logs to export.");
-            exportLogsToCSV(logs);
-        })
-        .catch(e => {
-            console.error(e);
-            alert("Error exporting CSV.");
-        });
-}
-
-function exportLogsToCSV(logs) {
-    try {
-        const header = ["Timestamp", "User", "Role", "School ID", "Action", "Details"];
-        const rows = logs.map(l => [
-            new Date(l.created_at).toLocaleString(),
-            l.username,
-            l.role,
-            l.school_id || '',
-            l.action.replace(/,/g, ' '),
-            (l.details || '').replace(/,/g, ' ').replace(/\n/g, ' ')
-        ]);
-
-        const csvContent = "data:text/csv;charset=utf-8,"
-            + header.join(",") + "\n"
-            + rows.map(e => e.join(",")).join("\n");
-
-        const encodedUri = encodeURI(csvContent);
-        const link = document.createElement("a");
-        link.setAttribute("href", encodedUri);
-        link.setAttribute("download", `system_logs_${new Date().toISOString().split('T')[0]}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-
-    } catch (e) {
-        console.error("CSV Export Error", e);
-        alert("Failed to export logs.");
-    }
-}
-
-// Logger Integration for Company Dashboard Actions
-// We will call Logger.log() in key functions
-
-// === NEW: GENERAL REPORTS LOGIC ===
-
-async function downloadSchoolReport() {
-    const schoolId = document.getElementById('report-school-select').value;
-    if (!schoolId) return alert("Please select a school first.");
-
-    try {
-        const r = await fetch(`${API_BASE}/data/students/${schoolId}`, { headers: { 'Authorization': `Bearer ${token}` } });
-        const students = await r.json();
-
-        if (!students || students.length === 0) return alert("No student data found for this school.");
-
-        // Export (Simplified)
-        const ws = XLSX.utils.json_to_sheet(students);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Students");
-        XLSX.writeFile(wb, `School_Data_${schoolId}.xlsx`);
-
-        Logger.log('REPORT_DOWNLOAD', `Downloaded Student Report for School ${schoolId}`);
-
-    } catch (e) {
-        console.error(e);
-        alert("Failed to download report.");
-    }
-}
-
-async function downloadUserReport() {
-    try {
-        const r = await fetch(`${API_BASE}/data/users`, { headers: { 'Authorization': `Bearer ${token}` } });
-        const users = await r.json();
-
-        if (!users || users.length === 0) return alert("No users found.");
-
-        const ws = XLSX.utils.json_to_sheet(users.map(u => ({
-            ID: u.id, Username: u.username, Role: u.role, SchoolID: u.school_id || 'N/A'
-        })));
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Users");
-        XLSX.writeFile(wb, `User_List_Report.xlsx`);
-
-        Logger.log('REPORT_DOWNLOAD', `Downloaded System User Report`);
-
-    } catch (e) {
-        console.error(e);
-        alert("Failed to download user report.");
-    }
-}
-
-// === NEW: LOGS PDF EXPORT ===
-
-function downloadLogsPDF() {
-    // Re-fetch current logs or use cache? We don't have a global cache of current logs in this file except inside fetchActivityLogs scope.
-    // Let's re-fetch with limit=none based on current filters. 
-    // Actually, `downloadLogsCSV` logic is good, let's adapt it.
-
-    const schoolId = document.getElementById('log-filter-school')?.value || 'All';
-    const userId = document.getElementById('log-filter-user')?.value || 'All';
-    const startDate = document.getElementById('log-filter-start-date')?.value;
-    const endDate = document.getElementById('log-filter-end-date')?.value;
-
-    // UI Feedback
-    const btn = document.activeElement;
-    const originalText = btn ? btn.innerText : '';
-    if (btn) btn.innerText = 'Generating...';
-
-    const query = `?limit=none` +
-        (schoolId !== 'All' ? `&school_id=${schoolId}` : '') +
-        (userId !== 'All' ? `&user_id=${userId}` : '') +
-        (startDate ? `&start_date=${startDate}` : '') +
-        (endDate ? `&end_date=${endDate}` : '');
-
-    fetch(`${API_BASE}/data/logs${query}`, { headers: { 'Authorization': `Bearer ${token}` } })
-        .then(r => r.json())
-        .then(logs => {
-            if (!Array.isArray(logs) || logs.length === 0) {
-                if (btn) btn.innerText = originalText;
-                return alert("No logs to export.");
-            }
-
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-
-            doc.setFontSize(18);
-            doc.text("System Activity Log", 14, 20);
-
-            doc.setFontSize(10);
-            doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 28);
-            doc.text(`Filters: School=${schoolId}, User=${userId}, Range=${startDate || '*'} to ${endDate || '*'}`, 14, 34);
-
-            const headers = [['Time', 'User', 'Role', 'Action', 'Details']];
-            const data = logs.map(l => [
-                new Date(l.created_at).toLocaleString(),
-                l.username,
-                l.role,
-                l.action,
-                l.details || ''
-            ]);
-
-            doc.autoTable({
-                head: headers,
-                body: data,
-                startY: 40,
-                theme: 'grid',
-                styles: { fontSize: 8, cellPadding: 2 },
-                headStyles: { fillColor: [41, 128, 185], textColor: 255 }
-            });
-
-            doc.save('Activity_Log_Report.pdf');
-            if (btn) btn.innerText = originalText;
-        })
-        .catch(e => {
-            console.error(e);
-            alert("Error exporting PDF.");
-            if (btn) btn.innerText = originalText;
-        });
-}
-
-// === NEW: SCHOOL REPORT PDF ===
-async function downloadSchoolReportPDF() {
-    const schoolId = document.getElementById('report-school-select').value;
-    if (!schoolId) return alert("Please select a school first.");
-
-    const btn = document.activeElement;
-    const originalText = btn ? btn.innerText : '';
-    if (btn) btn.innerText = '...';
-
-    try {
-        const r = await fetch(`${API_BASE}/data/students/${schoolId}`, { headers: { 'Authorization': `Bearer ${token}` } });
-        const students = await r.json();
-
-        if (!students || students.length === 0) {
-            if (btn) btn.innerText = originalText;
-            return alert("No student data found for this school.");
-        }
-
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-
-        const schoolName = globalSchools.find(s => s.id == schoolId)?.name || `School #${schoolId}`;
-
-        doc.setFontSize(18);
-        doc.text("School Student Report", 14, 20);
-        doc.setFontSize(12);
-        doc.text(schoolName, 14, 28);
-        doc.setFontSize(10);
-        doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 36);
-
-        const headers = [['Roll No', 'Name', 'Class', 'Gender', 'Pattern', 'Status']];
-        const data = students.map(s => [
-            s.roll_no || '-',
-            s.name,
-            `${s.class_name || ''} ${s.section || ''}`,
-            s.gender,
-            s.pattern_name || '-',
-            s.status || 'Pending'
-        ]);
-
-        doc.autoTable({
-            head: headers,
-            body: data,
-            startY: 42,
-            theme: 'grid',
-            styles: { fontSize: 9, cellPadding: 2 },
-            headStyles: { fillColor: [13, 148, 136], textColor: 255 } // Teal
-        });
-
-        doc.save(`Student_Report_${schoolName.replace(/\s+/g, '_')}.pdf`);
-        Logger.log('REPORT_DOWNLOAD', `Downloaded PDF Report using jsPDF for ${schoolName}`);
-
-    } catch (e) {
-        console.error(e);
-        alert("Failed to download PDF.");
-    } finally {
-        if (btn) btn.innerText = originalText;
-    }
-}
-
-// === NEW: USER REPORT PDF ===
-async function downloadUserReportPDF() {
-    const btn = document.activeElement;
-    const originalText = btn ? btn.innerText : '';
-    if (btn) btn.innerText = '...';
-
-    try {
-        const r = await fetch(`${API_BASE}/data/users`, { headers: { 'Authorization': `Bearer ${token}` } });
-        const users = await r.json();
-
-        if (!users || users.length === 0) {
-            if (btn) btn.innerText = originalText;
-            return alert("No users found.");
-        }
-
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-
-        doc.setFontSize(18);
-        doc.text("User Registry Report", 14, 20);
-        doc.setFontSize(10);
-        doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 28);
-
-        const headers = [['ID', 'Username', 'Role', 'School ID']];
-        const data = users.map(u => [
-            u.id,
-            u.username,
-            u.role,
-            u.school_id || '-'
-        ]);
-
-        doc.autoTable({
-            head: headers,
-            body: data,
-            startY: 35,
-            theme: 'striped',
-            styles: { fontSize: 10, cellPadding: 3 },
-            headStyles: { fillColor: [249, 115, 22], textColor: 255 } // Orange
-        });
-
-        doc.save(`User_List_Report.pdf`);
-        Logger.log('REPORT_DOWNLOAD', `Downloaded PDF User Report`);
-
-    } catch (e) {
-        console.error(e);
-        alert("Failed to download PDF.");
-    } finally {
-        if (btn) btn.innerText = originalText;
-    }
-}
-
-// Update initReports to populate School Select for Reports too
-const originalInitReports = initReports;
-initReports = async function () {
-    await originalInitReports(); // Call original
-
-    // Populate Report School Select
-    const repSchoolSel = document.getElementById('report-school-select');
-    if (repSchoolSel && globalSchools.length > 0) {
-        repSchoolSel.innerHTML = '<option value="">-- Select School --</option>' +
-            globalSchools.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
-    }
-
-    // Start AI Analysis
-    refreshAIInsights();
-};
-
-// === AI INSIGHTS ENGINE ===
-let aiInterval;
-function refreshAIInsights() {
+function stopAI() {
     if (aiInterval) clearInterval(aiInterval);
+}
 
-    const insights = [];
-    const statusText = document.getElementById('ai-status-text');
-    const insightText = document.getElementById('ai-insight-text');
-    const scoreVal = document.getElementById('ai-score');
-    const scoreBar = document.getElementById('ai-score-bar');
-
-    if (!insightText) return;
-
-    // 1. Analyze Schools
-    const totalSchools = globalSchools.length;
-    const activeSchools = globalSchools.filter(s => s.status === 'Active' || s.status === 'Production').length;
-
-    if (totalSchools > 0) {
-        const inactive = totalSchools - activeSchools;
-        if (inactive > 0) insights.push(`⚠️ <strong>${inactive} Schools</strong> are currently pending activation.`);
-        else insights.push(`✅ All <strong>${totalSchools} Schools</strong> are fully active.`);
-    }
-
-    // 2. Deadline Analysis (Mock logic if accurate dates aren't fully populated yet)
-    // We look for schools with status 'Production'
-    const inProduction = globalSchools.filter(s => s.status === 'Production');
-    if (inProduction.length > 0) {
-        insights.push(`🏭 <strong>${inProduction.length} Schools</strong> are in active production.`);
-    }
-
-    // 3. User Activity (Mocked from recent logs fetch if possible, or just general)
-    insights.push(`👥 System is monitoring <strong>${totalSchools * 120} est. students</strong>.`); // Pseudo-stat
-
-    // 4. Optimization Score Calculation
-    // (Active Schools / Total) * 100
-    const score = totalSchools > 0 ? Math.round((activeSchools / totalSchools) * 100) : 0;
-
-    // Update UI - Score
-    if (scoreVal) scoreVal.innerText = `${score}%`;
-    if (scoreBar) scoreBar.style.width = `${score}%`;
-
-    // Cycle Insights
-    let index = 0;
-    const update = () => {
-        insightText.innerHTML = insights[index];
-        statusText.innerText = "Monitoring Live Data...";
-        // Fade effect could be added here
-        index = (index + 1) % insights.length;
+function startAI() {
+    stopAI();
+    // Simple periodic check or "simulation" of live data
+    const update = async () => {
+        // In a real app, this might poll for "notifications"
+        // console.log("AI Polling...");
     };
 
     update(); // Immediate
     aiInterval = setInterval(update, 4000); // Cycle every 4s
 }
 
+// === NEW: DASHBOARD WIDGETS ===
+
+async function fetchProductionPipeline() {
+    const container = document.getElementById('production-pipeline-list');
+    if (!container) return;
+
+    // Use globalSchools if available, otherwise fetch
+    if ((typeof globalSchools === 'undefined') || !globalSchools || globalSchools.length === 0) {
+        if (typeof fetchSchoolsForSelect === 'function') await fetchSchoolsForSelect();
+    }
+
+    if (!globalSchools || globalSchools.length === 0) {
+        container.innerHTML = `<div class="text-center text-gray-400 py-4 text-xs">No schools found to display.</div>`;
+        return;
+    }
+
+    // 1. Group Schools by Status
+    // Define exact order of pipeline
+    const pipeline = ['Measurements', 'Processing', 'Production', 'Dispatch', 'Delivered'];
+    const groups = {
+        'Measurements': [], 'Processing': [], 'Production': [], 'Dispatch': [], 'Delivered': []
+    };
+
+    globalSchools.forEach(s => {
+        const st = s.status || 'Measurements';
+        if (groups[st]) groups[st].push(s);
+        else groups['Measurements'].push(s); // Default fallback
+    });
+
+    // 2. Render Vertical List of Stages
+    container.innerHTML = pipeline.map(stage => {
+        const schools = groups[stage];
+        const count = schools.length;
+        const colorMap = {
+            'Measurements': 'bg-yellow-50 text-yellow-600 border-yellow-100',
+            'Processing': 'bg-orange-50 text-orange-600 border-orange-100',
+            'Production': 'bg-blue-50 text-blue-600 border-blue-100',
+            'Dispatch': 'bg-indigo-50 text-indigo-600 border-indigo-100',
+            'Delivered': 'bg-emerald-50 text-emerald-600 border-emerald-100'
+        };
+        const color = colorMap[stage];
+
+        // If no schools in this stage, dim it? Or show 0.
+        const opacity = count === 0 ? 'opacity-60' : '';
+
+        return `
+        <div class="flex items-center gap-4 mb-3 last:mb-0 ${opacity}">
+             <!-- Badge / Stage Name -->
+             <div class="w-32 flex-shrink-0">
+                 <span class="block px-3 py-2 rounded-lg text-xs font-bold uppercase tracking-wider border ${color} text-center shadow-sm">
+                    ${stage}
+                 </span>
+             </div>
+
+             <!-- Schools List (Horizontal Scroll or just Count + Names truncated) -->
+             <div class="flex-1 bg-white border border-gray-100 rounded-lg p-2 shadow-sm min-h-[44px] flex items-center overflow-hidden">
+                 ${count === 0 ?
+                `<span class="text-[10px] text-gray-300 italic pl-2">No schools</span>` :
+                `<div class="flex gap-2 w-full overflow-x-auto custom-scrollbar pb-1">
+                        ${schools.map(s => `
+                            <span class="flex-shrink-0 px-2 py-1 rounded-md bg-gray-50 text-gray-600 text-[10px] font-bold border border-gray-200 truncate max-w-[150px]" title="${s.name}">
+                                ${s.name}
+                            </span>
+                        `).join('')}
+                     </div>`
+            }
+             </div>
+
+             <!-- Count -->
+             <div class="w-12 text-center">
+                 <span class="text-lg font-black text-gray-700">${count}</span>
+             </div>
+        </div>
+        `;
+    }).join('');
+}
+
+async function fetchRecentIssues() {
+    const list = document.getElementById('recent-issues-list');
+    if (!list) return;
+
+    // We can fetch "Open Tickets/Complaints" (if an API exists) or reuse Logs for "Errors"
+    // Better: Reuse the 'fetchComplaints' logic but just get the data without rendering the full view.
+    // Or, mock it via "Overdue Schools" if no complaints API readily separated.
+
+    // Let's look for "Urgent" schools that are overdue as "Issues" + Actual Complaints.
+    // Since we don't have a direct "Recent Unresolved Complaints" API endpoint handy in this file context without duplication,
+    // let's create a hybrid view of "Urgent Overdue Schools" (Critical) and "Recent Error Logs" (Operational).
+
+    let content = '';
+
+    // 1. Overdue Schools (Critical)
+    const overdue = (typeof globalSchools !== 'undefined' ? globalSchools : [])
+        .filter(s => s.deadline && new Date(s.deadline) < new Date());
+
+    if (overdue.length > 0) {
+        content += `<p class="text-[10px] uppercase font-bold text-red-400 mb-2">Overdue Projects</p>`;
+        content += overdue.slice(0, 3).map(s => `
+            <div class="bg-red-50 p-3 rounded-lg border border-red-100 mb-2">
+                <div class="flex justify-between">
+                    <span class="text-xs font-bold text-red-700 truncate">${s.name}</span>
+                    <span class="text-[10px] font-bold text-red-400">OVERDUE</span>
+                </div>
+                <div class="text-[10px] text-red-500 mt-1">Deadline: ${new Date(s.deadline).toLocaleDateString()}</div>
+            </div>
+        `).join('');
+    }
+
+    // 2. Recent System Errors (from Logs)
+    try {
+        const r = await fetch(`${API_BASE}/data/logs?limit=20`, { headers: { 'Authorization': `Bearer ${token}` } });
+        const logs = await r.json();
+        const errors = logs.filter(l => l.action.includes('ERROR') || l.action.includes('DELETE') || l.details.includes('Failed')).slice(0, 5);
+
+        if (errors.length > 0) {
+            content += `<p class="text-[10px] uppercase font-bold text-gray-400 mb-2 mt-4">System Alerts</p>`;
+            content += errors.map(l => `
+                <div class="bg-gray-50 p-3 rounded-lg border border-gray-100 mb-2 hover:bg-white hover:shadow-sm transition-all group">
+                    <div class="flex items-start gap-2">
+                        <div class="text-red-500 mt-0.5">⚠️</div>
+                        <div class="overflow-hidden">
+                            <p class="text-xs font-bold text-gray-700 truncate group-hover:whitespace-normal">${l.action}</p>
+                            <p class="text-[10px] text-gray-400 truncate group-hover:whitespace-normal group-hover:break-words">${l.details}</p>
+                            <p class="text-[9px] text-gray-300 mt-1 font-mono">${new Date(l.created_at).toLocaleString()}</p>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+    } catch (e) { console.error(e); }
+
+    if (content === '') {
+        list.innerHTML = `<div class="h-full flex flex-col items-center justify-center text-gray-300 opacity-60">
+            <svg class="w-12 h-12 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            <span class="text-xs font-bold">All Systems Healthy</span>
+        </div>`;
+    } else {
+        list.innerHTML = content;
+    }
+}
