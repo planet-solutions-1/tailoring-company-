@@ -2378,6 +2378,14 @@
             // Auto-Fetch Logic
             if (viewId === 'view-schools') fetchSchoolsManage();
             if (viewId === 'view-users') { fetchSchoolsForSelect(); fetchUsers(); }
+            if (viewId === 'view-data') {
+                // Ensure data is loaded
+                if (!globalSchools || globalSchools.length === 0) {
+                    fetchSchoolsForSelect().then(() => renderTailoringData());
+                } else {
+                    renderTailoringData();
+                }
+            }
             if (viewId === 'view-access') fetchAccessCodes();
             if (viewId === 'view-complaints') fetchComplaints();
             if (viewId === 'view-reports') {
@@ -2903,6 +2911,17 @@
             document.getElementById('td-level-1').classList.remove('hidden');
 
             const grid = document.getElementById('td-school-grid');
+            if (!globalSchools || globalSchools.length === 0) {
+                grid.innerHTML = `<div class="col-span-full text-center py-20">
+                    <div class="inline-block p-4 rounded-full bg-gray-50 mb-4 text-gray-300">
+                        <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-400">No Schools Found</h3>
+                    <p class="text-xs text-gray-400 mt-2">Add schools in the "Schools" tab to see them here.</p>
+                </div>`;
+                return;
+            }
+
             grid.innerHTML = globalSchools.map(s => {
                 // Calc stats - Use Name for safer matching if IDs are ambiguous
                 const schoolStudents = globalStudents.filter(st => st.school_name === s.name);
