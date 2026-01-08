@@ -2913,11 +2913,21 @@
                 const container = document.getElementById('td-level-1');
                 if (container) container.classList.remove('hidden');
 
-                // Safety check for students
-                if (!globalStudents) await fetchAllStudents();
-
                 const grid = document.getElementById('td-school-grid');
                 if (!grid) { console.error("Grid ID not found"); return; }
+
+                // Show loading state
+                grid.innerHTML = '<div class="col-span-full text-center py-10"><i class="fas fa-spinner fa-spin text-blue-500 text-2xl"></i><p class="text-gray-400 mt-2">Loading data...</p></div>';
+
+                // Safety check for students
+                if (!globalStudents || globalStudents.length === 0) {
+                    try { await fetchAllStudents(); } catch (e) { console.error("Student fetch failed", e); }
+                }
+
+                // Safety check for schools
+                if (!globalSchools || globalSchools.length === 0) {
+                    try { await fetchSchoolsForSelect(); } catch (e) { console.error("School fetch failed", e); }
+                }
 
                 if (!globalSchools || globalSchools.length === 0) {
                     grid.innerHTML = `<div class="col-span-full text-center py-20">
@@ -2926,6 +2936,7 @@
                         </div>
                         <h3 class="text-lg font-bold text-gray-400">No Schools Found</h3>
                         <p class="text-xs text-gray-400 mt-2">Add schools in the "Schools" tab to see them here.</p>
+                        <button onclick="renderTailoringData()" class="mt-4 text-blue-500 hover:underline text-xs">Retry</button>
                     </div>`;
                     return;
                 }
@@ -2962,7 +2973,12 @@
                 }).join('');
             } catch (e) {
                 console.error("Render Error:", e);
-                // alert("Error loading Tailoring Data: " + e.message); // Helpful for user reporting
+                const grid = document.getElementById('td-school-grid');
+                if (grid) grid.innerHTML = `<div class="col-span-full p-4 bg-red-50 text-red-500 rounded-xl text-center">
+                    <p class="font-bold">Error loading view</p>
+                    <p class="text-xs font-mono mt-2">${e.message}</p>
+                    <button onclick="location.reload()" class="mt-4 px-4 py-2 bg-red-100 rounded-lg hover:bg-red-200 transition-colors text-xs font-bold">Reload Page</button>
+                </div>`;
             }
         }
 
