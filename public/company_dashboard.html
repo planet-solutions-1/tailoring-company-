@@ -3704,31 +3704,7 @@
             }
         }
 
-        async function fetchUsers() {
-            try {
-                const r = await fetch(`${API_BASE}/data/users`, { headers: { 'Authorization': `Bearer ${token}` } });
-                const users = await r.json();
-                const tbody = document.getElementById('user-list-body');
-                tbody.innerHTML = '';
 
-                if (Array.isArray(users)) {
-                    tbody.innerHTML = users.map(u => `
-                        <tr>
-                            <td class="p-3 font-bold text-gray-700">${u.username}</td>
-                            <td class="p-3"><span class="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs font-bold uppercase">${u.role}</span></td>
-                            <td class="p-3 text-gray-500">${u.school_name || (u.role === 'company' ? 'Planet Schools' : '-')}</td>
-                            <td class="p-3 text-center">
-                                <button onclick="toggleUserStatus(${u.id}, ${!u.is_active}, '${u.username}')" 
-                                    class="${u.is_active ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'} px-2 py-1 rounded-full text-xs font-bold shadow-sm hover:scale-105 transition-transform">
-                                    ${u.is_active ? 'Active' : 'Disabled'}
-                                </button>
-                            </td>
-                            <td class="p-3 text-right text-gray-400 font-mono text-xs">${new Date(u.created_at).toLocaleDateString()}</td>
-                        </tr>
-                    `).join('');
-                }
-            } catch (e) { console.error("Fetch Users Error", e); }
-        }
 
         async function toggleUserStatus(id, active, username) {
             // Note: We need an endpoint to update user status. 
@@ -4463,53 +4439,109 @@
         }
 
         async function downloadUserReportPDF() {
+            // 1. Check Data Presence & Auto-Fetch
             if (!globalUsers || globalUsers.length === 0) {
+                console.warn("downloadUserReportPDF: globalUsers Empty, attempting force fetch...");
                 try {
-                    await fetchUsers(true);
+                    await fetchUsers(true); // Retry
                 } catch (e) {
-                    alert("Download Failed: " + e.message); return;
-                }
-
-                if (!globalUsers || globalUsers.length === 0) {
-                    alert("No user data found.\n\nThe database appears empty. Your session might be stale.\nPlease Log Out and Log In again to refresh.");
+                    alert("Report Generation Failed: Could not fetch user data.\n" + e.message);
                     return;
                 }
             }
 
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-            doc.text(`User Management Report`, 14, 15);
-            doc.setFontSize(10);
-            const head = [['Username', 'Role', 'School ID', 'Active']];
-            const body = globalUsers.map(u => [u.username, u.role, u.school_id || '-', u.is_active ? 'Yes' : 'No']);
+            // 2. Final Verification
+            if (!globalUsers || globalUsers.length === 0) {
+                alert("Report Empty: No users found in the database.\nIf you believe this is an error, please try logging out and back in.");
+                return;
+            }
 
-            doc.autoTable({ head, body, startY: 25 });
-            doc.save(`User_Registry.pdf`);
+            // 3. Generate PDF
+            try {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+
+                // Header
+                doc.setFontSize(16);
+                doc.text("Planetsolutions - User Management Report", 14, 15);
+
+                doc.setFontSize(10);
+                doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 22);
+                doc.text(`Total Users: ${globalUsers.length}`, 14, 27);
+
+                const head = [['ID', 'Username', 'Role', 'School', 'Status', 'Created']];
+                const body = globalUsers.map(u => [
+                    u.id,
+                    u.username,
+                    u.role,
+                    u.school_name || (u.role === 'company' ? 'HQ' : '-'),
+                    u.is_active ? 'Active' : 'Disabled',
+                    new Date(u.created_at).toLocaleDateString()
+                ]);
+
+                doc.autoTable({
+                    head,
+                    body,
+                    startY: 32,
+                    theme: 'grid',
+                    styles: { fontSize: 9 },
+                    headStyles: { fillColor: [63, 81, 181] }
+                });
+
+                doc.save(`User_Registry_Report_${new Date().toISOString().slice(0, 10)}.pdf`);
+            } catch (e) {
+                console.error(e);
+                alert("PDF Generation Error: " + e.message);
+            }
         }
 
         async function downloadUserReport() {
+            // 1. Check Data Presence & Auto-Fetch
             if (!globalUsers || globalUsers.length === 0) {
+                console.warn("downloadUserReport (CSV): globalUsers Empty, attempting force fetch...");
                 try {
-                    await fetchUsers(true);
+                    await fetchUsers(true); // Retry
                 } catch (e) {
-                    alert("Download Failed: " + e.message); return;
-                }
-
-                if (!globalUsers || globalUsers.length === 0) {
-                    alert("No user data found.\n\nThe database appears empty. Your session might be stale.\nPlease Log Out and Log In again to refresh.");
+                    alert("Report Generation Failed: Could not fetch user data.\n" + e.message);
                     return;
                 }
             }
 
-            const headers = ['Username', 'Role', 'School ID', 'Active'];
-            const rows = globalUsers.map(u => [`"${u.username}"`, `"${u.role}"`, `"${u.school_id || ''}"`, `"${u.is_active ? 'Yes' : 'No'}"`]);
+            // 2. Final Verification
+            if (!globalUsers || globalUsers.length === 0) {
+                alert("Report Empty: No users found in the database.");
+                return;
+            }
 
-            const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(blob);
-            link.download = `User_Registry.csv`;
-            link.click();
+            // 3. Generate CSV
+            try {
+                const headers = ['ID', 'Username', 'Role', 'School', 'Active', 'Created At'];
+                const rows = globalUsers.map(u => [
+                    `${u.id}`,
+                    `"${u.username}"`,
+                    `"${u.role}"`,
+                    `"${u.school_name || ''}"`,
+                    `"${u.is_active ? 'Yes' : 'No'}"`,
+                    `"${new Date(u.created_at).toLocaleString()}"`
+                ]);
+
+                const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+
+                const link = document.createElement('a');
+                if (link.download !== undefined) {
+                    const url = URL.createObjectURL(blob);
+                    link.setAttribute("href", url);
+                    link.setAttribute("download", `User_Registry_${new Date().toISOString().slice(0, 10)}.csv`);
+                    link.style.visibility = 'hidden';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                }
+            } catch (e) {
+                console.error(e);
+                alert("CSV Generation Error: " + e.message);
+            }
         }
 
         function updateAIComponents(logs, isLoading) {
