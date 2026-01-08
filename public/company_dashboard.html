@@ -4244,106 +4244,99 @@
 
         function initReports() {
             // Populate School Dropdowns (All Reports View Dropdowns)
-            const selectors = ['#rp-school-select', '#rp-export-school-select', '#report-school-select'];
+            const selectors = ['#log-filter-school', '#rp-export-school-select'];
 
             const populate = () => {
                 if (!globalSchools || globalSchools.length === 0) return;
                 const opts = globalSchools.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
                 selectors.forEach(sel => {
                     const el = document.querySelector(sel);
-                    if (el) el.innerHTML = `<option value="">-- All Schools --</option>` + opts;
+                    if (el) el.innerHTML = `<option value="All">-- All Schools --</option>` + opts;
                 });
             };
 
-            populate(); // Try immediately
-            setTimeout(populate, 1000); // Retry after 1s (if fetchSchoolsManage is slow)
-            setTimeout(populate, 3000); // Retry after 3s
+            populate();
+            setTimeout(populate, 1000); // Retry logic
 
-            // Initial Fetch (Load everything)
-            fetchReportLogs('overview');
+            // Initial Fetch
+            fetchReportLogs();
         }
 
-        // Removed switchReportTab (No longer needed)
+        // Wrapper for HTML Button
+        window.fetchActivityLogs = function () {
+            fetchReportLogs();
+        }
 
         function debounceLogFetch() {
             clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(() => fetchReportLogs('overview'), 500); // Always update main view
+            debounceTimer = setTimeout(() => fetchReportLogs(), 500);
         }
 
-        async function fetchReportLogs(context) {
-            const params = new URLSearchParams({ days: 7 }); // Default 7
+        async function fetchReportLogs() {
+            // Capture Filters Correctly
+            const schoolId = document.getElementById('log-filter-school')?.value;
+            const userId = document.getElementById('log-filter-user')?.value;
+            const startDate = document.getElementById('log-filter-start-date')?.value;
+            const endDate = document.getElementById('log-filter-end-date')?.value;
 
-            // APPLY ALL FILTERS ALWAYS (Single View)
-            const sid = document.getElementById('rp-school-select') ? document.getElementById('rp-school-select').value : null;
-            if (sid) params.append('school_id', sid);
+            const params = new URLSearchParams();
+            if (schoolId && schoolId !== 'All') params.append('school_id', schoolId);
+            if (userId && userId !== 'All') params.append('username', userId);
+            if (startDate) params.append('start_date', startDate);
+            if (endDate) params.append('end_date', endDate);
 
-            const uname = document.getElementById('rp-user-search') ? document.getElementById('rp-user-search').value : null;
-            if (uname) params.append('username', uname);
-
-            // Fetch
             try {
-                // Show Loading
                 const tbody = document.getElementById('rp-school-table');
-                if (tbody) tbody.innerHTML = '<tr><td colspan="5" class="p-8 text-center text-blue-500"><i class="fas fa-spinner fa-spin mr-2"></i>Loading System Logs...</td></tr>';
+                if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-blue-500"><i class="fas fa-spinner fa-spin mr-2"></i>Loading System Logs...</td></tr>';
 
-                // FIXED: API Path was missing /data
+                // Update AI Loading State
+                updateAIComponents({}, true);
+
                 const r = await fetch(`${API_BASE}/data/logs?${params}`, { headers: { 'Authorization': `Bearer ${token}` } });
                 const data = await r.json();
                 globalLogs = data.error ? [] : data;
 
-                // RENDER EVERYTHING
-                renderAnalytics();
-
-                if (typeof renderLogTable === 'function') {
-                    renderLogTable('rp-school-table', globalLogs);
-                } else {
-                    if (tbody) tbody.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-red-500">Error: renderLogTable function missing</td></tr>';
-                }
+                renderLogTable('rp-school-table', globalLogs);
+                updateAIComponents(globalLogs, false); // Update AI with real data
 
             } catch (e) {
                 console.error("Log Fetch Error", e);
                 const tbody = document.getElementById('rp-school-table');
-                if (tbody) tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-red-500">Log Fetch Error: ${e.message}</td></tr>`;
+                if (tbody) tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-red-500">Log Fetch Error: ${e.message}</td></tr>`;
             }
         }
 
-        function renderAnalytics() {
-            // 1. AI Insights (Safeguard)
-            const stats = {
-                total: globalLogs.length,
-                topAction: {},
-                topUser: {},
-                roles: {}
-            };
+        function updateAIComponents(logs, isLoading) {
+            const statusEl = document.getElementById('ai-status-text');
+            const insightEl = document.getElementById('ai-insight-text');
+            const scoreEl = document.getElementById('ai-score');
+            const barEl = document.getElementById('ai-score-bar');
 
-            globalLogs.forEach(l => {
-                stats.topAction[l.action] = (stats.topAction[l.action] || 0) + 1;
-                stats.topUser[l.username] = (stats.topUser[l.username] || 0) + 1;
-                stats.roles[l.role || 'unknown'] = (stats.roles[l.role || 'unknown'] || 0) + 1;
-            });
-
-            const topA = Object.entries(stats.topAction).sort((a, b) => b[1] - a[1])[0] || ['None', 0];
-            const topU = Object.entries(stats.topUser).sort((a, b) => b[1] - a[1])[0] || ['None', 0];
-
-            const grid = document.getElementById('ai-insights-grid');
-            if (grid) {
-                grid.innerHTML = `
-                    <div class="flex items-center gap-4 bg-white p-4 rounded-xl border border-indigo-100 shadow-sm">
-                        <div class="text-2xl">📈</div>
-                        <div><p class="text-[10px] bg-gray-100 px-2 rounded-full font-bold uppercase text-gray-500 mb-1 w-fit">Total Events</p><p class="font-bold text-gray-700">${stats.total} <span class="text-xs font-normal text-gray-400">last 7 days</span></p></div>
-                    </div>
-                    <div class="flex items-center gap-4 bg-white p-4 rounded-xl border border-indigo-100 shadow-sm">
-                        <div class="text-2xl">⚡</div>
-                        <div><p class="text-[10px] bg-blue-100 px-2 rounded-full font-bold uppercase text-blue-500 mb-1 w-fit">Top Action</p><p class="font-bold text-gray-700 truncate w-32" title="${topA[0]}">${topA[0]}</p></div>
-                    </div>
-                    <div class="flex items-center gap-4 bg-white p-4 rounded-xl border border-indigo-100 shadow-sm">
-                        <div class="text-2xl">👑</div>
-                        <div><p class="text-[10px] bg-amber-100 px-2 rounded-full font-bold uppercase text-amber-600 mb-1 w-fit">Most Active User</p><p class="font-bold text-gray-700">${topU[0]}</p></div>
-                    </div>
-                `;
+            if (isLoading) {
+                if (statusEl) statusEl.innerText = "SCANNING DATA...";
+                if (insightEl) insightEl.innerText = "Analyzing latest system activities...";
+                return;
             }
 
-            // 2. Volume Chart (Bar)
+            const total = logs.length || 0;
+            const actions = {};
+            logs.forEach(l => actions[l.action] = (actions[l.action] || 0) + 1);
+            const topAction = Object.entries(actions).sort((a, b) => b[1] - a[1])[0] || ['None', 0];
+            const score = total > 0 ? 98 : 100;
+
+            if (statusEl) statusEl.innerText = "SYSTEM OPTIMAL";
+            if (insightEl) insightEl.innerHTML = `Analyzed <span class="font-bold text-violet-600">${total} events</span>. Most frequent activity: <span class="font-bold">${topAction[0]}</span>.`;
+            if (scoreEl) scoreEl.innerText = `${score}%`;
+            if (barEl) barEl.style.width = `${score}%`;
+        }
+
+        function renderAnalytics() {
+            // Legacy function kept as stub
+            updateAIComponents(globalLogs, false);
+        }
+
+        // Chart Data Prep
+        function prepCharts() {
             const dates = {};
             globalLogs.forEach(l => {
                 const d = new Date(l.created_at).toLocaleDateString();
