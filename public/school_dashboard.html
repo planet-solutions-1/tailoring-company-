@@ -1893,11 +1893,11 @@
                 secSelect.remove(1);
             }
 
-            if (!classVal) return;
+            // if (!classVal) return; // Allow populating sections even if "All Classes" is selected
 
             const sections = [...new Set(
                 allStudents
-                    .filter(s => s.status !== 'Trash' && s.class == classVal)
+                    .filter(s => s.status !== 'Trash' && (!classVal || s.class == classVal))
                     .map(s => s.section)
                     .filter(Boolean)
             )].sort();
