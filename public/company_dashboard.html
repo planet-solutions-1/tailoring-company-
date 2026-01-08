@@ -3348,6 +3348,10 @@
                 const r = await fetch(`${API_BASE}/data/logs`, { headers: { 'Authorization': `Bearer ${token}` } });
                 const logs = await r.json();
 
+                // Check if the old activity feed element exists (it was removed in the widget update)
+                const feed = document.getElementById('activity-feed');
+                if (!feed) return; // Exit gracefully if element is missing
+
                 if (!Array.isArray(logs)) return;
 
                 const iconMap = {
@@ -3357,7 +3361,7 @@
                     'DEFAULT': '<span class="bg-gray-100 text-gray-500 p-2 rounded-lg"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg></span>'
                 };
 
-                document.getElementById('activity-feed').innerHTML = '<div class="absolute left-6 top-4 bottom-4 w-0.5 bg-gray-100"></div>' + logs.map(l => {
+                feed.innerHTML = '<div class="absolute left-6 top-4 bottom-4 w-0.5 bg-gray-100"></div>' + logs.map(l => {
                     let type = 'DEFAULT';
                     if (l.action.includes('CREATE')) type = 'CREATE';
                     if (l.action.includes('UPDATE')) type = 'UPDATE';
