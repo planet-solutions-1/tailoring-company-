@@ -4214,6 +4214,78 @@
             }
         }
 
+
+        // === SETTINGS & ERROR HANDLING ===
+
+        let appSettings = {
+            urgentAlerts: true,
+            complaintAlerts: true,
+            errorReporting: false
+        };
+
+        function initSettings() {
+            try {
+                const saved = localStorage.getItem('planet_settings');
+                if (saved) appSettings = { ...appSettings, ...JSON.parse(saved) };
+
+                // Update UI
+                const chkUrgent = document.getElementById('setting-notify');
+                const chkComplaint = document.getElementById('setting-notify-complaint');
+                const chkError = document.getElementById('setting-notify-error');
+
+                if (chkUrgent) chkUrgent.checked = appSettings.urgentAlerts;
+                if (chkComplaint) chkComplaint.checked = appSettings.complaintAlerts;
+                if (chkError) chkError.checked = appSettings.errorReporting;
+
+                // Apply Initial State
+                if (appSettings.errorReporting) enableErrorReporting();
+
+            } catch (e) { console.error("Settings Init Error", e); }
+        }
+
+        function toggleNotificationSetting(checked, type) {
+            if (type === 'urgent') appSettings.urgentAlerts = checked;
+            if (type === 'complaint') appSettings.complaintAlerts = checked;
+            if (type === 'error') {
+                appSettings.errorReporting = checked;
+                if (checked) {
+                    enableErrorReporting();
+                    alert("System Error Reports Enabled.\n\nCrash logs will be automatically sent to the server.");
+                } else {
+                    disableErrorReporting();
+                }
+            }
+            // Save
+            localStorage.setItem('planet_settings', JSON.stringify(appSettings));
+        }
+
+        // Global Error Handlers
+        let errorHandlersAttached = false;
+        function enableErrorReporting() {
+            if (errorHandlersAttached) return;
+
+            window.onerror = function (msg, url, lineNo, columnNo, error) {
+                if (!appSettings.errorReporting) return;
+                const details = `Crash: ${msg} @ ${url}:${lineNo}:${columnNo}`;
+                if (window.Logger) window.Logger.log('SYSTEM_ERROR', details);
+                else console.error("Logger not ready for error report", details);
+            };
+
+            window.onunhandledrejection = function (event) {
+                if (!appSettings.errorReporting) return;
+                const reason = event.reason ? (event.reason.stack || event.reason) : 'Unknown Promise Error';
+                const details = `Unhandled Promise: ${reason}`;
+                if (window.Logger) window.Logger.log('SYSTEM_ERROR', details);
+            };
+
+            errorHandlersAttached = true;
+            console.log("System Error Reporting Active");
+        }
+
+        function disableErrorReporting() {
+            console.log("System Error Reporting Paused");
+        }
+
         document.getElementById('nav-overview').classList.add('active'); init().then(() => {
             initSettings(); // LOAD SETTINGS
             // Auto Refresh Pollers
