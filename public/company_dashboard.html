@@ -4298,7 +4298,7 @@
         }
 
         function renderAnalytics() {
-            // 1. AI Insights
+            // 1. AI Insights (Safeguard)
             const stats = {
                 total: globalLogs.length,
                 topAction: {},
@@ -4315,20 +4315,23 @@
             const topA = Object.entries(stats.topAction).sort((a, b) => b[1] - a[1])[0] || ['None', 0];
             const topU = Object.entries(stats.topUser).sort((a, b) => b[1] - a[1])[0] || ['None', 0];
 
-            document.getElementById('ai-insights-grid').innerHTML = `
-                <div class="flex items-center gap-4 bg-white p-4 rounded-xl border border-indigo-100 shadow-sm">
-                    <div class="text-2xl">📈</div>
-                    <div><p class="text-[10px] bg-gray-100 px-2 rounded-full font-bold uppercase text-gray-500 mb-1 w-fit">Total Events</p><p class="font-bold text-gray-700">${stats.total} <span class="text-xs font-normal text-gray-400">last 7 days</span></p></div>
-                </div>
-                <div class="flex items-center gap-4 bg-white p-4 rounded-xl border border-indigo-100 shadow-sm">
-                    <div class="text-2xl">⚡</div>
-                    <div><p class="text-[10px] bg-blue-100 px-2 rounded-full font-bold uppercase text-blue-500 mb-1 w-fit">Top Action</p><p class="font-bold text-gray-700 truncate w-32" title="${topA[0]}">${topA[0]}</p></div>
-                </div>
-                <div class="flex items-center gap-4 bg-white p-4 rounded-xl border border-indigo-100 shadow-sm">
-                    <div class="text-2xl">👑</div>
-                    <div><p class="text-[10px] bg-amber-100 px-2 rounded-full font-bold uppercase text-amber-600 mb-1 w-fit">Most Active User</p><p class="font-bold text-gray-700">${topU[0]}</p></div>
-                </div>
-            `;
+            const grid = document.getElementById('ai-insights-grid');
+            if (grid) {
+                grid.innerHTML = `
+                    <div class="flex items-center gap-4 bg-white p-4 rounded-xl border border-indigo-100 shadow-sm">
+                        <div class="text-2xl">📈</div>
+                        <div><p class="text-[10px] bg-gray-100 px-2 rounded-full font-bold uppercase text-gray-500 mb-1 w-fit">Total Events</p><p class="font-bold text-gray-700">${stats.total} <span class="text-xs font-normal text-gray-400">last 7 days</span></p></div>
+                    </div>
+                    <div class="flex items-center gap-4 bg-white p-4 rounded-xl border border-indigo-100 shadow-sm">
+                        <div class="text-2xl">⚡</div>
+                        <div><p class="text-[10px] bg-blue-100 px-2 rounded-full font-bold uppercase text-blue-500 mb-1 w-fit">Top Action</p><p class="font-bold text-gray-700 truncate w-32" title="${topA[0]}">${topA[0]}</p></div>
+                    </div>
+                    <div class="flex items-center gap-4 bg-white p-4 rounded-xl border border-indigo-100 shadow-sm">
+                        <div class="text-2xl">👑</div>
+                        <div><p class="text-[10px] bg-amber-100 px-2 rounded-full font-bold uppercase text-amber-600 mb-1 w-fit">Most Active User</p><p class="font-bold text-gray-700">${topU[0]}</p></div>
+                    </div>
+                `;
+            }
 
             // 2. Volume Chart (Bar)
             const dates = {};
@@ -4337,26 +4340,32 @@
                 dates[d] = (dates[d] || 0) + 1;
             });
 
-            if (charts.vol) charts.vol.destroy();
-            charts.vol = new Chart(document.getElementById('chart-logs-volume'), {
-                type: 'bar',
-                data: {
-                    labels: Object.keys(dates),
-                    datasets: [{ label: 'Events', data: Object.values(dates), backgroundColor: '#818cf8', borderRadius: 4 }]
-                },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { display: false } } }
-            });
+            const volCanvas = document.getElementById('chart-logs-volume');
+            if (volCanvas) {
+                if (charts.vol) charts.vol.destroy();
+                charts.vol = new Chart(volCanvas, {
+                    type: 'bar',
+                    data: {
+                        labels: Object.keys(dates),
+                        datasets: [{ label: 'Events', data: Object.values(dates), backgroundColor: '#818cf8', borderRadius: 4 }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { grid: { display: false } }, y: { display: false } } }
+                });
+            }
 
             // 3. Role Chart (Pie)
-            if (charts.role) charts.role.destroy();
-            charts.role = new Chart(document.getElementById('chart-logs-role'), {
-                type: 'doughnut',
-                data: {
-                    labels: Object.keys(stats.roles),
-                    datasets: [{ data: Object.values(stats.roles), backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'], borderWidth: 0 }]
-                },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
-            });
+            const roleCanvas = document.getElementById('chart-logs-role');
+            if (roleCanvas) {
+                if (charts.role) charts.role.destroy();
+                charts.role = new Chart(roleCanvas, {
+                    type: 'doughnut',
+                    data: {
+                        labels: Object.keys(stats.roles),
+                        datasets: [{ data: Object.values(stats.roles), backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#ef4444'], borderWidth: 0 }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
+                });
+            }
         }
 
         function renderLogTable(id, logs) {
