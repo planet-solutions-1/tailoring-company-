@@ -3354,11 +3354,14 @@
                 const r = await fetch(`${API_BASE}/data/logs`, { headers: { 'Authorization': `Bearer ${token}` } });
                 const logs = await r.json();
 
-                // Check if the old activity feed element exists (it was removed in the widget update)
-                const feed = document.getElementById('activity-feed');
-                if (!feed) return; // Exit gracefully if element is missing
-
                 if (!Array.isArray(logs)) return;
+
+                // Update Reports Table (if function exists)
+                if (typeof renderLogsTable === 'function') renderLogsTable(logs);
+
+                // Update Dashboard Widget (if element exists)
+                const feed = document.getElementById('activity-feed');
+                if (!feed) return;
 
                 const iconMap = {
                     'CREATE': '<span class="bg-green-100 text-green-600 p-2 rounded-lg"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg></span>',
