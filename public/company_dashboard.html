@@ -4244,7 +4244,7 @@
 
         function initReports() {
             // Populate School Dropdowns (All Reports View Dropdowns)
-            const selectors = ['#log-filter-school', '#rp-export-school-select'];
+            const selectors = ['#log-filter-school', '#rp-export-school-select', '#report-school-select'];
 
             const populate = () => {
                 if (!globalSchools || globalSchools.length === 0) return;
@@ -4363,6 +4363,82 @@
                 link.click();
                 document.body.removeChild(link);
             }
+        }
+
+        // === GENERAL REPORT DOWNLOADS ===
+        function downloadSchoolReportPDF() {
+            const sid = document.getElementById('report-school-select')?.value;
+            if (!sid) { alert("Please select a school first."); return; }
+
+            const s = globalSchools.find(x => x.id == sid);
+            if (!s) return;
+
+            let data = globalStudents.filter(st => st.school_id == sid);
+            if (data.length === 0) {
+                alert("No loaded student data for this school. Please visit the 'Schools' tab to load data first, or wait for background sync.");
+                return;
+            }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.text(`${s.name} - Student Report`, 14, 15);
+            doc.setFontSize(10);
+            doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 22);
+
+            const head = [['Name', 'Class', 'Gender', 'Status']];
+            const body = data.map(st => [st.name, `${st.class}-${st.section}`, st.gender, st.is_packed ? 'Packed' : 'Pending']);
+
+            doc.autoTable({ head, body, startY: 25 });
+            doc.save(`${s.name}_Report.pdf`);
+        }
+
+        function downloadSchoolReport() {
+            const sid = document.getElementById('report-school-select')?.value;
+            if (!sid) { alert("Please select a school first."); return; }
+            const s = globalSchools.find(x => x.id == sid);
+
+            let data = globalStudents.filter(st => st.school_id == sid);
+            if (data.length === 0) { alert("No student data found for this school."); return; }
+
+            const headers = ['Name', 'Class', 'Section', 'Gender', 'Status', 'Roll No'];
+            const rows = data.map(st => [
+                `"${st.name}"`, `"${st.class}"`, `"${st.section}"`, `"${st.gender}"`,
+                `"${st.is_packed ? 'Packed' : 'Pending'}"`, `"${st.roll_no || ''}"`
+            ]);
+
+            const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `${s.name}_Data.csv`;
+            link.click();
+        }
+
+        function downloadUserReportPDF() {
+            if (!globalUsers || globalUsers.length === 0) { alert("No user data loaded."); return; }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.text(`User Management Report`, 14, 15);
+            doc.setFontSize(10);
+            const head = [['Username', 'Role', 'School ID', 'Active']];
+            const body = globalUsers.map(u => [u.username, u.role, u.school_id || '-', u.is_active ? 'Yes' : 'No']);
+
+            doc.autoTable({ head, body, startY: 25 });
+            doc.save(`User_Registry.pdf`);
+        }
+
+        function downloadUserReport() {
+            if (!globalUsers || globalUsers.length === 0) { alert("No user data loaded."); return; }
+            const headers = ['Username', 'Role', 'School ID', 'Active'];
+            const rows = globalUsers.map(u => [`"${u.username}"`, `"${u.role}"`, `"${u.school_id || ''}"`, `"${u.is_active ? 'Yes' : 'No'}"`]);
+
+            const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `User_Registry.csv`;
+            link.click();
         }
 
         function updateAIComponents(logs, isLoading) {
