@@ -2379,12 +2379,7 @@
             if (viewId === 'view-schools') fetchSchoolsManage();
             if (viewId === 'view-users') { fetchSchoolsForSelect(); fetchUsers(); }
             if (viewId === 'view-data') {
-                // Ensure data is loaded
-                if (!globalSchools || globalSchools.length === 0) {
-                    fetchSchoolsForSelect().then(() => renderTailoringData());
-                } else {
-                    renderTailoringData();
-                }
+                renderTailoringData();
             }
             if (viewId === 'view-access') fetchAccessCodes();
             if (viewId === 'view-complaints') fetchComplaints();
