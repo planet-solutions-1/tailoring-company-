@@ -2295,12 +2295,28 @@
         }
         async function fetchSchoolsForSelect() { try { const r = await fetch(`${API_BASE}/data/schools`, { headers: { 'Authorization': `Bearer ${token}` } }); const d = await r.json(); globalSchools = Array.isArray(d) ? d : []; if (globalSchools.length > 0) { const o = globalSchools.map(s => `<option value="${s.id}">${s.name}</option>`).join(''); document.getElementById('school-select').innerHTML = o; document.getElementById('access-school-select').innerHTML = o; } } catch (e) { console.error("Schools Error", e); globalSchools = []; } }
 
-        async function fetchUsers() {
+        async function fetchUsers(throwOnError = false) {
             try {
                 const r = await fetch(`${API_BASE}/data/users`, { headers: { 'Authorization': `Bearer ${token}` } });
+
+                if (!r.ok) {
+                    const errText = await r.text();
+                    const msg = `Server Error ${r.status}: ${errText}`;
+                    console.error("Fetch Users Failed:", msg);
+                    if (throwOnError) throw new Error(msg);
+                    return;
+                }
+
                 const u = await r.json();
-                if (!Array.isArray(u)) return;
-                globalUsers = u; // Populate global variable
+
+                if (!Array.isArray(u)) {
+                    const msg = "Invalid Data Format: Expected Array";
+                    console.error("Fetch Users Invalid Format:", u);
+                    if (throwOnError) throw new Error(msg);
+                    return;
+                }
+
+                globalUsers = u;
                 document.getElementById('user-list-body').innerHTML = u.map(x => `
                     <tr class="hover:bg-gray-50/50 group border-b border-gray-50">
                         <td class="p-4 font-bold text-gray-700">${x.username}</td>
@@ -2312,7 +2328,11 @@
                              <button onclick="toggleUserStatus(${x.id},${!(x.is_active !== false)},'${x.username}')" class="px-3 py-1.5 rounded-lg font-bold shadow-sm ${x.is_active !== false ? 'text-red-500 bg-red-50 hover:bg-red-100' : 'text-green-500 bg-green-50 hover:bg-green-100'}">${x.is_active !== false ? 'Disable' : 'Enable'}</button>
                         </td>
                     </tr>`).join('');
-            } catch (e) { console.error(e) }
+            } catch (e) {
+                console.error("Fetch Users Exception:", e);
+                globalUsers = [];
+                if (throwOnError) throw e;
+            }
         }
         async function fetchAccessCodes() { try { const r = await fetch(`${API_BASE}/data/access_codes`, { headers: { 'Authorization': `Bearer ${token}` } }); const c = await r.json(); if (Array.isArray(c)) document.getElementById('access-code-list').innerHTML = c.map(x => `<tr class="border-b border-gray-50 ${x.is_active ? '' : 'opacity-40'}"><td class="py-4 font-bold text-gray-600">${x.school_name}</td><td class="py-4 font-mono text-rose-500 font-bold tracking-wider">${x.code}</td><td class="py-4 capitalize text-gray-500 font-medium">${x.type}</td><td class="py-4 text-center"><span class="${x.is_active ? 'text-green-500' : 'text-red-400 animate-pulse'} font-extrabold text-xs uppercase tracking-wider">${x.is_active ? 'Active' : 'Revoked'}</span></td><td class="py-4 text-right space-x-2">${x.is_active ? `<button onclick="toggleCode(${x.id},false)" class="text-red-500 hover:bg-red-50 px-3 py-1 rounded-lg text-xs font-bold transition-colors">REVOKE</button>` : `<button onclick="toggleCode(${x.id},true)" class="text-green-500 hover:bg-green-50 px-3 py-1 rounded-lg text-xs font-bold transition-colors">ACTIVATE</button>`}</td></tr>`).join(''); } catch (e) { console.error(e) } }
         async function fetchSchoolsManage() {
@@ -4427,7 +4447,12 @@
 
         async function downloadUserReportPDF() {
             if (!globalUsers || globalUsers.length === 0) {
-                await fetchUsers();
+                try {
+                    await fetchUsers(true);
+                } catch (e) {
+                    alert("Download Failed: " + e.message); return;
+                }
+
                 if (!globalUsers || globalUsers.length === 0) {
                     alert("No user data loaded. Are you an Admin?"); return;
                 }
@@ -4446,7 +4471,12 @@
 
         async function downloadUserReport() {
             if (!globalUsers || globalUsers.length === 0) {
-                await fetchUsers();
+                try {
+                    await fetchUsers(true);
+                } catch (e) {
+                    alert("Download Failed: " + e.message); return;
+                }
+
                 if (!globalUsers || globalUsers.length === 0) {
                     alert("No user data loaded. Are you an Admin?"); return;
                 }
