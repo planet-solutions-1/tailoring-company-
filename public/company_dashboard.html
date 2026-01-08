@@ -2906,52 +2906,64 @@
             });
         }
 
-        function renderTailoringData() {
-            resetTdViews();
-            document.getElementById('td-level-1').classList.remove('hidden');
+        async function renderTailoringData() {
+            try {
+                console.log("Rendering Tailoring Data...");
+                resetTdViews();
+                const container = document.getElementById('td-level-1');
+                if (container) container.classList.remove('hidden');
 
-            const grid = document.getElementById('td-school-grid');
-            if (!globalSchools || globalSchools.length === 0) {
-                grid.innerHTML = `<div class="col-span-full text-center py-20">
-                    <div class="inline-block p-4 rounded-full bg-gray-50 mb-4 text-gray-300">
-                        <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
-                    </div>
-                    <h3 class="text-lg font-bold text-gray-400">No Schools Found</h3>
-                    <p class="text-xs text-gray-400 mt-2">Add schools in the "Schools" tab to see them here.</p>
-                </div>`;
-                return;
+                // Safety check for students
+                if (!globalStudents) await fetchAllStudents();
+
+                const grid = document.getElementById('td-school-grid');
+                if (!grid) { console.error("Grid ID not found"); return; }
+
+                if (!globalSchools || globalSchools.length === 0) {
+                    grid.innerHTML = `<div class="col-span-full text-center py-20">
+                        <div class="inline-block p-4 rounded-full bg-gray-50 mb-4 text-gray-300">
+                            <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                        </div>
+                        <h3 class="text-lg font-bold text-gray-400">No Schools Found</h3>
+                        <p class="text-xs text-gray-400 mt-2">Add schools in the "Schools" tab to see them here.</p>
+                    </div>`;
+                    return;
+                }
+
+                grid.innerHTML = globalSchools.map(s => {
+                    // Safe access to students
+                    const schoolStudents = Array.isArray(globalStudents) ? globalStudents.filter(st => st.school_name === s.name) : [];
+                    const count = schoolStudents.length;
+                    const takingMeas = schoolStudents.filter(st => st.measurements && Object.keys(st.measurements).length > 0).length;
+
+                    return `
+                         <div onclick="openSchoolDetails(${s.id})" class="clay-card p-6 flex flex-col cursor-pointer hover:scale-[1.03] transition-transform group">
+                             <div class="flex justify-between items-start mb-6">
+                                  <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-extrabold text-2xl shadow-lg shadow-blue-200">
+                                      ${s.name ? s.name.charAt(0) : '?'}
+                                  </div>
+                                  <span class="px-3 py-1 rounded-lg bg-gray-50 text-gray-400 text-[10px] font-bold uppercase tracking-wider group-hover:bg-blue-50 group-hover:text-blue-500 transition-colors">View Data</span>
+                             </div>
+                             <h3 class="text-xl font-bold text-gray-800 mb-1 line-clamp-1" title="${s.name}">${s.name}</h3>
+                             <p class="text-xs text-gray-400 font-bold uppercase tracking-wider mb-6">${s.priority || 'Normal'} Priority</p>
+                             
+                             <div class="mt-auto grid grid-cols-2 gap-4">
+                                  <div class="bg-gray-50 rounded-xl p-3">
+                                      <p class="text-[10px] text-gray-400 uppercase font-bold">Students</p>
+                                      <p class="text-lg font-extrabold text-gray-700">${count}</p>
+                                  </div>
+                                  <div class="bg-gray-50 rounded-xl p-3">
+                                      <p class="text-[10px] text-gray-400 uppercase font-bold">Meas. Taken</p>
+                                      <p class="text-lg font-extrabold text-emerald-500">${takingMeas}</p>
+                                  </div>
+                             </div>
+                         </div>
+                         `;
+                }).join('');
+            } catch (e) {
+                console.error("Render Error:", e);
+                // alert("Error loading Tailoring Data: " + e.message); // Helpful for user reporting
             }
-
-            grid.innerHTML = globalSchools.map(s => {
-                // Calc stats - Use Name for safer matching if IDs are ambiguous
-                const schoolStudents = globalStudents.filter(st => st.school_name === s.name);
-                const count = schoolStudents.length;
-                const takingMeas = schoolStudents.filter(st => st.measurements && Object.keys(st.measurements).length > 0).length; // Rough check
-
-                return `
-                     <div onclick="openSchoolDetails(${s.id})" class="clay-card p-6 flex flex-col cursor-pointer hover:scale-[1.03] transition-transform group">
-                         <div class="flex justify-between items-start mb-6">
-                              <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-extrabold text-2xl shadow-lg shadow-blue-200">
-                                  ${s.name.charAt(0)}
-                              </div>
-                              <span class="px-3 py-1 rounded-lg bg-gray-50 text-gray-400 text-[10px] font-bold uppercase tracking-wider group-hover:bg-blue-50 group-hover:text-blue-500 transition-colors">View Data</span>
-                         </div>
-                         <h3 class="text-xl font-bold text-gray-800 mb-1 line-clamp-1" title="${s.name}">${s.name}</h3>
-                         <p class="text-xs text-gray-400 font-bold uppercase tracking-wider mb-6">${s.priority} Priority</p>
-                         
-                         <div class="mt-auto grid grid-cols-2 gap-4">
-                              <div class="bg-gray-50 rounded-xl p-3">
-                                  <p class="text-[10px] text-gray-400 uppercase font-bold">Students</p>
-                                  <p class="text-lg font-extrabold text-gray-700">${count}</p>
-                              </div>
-                              <div class="bg-gray-50 rounded-xl p-3">
-                                  <p class="text-[10px] text-gray-400 uppercase font-bold">Meas. Taken</p>
-                                  <p class="text-lg font-extrabold text-emerald-500">${takingMeas}</p>
-                              </div>
-                         </div>
-                     </div>
-                     `;
-            }).join('');
         }
 
         async function openSchoolDetails(id) {
