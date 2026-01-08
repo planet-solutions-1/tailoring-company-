@@ -4242,7 +4242,11 @@
         let charts = { vol: null, role: null };
         let debounceTimer;
 
-        function initReports() {
+        async function initReports() {
+            // Ensure dependencies are loaded for Reports
+            if (!globalSchools || globalSchools.length === 0) await fetchSchoolsForSelect();
+            if (!globalUsers || globalUsers.length === 0) await fetchUsers();
+
             // Populate School Dropdowns (All Reports View Dropdowns)
             const selectors = ['#log-filter-school', '#rp-export-school-select', '#report-school-select'];
 
@@ -4251,18 +4255,23 @@
                 const opts = globalSchools.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
                 selectors.forEach(sel => {
                     const el = document.querySelector(sel);
-                    if (el) el.innerHTML = `<option value="All">-- All Schools --</option>` + opts;
+                    if (el) {
+                        const current = el.value;
+                        el.innerHTML = `<option value="All">-- All Schools --</option>` + opts;
+                        if (current && current !== 'All') el.value = current;
+                    }
                 });
             };
 
             populate();
-            setTimeout(populate, 1000); // Retry logic
+            // Retry not needed if we await, but good for safety if fetch fails silently
+            // setTimeout(populate, 1000); 
 
             // Initial Fetch
             fetchReportLogs();
         }
 
-        // Wrapper for HTML Button
+        // Wrapper for the HTML Filter Button
         window.fetchActivityLogs = function () {
             fetchReportLogs();
         }
@@ -4273,8 +4282,7 @@
         }
 
         async function fetchReportLogs() {
-            // ... (existing code matches)
-            // Capture Filters Correctly
+            // Capture Filters with correct IDs
             const schoolId = document.getElementById('log-filter-school')?.value;
             const userId = document.getElementById('log-filter-user')?.value;
             const startDate = document.getElementById('log-filter-start-date')?.value;
@@ -4286,17 +4294,19 @@
             if (startDate) params.append('start_date', startDate);
             if (endDate) params.append('end_date', endDate);
 
+            // Fetch
             try {
                 const tbody = document.getElementById('rp-school-table');
                 if (tbody) tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-blue-500"><i class="fas fa-spinner fa-spin mr-2"></i>Loading System Logs...</td></tr>';
 
-                // Update AI Loading State
+                // Update AI Analyst (Loading)
                 updateAIComponents({}, true);
 
                 const r = await fetch(`${API_BASE}/data/logs?${params}`, { headers: { 'Authorization': `Bearer ${token}` } });
                 const data = await r.json();
                 globalLogs = data.error ? [] : data;
 
+                // Render
                 renderLogTable('rp-school-table', globalLogs);
                 updateAIComponents(globalLogs, false);
 
