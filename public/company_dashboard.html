@@ -4425,8 +4425,13 @@
             link.click();
         }
 
-        function downloadUserReportPDF() {
-            if (!globalUsers || globalUsers.length === 0) { alert("No user data loaded."); return; }
+        async function downloadUserReportPDF() {
+            if (!globalUsers || globalUsers.length === 0) {
+                await fetchUsers();
+                if (!globalUsers || globalUsers.length === 0) {
+                    alert("No user data loaded. Are you an Admin?"); return;
+                }
+            }
 
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
@@ -4439,8 +4444,14 @@
             doc.save(`User_Registry.pdf`);
         }
 
-        function downloadUserReport() {
-            if (!globalUsers || globalUsers.length === 0) { alert("No user data loaded."); return; }
+        async function downloadUserReport() {
+            if (!globalUsers || globalUsers.length === 0) {
+                await fetchUsers();
+                if (!globalUsers || globalUsers.length === 0) {
+                    alert("No user data loaded. Are you an Admin?"); return;
+                }
+            }
+
             const headers = ['Username', 'Role', 'School ID', 'Active'];
             const rows = globalUsers.map(u => [`"${u.username}"`, `"${u.role}"`, `"${u.school_id || ''}"`, `"${u.is_active ? 'Yes' : 'No'}"`]);
 
