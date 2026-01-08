@@ -2297,7 +2297,6 @@
 
         async function fetchUsers(throwOnError = false) {
             try {
-                // alert("Debug: Fetching Users...");
                 const r = await fetch(`${API_BASE}/data/users`, { headers: { 'Authorization': `Bearer ${token}` } });
 
                 if (!r.ok) {
@@ -2317,9 +2316,10 @@
                     return;
                 }
 
-                // DEBUG ALERT FOR DIAGNOSIS
+                // Warn if data is unexpectedly empty (stale session?)
                 if (u.length === 0 && throwOnError) {
-                    alert(`Debug: API returned 0 users. \nMe: ${token ? 'Has Token' : 'No Token'}`);
+                    // We don't alert here anymore to avoid spam, but the caller will handle it.
+                    console.warn("API returned 0 users. Session might be stale.");
                 }
 
                 globalUsers = u;
@@ -4464,7 +4464,8 @@
                 }
 
                 if (!globalUsers || globalUsers.length === 0) {
-                    alert("No user data loaded. Are you an Admin?"); return;
+                    alert("No user data found.\n\nThe database appears empty. Your session might be stale.\nPlease Log Out and Log In again to refresh.");
+                    return;
                 }
             }
 
@@ -4488,7 +4489,8 @@
                 }
 
                 if (!globalUsers || globalUsers.length === 0) {
-                    alert("No user data loaded. Are you an Admin?"); return;
+                    alert("No user data found.\n\nThe database appears empty. Your session might be stale.\nPlease Log Out and Log In again to refresh.");
+                    return;
                 }
             }
 
