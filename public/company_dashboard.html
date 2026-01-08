@@ -418,17 +418,17 @@
                                     class="bg-slate-50/80 border-b border-indigo-100 backdrop-blur-sm sticky top-0 z-10">
                                     <th
                                         class="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider text-left pl-6">
-                                        TIMESTAMP</th>
-                                    <th class="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider text-left">
-                                        USER</th>
+                                        USERNAME</th>
                                     <th class="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider text-left">
                                         ROLE</th>
                                     <th class="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider text-left">
                                         SCHOOL</th>
-                                    <th class="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider text-left">
-                                        ACTION</th>
-                                    <th class="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider text-left">
-                                        DETAILS</th>
+                                    <th
+                                        class="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider text-center">
+                                        STATUS</th>
+                                    <th
+                                        class="p-4 text-xs font-bold text-slate-400 uppercase tracking-wider text-right">
+                                        ACTIONS</th>
                                 </tr>
                             </thead>
                             <tbody id="user-list-body" class="divide-y divide-gray-100"></tbody>
@@ -2341,6 +2341,13 @@
             } catch (e) {
                 console.error("Fetch Users Exception:", e);
                 globalUsers = [];
+                // Fix: Clear the table on error so the user doesn't see stale "Ghost" data
+                const listBody = document.getElementById('user-list-body');
+                if (listBody) {
+                    listBody.innerHTML = `<tr><td colspan="5" class="p-8 text-center text-red-500 font-bold bg-red-50 rounded-lg">
+                        Connection Failed. Please refresh the page.<br><span class="text-xs font-normal text-gray-500">${e.message}</span>
+                    </td></tr>`;
+                }
                 if (throwOnError) throw e;
             }
         }
