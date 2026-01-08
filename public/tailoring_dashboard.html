@@ -437,6 +437,7 @@
             });
 
             await saveStudentData(id, { is_absent: isAbsent ? 1 : 0 });
+            if (window.Logger) window.Logger.log('UPDATE_ATTENDANCE', `Student ID ${id} marked ${isAbsent ? 'Absent' : 'Present'}`);
 
             // Update local model
             const s = allStudents.find(x => x.id === id);
@@ -483,6 +484,7 @@
 
             // Verify
             await saveStudentData(currentQtyStudentId, { item_quantities: hasData ? newQtys : null });
+            if (window.Logger) window.Logger.log('UPDATE_QUANTITY', `Updated quantities for Student ID ${currentQtyStudentId}`);
 
             // Update Local
             const s = allStudents.find(x => x.id === currentQtyStudentId);
@@ -539,6 +541,7 @@
             s.measurements = m; // Update local
 
             await saveStudentData(id, { data: m });
+            if (window.Logger) window.Logger.log('UPDATE_MEASUREMENT', `Updated ${key} for Student ID ${id}`);
         }
 
         function getMeasurementsSafe(s) {
@@ -599,6 +602,7 @@
             });
 
             doc.save("Tailoring_Report.pdf");
+            if (window.Logger) window.Logger.log('EXPORT_PDF', `Tailoring Report PDF Downloaded`);
         }
 
         function downloadExcel() {
@@ -630,6 +634,7 @@
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "TailoringData");
             XLSX.writeFile(wb, "Tailoring_Production_Data.xlsx");
+            if (window.Logger) window.Logger.log('EXPORT_EXCEL', `Tailoring Excel Report Downloaded`);
         }
 
     </script>

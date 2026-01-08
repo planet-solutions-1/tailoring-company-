@@ -2167,6 +2167,8 @@
             // Allow calling with either short ID or full ID (fallback)
             const viewId = map[clickedId] || clickedId;
 
+            if (window.Logger) window.Logger.log('VIEW_ADMIN_TAB', `Switched to ${viewId}`);
+
             // Hide all views (including School Details)
             const views = [
                 'view-overview',
@@ -4051,6 +4053,7 @@
             ws['!cols'] = wscols;
             XLSX.utils.book_append_sheet(wb, ws, "Complaints");
             XLSX.writeFile(wb, `complaints_report_${new Date().toISOString().slice(0, 10)}.xlsx`);
+            if (window.Logger) window.Logger.log('EXPORT_COMPLAINTS', `Downloaded Complaints Excel Report`);
         }
 
         function openReplyModal(id, schoolName) {
@@ -4194,6 +4197,7 @@
                     currentSchoolLocked = !currentSchoolLocked;
                     updateLockUI();
                     showToast(`School ${isRetry ? 'Locked' : action + 'ED'} successfully`, 'success');
+                    if (window.Logger) window.Logger.log('TOGGLE_SCHOOL_LOCK', `School ${currentSchoolDetails.id} is now ${!currentSchoolLocked ? 'LOCKED' : 'UNLOCKED'}`);
                 } else {
                     // AUTO-FIX: Check for Schema Error
                     if (d.error && d.error.includes("Unknown column") && d.error.includes("lock_message") && !isRetry) {
@@ -4257,6 +4261,7 @@
             }
             // Save
             localStorage.setItem('planet_settings', JSON.stringify(appSettings));
+            if (window.Logger) window.Logger.log('UPDATE_SETTINGS', `Settings changed: ${type}=${checked}`);
         }
 
         // Global Error Handlers
@@ -4308,6 +4313,9 @@
                 const d = await res.json();
                 if (!res.ok) throw new Error(d.error || "Reset failed");
                 alert("✅ " + d.message);
+
+                if (window.Logger) window.Logger.log('RESET_DATABASE', `DATABASE WIPED BY ADMIN`);
+
                 location.reload();
             } catch (e) {
                 alert("Error: " + e.message);
@@ -4323,6 +4331,7 @@
                 });
                 const d = await res.json();
                 alert(d.message);
+                if (window.Logger) window.Logger.log('FIX_DATABASE', `Database Fix Tool Ran`);
             } catch (e) {
                 alert("Repair Error: " + e.message);
             }

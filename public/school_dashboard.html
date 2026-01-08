@@ -1626,6 +1626,9 @@
                 }
                 if (tabId === 'support') fetchMyComplaints();
                 if (tabId === 'settings') renderSettings();
+
+                // LOGGING
+                if (window.Logger) window.Logger.log('VIEW_SCHOOL_TAB', `Switched to ${tabId}`);
             }
         }
 
@@ -2465,6 +2468,9 @@
         }
 
         async function executeDelete(items) {
+            if (items.length > 0 && window.Logger) {
+                window.Logger.log(items.length > 1 ? 'BULK_DELETE_STUDENTS' : 'DELETE_STUDENT', `Deleted ${items.length} item(s). IDs: ${items.map(i => i.admission_no).join(', ')}`);
+            }
             // 0. ANIMATION (Visual Feedback)
             const idsToRemove = new Set(items.map(i => i.admission_no));
 
@@ -2610,6 +2616,9 @@
             renderStudents();
             backupData();
             syncToServer(); // Force immediate sync
+
+            if (window.Logger) window.Logger.log('UPDATE_STUDENT', `Edited student: ${document.getElementById('edit_name').value} (${document.getElementById('edit_adm').value})`);
+
             document.getElementById('editStudentModal').close();
         }
 
@@ -3258,6 +3267,8 @@
                 await syncToServer(); // PUSH DATA TO SERVER
 
                 alert(`Report:\n✅ Created: ${success}\n🔄 Updated: ${updated}\n⏭️ Skipped: ${skipped}\n❌ Errors: ${errors}`);
+
+                if (window.Logger) window.Logger.log('IMPORT_STUDENTS', `Batch Import Result - Created: ${success}, Updated: ${updated}, Errors: ${errors}`);
 
                 // Clear Queue on success
                 importQueue = [];
@@ -4391,6 +4402,7 @@
 
                     // Save
                     doc.save(`Filter_QR_${cls}_${sec}_${Date.now()}.pdf`);
+                    if (window.Logger) window.Logger.log('EXPORT_QR_PDF', `Generated QR PDF for Class: ${cls}, Sec: ${sec}`);
                 } catch (pdfErr) {
                     console.error("PDF generation error", pdfErr);
                     alert("Error adding QR to PDF.");

@@ -940,6 +940,7 @@
 
                 if (res.ok) {
                     alert("Pattern Saved to Cloud!");
+                    if (window.Logger) window.Logger.log('CREATE_PATTERN', `Created pattern: ${name}`);
                     document.getElementById('patternModal').classList.add('hidden');
                     loadFromCloud();
                 } else {
@@ -1016,6 +1017,7 @@
 
                 if (res.ok) {
                     alert("Pattern Updated Successfully!");
+                    if (window.Logger) window.Logger.log('UPDATE_PATTERN', `Updated pattern: ${name}`);
                     loadFromCloud(); // Reload to get fresh state
                     resetView(); // Exit update mode
                 } else {
@@ -1125,6 +1127,7 @@
 
                 if (res.ok) {
                     alert("Pattern Deleted.");
+                    if (window.Logger) window.Logger.log('DELETE_PATTERN', `Deleted pattern ID: ${id}`);
                     loadFromCloud();
                 } else {
                     const err = await res.text();
@@ -1326,6 +1329,7 @@
 
                 if (res.ok) {
                     alert("Pattern Details Saved!");
+                    if (window.Logger) window.Logger.log('UPDATE_PATTERN_METADATA', `Updated metadata for pattern ID: ${currentExportPatternId}`);
                     // Update Local State
                     p.description = newDesc;
                     p.consumption = parseFloat(totalCloth);
@@ -1408,6 +1412,7 @@
                 styles: { fontSize: 8, cellPadding: 2 }
             });
             doc.save(`Pattern_${code}.pdf`);
+            if (window.Logger) window.Logger.log('EXPORT_PATTERN_PDF', `Exported Pattern PDF: ${code}`);
             closeExportModal();
         }
 
@@ -1458,6 +1463,7 @@
             const ws = XLSX.utils.aoa_to_sheet(wsData);
             XLSX.utils.book_append_sheet(wb, ws, "Pattern");
             XLSX.writeFile(wb, `Pattern_${code}.xlsx`);
+            if (window.Logger) window.Logger.log('EXPORT_PATTERN_EXCEL', `Exported Pattern Excel: ${code}`);
             closeExportModal();
         }
 
