@@ -2379,7 +2379,8 @@
             if (viewId === 'view-access') fetchAccessCodes();
             if (viewId === 'view-complaints') fetchComplaints();
             if (viewId === 'view-reports') {
-                fetchSchoolsManage().then(() => { if (window.initReports) initReports(); });
+                fetchSchoolsManage();
+                if (window.initReports) initReports();
             }
         }
         function animateValue(obj, start, end, duration) { let startTimestamp = null; const step = (timestamp) => { if (!startTimestamp) startTimestamp = timestamp; const progress = Math.min((timestamp - startTimestamp) / duration, 1); obj.innerText = Math.floor(progress * (end - start) + start); if (progress < 1) { window.requestAnimationFrame(step); } }; window.requestAnimationFrame(step); }
@@ -3357,7 +3358,7 @@
                 if (!Array.isArray(logs)) return;
 
                 // Update Reports Table (if function exists)
-                if (typeof renderLogsTable === 'function') renderLogsTable(logs);
+                if (typeof renderLogTable === 'function') renderLogTable('rp-school-table', logs);
 
                 // Update Dashboard Widget (if element exists)
                 const feed = document.getElementById('activity-feed');
@@ -4472,6 +4473,7 @@
 
         function renderLogTable(id, logs) {
             const tbody = document.getElementById(id);
+            if (!tbody) { console.error("Log Table Body Not Found:", id); return; }
             if (logs.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-gray-400 italic">No logs found matching criteria.</td></tr>`;
                 return;
