@@ -1621,6 +1621,7 @@
                     selectedStudents.clear(); // Fix: Clear stale selections on tab entry to avoid "Ghost" counts
                     updateBulkActionUI(); // Reset UI
                     populateFilters(); // Ensure filters are ready
+                    populateSections(); // Fix: Init Sections too
                     renderStudents();
                 }
                 if (tabId === 'support') fetchMyComplaints();
