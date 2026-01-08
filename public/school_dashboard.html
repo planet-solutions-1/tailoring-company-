@@ -1618,6 +1618,8 @@
                     }
                 }
                 if (tabId === 'students') {
+                    selectedStudents.clear(); // Fix: Clear stale selections on tab entry to avoid "Ghost" counts
+                    updateBulkActionUI(); // Reset UI
                     populateFilters(); // Ensure filters are ready
                     renderStudents();
                 }
@@ -2149,6 +2151,12 @@
                 selectedStudents.add(key);
             }
             renderStudents();
+        }
+
+        function clearSelection() {
+            selectedStudents.clear();
+            renderStudents();
+            updateBulkActionUI();
         }
 
         function toggleSelectAll(checkbox) {
