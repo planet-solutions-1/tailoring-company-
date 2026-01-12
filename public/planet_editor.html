@@ -10,7 +10,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script>window.jsPDF = window.jspdf.jsPDF;</script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
-    <script src="js/logger.js"></script>
     <link
         href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap"
         rel="stylesheet">
@@ -306,7 +305,7 @@
         <input type="file" id="fileInput" accept=".xlsx, .xls" class="hidden" onchange="handleFileUpload(event)" />
         <div id="headerActions" class="grid grid-cols-2 w-full md:w-auto md:flex gap-2 md:gap-3 items-center">
             <!-- Navigation Button -->
-            <a href="packing_dashboard.html"
+            <a href="https://paking-dashboard-production.up.railway.app/"
                 class="flex items-center justify-center gap-2 px-3 py-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-md text-sm font-medium transition-colors border border-indigo-200"
                 title="Switch to Packing Mode">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -319,7 +318,7 @@
                 Packing
             </a>
 
-            <a href="pattern_view.html"
+            <a href="pattern_dashboard.html"
                 class="flex items-center justify-center gap-2 px-3 py-2 bg-purple-50 text-purple-700 hover:bg-purple-100 rounded-md text-sm font-medium transition-colors border border-purple-200"
                 title="Switch to Pattern Grouping Mode">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -614,7 +613,6 @@
                     alert("Complaint Submitted!");
                     e.target.reset();
                     fetchMyComplaints();
-                    if (window.Logger) window.Logger.log('SUBMIT_COMPLAINT', `Rating: ${rating}`);
                 } else {
                     alert("Submission Failed");
                 }
@@ -1381,7 +1379,6 @@
 
         function saveData() {
             localStorage.setItem('planetEditorData', JSON.stringify(data));
-            if (window.Logger && Math.random() > 0.9) window.Logger.log('AUTO_SAVE_LOCAL', 'Data saved to local storage', 10); // Log 10% of auto-saves to reduce noise
         }
 
         function updateRowCalculations(index) {
@@ -1460,7 +1457,6 @@
                 const sheetNames = currentWorkbook.SheetNames;
                 renderSheetTabs(sheetNames);
                 loadSheet(sheetNames[0]);
-                if (window.Logger) window.Logger.log('IMPORT_FILE', `Imported file: ${file.name}`);
             } catch (error) {
                 console.error("❌ Critical error in handleFileUpload:", error);
                 alert("Import failed: " + error.message);
@@ -1838,7 +1834,6 @@
 
             XLSX.utils.book_append_sheet(wb, ws, "Measurements");
             XLSX.writeFile(wb, `Planet_Data_${new Date().toISOString().slice(0, 10)}.xlsx`);
-            if (window.Logger) window.Logger.log('EXPORT_EXCEL', 'Exported Planet Data Excel');
         }
 
 
@@ -2033,7 +2028,6 @@
                 });
 
                 doc.save(`PlanetData_PDF_${new Date().toISOString().slice(0, 10)}.pdf`);
-                if (window.Logger) window.Logger.log('EXPORT_PDF', 'Exported Planet Data PDF');
 
             } catch (error) {
                 console.error("PDF Export Error:", error);

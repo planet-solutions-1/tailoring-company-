@@ -10,7 +10,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-    <script src="js/logger.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <script>
         // Shim for jspdf
@@ -289,7 +288,7 @@
                         onchange="handleFileUpload(event)">
                 </label>
 
-                <a href="planet_editor.html"
+                <a href="index.html"
                     class="hidden md:flex text-gray-400 hover:text-[#2C3E50] transition-colors p-2 rounded-full hover:bg-gray-100"
                     title="Back to Editor">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -782,7 +781,6 @@
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "PackingList_Updated");
             XLSX.writeFile(wb, `Packing_Status_${new Date().toISOString().slice(0, 10)}.xlsx`);
-            if (window.Logger) window.Logger.log('EXPORT_PACKING_EXCEL', 'Exported Packing List Excel');
         }
 
         function parseClass(cls) {
@@ -816,10 +814,8 @@
         function togglePack(admissionNo, checked) {
             if (checked) {
                 packedState[admissionNo] = true;
-                if (window.Logger) window.Logger.log('PACK_ITEM', `Packed student: ${admissionNo}`);
             } else {
                 delete packedState[admissionNo];
-                if (window.Logger) window.Logger.log('UNPACK_ITEM', `Unpacked student: ${admissionNo}`);
             }
             savePackedState();
 
