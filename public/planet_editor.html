@@ -2184,101 +2184,90 @@
             btn.innerHTML = `<span class="animate-spin">↻</span> Syncing...`;
             if (window.Logger) window.Logger.log('SYNC_START', `Started sync of ${data.length} records`);
 
-            let successCount = 0;
-            let failCount = 0;
+            let failed = 0;
+            let uploaded = 0;
+            let firstError = null;
 
+            // Batch Processing to avoid browser hang
+            const batchSize = 5;
             try {
-                // Batch Process in chunks of 5 to avoid browser/server overload
-                const CHUNK_SIZE = 5;
-                for (let i = 0; i < data.length; i += CHUNK_SIZE) {
-                    const chunk = data.slice(i, i + CHUNK_SIZE);
+                for (let i = 0; i < data.length; i += batchSize) {
+                    const chunk = data.slice(i, i + batchSize);
                     await Promise.all(chunk.map(async (row) => {
                         try {
-                            const studentId = await uploadStudent(row, schoolId, token);
-                            if (studentId) {
-                                await uploadMeasurements(studentId, row, schoolId, token);
-                                successCount++;
-                            } else {
-                                failCount++;
-                            }
+                            // 1. Upload/Update Student
+                            const sId = await uploadStudent(row, schoolId, token);
+
+                            // 2. Upload Measurements
+                            await uploadMeasurements(sId, row, schoolId, token);
+                            uploaded++;
                         } catch (e) {
-                            console.error(e);
-                            failCount++;
+                            failed++;
+                            console.error("Row fail", e);
+                            if (!firstError) firstError = e.message;
                         }
                     }));
+                    if (window.Logger) window.Logger.log('SYNC_COMPLETE', `Sync finished. Success: ${successCount}, Failed: ${failCount}`);
 
-                    // Update Progress
-                    btn.innerHTML = `<span class="animate-spin">↻</span> ${Math.min(i + CHUNK_SIZE, data.length)}/${data.length}`;
+                } catch (e) {
+                    alert("Critical Sync Error: " + e.message);
+                } finally {
+                    btn.disabled = false;
+                    btn.innerHTML = originalText;
                 }
-
-                alert(`Sync Complete!\n\n✅ Uploaded: ${successCount}\n❌ Failed: ${failCount}`);
-                if (window.Logger) window.Logger.log('SYNC_COMPLETE', `Sync finished. Success: ${successCount}, Failed: ${failCount}`);
-
-            } catch (e) {
-                alert("Critical Sync Error: " + e.message);
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = originalText;
             }
-        }
 
         async function uploadStudent(row, schoolId, token) {
-            const payload = {
-                school_id: schoolId,
-                admission_no: row['Admission No'] || row['Adm No'] || "",
-                roll_no: row['Roll No'] || "",
-                name: row['Student Name'] || "Unknown",
-                class: row['Class'] || "",
-                section: row['Section'] || "",
-                house: row['House'] || "",
-                gender: row['Gender'] || ""
+                const payload = {
+                    school_id: schoolId,
+                    admission_no: row['Admission No'] || row['Adm No'] || "",
+                    roll_no: row['Roll No'] || "",
+                    name: row['Student Name'] || "Unknown",
+                    class: row['Class'] || "",
+                    section: row['Section'] || "",
+                    house: row['House'] || "",
+                    gender: row['Gender'] || ""
+                };
+
+                admission_no: String(row['ADM NO'] || '').trim(), // Robust Trim
+                    name: row['STUDENT NAME'] || "Unknown",
+                        gender: row['GENDER'] || "",
+                            class: row['CLASS'] || "",
+                                section: row['SECTION'] || "",
+                                    house: row['HOUSE'] || "",
+                                        roll_no: row['ROLL NO'] || null
             };
 
-            // 1. Try to Find existing (Deduplicate by Adm No)
-            // The POST /student endpoint technically inserts new if ID not provided.
-            // But we want to UPDATE if exists.
-            // ideally we search first. BUT for speed, let's just attempt Create.
-            // Wait, duplicated Admission No might be an issue if UNIQUE constraint exists.
-            // Let's rely on backend logic. `data.js` shows INSERT.
-            // This means we might create DUPLICATES if we just spam POST.
-            // We need to SEARCH first.
-
-            // Try to Find by Admission No first
-            if (payload.admission_no) {
-                // We don't have a public search endpoint that returns ID easily without listing all.
-                // WE DO have GET /students/:schoolId
-                // We should cache existing students first?
-                // YES. That is faster.
-            }
-
-            // Simplified Approach: Just POST. If DB strict, it fails.
-            // Better: use the POST /student endpoint.
-            // Wait, does POST handle upsert?
-            // Reviewed `data.js`: NO. It does INSERT if no ID, UPDATE if ID.
-            // We have no ID here (Excel row).
-
-            // CRITICAL FIX: We need to LOOKUP student ID before Posting.
-            // Or assume "Fresh Upload".
-            // Let's try to DELETE prior data? "Reset Database"? No too dangerous.
-
             // SMART SYNC: List all students for school once.
-            // Map AdmNo -> ID.
-            // This is efficient.
-
             if (!window.existingStudentsMap) {
                 try {
+                    console.log("Fetching existing students for lookup...");
                     const res = await fetch(`/api/data/students/${schoolId}`, {
                         headers: { 'Authorization': `Bearer ${token}` }
                     });
+                    if (!res.ok) throw new Error("Failed to fetch existing students: " + res.statusText);
+
                     const list = await res.json();
                     window.existingStudentsMap = {};
                     list.forEach(s => {
-                        if (s.admission_no) window.existingStudentsMap[s.admission_no] = s.id;
+                        if (s.admission_no) window.existingStudentsMap[String(s.admission_no).trim()] = s.id;
                     });
-                } catch (e) { window.existingStudentsMap = {}; }
+                    console.log(`Mapped ${Object.keys(window.existingStudentsMap).length} existing students.`);
+                } catch (e) {
+                    console.error("Map Fetch Failed", e);
+                    // Crucial: If list fetch fails, we shouldn't proceed cleanly otherwise we risk duplicates. 
+                    // But for robustness let's continue and rely on backend errors.
+                    // window.existingStudentsMap = {}; 
+                    // Better: Alert user once.
+                    if (!window.fetchWarned) { alert("Warning: Could not sync with existing database. Duplicates might fail."); window.fetchWarned = true; }
+                    window.existingStudentsMap = {};
+                }
             }
 
-            payload.id = window.existingStudentsMap[payload.admission_no]; // If exists, add ID to payload -> Update
+            // Lookup ID
+            if (window.existingStudentsMap[payload.admission_no]) {
+                payload.id = window.existingStudentsMap[payload.admission_no];
+            }
 
             const res = await fetch('/api/data/student', {
                 method: 'POST',
@@ -2286,7 +2275,10 @@
                 body: JSON.stringify(payload)
             });
             const d = await res.json();
-            if (!res.ok) throw new Error(d.error);
+            if (!res.ok) throw new Error(d.error || "Server Error");
+
+            // Update Map for subsequent rows in this batch (if we just created one)
+            if (d.id) window.existingStudentsMap[payload.admission_no] = d.id;
 
             return d.id || payload.id;
         }
