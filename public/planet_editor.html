@@ -342,6 +342,16 @@
                 <span class="inline">Import</span>
             </button>
 
+            <button id="btnSyncCloud" onclick="syncToCloud()"
+                class="px-4 py-2 rounded-md text-sm font-bold flex items-center justify-center gap-2 shadow-sm text-white bg-green-600 hover:bg-green-700 transition-colors border border-green-700">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                <span class="inline">Sync Cloud</span>
+            </button>
+
             <button onclick="openExportModal()"
                 class="btn-action px-4 py-2 rounded-md text-sm font-medium flex items-center justify-center gap-2 shadow-sm">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -2103,6 +2113,185 @@
         }
 
 
+
+        // --- CLOUD SYNC LOGIC ---
+
+        async function syncToCloud() {
+            if (data.length === 0) return alert("No data to sync.");
+
+            // 1. Auth Check
+            let token = sessionStorage.getItem('token');
+            let schoolId = sessionStorage.getItem('schoolId');
+
+            if (!token || !schoolId) {
+                const u = prompt("Enter School Username to Sync:");
+                if (!u) return;
+                const p = prompt("Enter Password:");
+                if (!p) return;
+
+                // Login
+                try {
+                    const res = await fetch('/api/auth/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username: u, password: p })
+                    });
+                    const d = await res.json();
+                    if (!res.ok) throw new Error(d.error);
+
+                    token = d.token;
+                    schoolId = d.user.schoolId;
+                    sessionStorage.setItem('token', token);
+                    sessionStorage.setItem('schoolId', schoolId);
+                    sessionStorage.setItem('schoolName', d.user.schoolName || u);
+                } catch (e) {
+                    return alert("Login Failed: " + e.message);
+                }
+            }
+
+            if (!confirm(`Sync ${data.length} records to the Cloud for School ID #${schoolId}?`)) return;
+
+            const btn = document.getElementById('btnSyncCloud');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = `<span class="animate-spin">↻</span> Syncing...`;
+            if (window.Logger) window.Logger.log('SYNC_START', `Started sync of ${data.length} records`);
+
+            let successCount = 0;
+            let failCount = 0;
+
+            try {
+                // Batch Process in chunks of 5 to avoid browser/server overload
+                const CHUNK_SIZE = 5;
+                for (let i = 0; i < data.length; i += CHUNK_SIZE) {
+                    const chunk = data.slice(i, i + CHUNK_SIZE);
+                    await Promise.all(chunk.map(async (row) => {
+                        try {
+                            const studentId = await uploadStudent(row, schoolId, token);
+                            if (studentId) {
+                                await uploadMeasurements(studentId, row, schoolId, token);
+                                successCount++;
+                            } else {
+                                failCount++;
+                            }
+                        } catch (e) {
+                            console.error(e);
+                            failCount++;
+                        }
+                    }));
+
+                    // Update Progress
+                    btn.innerHTML = `<span class="animate-spin">↻</span> ${Math.min(i + CHUNK_SIZE, data.length)}/${data.length}`;
+                }
+
+                alert(`Sync Complete!\n\n✅ Uploaded: ${successCount}\n❌ Failed: ${failCount}`);
+                if (window.Logger) window.Logger.log('SYNC_COMPLETE', `Sync finished. Success: ${successCount}, Failed: ${failCount}`);
+
+            } catch (e) {
+                alert("Critical Sync Error: " + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        }
+
+        async function uploadStudent(row, schoolId, token) {
+            const payload = {
+                school_id: schoolId,
+                admission_no: row['Admission No'] || row['Adm No'] || "",
+                roll_no: row['Roll No'] || "",
+                name: row['Student Name'] || "Unknown",
+                class: row['Class'] || "",
+                section: row['Section'] || "",
+                house: row['House'] || "",
+                gender: row['Gender'] || ""
+            };
+
+            // 1. Try to Find existing (Deduplicate by Adm No)
+            // The POST /student endpoint technically inserts new if ID not provided.
+            // But we want to UPDATE if exists.
+            // ideally we search first. BUT for speed, let's just attempt Create.
+            // Wait, duplicated Admission No might be an issue if UNIQUE constraint exists.
+            // Let's rely on backend logic. `data.js` shows INSERT.
+            // This means we might create DUPLICATES if we just spam POST.
+            // We need to SEARCH first.
+
+            // Try to Find by Admission No first
+            if (payload.admission_no) {
+                // We don't have a public search endpoint that returns ID easily without listing all.
+                // WE DO have GET /students/:schoolId
+                // We should cache existing students first?
+                // YES. That is faster.
+            }
+
+            // Simplified Approach: Just POST. If DB strict, it fails.
+            // Better: use the POST /student endpoint.
+            // Wait, does POST handle upsert?
+            // Reviewed `data.js`: NO. It does INSERT if no ID, UPDATE if ID.
+            // We have no ID here (Excel row).
+
+            // CRITICAL FIX: We need to LOOKUP student ID before Posting.
+            // Or assume "Fresh Upload".
+            // Let's try to DELETE prior data? "Reset Database"? No too dangerous.
+
+            // SMART SYNC: List all students for school once.
+            // Map AdmNo -> ID.
+            // This is efficient.
+
+            if (!window.existingStudentsMap) {
+                try {
+                    const res = await fetch(`/api/data/students/${schoolId}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    const list = await res.json();
+                    window.existingStudentsMap = {};
+                    list.forEach(s => {
+                        if (s.admission_no) window.existingStudentsMap[s.admission_no] = s.id;
+                    });
+                } catch (e) { window.existingStudentsMap = {}; }
+            }
+
+            payload.id = window.existingStudentsMap[payload.admission_no]; // If exists, add ID to payload -> Update
+
+            const res = await fetch('/api/data/student', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify(payload)
+            });
+            const d = await res.json();
+            if (!res.ok) throw new Error(d.error);
+
+            return d.id || payload.id;
+        }
+
+        async function uploadMeasurements(studentId, row, schoolId, token) {
+            // Extract Measurements
+            const extracted = {};
+            measureCols.forEach(m => {
+                if (row[m]) extracted[m] = row[m];
+            });
+
+            // Extract Quantities (Qty_ItemName)
+            const qtys = {};
+            Object.keys(row).forEach(k => {
+                if (k.startsWith("Qty_")) qtys[k] = row[k];
+            });
+
+            const payload = {
+                student_id: studentId,
+                data: extracted,
+                remarks: row['Remarks'] || "",
+                is_absent: (row['Absent/Present'] === 'Absent'),
+                item_quantities: qtys
+            };
+
+            const res = await fetch('/api/data/measurements', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify(payload)
+            });
+            if (!res.ok) throw new Error("Meas Fail");
+        }
 
         init();
     </script>
