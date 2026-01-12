@@ -1565,285 +1565,338 @@
             if (u && Logger) Logger.log('PATTERN_DASHBOARD_LOAD', `Loaded by ${u}`);
         });
     </script>
-</body>
+    <!-- TRASH MODAL RECONSTRUCTED -->
+    <div id="trashModal"
+        class="fixed inset-0 bg-black/50 z-[60] hidden flex items-center justify-center backdrop-blur-sm">
+        <div
+            class="bg-white rounded-lg shadow-xl w-full max-w-md flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
+            <div class="px-6 py-4 border-b flex justify-between items-center bg-gray-50">
+                <h3 class="font-bold text-lg text-red-600">Trash Bin</h3>
+                <button onclick="closeTrashModal()" class="text-gray-400 hover:text-gray-600">×</button>
+            </div>
+            <div class="p-4 overflow-y-auto max-h-[60vh]">
+                <div id="trashList" class="space-y-2"></div>
+            </div>
+            <div class="px-6 py-4 border-t bg-gray-50 flex justify-between">
+                <button onclick="emptyTrash()" class="text-red-600 hover:underline text-xs font-bold uppercase">Empty
+                    Trash</button>
+                <button onclick="closeTrashModal()"
+                    class="px-4 py-2 rounded border hover:bg-gray-100 text-sm">Close</button>
+            </div>
+        </div>
+    </div>
 
-</html> modal.classList.remove('hidden');
-}
+    <script>
+        // TRASH LOGIC RECONSTRUCTED
+        let trashPatterns = [];
+        try {
+            const t = localStorage.getItem('trashPatterns');
+            if (t) trashPatterns = JSON.parse(t);
+        } catch (e) { }
 
-function closeTrashModal() {
-document.getElementById('trashModal').classList.add('hidden');
-}
+        function saveTrash() {
+            localStorage.setItem('trashPatterns', JSON.stringify(trashPatterns));
+        }
 
-function restorePattern(i) {
-const p = trashPatterns[i];
-patterns.push(p);
-trashPatterns.splice(i, 1);
-saveToLocal();
-saveTrash();
-renderModules();
-openTrashModal(); // Refresh modal
-}
+        function openTrashModal() {
+            const list = document.getElementById('trashList');
+            const modal = document.getElementById('trashModal');
+            if (!list || !modal) return;
 
-function permanentDelete(i) {
-if (!confirm("Delete forever? This logic cannot be undone.")) return;
-trashPatterns.splice(i, 1);
-saveTrash();
-openTrashModal();
-}
+            if (trashPatterns.length === 0) {
+                list.innerHTML = '<p class="text-center text-gray-400 italic text-sm">Trash is empty.</p>';
+            } else {
+                list.innerHTML = trashPatterns.map((p, i) => `
+                    <div class="flex justify-between items-center p-3 bg-white border border-gray-200 rounded shadow-sm">
+                        <div>
+                           <div class="font-bold text-gray-800 text-sm">${p.name}</div>
+                           <div class="text-[10px] text-gray-500">${p.count} students</div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="restorePattern(${i})" class="text-xs text-green-600 font-bold border border-green-200 px-2 py-1 rounded hover:bg-green-50">Restore</button>
+                            <button onclick="permanentDelete(${i})" class="text-xs text-red-600 font-bold border border-red-200 px-2 py-1 rounded hover:bg-red-50">Delete</button>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            modal.classList.remove('hidden');
+        }
 
-function emptyTrash() {
-if (!confirm(`Empty Trash? All ${trashPatterns.length} patterns will be lost forever.`)) return;
-trashPatterns = [];
-saveTrash();
-openTrashModal();
-}
+        function closeTrashModal() {
+            document.getElementById('trashModal').classList.add('hidden');
+        }
 
-// --- PACKING LIST EXPORT ---
+        function restorePattern(i) {
+            const p = trashPatterns[i];
+            patterns.push(p);
+            trashPatterns.splice(i, 1);
+            saveToLocal();
+            saveTrash();
+            renderModules();
+            openTrashModal(); // Refresh modal
+        }
 
-function getPackingListData() {
-// Aggregate all students from all patterns
-let allRows = [];
-const backupFilters = filters; // Backup global state
+        function permanentDelete(i) {
+            if (!confirm("Delete forever? This logic cannot be undone.")) return;
+            trashPatterns.splice(i, 1);
+            saveTrash();
+            openTrashModal();
+        }
 
-try {
-patterns.forEach(p => {
-// Temporarily Apply Filters
-filters = p.filters;
-const pRows = getFilteredData();
-const item = allItems.find(i => i.name === p.filters.item);
+        function emptyTrash() {
+            if (!confirm(`Empty Trash? All ${trashPatterns.length} patterns will be lost forever.`)) return;
+            trashPatterns = [];
+            saveTrash();
+            openTrashModal();
+        }
 
-pRows.forEach(r => {
-let qty = 1;
-if (item && r[`Qty_${item.name}`]) {
-const q = parseInt(r[`Qty_${item.name}`]);
-if (!isNaN(q)) qty = q;
-}
+        // --- PACKING LIST EXPORT ---
 
-// Create Simplified Row
-allRows.push({
-"Student Name": r["Student Name"],
-"School": p.metadata?.school || "",
-"Class": r["Class"],
-"Section": r["Section"],
-"Pattern Name": p.name,
-"Gender": r["Gender"],
-"House": r["House"] || "",
-"Description": p.metadata?.desc || "",
-"Quantity": qty,
-// New Fields
-"Roll No": r["Roll No"] || "",
-"Admission No": r["Admission No"] || r["Adm No"] || "",
-// Internal sort keys
-_clsRank: getClassRank(r["Class"]),
-_sec: r["Section"],
-_name: r["Student Name"]
-});
-});
-});
-} finally {
-filters = backupFilters; // Restore
-}
+        function getPackingListData() {
+            // Aggregate all students from all patterns
+            let allRows = [];
+            const backupFilters = filters; // Backup global state
 
-// Sort by Class -> Section -> Name
-allRows.sort((a, b) => {
-if (a._clsRank !== b._clsRank) return a._clsRank - b._clsRank;
-if (a._sec !== b._sec) return a._sec.localeCompare(b._sec);
-return a._name.localeCompare(b._name);
-});
+            try {
+                patterns.forEach(p => {
+                    // Temporarily Apply Filters
+                    filters = p.filters;
+                    const pRows = getFilteredData();
+                    const item = allItems.find(i => i.name === p.filters.item);
 
-return allRows;
-}
+                    pRows.forEach(r => {
+                        let qty = 1;
+                        if (item && r[`Qty_${item.name}`]) {
+                            const q = parseInt(r[`Qty_${item.name}`]);
+                            if (!isNaN(q)) qty = q;
+                        }
 
-function exportPackingListExcel() {
-if (patterns.length === 0) return alert("No patterns to export.");
+                        // Create Simplified Row
+                        allRows.push({
+                            "Student Name": r["Student Name"],
+                            "School": p.metadata?.school || "",
+                            "Class": r["Class"],
+                            "Section": r["Section"],
+                            "Pattern Name": p.name,
+                            "Gender": r["Gender"],
+                            "House": r["House"] || "",
+                            "Description": p.metadata?.desc || "",
+                            "Quantity": qty,
+                            // New Fields
+                            "Roll No": r["Roll No"] || "",
+                            "Admission No": r["Admission No"] || r["Adm No"] || "",
+                            // Internal sort keys
+                            _clsRank: getClassRank(r["Class"]),
+                            _sec: r["Section"],
+                            _name: r["Student Name"]
+                        });
+                    });
+                });
+            } finally {
+                filters = backupFilters; // Restore
+            }
 
-const rows = getPackingListData();
-const wb = XLSX.utils.book_new();
-const wsData = [
-["PACKING LIST REPORT"],
-[`Generated: ${new Date().toLocaleDateString()}`],
-[],
-["Roll No", "Admission No", "Student Name", "School", "Class", "Section", "Pattern Name", "Gender", "House",
-"Description", "Quantity"]
-];
+            // Sort by Class -> Section -> Name
+            allRows.sort((a, b) => {
+                if (a._clsRank !== b._clsRank) return a._clsRank - b._clsRank;
+                if (a._sec !== b._sec) return a._sec.localeCompare(b._sec);
+                return a._name.localeCompare(b._name);
+            });
 
-rows.forEach(r => {
-wsData.push([
-r["Roll No"],
-r["Admission No"],
-r["Student Name"],
-r["School"],
-r["Class"],
-r["Section"],
-r["Pattern Name"],
-r["Gender"],
-r["House"],
-r["Description"],
-r["Quantity"]
-]);
-});
+            return allRows;
+        }
 
-const ws = XLSX.utils.aoa_to_sheet(wsData);
-// Widths
-ws['!cols'] = [{ wch: 10 }, { wch: 15 }, { wch: 25 }, { wch: 20 }, { wch: 10 }, { wch: 10 }, { wch: 25 }, { wch: 10 }, {
-wch: 15 }, { wch: 20 }, { wch: 10 }];
+        function exportPackingListExcel() {
+            if (patterns.length === 0) return alert("No patterns to export.");
 
-XLSX.utils.book_append_sheet(wb, ws, "Packing List");
-XLSX.writeFile(wb, "Packing_List.xlsx");
-}
+            const rows = getPackingListData();
+            const wb = XLSX.utils.book_new();
+            const wsData = [
+                ["PACKING LIST REPORT"],
+                [`Generated: ${new Date().toLocaleDateString()}`],
+                [],
+                ["Roll No", "Admission No", "Student Name", "School", "Class", "Section", "Pattern Name", "Gender", "House",
+                    "Description", "Quantity"]
+            ];
 
-async function exportPackingListPDF() {
-if (patterns.length === 0) return alert("No patterns to export.");
+            rows.forEach(r => {
+                wsData.push([
+                    r["Roll No"],
+                    r["Admission No"],
+                    r["Student Name"],
+                    r["School"],
+                    r["Class"],
+                    r["Section"],
+                    r["Pattern Name"],
+                    r["Gender"],
+                    r["House"],
+                    r["Description"],
+                    r["Quantity"]
+                ]);
+            });
 
-const { jsPDF } = window.jspdf;
-const doc = new jsPDF({ orientation: 'landscape' });
-const rows = getPackingListData();
+            const ws = XLSX.utils.aoa_to_sheet(wsData);
+            // Widths
+            ws['!cols'] = [{ wch: 10 }, { wch: 15 }, { wch: 25 }, { wch: 20 }, { wch: 10 }, { wch: 10 }, { wch: 25 }, { wch: 10 }, {
+                wch: 15
+            }, { wch: 20 }, { wch: 10 }];
 
-doc.setFontSize(16);
-doc.text("Packing List Report", 14, 15);
-doc.setFontSize(10);
-doc.text(`Generated: ${new Date().toLocaleDateString()} | Total Items: ${rows.length}`, 14, 22);
+            XLSX.utils.book_append_sheet(wb, ws, "Packing List");
+            XLSX.writeFile(wb, "Packing_List.xlsx");
+        }
 
-const tableRows = rows.map(r => [
-r["Roll No"],
-r["Admission No"],
-r["Student Name"],
-r["School"],
-r["Class"],
-r["Section"],
-r["Pattern Name"],
-r["Gender"],
-// r["House"], // Optional: Hide House if space is tight, or keep it
-// r["Description"], // Keep essential fields
-r["Quantity"]
-]);
+        async function exportPackingListPDF() {
+            if (patterns.length === 0) return alert("No patterns to export.");
 
-doc.autoTable({
-head: [["Roll", "Adm No", "Name", "School", "Class", "Sec", "Pattern", "Gen", "Qty"]],
-body: tableRows,
-startY: 28,
-styles: { fontSize: 9 },
-headStyles: { fillColor: [44, 62, 80] }
-});
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ orientation: 'landscape' });
+            const rows = getPackingListData();
 
-doc.save("Packing_List.pdf");
-}
+            doc.setFontSize(16);
+            doc.text("Packing List Report", 14, 15);
+            doc.setFontSize(10);
+            doc.text(`Generated: ${new Date().toLocaleDateString()} | Total Items: ${rows.length}`, 14, 22);
 
-function exportAllPatternsSummary() {
-if (patterns.length === 0) return alert("No patterns to export.");
+            const tableRows = rows.map(r => [
+                r["Roll No"],
+                r["Admission No"],
+                r["Student Name"],
+                r["School"],
+                r["Class"],
+                r["Section"],
+                r["Pattern Name"],
+                r["Gender"],
+                // r["House"], // Optional: Hide House if space is tight, or keep it
+                // r["Description"], // Keep essential fields
+                r["Quantity"]
+            ]);
 
-const wb = XLSX.utils.book_new();
-const wsData = [
-["Pattern Name", "School", "Description", "Cloth Details", "Special Req", "Item Type", "M/Size of Pattern", "Cutting
-Quantity", "Total Cloth (M)", "Pattern Specifications"]
-];
+            doc.autoTable({
+                head: [["Roll", "Adm No", "Name", "School", "Class", "Sec", "Pattern", "Gen", "Qty"]],
+                body: tableRows,
+                startY: 28,
+                styles: { fontSize: 9 },
+                headStyles: { fillColor: [44, 62, 80] }
+            });
 
-patterns.forEach(p => {
-const m = p.metadata || {};
-// Calculate correct quantity on the fly
-const correctQty = calculatePatternQty(p);
-// Update p.count for consistency (optional)
-p.count = correctQty;
+            doc.save("Packing_List.pdf");
+        }
 
-const cons = parseFloat(m.consumption) || 0;
-const totalCloth = (cons * correctQty).toFixed(2);
+        function exportAllPatternsSummary() {
+            if (patterns.length === 0) return alert("No patterns to export.");
 
-// Construct filter summary
-let specifications = [];
-if (p.filters.class) specifications.push(`Class: ${p.filters.class}`);
-if (p.filters.section) specifications.push(`Sec: ${p.filters.section}`);
-if (p.filters.house) specifications.push(`House: ${p.filters.house}`);
-if (p.filters.gender) specifications.push(`Gender: ${p.filters.gender}`);
-if (p.filters.item) specifications.push(`Item: ${p.filters.item}`);
-// Add Measurement Filters
-if (p.filters.components) {
-for (const [key, val] of Object.entries(p.filters.components)) {
-if (val) specifications.push(`${key}: ${val}`);
-}
-}
+            const wb = XLSX.utils.book_new();
+            const wsData = [
+                ["Pattern Name", "School", "Description", "Cloth Details", "Special Req", "Item Type", "M/Size of Pattern", "Cutting
+Quantity", "Total Cloth(M)", "Pattern Specifications"]
+                ];
 
-wsData.push([
-p.name,
-m.school || "",
-m.desc || "",
-m.cloth || "",
-m.req || "",
-p.filters.item || "Mixed",
-cons,
-correctQty,
-totalCloth,
-specifications.join(', ')
-]);
-});
+            patterns.forEach(p => {
+                const m = p.metadata || {};
+                // Calculate correct quantity on the fly
+                const correctQty = calculatePatternQty(p);
+                // Update p.count for consistency (optional)
+                p.count = correctQty;
 
-const ws = XLSX.utils.aoa_to_sheet(wsData);
-// Auto-width
-const wscols = wsData[0].map(() => ({ wch: 20 }));
-ws['!cols'] = wscols;
+                const cons = parseFloat(m.consumption) || 0;
+                const totalCloth = (cons * correctQty).toFixed(2);
 
-XLSX.utils.book_append_sheet(wb, ws, "All Patterns Summary");
-XLSX.writeFile(wb, "All_Patterns_Summary.xlsx");
-}
+                // Construct filter summary
+                let specifications = [];
+                if (p.filters.class) specifications.push(`Class: ${p.filters.class}`);
+                if (p.filters.section) specifications.push(`Sec: ${p.filters.section}`);
+                if (p.filters.house) specifications.push(`House: ${p.filters.house}`);
+                if (p.filters.gender) specifications.push(`Gender: ${p.filters.gender}`);
+                if (p.filters.item) specifications.push(`Item: ${p.filters.item}`);
+                // Add Measurement Filters
+                if (p.filters.components) {
+                    for (const [key, val] of Object.entries(p.filters.components)) {
+                        if (val) specifications.push(`${key}: ${val}`);
+                    }
+                }
 
-function exportAllPatternsSummaryPDF() {
-if (patterns.length === 0) return alert("No patterns to export.");
+                wsData.push([
+                    p.name,
+                    m.school || "",
+                    m.desc || "",
+                    m.cloth || "",
+                    m.req || "",
+                    p.filters.item || "Mixed",
+                    cons,
+                    correctQty,
+                    totalCloth,
+                    specifications.join(', ')
+                ]);
+            });
 
-const { jsPDF } = window.jspdf;
-const doc = new jsPDF({ orientation: 'landscape' });
+            const ws = XLSX.utils.aoa_to_sheet(wsData);
+            // Auto-width
+            const wscols = wsData[0].map(() => ({ wch: 20 }));
+            ws['!cols'] = wscols;
 
-doc.setFontSize(16);
-doc.text("All Patterns Summary", 14, 15);
-doc.setFontSize(10);
-doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, 22);
+            XLSX.utils.book_append_sheet(wb, ws, "All Patterns Summary");
+            XLSX.writeFile(wb, "All_Patterns_Summary.xlsx");
+        }
 
-const headers = [["Pattern Name", "School", "Desc", "Cloth Details", "Special Req", "M/Size of Pattern", "Cutting
-Quantity", "Total Cloth (M)", "Pattern Specifications"]];
+        function exportAllPatternsSummaryPDF() {
+            if (patterns.length === 0) return alert("No patterns to export.");
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ orientation: 'landscape' });
+
+            doc.setFontSize(16);
+            doc.text("All Patterns Summary", 14, 15);
+            doc.setFontSize(10);
+            doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, 22);
+
+            const headers = [["Pattern Name", "School", "Desc", "Cloth Details", "Special Req", "M/Size of Pattern", "Cutting
+Quantity", "Total Cloth(M)", "Pattern Specifications"]];
 const rows = patterns.map(p => {
-const m = p.metadata || {};
-const correctQty = calculatePatternQty(p); // Use helper
+                const m = p.metadata || {};
+                const correctQty = calculatePatternQty(p); // Use helper
 
-const cons = parseFloat(m.consumption) || 0;
-const totalCloth = (cons * correctQty).toFixed(2);
+                const cons = parseFloat(m.consumption) || 0;
+                const totalCloth = (cons * correctQty).toFixed(2);
 
-// Construct a summary of filters for the "Pattern Specifications" column
-let specifications = [];
-if (p.filters.class) specifications.push(`Class: ${p.filters.class}`);
-if (p.filters.section) specifications.push(`Sec: ${p.filters.section}`);
-if (p.filters.house) specifications.push(`House: ${p.filters.house}`);
-if (p.filters.gender) specifications.push(`Gender: ${p.filters.gender}`);
-if (p.filters.item) specifications.push(`${p.filters.item}`);
-// Add Measurement Filters
-if (p.filters.components) {
-for (const [key, val] of Object.entries(p.filters.components)) {
-if (val) specifications.push(`${key}: ${val}`);
-}
-}
+                // Construct a summary of filters for the "Pattern Specifications" column
+                let specifications = [];
+                if (p.filters.class) specifications.push(`Class: ${p.filters.class}`);
+                if (p.filters.section) specifications.push(`Sec: ${p.filters.section}`);
+                if (p.filters.house) specifications.push(`House: ${p.filters.house}`);
+                if (p.filters.gender) specifications.push(`Gender: ${p.filters.gender}`);
+                if (p.filters.item) specifications.push(`${p.filters.item}`);
+                // Add Measurement Filters
+                if (p.filters.components) {
+                    for (const [key, val] of Object.entries(p.filters.components)) {
+                        if (val) specifications.push(`${key}: ${val}`);
+                    }
+                }
 
-return [
-p.name,
-m.school || "-",
-m.desc || "-",
-m.cloth || "-",
-m.req || "-",
-cons.toFixed(2),
-correctQty,
-totalCloth,
-specifications.join(', ')
-];
-});
+                return [
+                    p.name,
+                    m.school || "-",
+                    m.desc || "-",
+                    m.cloth || "-",
+                    m.req || "-",
+                    cons.toFixed(2),
+                    correctQty,
+                    totalCloth,
+                    specifications.join(', ')
+                ];
+            });
 
-doc.autoTable({
-head: headers,
-body: rows,
-startY: 25,
-styles: { fontSize: 9 },
-headStyles: { fillColor: [44, 62, 80] }
-});
+            doc.autoTable({
+                head: headers,
+                body: rows,
+                startY: 25,
+                styles: { fontSize: 9 },
+                headStyles: { fillColor: [44, 62, 80] }
+            });
 
-doc.save("All_Patterns_Summary.pdf");
-}
+            doc.save("All_Patterns_Summary.pdf");
+        }
 
-</script>
+    </script>
 </body>
 
 </html>
