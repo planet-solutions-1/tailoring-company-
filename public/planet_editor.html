@@ -2225,7 +2225,7 @@
 
         async function uploadStudent(row, schoolId, token) {
             const payload = {
-                school_id: schoolId,
+                school_id: parseInt(schoolId), // Fix 403 Forbidden (Type Mismatch)
                 admission_no: String(row['ADM NO'] || row['Admission No'] || '').trim(),
                 roll_no: row['ROLL NO'] || row['Roll No'] || null,
                 name: row['STUDENT NAME'] || row['Student Name'] || "Unknown",
@@ -2252,10 +2252,6 @@
                     console.log(`Mapped ${Object.keys(window.existingStudentsMap).length} existing students.`);
                 } catch (e) {
                     console.error("Map Fetch Failed", e);
-                    // Crucial: If list fetch fails, we shouldn't proceed cleanly otherwise we risk duplicates. 
-                    // But for robustness let's continue and rely on backend errors.
-                    // window.existingStudentsMap = {}; 
-                    // Better: Alert user once.
                     if (!window.fetchWarned) { alert("Warning: Could not sync with existing database. Duplicates might fail."); window.fetchWarned = true; }
                     window.existingStudentsMap = {};
                 }
@@ -2271,8 +2267,14 @@
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                 body: JSON.stringify(payload)
             });
+
+            // Fix "Unexpected token F" handling
+            if (!res.ok) {
+                const text = await res.text();
+                throw new Error(`Server Error (${res.status}): ${text.substring(0, 50)}`);
+            }
+
             const d = await res.json();
-            if (!res.ok) throw new Error(d.error || "Server Error");
 
             // Update Map for subsequent rows in this batch (if we just created one)
             if (d.id) window.existingStudentsMap[payload.admission_no] = d.id;
