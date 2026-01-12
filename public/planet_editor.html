@@ -2158,14 +2158,18 @@
                     const d = await res.json();
                     if (!res.ok) throw new Error(d.error);
 
+                    // DEBUG: Show exactly what the server sent
+                    // alert("Debug Server Response:\n" + JSON.stringify(d, null, 2)); 
+
                     token = d.accessToken;
                     schoolId = d.schoolId;
                     sessionStorage.setItem('token', token);
                     sessionStorage.setItem('schoolId', schoolId);
 
                     // Handle School Name safely
-                    const sName = (d.user && d.user.schoolName) ? d.user.schoolName : u;
+                    const sName = (d.user && d.user.schoolName) ? d.user.schoolName : ("School #" + schoolId);
                     sessionStorage.setItem('schoolName', sName);
+
                     if (typeof updateAuthUI === 'function') updateAuthUI();
                 } catch (e) {
                     return alert("Login Failed: " + e.message);
@@ -2344,12 +2348,9 @@
         }
 
         function logout() {
-            if (!confirm("Log out from ID " + (sessionStorage.getItem('schoolId') || 'Unknown') + "?")) return;
-            sessionStorage.removeItem('token');
-            sessionStorage.removeItem('schoolId');
-            sessionStorage.removeItem('schoolName');
-            sessionStorage.removeItem('userRole');
-            location.reload(); // Reload page to clear sensitive data
+            if (!confirm("Log out and return to Main Menu?")) return;
+            sessionStorage.clear();
+            window.location.href = 'index.html'; // Redirect to Main Login
         }
 
         init();
