@@ -302,14 +302,16 @@
             </div>
 
             <!-- User Profile (Hidden by default) -->
-            <div id="userProfile" class="hidden ml-6 pl-6 border-l border-gray-200 flex items-center gap-3">
+            <!-- User Profile -->
+            <div id="userProfile" class="ml-6 pl-6 border-l border-gray-200 flex items-center gap-3">
                 <div class="flex flex-col items-end">
-                    <span id="displaySchoolName"
-                        class="text-xs font-bold text-gray-700 uppercase tracking-wider"></span>
-                    <span id="displayUserName" class="text-[10px] text-gray-400 font-medium"></span>
+                    <span id="displaySchoolName" class="text-xs font-bold text-gray-700 uppercase tracking-wider">⚪ Not
+                        Connected</span>
+                    <span id="displayUserName" class="text-[10px] text-gray-400 font-medium">Click 'Sync Cloud' to
+                        Login</span>
                 </div>
-                <button onclick="logout()" class="text-rose-500 hover:bg-rose-50 p-1.5 rounded-md transition-colors"
-                    title="Logout">
+                <button id="btnLogout" onclick="logout()"
+                    class="hidden text-rose-500 hover:bg-rose-50 p-1.5 rounded-md transition-colors" title="Logout">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
                         <polyline points="16 17 21 12 16 7"></polyline>
@@ -2161,7 +2163,7 @@
                     sessionStorage.setItem('token', token);
                     sessionStorage.setItem('schoolId', schoolId);
                     sessionStorage.setItem('schoolName', d.user.schoolName || u);
-                    updateAuthUI(); // Update Header Immediately
+                    if (typeof updateAuthUI === 'function') updateAuthUI();
                 } catch (e) {
                     return alert("Login Failed: " + e.message);
                 }
@@ -2311,7 +2313,46 @@
             if (!res.ok) throw new Error("Meas Fail");
         }
 
+        // --- AUTH UI UTILS ---
+        function updateAuthUI() {
+            const token = sessionStorage.getItem('token');
+            const schoolName = sessionStorage.getItem('schoolName');
+            const schoolId = sessionStorage.getItem('schoolId');
+
+            const nameEl = document.getElementById('displaySchoolName');
+            const userEl = document.getElementById('displayUserName');
+            const btnLogout = document.getElementById('btnLogout');
+
+            if (token && schoolId) {
+                nameEl.textContent = schoolName || `School #${schoolId}`;
+                nameEl.classList.add('text-green-700');
+                userEl.textContent = `ID: ${schoolId} • Connected`;
+                userEl.classList.remove('text-gray-400');
+                userEl.classList.add('text-green-600');
+                btnLogout.classList.remove('hidden');
+            } else {
+                nameEl.textContent = "⚪ Not Connected";
+                nameEl.classList.remove('text-green-700');
+                userEl.textContent = "Click 'Sync Cloud' to Login";
+                userEl.classList.add('text-gray-400');
+                userEl.classList.remove('text-green-600');
+                btnLogout.classList.add('hidden');
+            }
+        }
+
+        function logout() {
+            if (!confirm("Log out from ID " + sessionStorage.getItem('schoolId') + "?")) return;
+            sessionStorage.removeItem('token');
+            sessionStorage.removeItem('schoolId');
+            sessionStorage.removeItem('schoolName');
+            sessionStorage.removeItem('userRole');
+            updateAuthUI();
+            alert("Logged out.");
+        }
+
         init();
+        // Run Auth Check on Load
+        setTimeout(updateAuthUI, 500);
     </script>
 
 
