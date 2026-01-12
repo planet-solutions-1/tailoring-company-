@@ -1560,17 +1560,18 @@
                 // Measure Columns Matching
                 // Row keys might be "U1 (Shirt Length)" or just "U1"
                 rowKeys.forEach(key => {
-                    const cleanKey = key.trim();
+                    const cleanKey = key.trim().toUpperCase(); // Case-insensitive
                     measureCols.forEach(m => {
                         // Match "U1", "U1 ", "U1 ("
-                        if (cleanKey === m || cleanKey.startsWith(m + " ") || cleanKey.startsWith(m + "(")) {
+                        const mUpper = m.toUpperCase();
+                        if (cleanKey === mUpper || cleanKey.startsWith(mUpper + " ") || cleanKey.startsWith(mUpper + "(")) {
                             newRow[m] = row[key];
                         }
                     });
                 });
 
                 measureCols.forEach(m => {
-                    if (!newRow[m]) newRow[m] = "00";
+                    if (!newRow[m]) newRow[m] = "";
                 });
                 newRow["S.No"] = i + 1;
                 return newRow;
