@@ -2158,11 +2158,14 @@
                     const d = await res.json();
                     if (!res.ok) throw new Error(d.error);
 
-                    token = d.token;
-                    schoolId = d.user.schoolId;
+                    token = d.accessToken;
+                    schoolId = d.schoolId;
                     sessionStorage.setItem('token', token);
                     sessionStorage.setItem('schoolId', schoolId);
-                    sessionStorage.setItem('schoolName', d.user.schoolName || u);
+
+                    // Handle School Name safely
+                    const sName = (d.user && d.user.schoolName) ? d.user.schoolName : u;
+                    sessionStorage.setItem('schoolName', sName);
                     if (typeof updateAuthUI === 'function') updateAuthUI();
                 } catch (e) {
                     return alert("Login Failed: " + e.message);
