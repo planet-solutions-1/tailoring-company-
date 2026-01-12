@@ -246,10 +246,22 @@
         </div>
 
         <div class="flex flex-col sm:flex-row items-center gap-3 w-full lg:w-auto justify-center lg:justify-end">
-            <a href="planet_editor.html"
-                class="text-xs font-bold text-gray-500 hover:text-gray-800 uppercase tracking-wide mr-0 sm:mr-4 order-2 sm:order-1">
-                &larr; Go to Cutting Dashboard
-            </a>
+            <div class="flex items-center gap-3 order-2 sm:order-1 mr-4">
+                <a href="planet_editor.html"
+                    class="text-xs font-bold text-gray-500 hover:text-gray-800 uppercase tracking-wide">
+                    &larr; Editor
+                </a>
+                <span class="text-gray-300">|</span>
+                <a href="packing_dashboard.html"
+                    class="text-xs font-bold text-gray-500 hover:text-gray-800 uppercase tracking-wide">
+                    Packing
+                </a>
+                <span class="text-gray-300">|</span>
+                <a href="tailoring_dashboard.html"
+                    class="text-xs font-bold text-gray-500 hover:text-gray-800 uppercase tracking-wide">
+                    Tailoring
+                </a>
+            </div>
             <button onclick="loadFromCloud()"
                 class="mr-2 text-xs font-bold text-blue-500 hover:text-blue-700 uppercase tracking-wide">
                 Refresh Cloud Data
