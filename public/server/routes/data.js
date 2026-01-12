@@ -590,6 +590,18 @@ router.post('/student', authenticateToken, async (req, res) => {
         const locked = await checkLock(req, res, school_id);
         if (locked) return;
 
+        // SAFEGUARD: Check for existing Admission No (Upsert Logic)
+        if (!id && admission_no && String(admission_no).trim() !== "") {
+            const checkSql = "SELECT id FROM students WHERE school_id = ? AND admission_no = ?";
+            if (db.execute) {
+                const [rows] = await db.execute(checkSql, [school_id, admission_no]);
+                if (rows.length > 0) id = rows[0].id;
+            } else {
+                const row = await new Promise(r => db.get(checkSql, [school_id, admission_no], (e, row) => r(row)));
+                if (row) id = row.id;
+            }
+        }
+
         if (id) {
             // Update
             db.run("UPDATE students SET roll_no=?, name=?, class=?, section=?, house=?, gender=? WHERE id=?",
@@ -597,7 +609,7 @@ router.post('/student', authenticateToken, async (req, res) => {
                 function (err) {
                     if (err) return res.status(500).json({ error: err.message });
                     if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'UPDATE_STUDENT', `Updated student: ${name}`, school_id, req.user.role);
-                    res.json({ message: "Updated" });
+                    res.json({ message: "Updated", id: id });
                 }
             );
         } else {
