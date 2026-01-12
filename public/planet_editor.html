@@ -2207,80 +2207,86 @@
                             if (!firstError) firstError = e.message;
                         }
                     }));
-                    if (window.Logger) window.Logger.log('SYNC_COMPLETE', `Sync finished. Success: ${successCount}, Failed: ${failCount}`);
-
-                } catch (e) {
-                    alert("Critical Sync Error: " + e.message);
-                } finally {
-                    btn.disabled = false;
-                    btn.innerHTML = originalText;
                 }
+
+                if (window.Logger) window.Logger.log('SYNC_COMPLETE', `Sync finished. Success: ${uploaded}, Failed: ${failed}`);
+
+                let msg = `Sync Complete!\n\n✅ Uploaded: ${uploaded}\n❌ Failed: ${failed}`;
+                if (firstError) msg += `\n\nUnknown Error: ${firstError}`;
+                alert(msg);
+
+            } catch (e) {
+                alert("Critical Sync Error: " + e.message);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
             }
+        }
 
         async function uploadStudent(row, schoolId, token) {
-                const payload = {
-                    school_id: schoolId,
-                    admission_no: row['Admission No'] || row['Adm No'] || "",
-                    roll_no: row['Roll No'] || "",
-                    name: row['Student Name'] || "Unknown",
-                    class: row['Class'] || "",
-                    section: row['Section'] || "",
-                    house: row['House'] || "",
-                    gender: row['Gender'] || ""
-                };
-
-                admission_no: String(row['ADM NO'] || '').trim(), // Robust Trim
-                    name: row['STUDENT NAME'] || "Unknown",
-                        gender: row['GENDER'] || "",
-                            class: row['CLASS'] || "",
-                                section: row['SECTION'] || "",
-                                    house: row['HOUSE'] || "",
-                                        roll_no: row['ROLL NO'] || null
+            const payload = {
+                school_id: schoolId,
+                admission_no: row['Admission No'] || row['Adm No'] || "",
+                roll_no: row['Roll No'] || "",
+                name: row['Student Name'] || "Unknown",
+                class: row['Class'] || "",
+                section: row['Section'] || "",
+                house: row['House'] || "",
+                gender: row['Gender'] || ""
             };
 
-            // SMART SYNC: List all students for school once.
-            if (!window.existingStudentsMap) {
-                try {
-                    console.log("Fetching existing students for lookup...");
-                    const res = await fetch(`/api/data/students/${schoolId}`, {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    });
-                    if (!res.ok) throw new Error("Failed to fetch existing students: " + res.statusText);
+            admission_no: String(row['ADM NO'] || '').trim(), // Robust Trim
+                name: row['STUDENT NAME'] || "Unknown",
+                    gender: row['GENDER'] || "",
+                        class: row['CLASS'] || "",
+                            section: row['SECTION'] || "",
+                                house: row['HOUSE'] || "",
+                                    roll_no: row['ROLL NO'] || null
+        };
 
-                    const list = await res.json();
-                    window.existingStudentsMap = {};
-                    list.forEach(s => {
-                        if (s.admission_no) window.existingStudentsMap[String(s.admission_no).trim()] = s.id;
-                    });
-                    console.log(`Mapped ${Object.keys(window.existingStudentsMap).length} existing students.`);
-                } catch (e) {
-                    console.error("Map Fetch Failed", e);
-                    // Crucial: If list fetch fails, we shouldn't proceed cleanly otherwise we risk duplicates. 
-                    // But for robustness let's continue and rely on backend errors.
-                    // window.existingStudentsMap = {}; 
-                    // Better: Alert user once.
-                    if (!window.fetchWarned) { alert("Warning: Could not sync with existing database. Duplicates might fail."); window.fetchWarned = true; }
-                    window.existingStudentsMap = {};
-                }
+        // SMART SYNC: List all students for school once.
+        if (!window.existingStudentsMap) {
+            try {
+                console.log("Fetching existing students for lookup...");
+                const res = await fetch(`/api/data/students/${schoolId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!res.ok) throw new Error("Failed to fetch existing students: " + res.statusText);
+
+                const list = await res.json();
+                window.existingStudentsMap = {};
+                list.forEach(s => {
+                    if (s.admission_no) window.existingStudentsMap[String(s.admission_no).trim()] = s.id;
+                });
+                console.log(`Mapped ${Object.keys(window.existingStudentsMap).length} existing students.`);
+            } catch (e) {
+                console.error("Map Fetch Failed", e);
+                // Crucial: If list fetch fails, we shouldn't proceed cleanly otherwise we risk duplicates. 
+                // But for robustness let's continue and rely on backend errors.
+                // window.existingStudentsMap = {}; 
+                // Better: Alert user once.
+                if (!window.fetchWarned) { alert("Warning: Could not sync with existing database. Duplicates might fail."); window.fetchWarned = true; }
+                window.existingStudentsMap = {};
             }
+        }
 
-            // Lookup ID
-            if (window.existingStudentsMap[payload.admission_no]) {
-                payload.id = window.existingStudentsMap[payload.admission_no];
-            }
+        // Lookup ID
+        if (window.existingStudentsMap[payload.admission_no]) {
+            payload.id = window.existingStudentsMap[payload.admission_no];
+        }
 
-            const res = await fetch('/api/data/student', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                body: JSON.stringify(payload)
-            });
-            const d = await res.json();
-            if (!res.ok) throw new Error(d.error || "Server Error");
+        const res = await fetch('/api/data/student', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify(payload)
+        });
+        const d = await res.json();
+        if (!res.ok) throw new Error(d.error || "Server Error");
 
-            // Update Map for subsequent rows in this batch (if we just created one)
-            if (d.id) window.existingStudentsMap[payload.admission_no] = d.id;
+        // Update Map for subsequent rows in this batch (if we just created one)
+        if (d.id) window.existingStudentsMap[payload.admission_no] = d.id;
 
-            return d.id || payload.id;
+        return d.id || payload.id;
         }
 
         async function uploadMeasurements(studentId, row, schoolId, token) {
