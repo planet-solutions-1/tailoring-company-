@@ -2341,13 +2341,12 @@
         }
 
         function logout() {
-            if (!confirm("Log out from ID " + sessionStorage.getItem('schoolId') + "?")) return;
+            if (!confirm("Log out from ID " + (sessionStorage.getItem('schoolId') || 'Unknown') + "?")) return;
             sessionStorage.removeItem('token');
             sessionStorage.removeItem('schoolId');
             sessionStorage.removeItem('schoolName');
             sessionStorage.removeItem('userRole');
-            updateAuthUI();
-            alert("Logged out.");
+            location.reload(); // Reload page to clear sensitive data
         }
 
         init();

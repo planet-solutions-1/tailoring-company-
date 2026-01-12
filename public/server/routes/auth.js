@@ -45,14 +45,32 @@ router.post('/login', async (req, res) => {
 
         if (await bcrypt.compare(password, user.password_hash)) {
             const secret = process.env.JWT_SECRET || 'fallback_secret_key_v2';
-            console.log("Using Secret:", secret ? "Present" : "Missing"); // Debug Log
+
+            // Fetch School Name if applicable
+            let schoolName = null;
+            if (user.school_id) {
+                try {
+                    const schoolRow = await new Promise((resolve) => {
+                        db.get("SELECT name FROM schools WHERE id = ?", [user.school_id], (err, row) => resolve(row));
+                    });
+                    if (schoolRow) schoolName = schoolRow.name;
+                } catch (e) { }
+            }
 
             const accessToken = jwt.sign(
                 { id: user.id, username: user.username, role: user.role, schoolId: user.school_id },
                 'hardcoded_secret_key_fixed',
                 { expiresIn: '12h' }
             );
-            res.json({ accessToken, role: user.role, schoolId: user.school_id });
+            res.json({
+                accessToken,
+                role: user.role,
+                schoolId: user.school_id,
+                user: {
+                    username: user.username,
+                    schoolName: schoolName
+                }
+            });
         } else {
             res.status(401).json({ error: "Invalid password" });
         }
