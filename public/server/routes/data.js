@@ -1144,7 +1144,7 @@ router.get('/patterns/trash/:schoolId', authenticateToken, (req, res) => {
     const { schoolId } = req.params;
     if (req.user.role !== 'company' && req.user.schoolId != schoolId) return res.sendStatus(403);
 
-    db.all("SELECT * FROM patterns WHERE school_id = ? AND is_deleted = 1 ORDER BY deleted_at DESC", [schoolId], (err, rows) => {
+    db.all("SELECT * FROM patterns WHERE school_id = ? AND is_deleted > 0 ORDER BY deleted_at DESC", [schoolId], (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json(rows);
     });
@@ -1204,7 +1204,11 @@ router.delete('/patterns/:id', authenticateToken, (req, res) => {
         db.run("UPDATE patterns SET is_deleted = 1, deleted_at = CURRENT_TIMESTAMP WHERE id = ?", [id], function (err2) {
             if (err2) return res.status(500).json({ error: err2.message });
             if (this.changes === 0) return res.status(404).json({ error: "No changes made (ID not found or already deleted)" });
-            res.json({ message: "Pattern moved to Trash" });
+
+            // Return new trash count for verification
+            db.get("SELECT COUNT(*) as count FROM patterns WHERE school_id = ? AND is_deleted > 0", [row.school_id], (err3, countRow) => {
+                res.json({ message: "Pattern moved to Trash", trashCount: countRow ? countRow.count : 0 });
+            });
         });
     });
 });
