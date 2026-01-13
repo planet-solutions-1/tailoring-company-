@@ -391,9 +391,13 @@ router.post('/fix_db', authenticateToken, requireRole('company'), async (req, re
                 consumption REAL DEFAULT 0,
                 cloth_details TEXT,
                 special_req TEXT,
+                filters TEXT, 
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 FOREIGN KEY (school_id) REFERENCES schools(id) ON DELETE CASCADE
-            )`, () => { });
+            )`, () => {
+                // Migration for existing tables
+                db.run("ALTER TABLE patterns ADD COLUMN filters TEXT", () => { });
+            });
 
             // Add pattern_id to students
             db.run("ALTER TABLE students ADD COLUMN pattern_id INTEGER REFERENCES patterns(id) ON DELETE SET NULL", () => { });
@@ -824,6 +828,76 @@ router.get('/patterns/all', authenticateToken, requireRole('company'), (req, res
         if (err) return res.status(500).json({ error: err.message });
         res.json(rows);
     });
+});
+
+// GET /api/data/patterns - My Patterns (School/Tailor)
+router.get('/patterns', authenticateToken, (req, res) => {
+    let schoolId = req.user.schoolId;
+    if (req.user.role === 'company') {
+        // Company usage: technically they should use /all, but if they hit this, return empty or all?
+        // Let's return all for consistency if they use this endpoint.
+        return res.redirect('/api/data/patterns/all');
+    }
+
+    if (!schoolId) return res.status(403).json({ error: "No School ID" });
+
+    db.all("SELECT * FROM patterns WHERE school_id = ? ORDER BY created_at DESC", [schoolId], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(rows);
+    });
+});
+
+// POST /api/data/patterns - Create Pattern (All Roles)
+router.post('/patterns', authenticateToken, async (req, res) => {
+    const { name, school_id, consumption, cloth_details, special_req, student_admission_nos, filters } = req.body;
+    let targetSchoolId = school_id;
+
+    // RBAC: Verify School ID
+    if (req.user.role === 'school' || req.user.role === 'tailor') {
+        targetSchoolId = req.user.schoolId;
+        if (parseInt(school_id) !== parseInt(targetSchoolId)) {
+            return res.status(403).json({ error: "Cannot create pattern for another school" });
+        }
+    }
+
+    if (!targetSchoolId) return res.status(400).json({ error: "School ID required" });
+
+    try {
+        // 1. Create Pattern
+        const patternId = await new Promise((resolve, reject) => {
+            db.run(`INSERT INTO patterns (school_id, name, consumption, cloth_details, special_req, filters) VALUES (?, ?, ?, ?, ?, ?)`,
+                [targetSchoolId, name, consumption || 0, cloth_details || "", special_req || "", JSON.stringify(filters || {})],
+                function (err) {
+                    if (err) reject(err); else resolve(this.lastID);
+                });
+        });
+
+        // 2. Link Students (if provided)
+        let updatedCount = 0;
+        if (student_admission_nos && Array.isArray(student_admission_nos) && student_admission_nos.length > 0) {
+            // Efficiently update students
+            const placeholders = student_admission_nos.map(() => '?').join(',');
+            const sql = `UPDATE students SET pattern_id = ? WHERE school_id = ? AND admission_no IN (${placeholders})`;
+
+            await new Promise((resolve, reject) => {
+                db.run(sql, [patternId, targetSchoolId, ...student_admission_nos], function (err) {
+                    if (err) reject(err);
+                    else {
+                        updatedCount = this.changes;
+                        resolve();
+                    }
+                });
+            });
+        }
+
+        if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'CREATE_PATTERN', `Created Pattern: ${name} (${updatedCount} students)`, targetSchoolId, req.user.role);
+
+        res.json({ message: "Pattern created successfully", id: patternId, students_updated: updatedCount });
+
+    } catch (e) {
+        console.error("Pattern Create Error", e);
+        res.status(500).json({ error: e.message });
+    }
 });
 
 // POST /api/users/create - Full User Management

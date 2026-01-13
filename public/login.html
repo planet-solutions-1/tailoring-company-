@@ -103,6 +103,8 @@
                     sessionStorage.setItem('token', data.accessToken);
                     sessionStorage.setItem('role', data.role);
                     sessionStorage.setItem('schoolId', data.schoolId || '');
+                    sessionStorage.setItem('username', data.user.username);
+                    sessionStorage.setItem('schoolName', data.user.school_name || '');
 
                     // Redirect logic
                     switch (data.role) {

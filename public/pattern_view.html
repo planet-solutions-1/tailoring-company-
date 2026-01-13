@@ -147,9 +147,10 @@
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-semibold text-[#7F8C8D] uppercase mb-1">School Name</label>
-                        <input type="text" id="newPatternSchool"
-                            class="w-full border border-gray-300 rounded p-2 text-sm focus:border-blue-500 outline-none"
-                            placeholder="School Name">
+                        <select id="newPatternSchool"
+                            class="w-full border border-gray-300 rounded p-2 text-sm focus:border-blue-500 outline-none bg-white">
+                            <option value="">Loading Schools...</option>
+                        </select>
                     </div>
                     <div>
                         <label class="block text-xs font-semibold text-[#7F8C8D] uppercase mb-1">Consumption (M)</label>
@@ -263,6 +264,9 @@
             <div>
                 <h1 class="text-2xl font-serif text-[#2D3748] tracking-tight">Pattern Dashboard</h1>
                 <p class="text-xs text-[#7F8C8D] tracking-wide">READ-ONLY GROUPING SYSTEM</p>
+                <div id="userWelcome" class="text-xs font-semibold text-blue-600 mt-1 hidden">
+                    Welcome, <span id="displayUser">User</span> <span id="displaySchool" class="text-gray-500"></span>
+                </div>
             </div>
         </div>
 
@@ -518,6 +522,15 @@
     </main>
 
     <script>
+        // --- AUTHENTICATION CHECK ---
+        const token = sessionStorage.getItem('token');
+        const userRole = sessionStorage.getItem('role');
+        const userSchoolId = sessionStorage.getItem('schoolId');
+
+        if (!token) {
+            window.location.href = 'login.html';
+        }
+
         let data = [];
         let patterns = [];
         let currentWorkbook = null;
@@ -550,10 +563,58 @@
                     updateCount();
                 }
                 if (sPatterns) {
+                    // Merge or Override? Let's treat Server as source of truth if we are fetching.
+                    // But init load is local.
                     patterns = JSON.parse(sPatterns);
                     renderModules();
                 }
             } catch (e) { console.error(e); }
+        }
+
+        async function fetchPatternsFromBackend() {
+            try {
+                const res = await fetch('/api/data/patterns', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const dbPatterns = await res.json();
+
+                    // Transform DB patterns to UI format
+                    const mappedPatterns = dbPatterns.map(p => ({
+                        id: p.id,
+                        name: p.name,
+                        filters: p.filters ? JSON.parse(p.filters) : {}, // Restore Filters
+                        // count: p.student_count || 0, // Server doesn't send count yet, maybe calculate?
+                        // For now, if we don't have local data matching school, count is 0.
+                        // We rely on "Load Pattern" to re-calculate count against CURRENT loaded data.
+                        count: "?", // Visual indicator until loaded
+                        metadata: {
+                            school: "Server Linked", // We could fetch name but logic is tricky
+                            // We can use the 'users' school name or fetch from /schools lookup
+                            desc: "",
+                            consumption: p.consumption,
+                            cloth: p.cloth_details,
+                            req: p.special_req
+                        },
+                        schoolId: p.school_id
+                    }));
+
+                    // Logic: Append to patterns? 
+                    // Or Replace? 
+                    // If we want "Global Access", we should probably PRIORITIZE Server patterns.
+                    // But we might have unsaved local ones.
+                    // Let's MERGE by ID, preferring Server.
+
+                    const localIds = new Set(patterns.map(p => p.id));
+                    mappedPatterns.forEach(mp => {
+                        // Check if exists locally (by loose matching name? or just append?)
+                        // Since DB IDs are integers (1, 2) and Local are Dates (163...), they won't collide.
+                        patterns.push(mp);
+                    });
+
+                    renderModules();
+                }
+            } catch (e) { console.error("Pattern Sync Error", e); }
         }
 
         function clearData() {
@@ -565,7 +626,51 @@
         }
 
         // Load on Init
-        window.addEventListener('DOMContentLoaded', loadFromLocal);
+        window.addEventListener('DOMContentLoaded', () => {
+            loadFromLocal();
+            fetchSchools();
+            fetchPatternsFromBackend();
+
+            // Show User Info
+            const uName = sessionStorage.getItem('username');
+            const sName = sessionStorage.getItem('schoolName');
+            if (uName) {
+                document.getElementById('userWelcome').classList.remove('hidden');
+                document.getElementById('displayUser').textContent = uName;
+                if (sName) document.getElementById('displaySchool').textContent = `— ${sName}`;
+            }
+        });
+
+        // --- BACKEND INTEGRATION ---
+        async function fetchSchools() {
+            try {
+                const res = await fetch('/api/schools', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!res.ok) throw new Error("Failed to load schools");
+                const schools = await res.json();
+
+                const sel = document.getElementById('newPatternSchool');
+                sel.innerHTML = '<option value="">Select School</option>';
+
+                schools.forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = s.id;
+                    opt.textContent = s.name;
+                    sel.appendChild(opt);
+                });
+
+                // Auto-Select if only one (RBAC)
+                if (schools.length === 1) {
+                    sel.value = schools[0].id;
+                    sel.disabled = true; // Lock it
+                }
+            } catch (e) {
+                console.error("School Fetch Error", e);
+                // Fallback to text input if API fails? No, critical dependency now.
+                document.getElementById('newPatternSchool').innerHTML = '<option value="">Error loading schools</option>';
+            }
+        }
 
         // Constants
         const infoCols = ["S.No", "Roll No", "Admission No", "Student Name", "Class", "Section", "House", "Gender", "Absent/Present"];
@@ -1120,43 +1225,89 @@
             document.getElementById('patternModal').classList.remove('hidden');
         }
 
-        function savePattern() {
+        async function savePattern() {
             const name = document.getElementById('newPatternName').value;
-            if (!name) return alert("Enter a pattern name");
+            const schoolId = document.getElementById('newPatternSchool').value;
 
-            // Ensure filters are mutually synced with DOM inputs before saving
-            // In case user typed but didn't trigger 'change' or pressed Enter
+            if (!name) return alert("Enter a pattern name");
+            if (!schoolId) return alert("Select a school");
+
+            // Ensure filters are mutually synced with DOM inputs
             syncFiltersFromDOM();
 
-            // Capture Advanced Filters too
+            // 1. Capture Data
             const currentFilters = JSON.parse(JSON.stringify(filters));
+            const filteredData = getFilteredData();
 
-            // Capture Metadata
-            const meta = {
-                school: document.getElementById('newPatternSchool').value || "",
-                desc: document.getElementById('newPatternDesc').value || "",
-                consumption: document.getElementById('newPatternCons').value || "0",
-                cloth: document.getElementById('newPatternCloth').value || "",
-                req: document.getElementById('newPatternReq').value || ""
-            };
+            // Extract Admission Numbers for Linkage
+            const studentAdmissionNos = filteredData.map(r => r['Admission No'] || r['Adm No']).filter(x => x);
 
-            const pattern = {
-                id: Date.now(),
-                name: name,
-                filters: currentFilters,
-                count: getFilteredData().length,
-                metadata: meta // Store it
-            };
+            if (studentAdmissionNos.length === 0) return alert("No students found in current filter!");
 
-            patterns.push(pattern);
-            renderModules();
-            saveToLocal(); // Save patterns
-            saveToLocal(); // Save patterns
-            document.getElementById('patternModal').classList.add('hidden');
-            // Auto-load the new pattern to allow immediate editing? 
-            // Better to stay in "Create" mode or switch? 
-            // Let's just reset view to prompt user to start fresh OR keep filters?
-            // Standard: keep filters, but user might want to reset.
+            // Metadata
+            const consumption = document.getElementById('newPatternCons').value || "0";
+            const cloth = document.getElementById('newPatternCloth').value || "";
+            const req = document.getElementById('newPatternReq').value || "";
+            // School Name for Local Display (Hack: Get text from select)
+            const sel = document.getElementById('newPatternSchool');
+            const schoolName = sel.options[sel.selectedIndex]?.text || "Unknown";
+
+            // 2. Send to Backend
+            try {
+                const payload = {
+                    name,
+                    school_id: schoolId,
+                    consumption: parseFloat(consumption),
+                    cloth_details: cloth,
+                    special_req: req,
+                    student_admission_nos: studentAdmissionNos,
+                    filters: currentFilters // Send Filters!
+                };
+
+                const res = await fetch('/api/data/patterns', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.error || "Failed to create pattern");
+                }
+
+                const result = await res.json();
+
+                // 3. Local Update (Optimistic/Visual)
+                const meta = {
+                    school: schoolName,
+                    desc: document.getElementById('newPatternDesc').value || "",
+                    consumption, cloth, req
+                };
+
+                const pattern = {
+                    id: result.id || Date.now(),
+                    name: name,
+                    filters: currentFilters,
+                    count: filteredData.length,
+                    metadata: meta,
+                    schoolId: schoolId // Store internally
+                };
+
+                patterns.push(pattern);
+                renderModules();
+                saveToLocal(); // Save pattern list locally for caching?
+                // Ideally we should re-fetch from server, but for now hybrid is fine.
+
+                document.getElementById('patternModal').classList.add('hidden');
+                alert(`Pattern Created! Linked ${result.students_updated} students.`);
+
+            } catch (e) {
+                console.error(e);
+                alert("Error creating pattern: " + e.message);
+            }
         }
 
         function updatePattern() {

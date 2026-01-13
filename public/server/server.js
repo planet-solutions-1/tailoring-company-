@@ -52,8 +52,13 @@ app.get('/uploads/:filename', (req, res) => {
 
 // Routes
 
-// 1. School Details (SQL Version - Fixes 404)
-app.get('/api/schools/:id', (req, res) => {
+// 1. School Details (SQL Version - Fixed 404 & Added RBAC)
+app.get('/api/schools/:id', authenticateToken, (req, res) => {
+    // RBAC Check
+    if (req.user.role !== 'company' && parseInt(req.user.schoolId) !== parseInt(req.params.id)) {
+        return res.status(403).json({ error: "Access Denied: You can only view your own school." });
+    }
+
     // Prevent Caching of Status/Priority
     res.set('Cache-Control', 'no-store');
     db.get("SELECT id, name, username, priority, status, is_locked, lock_message FROM schools WHERE id = ?", [req.params.id], (err, row) => {
@@ -61,6 +66,22 @@ app.get('/api/schools/:id', (req, res) => {
         if (row) res.json(row);
         else res.json({ id: req.params.id, name: "Unknown School", address: "N/A", logo: "" });
     });
+});
+
+// GET /api/schools - For Select Dropdowns
+app.get('/api/schools', authenticateToken, (req, res) => {
+    if (req.user.role === 'company') {
+        db.all("SELECT id, name FROM schools ORDER BY name ASC", [], (err, rows) => {
+            if (err) return res.status(500).json({ error: err.message });
+            res.json(rows);
+        });
+    } else {
+        // School/Tailor can only see themselves
+        db.all("SELECT id, name FROM schools WHERE id = ?", [req.user.schoolId], (err, rows) => {
+            if (err) return res.status(500).json({ error: err.message });
+            res.json(rows);
+        });
+    }
 });
 
 // EMERGENCY DATABASE RESET (Per User Request)
