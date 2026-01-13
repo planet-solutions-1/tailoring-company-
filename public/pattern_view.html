@@ -294,14 +294,14 @@
                     </svg>
                     Load from Cloud
                 </button>
-                <button onclick="document.getElementById('fileInput').click()"
-                    class="btn-outline px-4 py-2 rounded-md text-sm font-medium flex items-center gap-2">
+                <button onclick="syncPatternsToCloud()"
+                    class="btn-outline px-4 py-2 rounded-md text-sm font-medium text-green-700 border-green-200 hover:bg-green-50 flex items-center gap-2">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                        <polyline points="17 8 12 3 7 8"></polyline>
-                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                        <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                        <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                        <polyline points="7 3 7 8 15 8"></polyline>
                     </svg>
-                    Import Excel
+                    Save to Cloud
                 </button>
             </div>
     </header>
@@ -634,6 +634,74 @@
                     btn.disabled = false;
                     btn.innerHTML = 'Load from Cloud'; // Reset text on error
                 }
+            }
+        }
+
+        async function syncPatternsToCloud() {
+            if (patterns.length === 0) return alert("No patterns to save!");
+
+            const btn = document.querySelector('button[onclick="syncPatternsToCloud()"]');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = 'Saving...';
+            btn.disabled = true;
+
+            let successCount = 0;
+            let failCount = 0;
+
+            for (const p of patterns) {
+                try {
+                    // Extract Admission Numbers from filters
+                    // Note: This requires re-applying filters to get student list for each pattern
+                    // OR we assume pattern creation stores this? 
+                    // Let's re-calculate to be safe and accurate to current data state.
+                    const backupFilters = filters;
+                    filters = p.filters;
+                    const filteredStudents = getFilteredData();
+                    const admissionNos = filteredStudents.map(s => s['Admission No'] || s['Adm No']).filter(x => x).map(x => x.toString().trim());
+                    filters = backupFilters; // Restore
+
+                    if (admissionNos.length === 0) {
+                        console.warn(`Skipping pattern ${p.name}: No matching students found.`);
+                        continue;
+                    }
+
+                    const payload = {
+                        name: p.name,
+                        school_id: userSchoolId, // Use session ID
+                        consumption: p.metadata?.consumption || 0,
+                        cloth_details: p.metadata?.cloth || "",
+                        special_req: p.metadata?.desc || "",
+                        student_admission_nos: admissionNos,
+                        filters: JSON.stringify(p.filters)
+                    };
+
+                    const res = await fetch('/api/data/patterns', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (res.ok) successCount++;
+                    else failCount++;
+
+                } catch (e) {
+                    console.error("Sync Error for pattern:", p.name, e);
+                    failCount++;
+                }
+            }
+
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+
+            if (successCount > 0) {
+                alert(`Successfully saved ${successCount} patterns to Cloud!`);
+            } else if (failCount > 0) {
+                alert(`Failed to save patterns. Check console for details.`);
+            } else {
+                alert("No valid patterns found to save (make sure they have students linked).");
             }
         }
 
