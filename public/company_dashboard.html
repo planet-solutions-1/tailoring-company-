@@ -4417,6 +4417,27 @@
             }
         }
 
+        async function fetchGlobalPatterns() {
+            try {
+                const res = await fetch(`${API_BASE}/data/patterns/all`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    globalPatterns = await res.json();
+
+                    // Also Calculate Global Pattern Stats
+                    const uniquePatterns = [...new Set(globalPatterns.map(p => p.name))];
+                    const countEl = document.getElementById('stat-patterns');
+                    if (countEl) countEl.innerText = globalPatterns.length; // Or unique?
+
+                } else {
+                    console.error("Failed to fetch patterns");
+                }
+            } catch (e) {
+                console.error("Error fetching patterns:", e);
+            }
+        }
+
         // === DOWNLOAD FUNCTIONS ===
         function downloadLogsPDF() {
             if (!globalLogs || globalLogs.length === 0) { alert("No logs to export!"); return; }
