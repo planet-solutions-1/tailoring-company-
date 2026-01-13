@@ -747,22 +747,30 @@
             const btn = document.getElementById('btn-load-cloud');
             const originalHTML = btn ? btn.innerHTML : '';
             if (btn) {
-                btn.innerHTML = `<svg class="animate-spin h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Loading...`;
+                btn.innerHTML = `<svg class="animate-spin h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Loading Data...`;
                 btn.disabled = true;
             }
 
-
-
             try {
-                const res = await fetch('/api/data/patterns', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
+                const schoolId = sessionStorage.getItem('schoolId');
+                if (!schoolId) {
+                    alert("DEBUG ERROR: School ID is missing! Please Logout and Login again.");
+                    throw new Error("School ID missing");
+                }
 
-                if (res.ok) {
-                    const dbPatterns = await res.json();
+                // Fetch Patterns AND Students in parallel
+                const [patRes, stuRes] = await Promise.all([
+                    fetch('/api/data/patterns', { headers: { 'Authorization': `Bearer ${token}` } }),
+                    fetch(`/api/data/students/${schoolId}`, { headers: { 'Authorization': `Bearer ${token}` } })
+                ]);
+
+                // 1. Process Patterns
+                let loadedPatternsCount = 0;
+                if (patRes.ok) {
+                    const dbPatterns = await patRes.json();
+                    loadedPatternsCount = dbPatterns.length;
 
                     // --- OPTIMIZED DEDUPLICATION (O(N)) ---
-                    // 1. Index local patterns by ID and Name
                     const idMap = new Map();
                     const nameMap = new Map();
 
@@ -771,84 +779,112 @@
                         if (p.name) nameMap.set(p.name, p);
                     });
 
-                    let newCount = 0;
-                    let updateCount = 0;
-
                     dbPatterns.forEach(p => {
                         let filters = {};
-                        try { filters = JSON.parse(p.filters); } catch (e) { }
+                        try { filters = p.filters ? (typeof p.filters === 'string' ? JSON.parse(p.filters) : p.filters) : {}; } catch (e) { }
 
                         const mapped = {
                             id: p.id,
                             name: p.name,
                             filters: filters,
-                            count: p.student_admission_nos ? JSON.parse(p.student_admission_nos).length : 0,
+                            count: 0, // Will be updated by updateCount() based on loaded student data
                             metadata: {
                                 school: p.school_name,
                                 desc: p.special_req,
                                 consumption: p.consumption,
                                 cloth: p.cloth_details,
                                 req: p.special_req,
-                                student_admission_nos: p.student_admission_nos ? JSON.parse(p.student_admission_nos) : []
+                                student_admission_nos: [] // Cleared, will be re-linked dynamically if needed
                             },
-                            student_admission_nos: p.student_admission_nos ? JSON.parse(p.student_admission_nos) : [],
+                            student_admission_nos: [],
                             schoolId: p.school_id
                         };
 
-                        // Merge Logic
                         if (idMap.has(p.id)) {
-                            // Update existing by ID (Server Authority)
-                            // We replace the object in the map, which we will reconstruct array from later?
-                            // No, simpler to just modify the object in patterns array? 
-                            // Actually, let's rebuild the patterns array from scratch using the Map to ensure uniqueness.
                             idMap.set(p.id, mapped);
-                            updateCount++;
                         } else if (nameMap.has(p.name) && !nameMap.get(p.name).id) {
-                            // Link local unsaved pattern to server pattern
-                            // Remove from nameMap (old local) and add to idMap (new server)?
-                            // Better: Update nameMap entry to have ID, then put in idMap.
-                            const existingLocal = nameMap.get(p.name);
-                            // Merge local filters if server filters are empty? No, respect server.
                             idMap.set(p.id, mapped);
-                            // IMPORTANT: We must ensure this 'name' doesn't produce a duplicate unsaved entry.
-                            // We will process all dbPatterns first, putting them in idMap.
-                            // Then we process local 'unsaved' patterns, adding them only if name not in idMap.
-                            updateCount++;
                         } else {
-                            // New from Server
                             idMap.set(p.id, mapped);
-                            newCount++;
                         }
                     });
 
                     // Reconstruct patterns array
-                    // 1. All Server Patterns (from idMap)
                     const newPatternList = Array.from(idMap.values());
-
-                    // 2. Unsaved Local Patterns (that didn't get linked)
-                    // We iterate original patterns, if !id AND name is not covered by newPatternList
                     const serverNames = new Set(newPatternList.map(p => p.name));
                     patterns.forEach(p => {
                         if (!p.id && !serverNames.has(p.name)) {
                             newPatternList.push(p);
                         }
                     });
-
                     patterns = newPatternList;
-
-                    saveToLocal();
-                    renderModules();
-                    if (btn) {
-                        btn.innerHTML = `<svg class="w-4 h-4 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Loaded ${dbPatterns.length}`;
-                        setTimeout(() => { btn.innerHTML = originalHTML; btn.disabled = false; }, 2000);
-                    }
                 }
+
+                // 2. Process Students
+                let loadedStudentsCount = 0;
+                if (stuRes && stuRes.ok) {
+                    const students = await stuRes.json();
+                    if (Array.isArray(students) && students.length > 0) {
+                        loadedStudentsCount = students.length;
+                        data = students.map((s, i) => {
+                            // Flatten Item Quantities
+                            const qtyMap = {};
+                            let rawQty = s.item_quantities;
+                            if (typeof rawQty === 'string') {
+                                try { rawQty = JSON.parse(rawQty); } catch (e) { }
+                            }
+                            if (rawQty) {
+                                for (const [k, v] of Object.entries(rawQty)) {
+                                    qtyMap[`Qty_${k}`] = v;
+                                }
+                            }
+
+                            // Parse Measurements if string (API might return object or string)
+                            let meas = s.measurements || {};
+                            if (typeof meas === 'string') {
+                                try { meas = JSON.parse(meas); } catch (e) { }
+                            }
+
+                            return {
+                                "S.No": i + 1,
+                                "Student Name": s.name || "",
+                                "Admission No": s.admission_no || "",
+                                "Class": s.class || "",
+                                "Section": s.section || "",
+                                "Roll No": s.roll_no || "",
+                                "Gender": s.gender || "",
+                                "House": s.house || "",
+                                ...meas,
+                                ...qtyMap,
+                                "id": s.id
+                            };
+                        });
+                        console.log(`[Cloud Load] Loaded ${loadedStudentsCount} students.`);
+                    } else {
+                        alert(`DEBUG: API returned 0 students for School ID: ${schoolId}. Check if you have synced students in Editor.`);
+                    }
+                } else {
+                    alert(`DEBUG ERROR: Student Fetch Failed! Status: ${stuRes ? stuRes.status : 'Unknown'}`);
+                }
+
+                saveToLocal();
+                renderModules();
+                renderTable();
+                populateFilters();
+                updateCount(); // This recalculates pattern counts based on the new 'data'
+
+                if (btn) {
+                    btn.innerHTML = `<svg class="w-4 h-4 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Loaded ${loadedPatternsCount} Patterns, ${loadedStudentsCount} Students`;
+                    setTimeout(() => { btn.innerHTML = originalHTML; btn.disabled = false; }, 3000);
+                }
+
             } catch (e) {
                 console.error("Fetch Patterns Error", e);
                 if (btn) {
                     btn.innerText = "Error!";
                     setTimeout(() => { btn.innerHTML = originalHTML; btn.disabled = false; }, 2000);
                 }
+                alert("Debug Exception: " + e.message);
             }
         }
 
