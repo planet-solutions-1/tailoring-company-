@@ -226,7 +226,10 @@ if (process.env.RAILWAY_ENVIRONMENT || process.env.NODE_ENV === 'production') {
 
             // PATTERNS MIGRATION (Ensure description exists if table was old)
             try { await promisePool.execute("ALTER TABLE patterns ADD COLUMN description TEXT"); } catch (e) { }
+            try { await promisePool.execute("ALTER TABLE patterns ADD COLUMN description TEXT"); } catch (e) { }
             try { await promisePool.execute("ALTER TABLE patterns ADD COLUMN filters TEXT"); } catch (e) { }
+            try { await promisePool.execute("ALTER TABLE patterns ADD COLUMN is_deleted TINYINT DEFAULT 0"); } catch (e) { }
+            try { await promisePool.execute("ALTER TABLE patterns ADD COLUMN deleted_at DATETIME NULL"); } catch (e) { }
 
             // LOGS MIGRATION
             try { await promisePool.execute("ALTER TABLE activity_logs ADD COLUMN school_id INT"); } catch (e) { }
@@ -430,6 +433,8 @@ function initSqliteDb(database) {
             // Patterns
             database.run("ALTER TABLE patterns ADD COLUMN description TEXT", () => { });
             database.run("ALTER TABLE patterns ADD COLUMN filters TEXT", () => { });
+            database.run("ALTER TABLE patterns ADD COLUMN is_deleted INTEGER DEFAULT 0", () => { });
+            database.run("ALTER TABLE patterns ADD COLUMN deleted_at DATETIME", () => { });
 
 
             // Complaints Migration
