@@ -1130,6 +1130,26 @@ router.get('/my_complaints', authenticateToken, (req, res) => {
 
 // GET /api/data/patterns/:schoolId
 // GET /api/data/patterns/:schoolId - Active Patterns Only
+// === DEBUG / REPAIR ROUTES ===
+router.post('/debug/fix_trash', authenticateToken, (req, res) => {
+    const schoolId = req.user.role === 'company' ? '%' : req.user.schoolId; // Companies fix all
+    db.serialize(() => {
+        // 1. Fix NULLs -> 0 (Active)
+        db.run("UPDATE patterns SET is_deleted = 0 WHERE is_deleted IS NULL", [], (err) => {
+            if (err) console.error("Fix NULLs failed", err);
+
+            // 2. Normalize Deleted -> 1
+            db.run("UPDATE patterns SET is_deleted = 1 WHERE is_deleted > 0", [], (err2) => {
+                res.json({ message: "Trash System Repaired (Schema Normalized)" });
+            });
+        });
+    });
+});
+
+// === PATTERN ROUTES ===
+
+// GET /api/data/patterns/:schoolId
+// GET /api/data/patterns/:schoolId - Active Patterns Only
 router.get('/patterns/:schoolId', authenticateToken, (req, res) => {
     const { schoolId } = req.params;
     // Security check logic omitted for brevity, assuming standard school match
