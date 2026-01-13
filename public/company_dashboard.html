@@ -2920,16 +2920,31 @@
                 (p.school_name === s.name)
             );
 
-            // Heuristic with Fallback
-            const boysPatterns = schoolPatterns.filter(p => {
-                const name = (p.name || '').toUpperCase();
-                return name.includes('BOYS') || name.includes('MALE') || name.includes('SHIRT') || name.includes('PANT');
-            }).length;
+            // Heuristic with Fallback + JSON Check
+            const checkGender = (p, genderTarget) => {
+                // 1. Check Explicit 'filters' JSON if available
+                if (p.filters) {
+                    try {
+                        const f = typeof p.filters === 'string' ? JSON.parse(p.filters) : p.filters;
+                        if (f.gender && f.gender.toLowerCase() === genderTarget.toLowerCase()) return true;
+                    } catch (e) { }
+                }
 
-            const girlsPatterns = schoolPatterns.filter(p => {
+                // 2. Keyword Check
                 const name = (p.name || '').toUpperCase();
-                return name.includes('GIRLS') || name.includes('FEMALE') || name.includes('SKIRT') || name.includes('FROCK') || name.includes('KURTHA');
-            }).length;
+                if (genderTarget === 'Male') {
+                    return name.includes('BOYS') || name.includes('MALE') || name.includes('SHIRT') || name.includes('PANT');
+                } else {
+                    return name.includes('GIRLS') || name.includes('FEMALE') || name.includes('SKIRT') || name.includes('FROCK') || name.includes('KURTHA');
+                }
+            };
+
+            const boysPatterns = schoolPatterns.filter(p => checkGender(p, 'Male')).length;
+            const girlsPatterns = schoolPatterns.filter(p => checkGender(p, 'Female')).length;
+
+            // Updated Fallback logic for Counts:
+            // If we have patterns but count is 0 for both, maybe they are uncategorized?
+            // We'll show "Uncategorized" if needed, but for now let's hope the looser logic works.
 
             // Update UI
             document.getElementById('td-cat-boys-count').innerText = `${boysPatterns} Groups`;
@@ -3174,8 +3189,18 @@
                 (p.school_name === schoolName)
             );
 
-            // Detailed Gender Filter
+            // Detailed Gender Filter with JSON support
             const displayPatterns = relevantPatterns.filter(p => {
+                // 1. Check Explicit 'filters' JSON if available
+                if (p.filters) {
+                    try {
+                        const f = typeof p.filters === 'string' ? JSON.parse(p.filters) : p.filters;
+                        // Strict check if gender is present
+                        if (f.gender) return f.gender.toLowerCase() === gender.toLowerCase();
+                    } catch (e) { }
+                }
+
+                // 2. Fallback to Name
                 const n = (p.name || '').toUpperCase();
                 if (gender === 'Male') return n.includes('BOYS') || n.includes('MALE') || n.includes('SHIRT') || n.includes('PANT');
                 if (gender === 'Female') return n.includes('GIRLS') || n.includes('FEMALE') || n.includes('SKIRT') || n.includes('FROCK') || n.includes('KURTHA');
@@ -3183,12 +3208,15 @@
             });
 
             if (displayPatterns.length === 0) {
-                // Fallback Debug Info
+                // Fallback Debug Info - List names to help user debug
                 const totalForSchool = relevantPatterns.length;
+                const exampleNames = relevantPatterns.slice(0, 3).map(p => p.name).join(', ');
                 container.innerHTML = `
                     <div class="col-span-full text-center py-12 text-gray-300 italic">
                         No patterns found for ${gender}.<br>
-                        <span class="text-xs text-gray-400">(Found ${totalForSchool} total patterns for this school, but none matched "${gender}" keywords)</span>
+                        <span class="text-xs text-gray-400 font-mono mt-2 block">
+                            (Found ${totalForSchool} total. Examples: ${exampleNames || 'None'})
+                        </span>
                     </div>`;
                 return;
             }
@@ -4417,6 +4445,23 @@
 
         function disableErrorReporting() {
             console.log("System Error Reporting Paused");
+        }
+
+        async function fetchGlobalPatterns() {
+            try {
+                const res = await fetch(`${API_BASE}/data/patterns/all`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    globalPatterns = await res.json();
+                } else {
+                    console.error("Failed to fetch global patterns");
+                    globalPatterns = [];
+                }
+            } catch (e) {
+                console.error("Pattern Fetch Error", e);
+                globalPatterns = [];
+            }
         }
 
         document.getElementById('nav-overview').classList.add('active'); init().then(() => {
