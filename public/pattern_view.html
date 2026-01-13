@@ -770,645 +770,638 @@
                     const dbPatterns = await patRes.json();
                     loadedPatternsCount = dbPatterns.length;
 
-                    // --- OPTIMIZED DEDUPLICATION (O(N)) ---
-                    const idMap = new Map();
-                    const nameMap = new Map();
-
-                    patterns.forEach(p => {
-                        if (p.id) idMap.set(p.id, p);
-                        if (p.name) nameMap.set(p.name, p);
-                    });
+                    // --- STRICT SYNC LOGIC ---
+                    // 1. Start with Server Data (Source of Truth)
+                    const serverIdMap = new Set();
+                    const newPatternList = [];
 
                     dbPatterns.forEach(p => {
                         let filters = {};
                         try { filters = p.filters ? (typeof p.filters === 'string' ? JSON.parse(p.filters) : p.filters) : {}; } catch (e) { }
 
-                        const mapped = {
+                        newPatternList.push({
                             id: p.id,
                             name: p.name,
                             filters: filters,
-                            count: 0, // Will be updated by updateCount() based on loaded student data
+                            count: 0, // Will be updated later
                             metadata: {
                                 school: p.school_name,
                                 desc: p.special_req,
                                 consumption: p.consumption,
                                 cloth: p.cloth_details,
                                 req: p.special_req,
-                                student_admission_nos: [] // Cleared, will be re-linked dynamically if needed
+                                student_admission_nos: []
                             },
                             student_admission_nos: [],
                             schoolId: p.school_id
-                        };
-
-                        if (idMap.has(p.id)) {
-                            idMap.set(p.id, mapped);
-                        } else if (nameMap.has(p.name) && !nameMap.get(p.name).id) {
-                            idMap.set(p.id, mapped);
-                        } else {
-                            idMap.set(p.id, mapped);
-                        }
+                        });
+                        serverIdMap.add(p.id);
                     });
 
-                    // Reconstruct patterns array
-                    const newPatternList = Array.from(idMap.values());
-                    const serverNames = new Set(newPatternList.map(p => p.name));
+                    // 2. Merge Local-Only (Unsaved) Patterns
+                    // If a pattern is in local 'patterns' but NOT in server response:
+                    // - If ID is a small integer (real DB id), it means it was DELETED on server -> Drop it.
+                    // - If ID is large timestamp (> 1600000000000), it's local/unsaved -> Keep it.
                     patterns.forEach(p => {
-                        if (!p.id && !serverNames.has(p.name)) {
+                        const isLocalId = p.id && p.id > 1600000000000;
+                        if (isLocalId && !serverIdMap.has(p.id)) {
                             newPatternList.push(p);
                         }
                     });
+
                     patterns = newPatternList;
-                }
 
-                // 2. Process Students
-                let loadedStudentsCount = 0;
-                if (stuRes && stuRes.ok) {
-                    const students = await stuRes.json();
-                    if (Array.isArray(students) && students.length > 0) {
-                        loadedStudentsCount = students.length;
-                        data = students.map((s, i) => {
-                            // Flatten Item Quantities
-                            const qtyMap = {};
-                            let rawQty = s.item_quantities;
-                            if (typeof rawQty === 'string') {
-                                try { rawQty = JSON.parse(rawQty); } catch (e) { }
-                            }
-                            if (rawQty) {
-                                for (const [k, v] of Object.entries(rawQty)) {
-                                    qtyMap[`Qty_${k}`] = v;
+
+
+                    // 2. Process Students
+                    let loadedStudentsCount = 0;
+                    if (stuRes && stuRes.ok) {
+                        const students = await stuRes.json();
+                        if (Array.isArray(students) && students.length > 0) {
+                            loadedStudentsCount = students.length;
+                            data = students.map((s, i) => {
+                                // Flatten Item Quantities
+                                const qtyMap = {};
+                                let rawQty = s.item_quantities;
+                                if (typeof rawQty === 'string') {
+                                    try { rawQty = JSON.parse(rawQty); } catch (e) { }
                                 }
-                            }
+                                if (rawQty) {
+                                    for (const [k, v] of Object.entries(rawQty)) {
+                                        qtyMap[`Qty_${k}`] = v;
+                                    }
+                                }
 
-                            // Parse Measurements if string (API might return object or string)
-                            let meas = s.measurements || {};
-                            if (typeof meas === 'string') {
-                                try { meas = JSON.parse(meas); } catch (e) { }
-                            }
+                                // Parse Measurements if string (API might return object or string)
+                                let meas = s.measurements || {};
+                                if (typeof meas === 'string') {
+                                    try { meas = JSON.parse(meas); } catch (e) { }
+                                }
 
-                            return {
-                                "S.No": i + 1,
-                                "Student Name": s.name || "",
-                                "Admission No": s.admission_no || "",
-                                "Class": s.class || "",
-                                "Section": s.section || "",
-                                "Roll No": s.roll_no || "",
-                                "Gender": s.gender || "",
-                                "House": s.house || "",
-                                ...meas,
-                                ...qtyMap,
-                                "id": s.id
-                            };
-                        });
-                        console.log(`[Cloud Load] Loaded ${loadedStudentsCount} students.`);
+                                return {
+                                    "S.No": i + 1,
+                                    "Student Name": s.name || "",
+                                    "Admission No": s.admission_no || "",
+                                    "Class": s.class || "",
+                                    "Section": s.section || "",
+                                    "Roll No": s.roll_no || "",
+                                    "Gender": s.gender || "",
+                                    "House": s.house || "",
+                                    ...meas,
+                                    ...qtyMap,
+                                    "id": s.id
+                                };
+                            });
+                            console.log(`[Cloud Load] Loaded ${loadedStudentsCount} students.`);
+                        } else {
+                            // alert(`DEBUG: API returned 0 students for School ID: ${schoolId}. Check if you have synced students in Editor.`);
+                        }
                     } else {
-                        // alert(`DEBUG: API returned 0 students for School ID: ${schoolId}. Check if you have synced students in Editor.`);
+                        // alert(`DEBUG ERROR: Student Fetch Failed! Status: ${stuRes ? stuRes.status : 'Unknown'}`);
                     }
-                } else {
-                    // alert(`DEBUG ERROR: Student Fetch Failed! Status: ${stuRes ? stuRes.status : 'Unknown'}`);
-                }
 
-                saveToLocal();
-                renderModules();
-                renderTable();
-                populateFilters();
-                updateCount(); // This recalculates pattern counts based on the new 'data'
+                    saveToLocal();
+                    renderModules();
+                    renderTable();
+                    populateFilters();
+                    updateCount(); // This recalculates pattern counts based on the new 'data'
 
-                if (btn) {
-                    btn.innerHTML = `<svg class="w-4 h-4 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Loaded ${loadedPatternsCount} Patterns, ${loadedStudentsCount} Students`;
-                    setTimeout(() => { btn.innerHTML = originalHTML; btn.disabled = false; }, 3000);
-                }
+                    if (btn) {
+                        btn.innerHTML = `<svg class="w-4 h-4 mr-2 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Loaded ${loadedPatternsCount} Patterns, ${loadedStudentsCount} Students`;
+                        setTimeout(() => { btn.innerHTML = originalHTML; btn.disabled = false; }, 3000);
+                    }
 
-            } catch (e) {
-                console.error("Fetch Patterns Error", e);
-                if (btn) {
-                    btn.innerText = "Error!";
-                    setTimeout(() => { btn.innerHTML = originalHTML; btn.disabled = false; }, 2000);
+                } catch (e) {
+                    console.error("Fetch Patterns Error", e);
+                    if (btn) {
+                        btn.innerText = "Error!";
+                        setTimeout(() => { btn.innerHTML = originalHTML; btn.disabled = false; }, 2000);
+                    }
+                    alert("Debug Exception: " + e.message);
                 }
-                alert("Debug Exception: " + e.message);
             }
-        }
 
         // Constants
         const infoCols = ["S.No", "Roll No", "Admission No", "Student Name", "Class", "Section", "House", "Gender", "Absent/Present"];
-        const measureCols = ["U1", "U2", "U3", "U4", "U5", "U6", "U7", "U8", "L1", "L2", "L3", "L4", "L5", "L6", "L7", "L8"];
+            const measureCols = ["U1", "U2", "U3", "U4", "U5", "U6", "U7", "U8", "L1", "L2", "L3", "L4", "L5", "L6", "L7", "L8"];
 
-        // Item Definitions
-        const boysItems = [
-            { name: "BOYS - FORMAL SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Male" },
-            { name: "BOYS - TRACK T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Male" },
-            { name: "BOYS - UNIFORM T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Male" },
-            { name: "BOYS - JERKIN", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Male" },
-            { name: "BOYS - PULLOVER", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Male" },
-            { name: "BOYS - FORMAL PANT", cols: ["L1", "L2"], type: "Male" },
-            { name: "BOYS - TRACK PANT", cols: ["L1", "L2"], type: "Male" },
-            { name: "BOYS - FORMAL SHORTS", cols: ["L3", "L2"], type: "Male" },
-            { name: "BOYS - TRACK SHORTS", cols: ["L3", "L2"], type: "Male" },
-            { name: "BOYS - PANT SPECIAL CASE", cols: ["L1", "L2", "L6", "L7"], type: "Male" },
-        ];
-        const girlsItems = [
-            { name: "GIRLS - FORMAL SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Female" },
-            { name: "GIRLS - TRACK T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Female" },
-            { name: "GIRLS - UNIFORM T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Female" },
-            { name: "GIRLS - JERKIN", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Female" },
-            { name: "GIRLS - FULL SLEEVE SHIRT", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Female" },
-            { name: "GIRLS - PULLOVER", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Female" },
-            { name: "GIRLS - KURTHA SHIRT", cols: ["U7", "U2", "U3", "U4", "U6"], type: "Female" },
-            { name: "GIRLS - SPECIAL FROCKS", cols: ["U7", "U2", "U3", "U4", "U6"], type: "Female" },
-            { name: "GIRLS - FORMAL PANT", cols: ["L1", "L2"], type: "Female" },
-            { name: "GIRLS - TRACK PANT", cols: ["L1", "L2"], type: "Female" },
-            { name: "GIRLS - TRACK SHORTS", cols: ["L3", "L2"], type: "Female" },
-            { name: "GIRLS - PINOFORE", cols: ["L4", "L2"], type: "Female" },
-            { name: "GIRLS - SKIRT", cols: ["L5", "L2"], type: "Female" },
-            { name: "GIRLS - PANT SPECIAL CASE", cols: ["L1", "L2", "L6", "L7"], type: "Female" },
-        ];
-        const allItems = [...boysItems, ...girlsItems];
+            // Item Definitions
+            const boysItems = [
+                { name: "BOYS - FORMAL SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Male" },
+                { name: "BOYS - TRACK T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Male" },
+                { name: "BOYS - UNIFORM T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Male" },
+                { name: "BOYS - JERKIN", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Male" },
+                { name: "BOYS - PULLOVER", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Male" },
+                { name: "BOYS - FORMAL PANT", cols: ["L1", "L2"], type: "Male" },
+                { name: "BOYS - TRACK PANT", cols: ["L1", "L2"], type: "Male" },
+                { name: "BOYS - FORMAL SHORTS", cols: ["L3", "L2"], type: "Male" },
+                { name: "BOYS - TRACK SHORTS", cols: ["L3", "L2"], type: "Male" },
+                { name: "BOYS - PANT SPECIAL CASE", cols: ["L1", "L2", "L6", "L7"], type: "Male" },
+            ];
+            const girlsItems = [
+                { name: "GIRLS - FORMAL SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Female" },
+                { name: "GIRLS - TRACK T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Female" },
+                { name: "GIRLS - UNIFORM T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Female" },
+                { name: "GIRLS - JERKIN", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Female" },
+                { name: "GIRLS - FULL SLEEVE SHIRT", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Female" },
+                { name: "GIRLS - PULLOVER", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Female" },
+                { name: "GIRLS - KURTHA SHIRT", cols: ["U7", "U2", "U3", "U4", "U6"], type: "Female" },
+                { name: "GIRLS - SPECIAL FROCKS", cols: ["U7", "U2", "U3", "U4", "U6"], type: "Female" },
+                { name: "GIRLS - FORMAL PANT", cols: ["L1", "L2"], type: "Female" },
+                { name: "GIRLS - TRACK PANT", cols: ["L1", "L2"], type: "Female" },
+                { name: "GIRLS - TRACK SHORTS", cols: ["L3", "L2"], type: "Female" },
+                { name: "GIRLS - PINOFORE", cols: ["L4", "L2"], type: "Female" },
+                { name: "GIRLS - SKIRT", cols: ["L5", "L2"], type: "Female" },
+                { name: "GIRLS - PANT SPECIAL CASE", cols: ["L1", "L2", "L6", "L7"], type: "Female" },
+            ];
+            const allItems = [...boysItems, ...girlsItems];
 
-        // Column Aliases for Robust Parsing
-        const colAliases = {
-            "S.No": ["s.no", "no", "sno", "sl.no", "sl no", "#", "ser.no", "serial no", "serial number"],
-            "Section": ["section", "sec", "sec.", "class section", "class & sec", "class/sec", "grade section", "div", "division", "class-sec"],
-            "Roll No": ["roll no", "rollno", "roll_no", "roll.no", "roll #"],
-            "Admission No": ["admission no", "adm no", "admin no", "adm.no", "admission_no", "reg no", "register no", "admn no"],
-            "Class": ["class", "grade", "standard", "std", "c", "class/grade"],
-            "Gender": ["gender", "sex", "m/f"]
-        };
+            // Column Aliases for Robust Parsing
+            const colAliases = {
+                "S.No": ["s.no", "no", "sno", "sl.no", "sl no", "#", "ser.no", "serial no", "serial number"],
+                "Section": ["section", "sec", "sec.", "class section", "class & sec", "class/sec", "grade section", "div", "division", "class-sec"],
+                "Roll No": ["roll no", "rollno", "roll_no", "roll.no", "roll #"],
+                "Admission No": ["admission no", "adm no", "admin no", "adm.no", "admission_no", "reg no", "register no", "admn no"],
+                "Class": ["class", "grade", "standard", "std", "c", "class/grade"],
+                "Gender": ["gender", "sex", "m/f"]
+            };
 
-        // --- CORE FUNCTIONS ---
+            // --- CORE FUNCTIONS ---
 
-        async function handleFileUpload(e) {
-            const file = e.target.files[0];
-            if (!file) return;
-            const ab = await file.arrayBuffer();
-            currentWorkbook = XLSX.read(ab);
-            const ws = currentWorkbook.Sheets[currentWorkbook.SheetNames[0]];
+            async function handleFileUpload(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                const ab = await file.arrayBuffer();
+                currentWorkbook = XLSX.read(ab);
+                const ws = currentWorkbook.Sheets[currentWorkbook.SheetNames[0]];
 
-            let headerRowIndex = 0;
-            const rawRows = XLSX.utils.sheet_to_json(ws, { header: 1 });
-            for (let i = 0; i < Math.min(rawRows.length, 20); i++) {
-                const rowStr = JSON.stringify(rawRows[i] || []).toLowerCase();
-                if (rowStr.includes("student") && rowStr.includes("name")) { headerRowIndex = i; break; }
-            }
+                let headerRowIndex = 0;
+                const rawRows = XLSX.utils.sheet_to_json(ws, { header: 1 });
+                for (let i = 0; i < Math.min(rawRows.length, 20); i++) {
+                    const rowStr = JSON.stringify(rawRows[i] || []).toLowerCase();
+                    if (rowStr.includes("student") && rowStr.includes("name")) { headerRowIndex = i; break; }
+                }
 
-            const jsonData = XLSX.utils.sheet_to_json(ws, { range: headerRowIndex, defval: "" });
+                const jsonData = XLSX.utils.sheet_to_json(ws, { range: headerRowIndex, defval: "" });
 
-            // RELIABLE IMPORT (Array Mode) to fix Quantity Mapping
-            const headerRow = rawRows[headerRowIndex];
-            const dataRows = rawRows.slice(headerRowIndex + 1);
+                // RELIABLE IMPORT (Array Mode) to fix Quantity Mapping
+                const headerRow = rawRows[headerRowIndex];
+                const dataRows = rawRows.slice(headerRowIndex + 1);
 
-            console.log("DEBUG: Detected Header Row:", headerRow);
-            console.log("DEBUG: Column Aliases:", colAliases);
+                console.log("DEBUG: Detected Header Row:", headerRow);
+                console.log("DEBUG: Column Aliases:", colAliases);
 
-            data = dataRows.map((rArr, i) => {
-                const newRow = {};
-                // fill info/measures
-                // fill info/measures
-                infoCols.forEach(col => {
-                    // 1. Try Exact Match (Header === Column Name)
-                    const normalizedCol = col.toLowerCase();
-                    let idx = headerRow.findIndex(h => h && h.toString().trim().toLowerCase() === normalizedCol);
+                data = dataRows.map((rArr, i) => {
+                    const newRow = {};
+                    // fill info/measures
+                    // fill info/measures
+                    infoCols.forEach(col => {
+                        // 1. Try Exact Match (Header === Column Name)
+                        const normalizedCol = col.toLowerCase();
+                        let idx = headerRow.findIndex(h => h && h.toString().trim().toLowerCase() === normalizedCol);
 
-                    // 2. Try Known Aliases
-                    if (idx === -1 && colAliases[col]) {
-                        idx = headerRow.findIndex(h => h && colAliases[col].includes(h.toString().trim().toLowerCase()));
-                    }
-
-                    // 3. Last Resort: Fuzzy "Contains" Match (Use with caution, mainly for Section/Class)
-                    if (idx === -1) {
-                        // Only do this for specific columns to avoid false positives (e.g. "Class" matching "Classical Dance")
-                        if (col === "Section" || col === "Class" || col === "Admission No") {
-                            const possibleAliases = colAliases[col] || [col.toLowerCase()];
-                            idx = headerRow.findIndex(h => {
-                                if (!h) return false;
-                                const val = h.toString().toLowerCase();
-                                return possibleAliases.some(alias => val.includes(alias));
-                            });
+                        // 2. Try Known Aliases
+                        if (idx === -1 && colAliases[col]) {
+                            idx = headerRow.findIndex(h => h && colAliases[col].includes(h.toString().trim().toLowerCase()));
                         }
-                    }
 
-                    if (idx !== -1) newRow[col] = rArr[idx];
-                });
-                measureCols.forEach(col => {
-                    const idx = headerRow.findIndex(h => h && h.toString().startsWith(col));
-                    if (idx !== -1) newRow[col] = rArr[idx] || "00";
-                    else newRow[col] = "00";
-                });
-
-                // Fill Quantities by Header Position - Robust Logic
-                allItems.forEach(item => {
-                    const itemIdx = headerRow.indexOf(item.name);
-                    if (itemIdx !== -1) {
-                        // Assume Qty is next
-                        const nextCol = headerRow[itemIdx + 1];
-                        if (nextCol && (nextCol.toString().toLowerCase().includes("qty") || nextCol.toString().toLowerCase().includes("quantity"))) {
-                            newRow[`Qty_${item.name}`] = rArr[itemIdx + 1];
+                        // 3. Last Resort: Fuzzy "Contains" Match (Use with caution, mainly for Section/Class)
+                        if (idx === -1) {
+                            // Only do this for specific columns to avoid false positives (e.g. "Class" matching "Classical Dance")
+                            if (col === "Section" || col === "Class" || col === "Admission No") {
+                                const possibleAliases = colAliases[col] || [col.toLowerCase()];
+                                idx = headerRow.findIndex(h => {
+                                    if (!h) return false;
+                                    const val = h.toString().toLowerCase();
+                                    return possibleAliases.some(alias => val.includes(alias));
+                                });
+                            }
                         }
-                    }
+
+                        if (idx !== -1) newRow[col] = rArr[idx];
+                    });
+                    measureCols.forEach(col => {
+                        const idx = headerRow.findIndex(h => h && h.toString().startsWith(col));
+                        if (idx !== -1) newRow[col] = rArr[idx] || "00";
+                        else newRow[col] = "00";
+                    });
+
+                    // Fill Quantities by Header Position - Robust Logic
+                    allItems.forEach(item => {
+                        const itemIdx = headerRow.indexOf(item.name);
+                        if (itemIdx !== -1) {
+                            // Assume Qty is next
+                            const nextCol = headerRow[itemIdx + 1];
+                            if (nextCol && (nextCol.toString().toLowerCase().includes("qty") || nextCol.toString().toLowerCase().includes("quantity"))) {
+                                newRow[`Qty_${item.name}`] = rArr[itemIdx + 1];
+                            }
+                        }
+                    });
+
+                    if (!newRow["S.No"]) newRow["S.No"] = i + 1;
+                    // Debug: Print keys for first row
+                    if (i === 0) console.log("DEBUG: First mapped row:", newRow);
+                    return newRow;
                 });
 
-                if (!newRow["S.No"]) newRow["S.No"] = i + 1;
-                // Debug: Print keys for first row
-                if (i === 0) console.log("DEBUG: First mapped row:", newRow);
-                return newRow;
-            });
+                populateFilters();
 
-            populateFilters();
-
-            // Auto-Detect Item Logic
-            // If the uploaded file contains a column header matching an item name, auto-select it.
-            let detectedItem = null;
-            if (headerRow) {
-                for (const item of allItems) {
-                    if (headerRow.some(h => h && h.toString().trim() === item.name)) {
-                        detectedItem = item.name;
-                        break; // Prioritize the first one found
+                // Auto-Detect Item Logic
+                // If the uploaded file contains a column header matching an item name, auto-select it.
+                let detectedItem = null;
+                if (headerRow) {
+                    for (const item of allItems) {
+                        if (headerRow.some(h => h && h.toString().trim() === item.name)) {
+                            detectedItem = item.name;
+                            break; // Prioritize the first one found
+                        }
                     }
                 }
+
+                if (detectedItem) {
+                    document.getElementById('filterItem').value = detectedItem;
+                    handleItemFilter(); // This handles rendering
+                    // Also trigger basic filter update to ensure state consistency
+                    // handleFilter(); 
+                } else {
+                    renderTable();
+                    updateCount();
+                }
+                saveToLocal(); // Save new data
             }
 
-            if (detectedItem) {
-                document.getElementById('filterItem').value = detectedItem;
-                handleItemFilter(); // This handles rendering
-                // Also trigger basic filter update to ensure state consistency
-                // handleFilter(); 
-            } else {
+
+            // --- PRESET SYSTEM ---
+            let presets = [];
+            const PRESET_STORAGE_KEY = 'exal_filter_presets';
+
+            function loadPresets() {
+                try {
+                    const stored = localStorage.getItem(PRESET_STORAGE_KEY);
+                    if (stored) {
+                        presets = JSON.parse(stored);
+                    }
+                } catch (e) { console.error("Failed to load presets", e); }
+                renderPresetDropdown();
+            }
+
+            function renderPresetDropdown() {
+                const sel = document.getElementById('presetSelect');
+                if (!sel) return;
+
+                // Filter by Active Item
+                const activeItem = document.getElementById('filterItem') ? document.getElementById('filterItem').value : "";
+
+                // Show all if no item selected, OR if preset matches item
+                const visiblePresets = presets.filter(p => {
+                    if (!activeItem) return true; // Show all if global filter is empty
+                    return p.filters.item === activeItem;
+                });
+
+                sel.innerHTML = '<option value="">Select Preset...</option>';
+                visiblePresets.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.name;
+                    opt.textContent = p.name;
+                    sel.appendChild(opt);
+                });
+                sel.onchange = (e) => applyPreset(e.target.value);
+            }
+
+            function saveCurrentAsPreset() {
+                // syncFiltersFromDOM(); // Ensure up to date (Assuming handleFilter updates 'filters')
+                // Actually handleFilter updates 'filters'.
+                const name = prompt("Enter a name for this filter preset:");
+                if (!name) return;
+
+                // Check duplicate
+                const existing = presets.findIndex(p => p.name === name);
+                // Deep copy filters
+                const newPreset = { name: name, filters: JSON.parse(JSON.stringify(filters)) };
+
+                if (existing !== -1) {
+                    if (!confirm(`Preset "${name}" already exists. Overwrite?`)) return;
+                    presets[existing] = newPreset;
+                } else {
+                    presets.push(newPreset);
+                }
+
+                localStorage.setItem(PRESET_STORAGE_KEY, JSON.stringify(presets));
+                renderPresetDropdown();
+                // Select the newly created one
+                setTimeout(() => { document.getElementById('presetSelect').value = name; }, 50);
+                alert("Preset Saved!");
+            }
+
+            function applyPreset(name) {
+                if (!name) return;
+                const p = presets.find(x => x.name === name);
+                if (!p) return;
+
+                // Restore Logic
+                filters = JSON.parse(JSON.stringify(p.filters));
+
+                // Update DOM Elements
+                const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ""; };
+                setVal('searchInput', filters.search);
+                setVal('filterClass', filters.class);
+                setVal('filterSection', filters.section);
+                setVal('filterHouse', filters.house);
+                setVal('filterGender', filters.gender);
+                setVal('filterItem', filters.item);
+
+                // BACKUP COMPONENTS map to prevent handleItemFilter from wiping them
+                const savedComponents = JSON.parse(JSON.stringify(filters.components || {}));
+
+                // Re-trigger item filter rendering (clears dynamic inputs)
+                handleItemFilter();
+
+                // RESTORE COMPONENTS
+                filters.components = savedComponents;
+                const container = document.getElementById('dynamicFilters');
+                if (filters.components && container) {
+                    Array.from(container.children).forEach(wrapper => {
+                        const input = wrapper.querySelector('input');
+                        if (input && filters.components[input.placeholder]) {
+                            input.value = filters.components[input.placeholder];
+                        }
+                    });
+                }
+
                 renderTable();
                 updateCount();
             }
-            saveToLocal(); // Save new data
-        }
 
+            function managePresets() {
+                if (presets.length === 0) return alert("No saved presets to manage.");
 
-        // --- PRESET SYSTEM ---
-        let presets = [];
-        const PRESET_STORAGE_KEY = 'exal_filter_presets';
+                const names = presets.map((p, i) => `${i + 1}. ${p.name}`).join('\n');
+                const choice = prompt(`Saved Presets:\n${names}\n\nEnter number to DELETE, or Cancel.`);
+                if (!choice) return;
 
-        function loadPresets() {
-            try {
-                const stored = localStorage.getItem(PRESET_STORAGE_KEY);
-                if (stored) {
-                    presets = JSON.parse(stored);
-                }
-            } catch (e) { console.error("Failed to load presets", e); }
-            renderPresetDropdown();
-        }
-
-        function renderPresetDropdown() {
-            const sel = document.getElementById('presetSelect');
-            if (!sel) return;
-
-            // Filter by Active Item
-            const activeItem = document.getElementById('filterItem') ? document.getElementById('filterItem').value : "";
-
-            // Show all if no item selected, OR if preset matches item
-            const visiblePresets = presets.filter(p => {
-                if (!activeItem) return true; // Show all if global filter is empty
-                return p.filters.item === activeItem;
-            });
-
-            sel.innerHTML = '<option value="">Select Preset...</option>';
-            visiblePresets.forEach(p => {
-                const opt = document.createElement('option');
-                opt.value = p.name;
-                opt.textContent = p.name;
-                sel.appendChild(opt);
-            });
-            sel.onchange = (e) => applyPreset(e.target.value);
-        }
-
-        function saveCurrentAsPreset() {
-            // syncFiltersFromDOM(); // Ensure up to date (Assuming handleFilter updates 'filters')
-            // Actually handleFilter updates 'filters'.
-            const name = prompt("Enter a name for this filter preset:");
-            if (!name) return;
-
-            // Check duplicate
-            const existing = presets.findIndex(p => p.name === name);
-            // Deep copy filters
-            const newPreset = { name: name, filters: JSON.parse(JSON.stringify(filters)) };
-
-            if (existing !== -1) {
-                if (!confirm(`Preset "${name}" already exists. Overwrite?`)) return;
-                presets[existing] = newPreset;
-            } else {
-                presets.push(newPreset);
-            }
-
-            localStorage.setItem(PRESET_STORAGE_KEY, JSON.stringify(presets));
-            renderPresetDropdown();
-            // Select the newly created one
-            setTimeout(() => { document.getElementById('presetSelect').value = name; }, 50);
-            alert("Preset Saved!");
-        }
-
-        function applyPreset(name) {
-            if (!name) return;
-            const p = presets.find(x => x.name === name);
-            if (!p) return;
-
-            // Restore Logic
-            filters = JSON.parse(JSON.stringify(p.filters));
-
-            // Update DOM Elements
-            const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ""; };
-            setVal('searchInput', filters.search);
-            setVal('filterClass', filters.class);
-            setVal('filterSection', filters.section);
-            setVal('filterHouse', filters.house);
-            setVal('filterGender', filters.gender);
-            setVal('filterItem', filters.item);
-
-            // BACKUP COMPONENTS map to prevent handleItemFilter from wiping them
-            const savedComponents = JSON.parse(JSON.stringify(filters.components || {}));
-
-            // Re-trigger item filter rendering (clears dynamic inputs)
-            handleItemFilter();
-
-            // RESTORE COMPONENTS
-            filters.components = savedComponents;
-            const container = document.getElementById('dynamicFilters');
-            if (filters.components && container) {
-                Array.from(container.children).forEach(wrapper => {
-                    const input = wrapper.querySelector('input');
-                    if (input && filters.components[input.placeholder]) {
-                        input.value = filters.components[input.placeholder];
-                    }
-                });
-            }
-
-            renderTable();
-            updateCount();
-        }
-
-        function managePresets() {
-            if (presets.length === 0) return alert("No saved presets to manage.");
-
-            const names = presets.map((p, i) => `${i + 1}. ${p.name}`).join('\n');
-            const choice = prompt(`Saved Presets:\n${names}\n\nEnter number to DELETE, or Cancel.`);
-            if (!choice) return;
-
-            const idx = parseInt(choice) - 1;
-            if (idx >= 0 && idx < presets.length) {
-                const p = presets[idx];
-                if (confirm(`Delete preset "${p.name}"?`)) {
-                    presets.splice(idx, 1);
-                    localStorage.setItem(PRESET_STORAGE_KEY, JSON.stringify(presets));
-                    renderPresetDropdown();
-                    alert("Deleted.");
-                }
-            } else {
-                alert("Invalid selection.");
-            }
-        }
-
-        // Init Presets on Load
-        document.addEventListener('DOMContentLoaded', () => {
-            loadPresets();
-            loadTrash();
-        });
-
-        function populateFilters() {
-            const getOpts = (key) => [...new Set(data.map(r => r[key]).filter(Boolean))].sort();
-            const updateDatalist = (id, opts) => {
-                const el = document.getElementById(id);
-                el.innerHTML = opts.map(o => `<option value="${o}">`).join('');
-            };
-
-            const updateSelect = (id, opts, label) => {
-                const el = document.getElementById(id);
-                const currentVal = el.value;
-                el.innerHTML = `<option value="">${label}</option>` + opts.map(o => `<option value="${o}">${o}</option>`).join('');
-                if (opts.includes(currentVal)) el.value = currentVal;
-            };
-
-            updateDatalist('listClass', getOpts('Class'));
-            updateDatalist('listSection', getOpts('Section'));
-            updateSelect('filterHouse', getOpts('House'), 'All Houses');
-            updateSelect('filterGender', getOpts('Gender'), 'All Genders');
-
-            const itemSelect = document.getElementById('filterItem');
-            // We want to keep the list of ALL items, not just present ones?
-            // Actually, showing only present items might be better UX?
-            // "pattern dashboard" should allow filtering by any known item type to create new patterns?
-            // No, stick to allItems as defined constantly.
-            itemSelect.innerHTML = '<option value="">Filter by Item</option>' + allItems.map(i => `<option value="${i.name}">${i.name}</option>`).join('');
-        }
-
-        function handleFilter() {
-            filters.class = document.getElementById('filterClass').value;
-            filters.section = document.getElementById('filterSection').value;
-            filters.house = document.getElementById('filterHouse').value;
-            filters.gender = document.getElementById('filterGender').value;
-            renderTable();
-            updateCount();
-        }
-
-        function handleItemFilter() {
-            const itemName = document.getElementById('filterItem').value;
-            filters.item = itemName;
-            filters.components = {};
-
-            // Refresh Presets Dropdown to show only relevant ones
-            renderPresetDropdown();
-
-            const container = document.getElementById('dynamicFilters');
-            container.innerHTML = '';
-
-            if (itemName) {
-                const item = allItems.find(i => i.name === itemName);
-                if (item) {
-                    item.cols.forEach(col => {
-                        const values = [...new Set(data.map(r => r[col]).filter(v => v && v !== "00"))].sort();
-
-                        const wrapper = document.createElement('div');
-                        wrapper.className = "relative inline-block";
-
-                        const input = document.createElement('input');
-                        input.setAttribute('list', `list-${col}`);
-                        input.type = "text";
-                        input.placeholder = col;
-                        input.className = "text-sm border border-[#E2E8F0] rounded-md px-2 py-1.5 outline-none focus:border-[#4A5568] w-20 text-gray-600";
-
-                        const dl = document.createElement('datalist');
-                        dl.id = `list-${col}`;
-                        dl.innerHTML = values.map(v => `<option value="${v}">`).join('');
-
-                        input.onchange = (e) => {
-                            if (e.target.value) filters.components[col] = e.target.value;
-                            else delete filters.components[col];
-                            renderTable();
-                            updateCount();
-                        };
-
-                        wrapper.appendChild(input);
-                        wrapper.appendChild(dl);
-                        container.appendChild(wrapper);
-                    });
-                }
-            }
-            renderTable();
-            updateCount();
-        }
-
-        function handleSearch() {
-            filters.search = document.getElementById('searchInput').value.toLowerCase();
-            renderTable();
-            updateCount();
-        }
-
-        function syncFiltersFromDOM() {
-            // 1. Sync Static Filters
-            filters.class = document.getElementById('filterClass').value;
-            filters.section = document.getElementById('filterSection').value;
-            filters.house = document.getElementById('filterHouse').value;
-            filters.gender = document.getElementById('filterGender').value;
-
-            // 2. Sync Dynamic Component Filters
-            // Don't rebuild them! Just read values from existing inputs.
-            const container = document.getElementById('dynamicFilters');
-            filters.components = {}; // Clear and rebuild based on DOM
-
-            // Only if item selected
-            const activeItem = document.getElementById('filterItem').value;
-            if (activeItem && activeItem === filters.item) {
-                const inputs = container.querySelectorAll('input');
-                inputs.forEach(input => {
-                    const col = input.getAttribute('placeholder');
-                    const val = input.value.trim();
-                    if (col && val) {
-                        filters.components[col] = val;
-                    }
-                });
-            }
-        }
-
-
-
-        // --- CLASS RANK LOGIC ---
-        const CLASS_ORDER = ["PRE-KG", "PREKG", "LKG", "UKG", "KG", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"];
-
-        function getClassRank(cls) {
-            if (!cls) return -1;
-            const s = String(cls).toUpperCase().trim();
-            const idx = CLASS_ORDER.indexOf(s);
-            if (idx !== -1) return idx;
-            // Fallback for purely numeric classes not in list (e.g. 13?)
-            const num = parseFloat(s);
-            if (!isNaN(num)) return CLASS_ORDER.length + num;
-            return -1; // Unknown
-        }
-
-        // --- FILTER HELPERS ---
-        function checkFilterMatch(rowValue, filterInput, isNumeric = false) {
-            if (!filterInput) return true;
-            const parts = filterInput.split(',').map(s => s.trim());
-
-            // Check if rowValue matches ANY of the parts (OR logic between commas)
-            return parts.some(part => {
-                if (part.includes('-')) {
-                    const [start, end] = part.split('-').map(s => s.trim());
-
-                    if (typeof isNumeric === 'function') {
-                        // Custom Rank Logic (for Classes)
-                        const val = isNumeric(rowValue);
-                        const sVal = isNumeric(start);
-                        const eVal = isNumeric(end);
-                        if (val === -1 || sVal === -1 || eVal === -1) return false;
-                        return val >= sVal && val <= eVal;
-                    } else if (isNumeric) {
-                        const val = parseFloat(rowValue);
-                        const sNum = parseFloat(start);
-                        const eNum = parseFloat(end);
-                        // Handle invalid numbers gracefully
-                        if (isNaN(val) || isNaN(sNum) || isNaN(eNum)) return false;
-                        return val >= sNum && val <= eNum;
-                    } else {
-                        // String range (lexicographical) - case insensitive
-                        const rVal = String(rowValue || "").toLowerCase();
-                        const sVal = start.toLowerCase();
-                        const eVal = end.toLowerCase();
-                        return rVal >= sVal && rVal <= eVal;
+                const idx = parseInt(choice) - 1;
+                if (idx >= 0 && idx < presets.length) {
+                    const p = presets[idx];
+                    if (confirm(`Delete preset "${p.name}"?`)) {
+                        presets.splice(idx, 1);
+                        localStorage.setItem(PRESET_STORAGE_KEY, JSON.stringify(presets));
+                        renderPresetDropdown();
+                        alert("Deleted.");
                     }
                 } else {
-                    // Single value match
-                    if (typeof isNumeric === 'function') {
-                        // For single values in Rank Mode, usually explicit match expected
-                        // But "1" (Rank 5) == "1" (Rank 5) works.
-                        // "LKG" (Rank 2) == "LKG" (Rank 2) works.
-                        const val = isNumeric(rowValue);
-                        const pVal = isNumeric(part);
-                        // If both are valid ranks, compare ranks. 
-                        // If part is not a valid rank (e.g. "Class A" not in list), strict inequality
-                        if (val !== -1 && pVal !== -1) return val === pVal;
-                        // Fallback to string match if ranks fail?
-                        return String(rowValue || "").toLowerCase() === part.toLowerCase();
-                    } else if (isNumeric) {
-                        // Loose equality for numbers in strings (e.g. "5" == 5)
-                        return String(rowValue) == part;
-                    } else {
-                        // Exact string match (case-insensitive)
-                        return String(rowValue || "").toLowerCase() === part.toLowerCase();
-                    }
+                    alert("Invalid selection.");
                 }
+            }
+
+            // Init Presets on Load
+            document.addEventListener('DOMContentLoaded', () => {
+                loadPresets();
+                loadTrash();
             });
-        }
 
-        function getFilteredData() {
-            return data.filter(row => {
-                // 1. Basic Filters
-                const matchSearch = !filters.search || Object.values(row).some(v => String(v).toLowerCase().includes(filters.search));
-                // Use Helper Helper for Range Support
-                // Pass getClassRank function for custom class ordering (LKG < UKG < 1)
-                const matchClass = checkFilterMatch(row.Class, filters.class, getClassRank);
-                const matchSection = checkFilterMatch(row.Section, filters.section, false);
-                // Keep House/Gender as exact (selects)
-                const matchHouse = !filters.house || row.House == filters.house;
-                const matchGender = !filters.gender || row.Gender == filters.gender;
+            function populateFilters() {
+                const getOpts = (key) => [...new Set(data.map(r => r[key]).filter(Boolean))].sort();
+                const updateDatalist = (id, opts) => {
+                    const el = document.getElementById(id);
+                    el.innerHTML = opts.map(o => `<option value="${o}">`).join('');
+                };
 
-                // 2. Item Gender Logic
-                let matchItem = true;
-                if (filters.item) {
-                    const item = allItems.find(i => i.name === filters.item);
+                const updateSelect = (id, opts, label) => {
+                    const el = document.getElementById(id);
+                    const currentVal = el.value;
+                    el.innerHTML = `<option value="">${label}</option>` + opts.map(o => `<option value="${o}">${o}</option>`).join('');
+                    if (opts.includes(currentVal)) el.value = currentVal;
+                };
+
+                updateDatalist('listClass', getOpts('Class'));
+                updateDatalist('listSection', getOpts('Section'));
+                updateSelect('filterHouse', getOpts('House'), 'All Houses');
+                updateSelect('filterGender', getOpts('Gender'), 'All Genders');
+
+                const itemSelect = document.getElementById('filterItem');
+                // We want to keep the list of ALL items, not just present ones?
+                // Actually, showing only present items might be better UX?
+                // "pattern dashboard" should allow filtering by any known item type to create new patterns?
+                // No, stick to allItems as defined constantly.
+                itemSelect.innerHTML = '<option value="">Filter by Item</option>' + allItems.map(i => `<option value="${i.name}">${i.name}</option>`).join('');
+            }
+
+            function handleFilter() {
+                filters.class = document.getElementById('filterClass').value;
+                filters.section = document.getElementById('filterSection').value;
+                filters.house = document.getElementById('filterHouse').value;
+                filters.gender = document.getElementById('filterGender').value;
+                renderTable();
+                updateCount();
+            }
+
+            function handleItemFilter() {
+                const itemName = document.getElementById('filterItem').value;
+                filters.item = itemName;
+                filters.components = {};
+
+                // Refresh Presets Dropdown to show only relevant ones
+                renderPresetDropdown();
+
+                const container = document.getElementById('dynamicFilters');
+                container.innerHTML = '';
+
+                if (itemName) {
+                    const item = allItems.find(i => i.name === itemName);
                     if (item) {
-                        const gender = (row.Gender || "").toUpperCase();
-                        if (item.type === "Male" && gender !== "MALE") matchItem = false;
-                        if (item.type === "Female" && gender !== "FEMALE") matchItem = false;
+                        item.cols.forEach(col => {
+                            const values = [...new Set(data.map(r => r[col]).filter(v => v && v !== "00"))].sort();
+
+                            const wrapper = document.createElement('div');
+                            wrapper.className = "relative inline-block";
+
+                            const input = document.createElement('input');
+                            input.setAttribute('list', `list-${col}`);
+                            input.type = "text";
+                            input.placeholder = col;
+                            input.className = "text-sm border border-[#E2E8F0] rounded-md px-2 py-1.5 outline-none focus:border-[#4A5568] w-20 text-gray-600";
+
+                            const dl = document.createElement('datalist');
+                            dl.id = `list-${col}`;
+                            dl.innerHTML = values.map(v => `<option value="${v}">`).join('');
+
+                            input.onchange = (e) => {
+                                if (e.target.value) filters.components[col] = e.target.value;
+                                else delete filters.components[col];
+                                renderTable();
+                                updateCount();
+                            };
+
+                            wrapper.appendChild(input);
+                            wrapper.appendChild(dl);
+                            container.appendChild(wrapper);
+                        });
                     }
                 }
+                renderTable();
+                updateCount();
+            }
 
-                // 3. Component Range Logic (The "Advanced" part)
-                let matchComp = true;
-                if (filters.item) {
-                    Object.keys(filters.components).forEach(col => {
-                        const filterVal = filters.components[col];
-                        const rowVal = row[col];
+            function handleSearch() {
+                filters.search = document.getElementById('searchInput').value.toLowerCase();
+                renderTable();
+                updateCount();
+            }
 
-                        // Use the shared helper for robust range support (Numeric for measurements)
-                        // Measurements (U1-U8, L1 etc) are numeric.
-                        if (!checkFilterMatch(rowVal, filterVal, true)) {
-                            matchComp = false;
+            function syncFiltersFromDOM() {
+                // 1. Sync Static Filters
+                filters.class = document.getElementById('filterClass').value;
+                filters.section = document.getElementById('filterSection').value;
+                filters.house = document.getElementById('filterHouse').value;
+                filters.gender = document.getElementById('filterGender').value;
+
+                // 2. Sync Dynamic Component Filters
+                // Don't rebuild them! Just read values from existing inputs.
+                const container = document.getElementById('dynamicFilters');
+                filters.components = {}; // Clear and rebuild based on DOM
+
+                // Only if item selected
+                const activeItem = document.getElementById('filterItem').value;
+                if (activeItem && activeItem === filters.item) {
+                    const inputs = container.querySelectorAll('input');
+                    inputs.forEach(input => {
+                        const col = input.getAttribute('placeholder');
+                        const val = input.value.trim();
+                        if (col && val) {
+                            filters.components[col] = val;
                         }
                     });
                 }
+            }
 
-                return matchSearch && matchClass && matchSection && matchHouse && matchGender && matchItem && matchComp;
-            });
-        }
 
-        function calculateItemValue(row, item) {
-            const parts = item.cols.map(col => {
-                const v = row[col];
-                return (v && v !== '00') ? v : "00";
-            });
-            return parts.join(",");
-        }
 
-        function renderTable() {
-            const filtered = getFilteredData();
-            const thead = document.getElementById('tableHead');
-            const tbody = document.getElementById('tableBody');
+            // --- CLASS RANK LOGIC ---
+            const CLASS_ORDER = ["PRE-KG", "PREKG", "LKG", "UKG", "KG", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"];
 
-            // Header
-            let h = `<tr class="bg-[#F7FAFC]">
+            function getClassRank(cls) {
+                if (!cls) return -1;
+                const s = String(cls).toUpperCase().trim();
+                const idx = CLASS_ORDER.indexOf(s);
+                if (idx !== -1) return idx;
+                // Fallback for purely numeric classes not in list (e.g. 13?)
+                const num = parseFloat(s);
+                if (!isNaN(num)) return CLASS_ORDER.length + num;
+                return -1; // Unknown
+            }
+
+            // --- FILTER HELPERS ---
+            function checkFilterMatch(rowValue, filterInput, isNumeric = false) {
+                if (!filterInput) return true;
+                const parts = filterInput.split(',').map(s => s.trim());
+
+                // Check if rowValue matches ANY of the parts (OR logic between commas)
+                return parts.some(part => {
+                    if (part.includes('-')) {
+                        const [start, end] = part.split('-').map(s => s.trim());
+
+                        if (typeof isNumeric === 'function') {
+                            // Custom Rank Logic (for Classes)
+                            const val = isNumeric(rowValue);
+                            const sVal = isNumeric(start);
+                            const eVal = isNumeric(end);
+                            if (val === -1 || sVal === -1 || eVal === -1) return false;
+                            return val >= sVal && val <= eVal;
+                        } else if (isNumeric) {
+                            const val = parseFloat(rowValue);
+                            const sNum = parseFloat(start);
+                            const eNum = parseFloat(end);
+                            // Handle invalid numbers gracefully
+                            if (isNaN(val) || isNaN(sNum) || isNaN(eNum)) return false;
+                            return val >= sNum && val <= eNum;
+                        } else {
+                            // String range (lexicographical) - case insensitive
+                            const rVal = String(rowValue || "").toLowerCase();
+                            const sVal = start.toLowerCase();
+                            const eVal = end.toLowerCase();
+                            return rVal >= sVal && rVal <= eVal;
+                        }
+                    } else {
+                        // Single value match
+                        if (typeof isNumeric === 'function') {
+                            // For single values in Rank Mode, usually explicit match expected
+                            // But "1" (Rank 5) == "1" (Rank 5) works.
+                            // "LKG" (Rank 2) == "LKG" (Rank 2) works.
+                            const val = isNumeric(rowValue);
+                            const pVal = isNumeric(part);
+                            // If both are valid ranks, compare ranks. 
+                            // If part is not a valid rank (e.g. "Class A" not in list), strict inequality
+                            if (val !== -1 && pVal !== -1) return val === pVal;
+                            // Fallback to string match if ranks fail?
+                            return String(rowValue || "").toLowerCase() === part.toLowerCase();
+                        } else if (isNumeric) {
+                            // Loose equality for numbers in strings (e.g. "5" == 5)
+                            return String(rowValue) == part;
+                        } else {
+                            // Exact string match (case-insensitive)
+                            return String(rowValue || "").toLowerCase() === part.toLowerCase();
+                        }
+                    }
+                });
+            }
+
+            function getFilteredData() {
+                return data.filter(row => {
+                    // 1. Basic Filters
+                    const matchSearch = !filters.search || Object.values(row).some(v => String(v).toLowerCase().includes(filters.search));
+                    // Use Helper Helper for Range Support
+                    // Pass getClassRank function for custom class ordering (LKG < UKG < 1)
+                    const matchClass = checkFilterMatch(row.Class, filters.class, getClassRank);
+                    const matchSection = checkFilterMatch(row.Section, filters.section, false);
+                    // Keep House/Gender as exact (selects)
+                    const matchHouse = !filters.house || row.House == filters.house;
+                    const matchGender = !filters.gender || row.Gender == filters.gender;
+
+                    // 2. Item Gender Logic
+                    let matchItem = true;
+                    if (filters.item) {
+                        const item = allItems.find(i => i.name === filters.item);
+                        if (item) {
+                            const gender = (row.Gender || "").toUpperCase();
+                            if (item.type === "Male" && gender !== "MALE") matchItem = false;
+                            if (item.type === "Female" && gender !== "FEMALE") matchItem = false;
+                        }
+                    }
+
+                    // 3. Component Range Logic (The "Advanced" part)
+                    let matchComp = true;
+                    if (filters.item) {
+                        Object.keys(filters.components).forEach(col => {
+                            const filterVal = filters.components[col];
+                            const rowVal = row[col];
+
+                            // Use the shared helper for robust range support (Numeric for measurements)
+                            // Measurements (U1-U8, L1 etc) are numeric.
+                            if (!checkFilterMatch(rowVal, filterVal, true)) {
+                                matchComp = false;
+                            }
+                        });
+                    }
+
+                    return matchSearch && matchClass && matchSection && matchHouse && matchGender && matchItem && matchComp;
+                });
+            }
+
+            function calculateItemValue(row, item) {
+                const parts = item.cols.map(col => {
+                    const v = row[col];
+                    return (v && v !== '00') ? v : "00";
+                });
+                return parts.join(",");
+            }
+
+            function renderTable() {
+                const filtered = getFilteredData();
+                const thead = document.getElementById('tableHead');
+                const tbody = document.getElementById('tableBody');
+
+                // Header
+                let h = `<tr class="bg-[#F7FAFC]">
                 <th class="p-3 border-b border-r min-w-[50px] text-center font-bold text-gray-600">#</th>
                 <th class="p-3 border-b border-r min-w-[200px] text-left font-bold text-gray-600 sticky-col z-20">Student Name</th>
                 <th class="p-3 border-b border-r min-w-[80px]">Class</th>
@@ -1418,23 +1411,23 @@
                 <th class="p-3 border-b border-r min-w-[80px]">Roll No</th>
                 <th class="p-3 border-b border-r min-w-[100px]">House</th>`;
 
-            measureCols.forEach(c => {
-                const color = c.startsWith('U') ? 'text-blue-600 bg-blue-50' : 'text-green-600 bg-green-50';
-                h += `<th class="p-2 border-b border-r ${color} text-center text-xs font-mono">${c}</th>`;
-            });
-            // Add Item Columns if Filtered
-            const activeItemName = document.getElementById('filterItem') ? document.getElementById('filterItem').value : null;
-            if (activeItemName) {
-                h += `<th class="p-3 border-b border-r bg-purple-50 text-purple-700 font-bold min-w-[150px] sticky-col z-20" style="left: 200px;">${activeItemName}</th>`;
-                h += `<th class="p-3 border-b border-r bg-yellow-50 text-yellow-700 font-bold min-w-[80px]">Qty</th>`;
-            }
+                measureCols.forEach(c => {
+                    const color = c.startsWith('U') ? 'text-blue-600 bg-blue-50' : 'text-green-600 bg-green-50';
+                    h += `<th class="p-2 border-b border-r ${color} text-center text-xs font-mono">${c}</th>`;
+                });
+                // Add Item Columns if Filtered
+                const activeItemName = document.getElementById('filterItem') ? document.getElementById('filterItem').value : null;
+                if (activeItemName) {
+                    h += `<th class="p-3 border-b border-r bg-purple-50 text-purple-700 font-bold min-w-[150px] sticky-col z-20" style="left: 200px;">${activeItemName}</th>`;
+                    h += `<th class="p-3 border-b border-r bg-yellow-50 text-yellow-700 font-bold min-w-[80px]">Qty</th>`;
+                }
 
-            h += `</tr>`;
-            thead.innerHTML = h;
+                h += `</tr>`;
+                thead.innerHTML = h;
 
-            // Body
-            tbody.innerHTML = filtered.map((row, i) => {
-                let r = `<tr class="hover:bg-gray-50 border-b border-gray-100">
+                // Body
+                tbody.innerHTML = filtered.map((row, i) => {
+                    let r = `<tr class="hover:bg-gray-50 border-b border-gray-100">
                     <td class="p-2 border-r text-center text-xs text-gray-400 font-mono">${row["S.No"] || i + 1}</td>
                     <td class="p-2 border-r font-medium text-gray-700 sticky-col bg-white">${row["Student Name"] || ""}</td>
                     <td class="p-2 border-r text-center text-gray-600 text-xs">${row["Class"] || ""}</td>
@@ -1444,159 +1437,159 @@
                     <td class="p-2 border-r text-center text-gray-600 text-xs">${row["Roll No"] || ""}</td>
                     <td class="p-2 border-r text-center text-gray-600 text-xs">${row["House"] || ""}</td>`;
 
-                measureCols.forEach(c => {
-                    let val = row[c];
-                    if (val === '00' || val === '0') val = '';
-                    r += `<td class="p-2 border-r text-center font-mono text-gray-600 text-sm">${val}</td>`;
-                });
-                if (activeItemName) {
-                    const item = allItems.find(i => i.name === activeItemName);
-                    if (item) {
-                        const calcVal = calculateItemValue(row, item);
-                        const qty = row[`Qty_${item.name}`] || "";
-                        r += `<td class="p-2 border-r text-center text-xs text-purple-700 font-mono bg-purple-50/30 font-bold">${calcVal}</td>`;
-                        r += `<td class="p-2 border-r text-center text-sm font-bold text-yellow-700 bg-yellow-50/30">${qty}</td>`;
+                    measureCols.forEach(c => {
+                        let val = row[c];
+                        if (val === '00' || val === '0') val = '';
+                        r += `<td class="p-2 border-r text-center font-mono text-gray-600 text-sm">${val}</td>`;
+                    });
+                    if (activeItemName) {
+                        const item = allItems.find(i => i.name === activeItemName);
+                        if (item) {
+                            const calcVal = calculateItemValue(row, item);
+                            const qty = row[`Qty_${item.name}`] || "";
+                            r += `<td class="p-2 border-r text-center text-xs text-purple-700 font-mono bg-purple-50/30 font-bold">${calcVal}</td>`;
+                            r += `<td class="p-2 border-r text-center text-sm font-bold text-yellow-700 bg-yellow-50/30">${qty}</td>`;
+                        }
                     }
+
+                    r += `</tr>`;
+                    return r;
+                }).join('');
+            }
+
+            function updateCount() {
+                const count = getFilteredData().length;
+                document.getElementById('rowCount').textContent = count;
+                document.getElementById('patternCountDisplay').textContent = count;
+            }
+
+            // --- PATTERN LOGIC ---
+
+            function openPatternModal() {
+                if (getFilteredData().length === 0) {
+                    alert("No data to group! Import a file or adjust filters.");
+                    return;
+                }
+                document.getElementById('newPatternName').value = `Pattern ${patterns.length + 1}`;
+                updateCount();
+                document.getElementById('patternModal').classList.remove('hidden');
+            }
+
+            async function savePattern() {
+                const name = document.getElementById('newPatternName').value;
+                const schoolId = document.getElementById('newPatternSchool').value;
+
+                if (!name) return alert("Enter a pattern name");
+                if (!schoolId) return alert("Select a school");
+
+                // Ensure filters are mutually synced with DOM inputs
+                syncFiltersFromDOM();
+
+                // 1. Capture Data
+                const currentFilters = JSON.parse(JSON.stringify(filters));
+                const filteredData = getFilteredData();
+
+                // Extract Admission Numbers for Linkage - Robust Cleaning
+                const studentAdmissionNos = filteredData
+                    .map(r => r['Admission No'] || r['Adm No'])
+                    .filter(x => x)
+                    .map(x => x.toString().trim()); // Clean Whitespace/Types
+
+                if (studentAdmissionNos.length === 0) return alert("No students found in current filter!");
+
+                // Metadata
+                const consumption = document.getElementById('newPatternCons').value || "0";
+                const cloth = document.getElementById('newPatternCloth').value || "";
+                const req = document.getElementById('newPatternReq').value || "";
+                // School Name for Local Display (Hack: Get text from select)
+                const sel = document.getElementById('newPatternSchool');
+                const schoolName = sel.options[sel.selectedIndex]?.text || "Unknown";
+
+                // 2. Send to Backend
+                try {
+                    const payload = {
+                        name,
+                        school_id: schoolId,
+                        consumption: parseFloat(consumption),
+                        cloth_details: cloth,
+                        special_req: req,
+                        student_admission_nos: studentAdmissionNos,
+                        filters: currentFilters // Send Filters!
+                    };
+
+                    const res = await fetch('/api/data/patterns', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!res.ok) {
+                        const err = await res.json();
+                        throw new Error(err.error || "Failed to create pattern");
+                    }
+
+                    const result = await res.json();
+
+                    // 3. Local Update (Optimistic/Visual)
+                    const meta = {
+                        school: schoolName,
+                        desc: document.getElementById('newPatternDesc').value || "",
+                        consumption, cloth, req
+                    };
+
+                    const pattern = {
+                        id: result.id || Date.now(),
+                        name: name,
+                        filters: currentFilters,
+                        count: filteredData.length,
+                        metadata: meta,
+                        schoolId: schoolId // Store internally
+                    };
+
+                    patterns.push(pattern);
+                    renderModules();
+                    saveToLocal(); // Save pattern list locally for caching?
+                    // Ideally we should re-fetch from server, but for now hybrid is fine.
+
+                    document.getElementById('patternModal').classList.add('hidden');
+
+                    let msg = `Pattern Created! Linked ${result.students_updated} students.`;
+                    if (result.students_updated === 0) {
+                        msg += "\n\n⚠️ Warning: No students were linked in the system.\nPlease ensure these students are uploaded to the Cloud via the Planet Editor first.";
+                    }
+                    alert(msg);
+
+                } catch (e) {
+                    console.error(e);
+                    alert("Error creating pattern: " + e.message);
+                }
+            }
+
+            function updatePattern() {
+                if (!loadedPatternId) return;
+                const pIndex = patterns.findIndex(p => p.id === loadedPatternId);
+                if (pIndex === -1) return;
+
+                if (confirm(`Update pattern "${patterns[pIndex].name}" with current filters?`)) {
+                    patterns[pIndex].filters = JSON.parse(JSON.stringify(filters));
+                    patterns[pIndex].count = getFilteredData().length;
+                    renderModules();
+                    saveToLocal();
+                    alert("Pattern updated successfully!");
+                }
+            }
+
+            function renderModules() {
+                const container = document.getElementById('patternList');
+                if (patterns.length === 0) {
+                    container.innerHTML = '<span class="text-xs text-gray-400 italic py-1">No patterns created yet.</span>';
+                    return;
                 }
 
-                r += `</tr>`;
-                return r;
-            }).join('');
-        }
-
-        function updateCount() {
-            const count = getFilteredData().length;
-            document.getElementById('rowCount').textContent = count;
-            document.getElementById('patternCountDisplay').textContent = count;
-        }
-
-        // --- PATTERN LOGIC ---
-
-        function openPatternModal() {
-            if (getFilteredData().length === 0) {
-                alert("No data to group! Import a file or adjust filters.");
-                return;
-            }
-            document.getElementById('newPatternName').value = `Pattern ${patterns.length + 1}`;
-            updateCount();
-            document.getElementById('patternModal').classList.remove('hidden');
-        }
-
-        async function savePattern() {
-            const name = document.getElementById('newPatternName').value;
-            const schoolId = document.getElementById('newPatternSchool').value;
-
-            if (!name) return alert("Enter a pattern name");
-            if (!schoolId) return alert("Select a school");
-
-            // Ensure filters are mutually synced with DOM inputs
-            syncFiltersFromDOM();
-
-            // 1. Capture Data
-            const currentFilters = JSON.parse(JSON.stringify(filters));
-            const filteredData = getFilteredData();
-
-            // Extract Admission Numbers for Linkage - Robust Cleaning
-            const studentAdmissionNos = filteredData
-                .map(r => r['Admission No'] || r['Adm No'])
-                .filter(x => x)
-                .map(x => x.toString().trim()); // Clean Whitespace/Types
-
-            if (studentAdmissionNos.length === 0) return alert("No students found in current filter!");
-
-            // Metadata
-            const consumption = document.getElementById('newPatternCons').value || "0";
-            const cloth = document.getElementById('newPatternCloth').value || "";
-            const req = document.getElementById('newPatternReq').value || "";
-            // School Name for Local Display (Hack: Get text from select)
-            const sel = document.getElementById('newPatternSchool');
-            const schoolName = sel.options[sel.selectedIndex]?.text || "Unknown";
-
-            // 2. Send to Backend
-            try {
-                const payload = {
-                    name,
-                    school_id: schoolId,
-                    consumption: parseFloat(consumption),
-                    cloth_details: cloth,
-                    special_req: req,
-                    student_admission_nos: studentAdmissionNos,
-                    filters: currentFilters // Send Filters!
-                };
-
-                const res = await fetch('/api/data/patterns', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify(payload)
-                });
-
-                if (!res.ok) {
-                    const err = await res.json();
-                    throw new Error(err.error || "Failed to create pattern");
-                }
-
-                const result = await res.json();
-
-                // 3. Local Update (Optimistic/Visual)
-                const meta = {
-                    school: schoolName,
-                    desc: document.getElementById('newPatternDesc').value || "",
-                    consumption, cloth, req
-                };
-
-                const pattern = {
-                    id: result.id || Date.now(),
-                    name: name,
-                    filters: currentFilters,
-                    count: filteredData.length,
-                    metadata: meta,
-                    schoolId: schoolId // Store internally
-                };
-
-                patterns.push(pattern);
-                renderModules();
-                saveToLocal(); // Save pattern list locally for caching?
-                // Ideally we should re-fetch from server, but for now hybrid is fine.
-
-                document.getElementById('patternModal').classList.add('hidden');
-
-                let msg = `Pattern Created! Linked ${result.students_updated} students.`;
-                if (result.students_updated === 0) {
-                    msg += "\n\n⚠️ Warning: No students were linked in the system.\nPlease ensure these students are uploaded to the Cloud via the Planet Editor first.";
-                }
-                alert(msg);
-
-            } catch (e) {
-                console.error(e);
-                alert("Error creating pattern: " + e.message);
-            }
-        }
-
-        function updatePattern() {
-            if (!loadedPatternId) return;
-            const pIndex = patterns.findIndex(p => p.id === loadedPatternId);
-            if (pIndex === -1) return;
-
-            if (confirm(`Update pattern "${patterns[pIndex].name}" with current filters?`)) {
-                patterns[pIndex].filters = JSON.parse(JSON.stringify(filters));
-                patterns[pIndex].count = getFilteredData().length;
-                renderModules();
-                saveToLocal();
-                alert("Pattern updated successfully!");
-            }
-        }
-
-        function renderModules() {
-            const container = document.getElementById('patternList');
-            if (patterns.length === 0) {
-                container.innerHTML = '<span class="text-xs text-gray-400 italic py-1">No patterns created yet.</span>';
-                return;
-            }
-
-            container.innerHTML = patterns.map(p => `
+                container.innerHTML = patterns.map(p => `
                 <div class="flex items-center gap-2 bg-white border border-gray-200 rounded-md px-3 py-1.5 text-sm shadow-sm hover:shadow-md transition-shadow">
                     <button onclick="loadPattern(${p.id})" class="text-blue-600 font-bold hover:underline truncate max-w-[150px]" title="Load Filters">${p.name}</button>
                     <span class="text-xs text-gray-400 font-mono">(${p.count !== undefined ? p.count : (p.student_admission_nos ? p.student_admission_nos.length : '?')})</span>
@@ -1610,431 +1603,431 @@
                     </div>
                 </div>
             `).join('');
-        }
-
-        function loadPattern(id) {
-            const p = patterns.find(x => x.id === id);
-            if (!p) return;
-
-            filters = JSON.parse(JSON.stringify(p.filters));
-
-            // Restore Inputs
-            document.getElementById('searchInput').value = filters.search || "";
-            document.getElementById('filterClass').value = filters.class || "";
-            document.getElementById('filterSection').value = filters.section || "";
-            document.getElementById('filterHouse').value = filters.house || "";
-            document.getElementById('filterGender').value = filters.gender || "";
-
-            // Restore Item Filters & Datalists
-            document.getElementById('filterItem').value = filters.item;
-
-            // BACKUP COMPONENTS: handleItemFilter() will reset filters.components to {}
-            // We must save them to restore them after the DOM inputs are created.
-            const savedComponents = JSON.parse(JSON.stringify(filters.components || {}));
-
-            // Re-trigger item filter rendering to show dyanmic controls
-            handleItemFilter();
-
-            // RESTORE COMPONENTS: Put them back into state and DOM
-            filters.components = savedComponents;
-
-            // Now restore the dynamic component values
-            const container = document.getElementById('dynamicFilters');
-            if (filters.components) {
-                Array.from(container.children).forEach(wrapper => {
-                    const input = wrapper.querySelector('input');
-                    if (input && filters.components[input.placeholder]) {
-                        input.value = filters.components[input.placeholder];
-                    }
-                });
             }
 
-            renderTable();
-            updateCount();
-            alert(`Loaded pattern: ${p.name}`);
+            function loadPattern(id) {
+                const p = patterns.find(x => x.id === id);
+                if (!p) return;
 
-            // Enter "Update Mode"
-            loadedPatternId = p.id;
-            document.getElementById('btnCreatePattern').classList.add('hidden');
-            document.getElementById('btnUpdatePattern').classList.remove('hidden');
-        }
+                filters = JSON.parse(JSON.stringify(p.filters));
 
-        function resetView() {
-            // Clear Filters
-            document.getElementById('searchInput').value = '';
-            document.getElementById('filterClass').value = '';
-            document.getElementById('filterSection').value = '';
-            document.getElementById('filterHouse').value = '';
-            document.getElementById('filterGender').value = '';
-            document.getElementById('filterItem').value = '';
+                // Restore Inputs
+                document.getElementById('searchInput').value = filters.search || "";
+                document.getElementById('filterClass').value = filters.class || "";
+                document.getElementById('filterSection').value = filters.section || "";
+                document.getElementById('filterHouse').value = filters.house || "";
+                document.getElementById('filterGender').value = filters.gender || "";
 
-            // Clear internal state
-            filters = { search: '', class: '', section: '', house: '', gender: '', item: '', components: {} };
+                // Restore Item Filters & Datalists
+                document.getElementById('filterItem').value = filters.item;
 
-            // Re-render
-            handleItemFilter(); // Clears dynamic
-            // handleFilter() called internally? no, manual reset
-            renderTable();
-            updateCount();
+                // BACKUP COMPONENTS: handleItemFilter() will reset filters.components to {}
+                // We must save them to restore them after the DOM inputs are created.
+                const savedComponents = JSON.parse(JSON.stringify(filters.components || {}));
 
-            // Reset Mode
-            loadedPatternId = null;
-            document.getElementById('btnCreatePattern').classList.remove('hidden');
-            document.getElementById('btnUpdatePattern').classList.add('hidden');
-        }
+                // Re-trigger item filter rendering to show dyanmic controls
+                handleItemFilter();
 
-        function deletePattern(id) {
-            if (confirm("Remove this pattern group?")) {
-                patterns = patterns.filter(p => p.id !== id);
-                renderModules();
-                saveToLocal(); // Update storage
-            }
-        }
+                // RESTORE COMPONENTS: Put them back into state and DOM
+                filters.components = savedComponents;
 
-        // --- EXPORT LOGIC ---
+                // Now restore the dynamic component values
+                const container = document.getElementById('dynamicFilters');
+                if (filters.components) {
+                    Array.from(container.children).forEach(wrapper => {
+                        const input = wrapper.querySelector('input');
+                        if (input && filters.components[input.placeholder]) {
+                            input.value = filters.components[input.placeholder];
+                        }
+                    });
+                }
 
-        let currentExportPatternId = null;
+                renderTable();
+                updateCount();
+                alert(`Loaded pattern: ${p.name}`);
 
-        function openExportForPattern(id) {
-            currentExportPatternId = id;
-            const p = patterns.find(x => x.id === id);
-
-            document.getElementById('metaPattern').value = p.name;
-            document.getElementById('exportFilters').textContent = p.name;
-
-            // Restore Metadata for Export Modal
-            if (p.metadata) {
-                document.getElementById('metaSchool').value = p.metadata.school || "";
-                document.getElementById('metaDesc').value = p.metadata.desc || "";
-                document.getElementById('metaConsumption').value = p.metadata.consumption || "";
-                document.getElementById('metaClothDetails').value = p.metadata.cloth || "";
-                document.getElementById('metaSpecialReq').value = p.metadata.req || "";
+                // Enter "Update Mode"
+                loadedPatternId = p.id;
+                document.getElementById('btnCreatePattern').classList.add('hidden');
+                document.getElementById('btnUpdatePattern').classList.remove('hidden');
             }
 
-            // Must Ensure Data is Correct (Reload Filters quietly)
-            // Must Ensure Data is Correct (Reload Filters quietly)
-            // This ensures getFilteredData() uses this pattern's filters
-            loadPattern(id);
-            // Force re-render just to be safe, though loadPattern does it
-            renderTable();
+            function resetView() {
+                // Clear Filters
+                document.getElementById('searchInput').value = '';
+                document.getElementById('filterClass').value = '';
+                document.getElementById('filterSection').value = '';
+                document.getElementById('filterHouse').value = '';
+                document.getElementById('filterGender').value = '';
+                document.getElementById('filterItem').value = '';
 
-            document.getElementById('exportModal').classList.remove('hidden');
-            updateExportTotal();
-        }
+                // Clear internal state
+                filters = { search: '', class: '', section: '', house: '', gender: '', item: '', components: {} };
 
-        function closeExportModal() {
-            document.getElementById('exportModal').classList.add('hidden');
-        }
+                // Re-render
+                handleItemFilter(); // Clears dynamic
+                // handleFilter() called internally? no, manual reset
+                renderTable();
+                updateCount();
 
-        function updateExportTotal() {
-            const consumption = parseFloat(document.getElementById('metaConsumption').value) || 0;
-            const filtered = getFilteredData();
-            // Count "Active" Students: For simplistic grouping, every row is a student.
-            const total = (filtered.length * consumption).toFixed(2);
-            document.getElementById('exportTotalCloth').textContent = `${total} M`;
-        }
+                // Reset Mode
+                loadedPatternId = null;
+                document.getElementById('btnCreatePattern').classList.remove('hidden');
+                document.getElementById('btnUpdatePattern').classList.add('hidden');
+            }
 
-        async function confirmExportPDF() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF({ orientation: 'landscape' });
-
-            // Metadata Block
-            const school = document.getElementById('metaSchool').value;
-            const code = document.getElementById('metaPattern').value;
-            const desc = document.getElementById('metaDesc').value;
-            const cloth = document.getElementById('metaClothDetails').value;
-            const req = document.getElementById('metaSpecialReq').value;
-            const totalCloth = document.getElementById('exportTotalCloth').textContent;
-
-            let y = 15;
-            doc.setFontSize(14); doc.text(`Pattern List`, 14, y); y += 8;
-            doc.setFontSize(12); doc.text(`Pattern Code: ${code}`, 14, y); y += 6;
-            doc.setFontSize(10);
-            if (school) { doc.text(`School: ${school}`, 14, y); y += 6; }
-            if (desc) { doc.text(`Desc: ${desc}`, 14, y); y += 6; }
-            if (cloth) { doc.text(`Cloth: ${cloth}`, 14, y); y += 6; }
-
-            if (req) { doc.text(`Special: ${req}`, 14, y); y += 6; }
-
-            // Construct Specifications
-            let specs = [];
-            if (filters.class) specs.push(`Class: ${filters.class}`);
-            if (filters.section) specs.push(`Sec: ${filters.section}`);
-            if (filters.house) specs.push(`House: ${filters.house}`);
-            if (filters.gender) specs.push(`Gender: ${filters.gender}`);
-            if (filters.item) specs.push(`Item: ${filters.item}`);
-            if (filters.components) {
-                for (const [key, val] of Object.entries(filters.components)) {
-                    if (val) specs.push(`${key}: ${val}`);
+            function deletePattern(id) {
+                if (confirm("Remove this pattern group?")) {
+                    patterns = patterns.filter(p => p.id !== id);
+                    renderModules();
+                    saveToLocal(); // Update storage
                 }
             }
-            if (specs.length > 0) {
-                doc.text(`Specs: ${specs.join(', ')}`, 14, y); y += 6;
+
+            // --- EXPORT LOGIC ---
+
+            let currentExportPatternId = null;
+
+            function openExportForPattern(id) {
+                currentExportPatternId = id;
+                const p = patterns.find(x => x.id === id);
+
+                document.getElementById('metaPattern').value = p.name;
+                document.getElementById('exportFilters').textContent = p.name;
+
+                // Restore Metadata for Export Modal
+                if (p.metadata) {
+                    document.getElementById('metaSchool').value = p.metadata.school || "";
+                    document.getElementById('metaDesc').value = p.metadata.desc || "";
+                    document.getElementById('metaConsumption').value = p.metadata.consumption || "";
+                    document.getElementById('metaClothDetails').value = p.metadata.cloth || "";
+                    document.getElementById('metaSpecialReq').value = p.metadata.req || "";
+                }
+
+                // Must Ensure Data is Correct (Reload Filters quietly)
+                // Must Ensure Data is Correct (Reload Filters quietly)
+                // This ensures getFilteredData() uses this pattern's filters
+                loadPattern(id);
+                // Force re-render just to be safe, though loadPattern does it
+                renderTable();
+
+                document.getElementById('exportModal').classList.remove('hidden');
+                updateExportTotal();
             }
 
-            doc.text(`Total Qty: ${getFilteredData().length} Students | Total Cloth: ${totalCloth}`, 14, y); y += 10;
+            function closeExportModal() {
+                document.getElementById('exportModal').classList.add('hidden');
+            }
 
-            // Determine Cols
-            const activeItemName = filters.item;
-            const itemHeaders = activeItemName ? [activeItemName, "Qty"] : [];
+            function updateExportTotal() {
+                const consumption = parseFloat(document.getElementById('metaConsumption').value) || 0;
+                const filtered = getFilteredData();
+                // Count "Active" Students: For simplistic grouping, every row is a student.
+                const total = (filtered.length * consumption).toFixed(2);
+                document.getElementById('exportTotalCloth').textContent = `${total} M`;
+            }
 
-            const rows = getFilteredData().map(r => {
-                const base = [
-                    r['Roll No'],
-                    r['Student Name'],
-                    r['Admission No'] || r['Adm No'] || "",
-                    r['House'] || "",
-                    r['Class'],
-                    r['Section'],
-                    ...measureCols.map(m => r[m])
-                ];
-                if (activeItemName) {
-                    const item = allItems.find(i => i.name === activeItemName);
-                    if (item) {
-                        base.push(calculateItemValue(r, item));
-                        base.push(r[`Qty_${item.name}`] || "");
+            async function confirmExportPDF() {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF({ orientation: 'landscape' });
+
+                // Metadata Block
+                const school = document.getElementById('metaSchool').value;
+                const code = document.getElementById('metaPattern').value;
+                const desc = document.getElementById('metaDesc').value;
+                const cloth = document.getElementById('metaClothDetails').value;
+                const req = document.getElementById('metaSpecialReq').value;
+                const totalCloth = document.getElementById('exportTotalCloth').textContent;
+
+                let y = 15;
+                doc.setFontSize(14); doc.text(`Pattern List`, 14, y); y += 8;
+                doc.setFontSize(12); doc.text(`Pattern Code: ${code}`, 14, y); y += 6;
+                doc.setFontSize(10);
+                if (school) { doc.text(`School: ${school}`, 14, y); y += 6; }
+                if (desc) { doc.text(`Desc: ${desc}`, 14, y); y += 6; }
+                if (cloth) { doc.text(`Cloth: ${cloth}`, 14, y); y += 6; }
+
+                if (req) { doc.text(`Special: ${req}`, 14, y); y += 6; }
+
+                // Construct Specifications
+                let specs = [];
+                if (filters.class) specs.push(`Class: ${filters.class}`);
+                if (filters.section) specs.push(`Sec: ${filters.section}`);
+                if (filters.house) specs.push(`House: ${filters.house}`);
+                if (filters.gender) specs.push(`Gender: ${filters.gender}`);
+                if (filters.item) specs.push(`Item: ${filters.item}`);
+                if (filters.components) {
+                    for (const [key, val] of Object.entries(filters.components)) {
+                        if (val) specs.push(`${key}: ${val}`);
                     }
                 }
-                return base;
-            });
-
-            doc.autoTable({
-                head: [['Roll', 'Name', 'Adm No', 'House', 'Class', 'Sec', ...measureCols, ...itemHeaders]],
-                body: rows,
-                startY: y,
-                styles: { fontSize: 8, cellPadding: 2 }
-            });
-            doc.save(`Pattern_${code}.pdf`);
-            closeExportModal();
-        }
-
-        function confirmExport() {
-            const wb = XLSX.utils.book_new();
-            const filtered = getFilteredData();
-
-            // Prefer metadata from storage if available (when exporting via button), else from modal inputs?
-            // Actually, openExportForPattern loads inputs, so inputs are source of truth for THIS export.
-            const school = document.getElementById('metaSchool').value;
-            const code = document.getElementById('metaPattern').value;
-            const desc = document.getElementById('metaDesc').value;
-            const cloth = document.getElementById('metaClothDetails').value;
-            const req = document.getElementById('metaSpecialReq').value;
-            const totalCloth = document.getElementById('exportTotalCloth').textContent;
-
-            const activeItemName = filters.item;
-            const itemHeaders = activeItemName ? [activeItemName, "Quantity"] : [];
-
-            // Construct Specifications for Excel
-            let specs = [];
-            if (filters.class) specs.push(`Class: ${filters.class}`);
-            if (filters.section) specs.push(`Sec: ${filters.section}`);
-            if (filters.house) specs.push(`House: ${filters.house}`);
-            if (filters.gender) specs.push(`Gender: ${filters.gender}`);
-            if (filters.item) specs.push(`Item: ${filters.item}`);
-            if (filters.components) {
-                for (const [key, val] of Object.entries(filters.components)) {
-                    if (val) specs.push(`${key}: ${val}`);
+                if (specs.length > 0) {
+                    doc.text(`Specs: ${specs.join(', ')}`, 14, y); y += 6;
                 }
-            }
 
-            // ... (Rest of export logic same)
-            // ... (Rest of export logic same)
-            const wsData = [
-                ["PATTERN LIST EXPORT"],
-                ["Pattern Code", code],
-                ["School Name", school],
-                ["Description", desc],
-                ["Cloth Details", cloth],
-                ["Special Requirements", req],
-                ["Pattern Specifications", specs.join(', ')],
-                ["Total Cloth Needed", totalCloth],
-                ["Total Students", filtered.length],
-                [],
-                ["Roll No", "Student Name", "Admission No", "House", "Class", "Section", "Gender", ...measureCols, ...itemHeaders]
-            ];
+                doc.text(`Total Qty: ${getFilteredData().length} Students | Total Cloth: ${totalCloth}`, 14, y); y += 10;
 
-            filtered.forEach(r => {
-                const rowArr = [
-                    r['Roll No'],
-                    r['Student Name'],
-                    r['Admission No'] || r['Adm No'] || "",
-                    r['House'] || "",
-                    r['Class'],
-                    r['Section'],
-                    r['Gender'],
-                    ...measureCols.map(m => r[m])
-                ];
-                if (activeItemName) {
-                    const item = allItems.find(i => i.name === activeItemName);
-                    if (item) {
-                        rowArr.push(calculateItemValue(r, item));
-                        rowArr.push(r[`Qty_${item.name}`] || "");
-                    }
-                }
-                wsData.push(rowArr);
-            });
+                // Determine Cols
+                const activeItemName = filters.item;
+                const itemHeaders = activeItemName ? [activeItemName, "Qty"] : [];
 
-            const ws = XLSX.utils.aoa_to_sheet(wsData);
-            XLSX.utils.book_append_sheet(wb, ws, "Pattern");
-            XLSX.writeFile(wb, `Pattern_${code}.xlsx`);
-            closeExportModal();
-        }
-
-
-
-        function calculatePatternQty(p) {
-            // Helper to calculate total QTY for a pattern (Sum of item quantities)
-            // Robust Approach: Temporarily swap global filters to reuse getFilteredData logic
-            const backupFilters = filters; // Save current global state
-            try {
-                // Use pattern's filters (Deep copy to be safe, though not strictly required if read-only)
-                filters = p.filters;
-
-                const rows = getFilteredData();
-
-                // 2. Sum Quantity
-                let totalQty = 0;
-                const item = allItems.find(i => i.name === p.filters.item);
-
-                rows.forEach(r => {
-                    let q = 1; // Default to 1 if not specified
-                    if (item) {
-                        const val = r[`Qty_${item.name}`];
-                        // Precise check to allow 0
-                        if (val !== undefined && val !== null && val !== "") {
-                            const parsed = parseInt(val);
-                            q = isNaN(parsed) ? 1 : parsed;
+                const rows = getFilteredData().map(r => {
+                    const base = [
+                        r['Roll No'],
+                        r['Student Name'],
+                        r['Admission No'] || r['Adm No'] || "",
+                        r['House'] || "",
+                        r['Class'],
+                        r['Section'],
+                        ...measureCols.map(m => r[m])
+                    ];
+                    if (activeItemName) {
+                        const item = allItems.find(i => i.name === activeItemName);
+                        if (item) {
+                            base.push(calculateItemValue(r, item));
+                            base.push(r[`Qty_${item.name}`] || "");
                         }
                     }
-                    totalQty += q;
+                    return base;
                 });
-                return totalQty;
-            } finally {
-                // Always restore global state
-                filters = backupFilters;
+
+                doc.autoTable({
+                    head: [['Roll', 'Name', 'Adm No', 'House', 'Class', 'Sec', ...measureCols, ...itemHeaders]],
+                    body: rows,
+                    startY: y,
+                    styles: { fontSize: 8, cellPadding: 2 }
+                });
+                doc.save(`Pattern_${code}.pdf`);
+                closeExportModal();
             }
-        }
 
-        // --- TRASH SYSTEM ---
-        let trashPatterns = [];
-        const TRASH_STORAGE_KEY = 'exal_trash_patterns';
+            function confirmExport() {
+                const wb = XLSX.utils.book_new();
+                const filtered = getFilteredData();
 
-        async function loadTrash() {
-            // Use the currently selected school, consistent with active active pattern fetch
-            const currentSchoolId = sessionStorage.getItem('schoolId') || (currentUser ? currentUser.schoolId : null);
-            if (!currentSchoolId) return;
+                // Prefer metadata from storage if available (when exporting via button), else from modal inputs?
+                // Actually, openExportForPattern loads inputs, so inputs are source of truth for THIS export.
+                const school = document.getElementById('metaSchool').value;
+                const code = document.getElementById('metaPattern').value;
+                const desc = document.getElementById('metaDesc').value;
+                const cloth = document.getElementById('metaClothDetails').value;
+                const req = document.getElementById('metaSpecialReq').value;
+                const totalCloth = document.getElementById('exportTotalCloth').textContent;
 
-            // Show loading state if needed, or just update silently
-            try {
-                const token = sessionStorage.getItem('token');
-                const res = await fetch(`/api/data/patterns/trash/${currentSchoolId}`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
+                const activeItemName = filters.item;
+                const itemHeaders = activeItemName ? [activeItemName, "Quantity"] : [];
 
-                if (res.ok) {
-                    trashPatterns = await res.json();
-                    updateTrashCount();
-                    // Always refresh the list if modal is open
-                    const listContainer = document.getElementById('trashList');
-                    if (listContainer && !document.getElementById('trashModal').classList.contains('hidden')) {
-                        renderTrashList();
+                // Construct Specifications for Excel
+                let specs = [];
+                if (filters.class) specs.push(`Class: ${filters.class}`);
+                if (filters.section) specs.push(`Sec: ${filters.section}`);
+                if (filters.house) specs.push(`House: ${filters.house}`);
+                if (filters.gender) specs.push(`Gender: ${filters.gender}`);
+                if (filters.item) specs.push(`Item: ${filters.item}`);
+                if (filters.components) {
+                    for (const [key, val] of Object.entries(filters.components)) {
+                        if (val) specs.push(`${key}: ${val}`);
                     }
-                } else {
-                    console.error("Failed to load trash:", await res.text());
                 }
-            } catch (e) {
-                console.error("Trash load error", e);
-            }
-        }
 
-        async function repairTrashSystem() {
-            if (!confirm("This will attempt to fix the database schema for the Trash system. The page will reload. Continue?")) return;
+                // ... (Rest of export logic same)
+                // ... (Rest of export logic same)
+                const wsData = [
+                    ["PATTERN LIST EXPORT"],
+                    ["Pattern Code", code],
+                    ["School Name", school],
+                    ["Description", desc],
+                    ["Cloth Details", cloth],
+                    ["Special Requirements", req],
+                    ["Pattern Specifications", specs.join(', ')],
+                    ["Total Cloth Needed", totalCloth],
+                    ["Total Students", filtered.length],
+                    [],
+                    ["Roll No", "Student Name", "Admission No", "House", "Class", "Section", "Gender", ...measureCols, ...itemHeaders]
+                ];
 
-            try {
-                const token = sessionStorage.getItem('token');
-                const res = await fetch('/api/data/debug/fix_trash', {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}` }
+                filtered.forEach(r => {
+                    const rowArr = [
+                        r['Roll No'],
+                        r['Student Name'],
+                        r['Admission No'] || r['Adm No'] || "",
+                        r['House'] || "",
+                        r['Class'],
+                        r['Section'],
+                        r['Gender'],
+                        ...measureCols.map(m => r[m])
+                    ];
+                    if (activeItemName) {
+                        const item = allItems.find(i => i.name === activeItemName);
+                        if (item) {
+                            rowArr.push(calculateItemValue(r, item));
+                            rowArr.push(r[`Qty_${item.name}`] || "");
+                        }
+                    }
+                    wsData.push(rowArr);
                 });
 
-                if (res.ok) {
-                    alert("System Repaired! Reloading...");
-                    window.location.reload();
-                } else {
-                    alert("Repair failed: " + await res.text());
+                const ws = XLSX.utils.aoa_to_sheet(wsData);
+                XLSX.utils.book_append_sheet(wb, ws, "Pattern");
+                XLSX.writeFile(wb, `Pattern_${code}.xlsx`);
+                closeExportModal();
+            }
+
+
+
+            function calculatePatternQty(p) {
+                // Helper to calculate total QTY for a pattern (Sum of item quantities)
+                // Robust Approach: Temporarily swap global filters to reuse getFilteredData logic
+                const backupFilters = filters; // Save current global state
+                try {
+                    // Use pattern's filters (Deep copy to be safe, though not strictly required if read-only)
+                    filters = p.filters;
+
+                    const rows = getFilteredData();
+
+                    // 2. Sum Quantity
+                    let totalQty = 0;
+                    const item = allItems.find(i => i.name === p.filters.item);
+
+                    rows.forEach(r => {
+                        let q = 1; // Default to 1 if not specified
+                        if (item) {
+                            const val = r[`Qty_${item.name}`];
+                            // Precise check to allow 0
+                            if (val !== undefined && val !== null && val !== "") {
+                                const parsed = parseInt(val);
+                                q = isNaN(parsed) ? 1 : parsed;
+                            }
+                        }
+                        totalQty += q;
+                    });
+                    return totalQty;
+                } finally {
+                    // Always restore global state
+                    filters = backupFilters;
                 }
-            } catch (e) {
-                alert("Network Error during repair: " + e.message);
-            }
-        }
-
-        function updateTrashCount() {
-            const el = document.getElementById('trashCount');
-            if (el) el.textContent = trashPatterns.length;
-        }
-
-        // Deprecated: Local save no longer needed for cloud trash
-        function saveTrash() {
-            // No-op or removo
-        }
-
-        async function deletePattern(id) {
-            if (!confirm("Move pattern to Trash?")) return;
-
-            // UI Optimistic Update (Use loose equality for safety)
-            const index = patterns.findIndex(p => p.id == id);
-            if (index > -1) {
-                patterns.splice(index, 1);
-                renderModules();
             }
 
-            // If ID looks like a local timestamp (large number), it might not be on server yet.
-            // But usually we sync immediately. Let's try server, if 404, assume it was local/already gone.
-            try {
-                const token = sessionStorage.getItem('token');
-                const res = await fetch(`/api/data/patterns/${id}`, {
-                    method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
+            // --- TRASH SYSTEM ---
+            let trashPatterns = [];
+            const TRASH_STORAGE_KEY = 'exal_trash_patterns';
 
-                if (res.ok) {
-                    loadTrash(); // Refresh trash list
-                    fetchPatternsFromBackend(); // Force sync of active list from server
-                    showToast("Moved to Trash", "success");
-                } else {
-                    const txt = await res.text();
-                    console.error("Delete failed", txt);
-                    // If 404, it's already gone from server, so just success.
-                    if (res.status === 404) {
-                        loadTrash();
+            async function loadTrash() {
+                // Use the currently selected school, consistent with active active pattern fetch
+                const currentSchoolId = sessionStorage.getItem('schoolId') || (currentUser ? currentUser.schoolId : null);
+                if (!currentSchoolId) return;
+
+                // Show loading state if needed, or just update silently
+                try {
+                    const token = sessionStorage.getItem('token');
+                    const res = await fetch(`/api/data/patterns/trash/${currentSchoolId}`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+
+                    if (res.ok) {
+                        trashPatterns = await res.json();
+                        updateTrashCount();
+                        // Always refresh the list if modal is open
+                        const listContainer = document.getElementById('trashList');
+                        if (listContainer && !document.getElementById('trashModal').classList.contains('hidden')) {
+                            renderTrashList();
+                        }
+                    } else {
+                        console.error("Failed to load trash:", await res.text());
+                    }
+                } catch (e) {
+                    console.error("Trash load error", e);
+                }
+            }
+
+            async function repairTrashSystem() {
+                if (!confirm("This will attempt to fix the database schema for the Trash system. The page will reload. Continue?")) return;
+
+                try {
+                    const token = sessionStorage.getItem('token');
+                    const res = await fetch('/api/data/debug/fix_trash', {
+                        method: 'POST',
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+
+                    if (res.ok) {
+                        alert("System Repaired! Reloading...");
+                        window.location.reload();
+                    } else {
+                        alert("Repair failed: " + await res.text());
+                    }
+                } catch (e) {
+                    alert("Network Error during repair: " + e.message);
+                }
+            }
+
+            function updateTrashCount() {
+                const el = document.getElementById('trashCount');
+                if (el) el.textContent = trashPatterns.length;
+            }
+
+            // Deprecated: Local save no longer needed for cloud trash
+            function saveTrash() {
+                // No-op or removo
+            }
+
+            async function deletePattern(id) {
+                if (!confirm("Move pattern to Trash?")) return;
+
+                // UI Optimistic Update (Use loose equality for safety)
+                const index = patterns.findIndex(p => p.id == id);
+                if (index > -1) {
+                    patterns.splice(index, 1);
+                    renderModules();
+                }
+
+                // If ID looks like a local timestamp (large number), it might not be on server yet.
+                // But usually we sync immediately. Let's try server, if 404, assume it was local/already gone.
+                try {
+                    const token = sessionStorage.getItem('token');
+                    const res = await fetch(`/api/data/patterns/${id}`, {
+                        method: 'DELETE',
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+
+                    if (res.ok) {
+                        loadTrash(); // Refresh trash list
+                        fetchPatternsFromBackend(); // Force sync of active list from server
                         showToast("Moved to Trash", "success");
-                        return;
+                    } else {
+                        const txt = await res.text();
+                        console.error("Delete failed", txt);
+                        // If 404, it's already gone from server, so just success.
+                        if (res.status === 404) {
+                            loadTrash();
+                            showToast("Moved to Trash", "success");
+                            return;
+                        }
+                        alert("Failed to move to trash: " + txt);
+                        window.location.reload(); // Fallback sync
                     }
-                    alert("Failed to move to trash: " + txt);
-                    window.location.reload(); // Fallback sync
+                } catch (e) {
+                    console.error("Delete error", e);
+                    // If network error, maybe server is restarting.
+                    // But optimistically we removed it from UI.
+                    alert("Network error: " + e.message + "\n\n(The item was removed from your view, but might reappear if sync failed. Please reload page in a moment to verify.)");
                 }
-            } catch (e) {
-                console.error("Delete error", e);
-                // If network error, maybe server is restarting.
-                // But optimistically we removed it from UI.
-                alert("Network error: " + e.message + "\n\n(The item was removed from your view, but might reappear if sync failed. Please reload page in a moment to verify.)");
             }
-        }
 
-        function openTrashModal() {
-            const modal = document.getElementById('trashModal');
-            const list = document.getElementById('trashList');
-            const msg = document.getElementById('emptyTrashMsg');
+            function openTrashModal() {
+                const modal = document.getElementById('trashModal');
+                const list = document.getElementById('trashList');
+                const msg = document.getElementById('emptyTrashMsg');
 
-            list.innerHTML = '';
-            if (trashPatterns.length === 0) {
-                msg.classList.remove('hidden');
-            } else {
-                msg.classList.add('hidden');
-                trashPatterns.forEach((p, i) => {
-                    const div = document.createElement('div');
-                    div.className = "flex items-center justify-between p-3 bg-white hover:bg-gray-50 group border-b border-gray-100 last:border-0";
-                    div.innerHTML = `
+                list.innerHTML = '';
+                if (trashPatterns.length === 0) {
+                    msg.classList.remove('hidden');
+                } else {
+                    msg.classList.add('hidden');
+                    trashPatterns.forEach((p, i) => {
+                        const div = document.createElement('div');
+                        div.className = "flex items-center justify-between p-3 bg-white hover:bg-gray-50 group border-b border-gray-100 last:border-0";
+                        div.innerHTML = `
                         <div class="flex flex-col">
                             <span class="font-bold text-gray-700 text-sm">${p.name}</span>
                             <span class="text-xs text-gray-400">Items: ${p.count || 0}</span>
@@ -2048,141 +2041,176 @@
                             </button>
                         </div>
                     `;
-                    list.appendChild(div);
-                });
-            }
-            modal.classList.remove('hidden');
-        }
-
-        function closeTrashModal() {
-            document.getElementById('trashModal').classList.add('hidden');
-        }
-
-        async function restorePattern(i) {
-            const p = trashPatterns[i];
-            if (!p || !p.id) return;
-
-            try {
-                const token = sessionStorage.getItem('token');
-                const res = await fetch(`/api/data/patterns/${p.id}/restore`, {
-                    method: 'PUT',
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-
-                if (res.ok) {
-                    showToast("Restored Pattern", "success");
-                    trashPatterns.splice(i, 1); // Optimistic
-                    openTrashModal(); // Refresh UI
-                    fetchPatternsFromBackend(); // Refresh active list
-                } else {
-                    console.error("Restore failed", await res.text());
-                    alert("Failed to restore.");
+                        list.appendChild(div);
+                    });
                 }
-            } catch (e) {
-                console.error("Restore error", e);
+                modal.classList.remove('hidden');
             }
-        }
 
-        async function permanentDelete(i) {
-            if (!confirm("Delete forever? This logic cannot be undone.")) return;
-            const p = trashPatterns[i];
-            if (!p || !p.id) return;
+            function closeTrashModal() {
+                document.getElementById('trashModal').classList.add('hidden');
+            }
 
-            try {
-                const token = sessionStorage.getItem('token');
-                const res = await fetch(`/api/data/patterns/${p.id}/permanent`, {
-                    method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
+            async function restorePattern(i) {
+                const p = trashPatterns[i];
+                if (!p || !p.id) return;
 
-                if (res.ok) {
-                    showToast("Permanently Deleted", "success");
-                    trashPatterns.splice(i, 1);
-                    openTrashModal();
-                } else {
-                    alert("Failed to delete permanently.");
+                try {
+                    const token = sessionStorage.getItem('token');
+                    const res = await fetch(`/api/data/patterns/${p.id}/restore`, {
+                        method: 'PUT',
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+
+                    if (res.ok) {
+                        showToast("Restored Pattern", "success");
+                        trashPatterns.splice(i, 1); // Optimistic
+                        openTrashModal(); // Refresh UI
+                        fetchPatternsFromBackend(); // Refresh active list
+                    } else {
+                        console.error("Restore failed", await res.text());
+                        alert("Failed to restore.");
+                    }
+                } catch (e) {
+                    console.error("Restore error", e);
                 }
-            } catch (e) {
-                console.error("Perm delete error", e);
             }
-        }
 
-        function emptyTrash() {
-            if (confirm("Run System Repair? (Try this if items are missing from Trash)\n\nClick OK to Repair, Cancel to skip.")) {
-                repairTrashSystem();
+            async function permanentDelete(i) {
+                if (!confirm("Delete forever? This logic cannot be undone.")) return;
+                const p = trashPatterns[i];
+                if (!p || !p.id) return;
+
+                try {
+                    const token = sessionStorage.getItem('token');
+                    const res = await fetch(`/api/data/patterns/${p.id}/permanent`, {
+                        method: 'DELETE',
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+
+                    if (res.ok) {
+                        showToast("Permanently Deleted", "success");
+                        trashPatterns.splice(i, 1);
+                        openTrashModal();
+                    } else {
+                        alert("Failed to delete permanently.");
+                    }
+                } catch (e) {
+                    console.error("Perm delete error", e);
+                }
             }
-        }
 
-        // --- PACKING LIST EXPORT ---
+            function emptyTrash() {
+                if (confirm("Run System Repair? (Try this if items are missing from Trash)\n\nClick OK to Repair, Cancel to skip.")) {
+                    repairTrashSystem();
+                }
+            }
 
-        function getPackingListData() {
-            // Aggregate all students from all patterns
-            let allRows = [];
-            const backupFilters = filters; // Backup global state
+            // --- PACKING LIST EXPORT ---
 
-            try {
-                patterns.forEach(p => {
-                    // Temporarily Apply Filters
-                    filters = p.filters;
-                    const pRows = getFilteredData();
-                    const item = allItems.find(i => i.name === p.filters.item);
+            function getPackingListData() {
+                // Aggregate all students from all patterns
+                let allRows = [];
+                const backupFilters = filters; // Backup global state
 
-                    pRows.forEach(r => {
-                        let qty = 1;
-                        if (item && r[`Qty_${item.name}`]) {
-                            const q = parseInt(r[`Qty_${item.name}`]);
-                            if (!isNaN(q)) qty = q;
-                        }
+                try {
+                    patterns.forEach(p => {
+                        // Temporarily Apply Filters
+                        filters = p.filters;
+                        const pRows = getFilteredData();
+                        const item = allItems.find(i => i.name === p.filters.item);
 
-                        // Create Simplified Row
-                        allRows.push({
-                            "Student Name": r["Student Name"],
-                            "School": p.metadata?.school || "",
-                            "Class": r["Class"],
-                            "Section": r["Section"],
-                            "Pattern Name": p.name,
-                            "Gender": r["Gender"],
-                            "House": r["House"] || "",
-                            "Description": p.metadata?.desc || "",
-                            "Quantity": qty,
-                            // New Fields
-                            "Roll No": r["Roll No"] || "",
-                            "Admission No": r["Admission No"] || r["Adm No"] || "",
-                            // Internal sort keys
-                            _clsRank: getClassRank(r["Class"]),
-                            _sec: r["Section"],
-                            _name: r["Student Name"]
+                        pRows.forEach(r => {
+                            let qty = 1;
+                            if (item && r[`Qty_${item.name}`]) {
+                                const q = parseInt(r[`Qty_${item.name}`]);
+                                if (!isNaN(q)) qty = q;
+                            }
+
+                            // Create Simplified Row
+                            allRows.push({
+                                "Student Name": r["Student Name"],
+                                "School": p.metadata?.school || "",
+                                "Class": r["Class"],
+                                "Section": r["Section"],
+                                "Pattern Name": p.name,
+                                "Gender": r["Gender"],
+                                "House": r["House"] || "",
+                                "Description": p.metadata?.desc || "",
+                                "Quantity": qty,
+                                // New Fields
+                                "Roll No": r["Roll No"] || "",
+                                "Admission No": r["Admission No"] || r["Adm No"] || "",
+                                // Internal sort keys
+                                _clsRank: getClassRank(r["Class"]),
+                                _sec: r["Section"],
+                                _name: r["Student Name"]
+                            });
                         });
                     });
+                } finally {
+                    filters = backupFilters; // Restore
+                }
+
+                // Sort by Class -> Section -> Name
+                allRows.sort((a, b) => {
+                    if (a._clsRank !== b._clsRank) return a._clsRank - b._clsRank;
+                    if (a._sec !== b._sec) return a._sec.localeCompare(b._sec);
+                    return a._name.localeCompare(b._name);
                 });
-            } finally {
-                filters = backupFilters; // Restore
+
+                return allRows;
             }
 
-            // Sort by Class -> Section -> Name
-            allRows.sort((a, b) => {
-                if (a._clsRank !== b._clsRank) return a._clsRank - b._clsRank;
-                if (a._sec !== b._sec) return a._sec.localeCompare(b._sec);
-                return a._name.localeCompare(b._name);
-            });
+            function exportPackingListExcel() {
+                if (patterns.length === 0) return alert("No patterns to export.");
 
-            return allRows;
-        }
+                const rows = getPackingListData();
+                const wb = XLSX.utils.book_new();
+                const wsData = [
+                    ["PACKING LIST REPORT"],
+                    [`Generated: ${new Date().toLocaleDateString()}`],
+                    [],
+                    ["Roll No", "Admission No", "Student Name", "School", "Class", "Section", "Pattern Name", "Gender", "House", "Description", "Quantity"]
+                ];
 
-        function exportPackingListExcel() {
-            if (patterns.length === 0) return alert("No patterns to export.");
+                rows.forEach(r => {
+                    wsData.push([
+                        r["Roll No"],
+                        r["Admission No"],
+                        r["Student Name"],
+                        r["School"],
+                        r["Class"],
+                        r["Section"],
+                        r["Pattern Name"],
+                        r["Gender"],
+                        r["House"],
+                        r["Description"],
+                        r["Quantity"]
+                    ]);
+                });
 
-            const rows = getPackingListData();
-            const wb = XLSX.utils.book_new();
-            const wsData = [
-                ["PACKING LIST REPORT"],
-                [`Generated: ${new Date().toLocaleDateString()}`],
-                [],
-                ["Roll No", "Admission No", "Student Name", "School", "Class", "Section", "Pattern Name", "Gender", "House", "Description", "Quantity"]
-            ];
+                const ws = XLSX.utils.aoa_to_sheet(wsData);
+                // Widths
+                ws['!cols'] = [{ wch: 10 }, { wch: 15 }, { wch: 25 }, { wch: 20 }, { wch: 10 }, { wch: 10 }, { wch: 25 }, { wch: 10 }, { wch: 15 }, { wch: 20 }, { wch: 10 }];
 
-            rows.forEach(r => {
-                wsData.push([
+                XLSX.utils.book_append_sheet(wb, ws, "Packing List");
+                XLSX.writeFile(wb, "Packing_List.xlsx");
+            }
+
+            async function exportPackingListPDF() {
+                if (patterns.length === 0) return alert("No patterns to export.");
+
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF({ orientation: 'landscape' });
+                const rows = getPackingListData();
+
+                doc.setFontSize(16);
+                doc.text("Packing List Report", 14, 15);
+                doc.setFontSize(10);
+                doc.text(`Generated: ${new Date().toLocaleDateString()} | Total Items: ${rows.length}`, 14, 22);
+
+                const tableRows = rows.map(r => [
                     r["Roll No"],
                     r["Admission No"],
                     r["Student Name"],
@@ -2191,187 +2219,152 @@
                     r["Section"],
                     r["Pattern Name"],
                     r["Gender"],
-                    r["House"],
-                    r["Description"],
+                    // r["House"], // Optional: Hide House if space is tight, or keep it
+                    // r["Description"], // Keep essential fields
                     r["Quantity"]
                 ]);
-            });
 
-            const ws = XLSX.utils.aoa_to_sheet(wsData);
-            // Widths
-            ws['!cols'] = [{ wch: 10 }, { wch: 15 }, { wch: 25 }, { wch: 20 }, { wch: 10 }, { wch: 10 }, { wch: 25 }, { wch: 10 }, { wch: 15 }, { wch: 20 }, { wch: 10 }];
+                doc.autoTable({
+                    head: [["Roll", "Adm No", "Name", "School", "Class", "Sec", "Pattern", "Gen", "Qty"]],
+                    body: tableRows,
+                    startY: 28,
+                    styles: { fontSize: 9 },
+                    headStyles: { fillColor: [44, 62, 80] }
+                });
 
-            XLSX.utils.book_append_sheet(wb, ws, "Packing List");
-            XLSX.writeFile(wb, "Packing_List.xlsx");
-        }
+                doc.save("Packing_List.pdf");
+            }
 
-        async function exportPackingListPDF() {
-            if (patterns.length === 0) return alert("No patterns to export.");
+            function exportAllPatternsSummary() {
+                if (patterns.length === 0) return alert("No patterns to export.");
 
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF({ orientation: 'landscape' });
-            const rows = getPackingListData();
-
-            doc.setFontSize(16);
-            doc.text("Packing List Report", 14, 15);
-            doc.setFontSize(10);
-            doc.text(`Generated: ${new Date().toLocaleDateString()} | Total Items: ${rows.length}`, 14, 22);
-
-            const tableRows = rows.map(r => [
-                r["Roll No"],
-                r["Admission No"],
-                r["Student Name"],
-                r["School"],
-                r["Class"],
-                r["Section"],
-                r["Pattern Name"],
-                r["Gender"],
-                // r["House"], // Optional: Hide House if space is tight, or keep it
-                // r["Description"], // Keep essential fields
-                r["Quantity"]
-            ]);
-
-            doc.autoTable({
-                head: [["Roll", "Adm No", "Name", "School", "Class", "Sec", "Pattern", "Gen", "Qty"]],
-                body: tableRows,
-                startY: 28,
-                styles: { fontSize: 9 },
-                headStyles: { fillColor: [44, 62, 80] }
-            });
-
-            doc.save("Packing_List.pdf");
-        }
-
-        function exportAllPatternsSummary() {
-            if (patterns.length === 0) return alert("No patterns to export.");
-
-            const wb = XLSX.utils.book_new();
-            const wsData = [
-                ["Pattern Name", "School", "Description", "Cloth Details", "Special Req", "Item Type", "M/Size of Pattern", "Cutting Quantity", "Total Cloth (M)", "Pattern Specifications"]
-            ];
-
-            patterns.forEach(p => {
-                const m = p.metadata || {};
-                // Calculate correct quantity on the fly
-                const correctQty = calculatePatternQty(p);
-                // Update p.count for consistency (optional)
-                p.count = correctQty;
-
-                const cons = parseFloat(m.consumption) || 0;
-                const totalCloth = (cons * correctQty).toFixed(2);
-
-                // Construct filter summary
-                let specifications = [];
-                if (p.filters.class) specifications.push(`Class: ${p.filters.class}`);
-                if (p.filters.section) specifications.push(`Sec: ${p.filters.section}`);
-                if (p.filters.house) specifications.push(`House: ${p.filters.house}`);
-                if (p.filters.gender) specifications.push(`Gender: ${p.filters.gender}`);
-                if (p.filters.item) specifications.push(`Item: ${p.filters.item}`);
-                // Add Measurement Filters
-                if (p.filters.components) {
-                    for (const [key, val] of Object.entries(p.filters.components)) {
-                        if (val) specifications.push(`${key}: ${val}`);
-                    }
-                }
-
-                wsData.push([
-                    p.name,
-                    m.school || "",
-                    m.desc || "",
-                    m.cloth || "",
-                    m.req || "",
-                    p.filters.item || "Mixed",
-                    cons,
-                    correctQty,
-                    totalCloth,
-                    specifications.join(', ')
-                ]);
-            });
-
-            const ws = XLSX.utils.aoa_to_sheet(wsData);
-            // Auto-width
-            const wscols = wsData[0].map(() => ({ wch: 20 }));
-            ws['!cols'] = wscols;
-
-            XLSX.utils.book_append_sheet(wb, ws, "All Patterns Summary");
-            XLSX.writeFile(wb, "All_Patterns_Summary.xlsx");
-        }
-
-        function exportAllPatternsSummaryPDF() {
-            if (patterns.length === 0) return alert("No patterns to export.");
-
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF({ orientation: 'landscape' });
-
-            doc.setFontSize(16);
-            doc.text("All Patterns Summary", 14, 15);
-            doc.setFontSize(10);
-            doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, 22);
-
-            const headers = [["Pattern Name", "School", "Desc", "Cloth Details", "Special Req", "M/Size of Pattern", "Cutting Quantity", "Total Cloth (M)", "Pattern Specifications"]];
-            const rows = patterns.map(p => {
-                const m = p.metadata || {};
-                const correctQty = calculatePatternQty(p); // Use helper
-
-                const cons = parseFloat(m.consumption) || 0;
-                const totalCloth = (cons * correctQty).toFixed(2);
-
-                // Construct a summary of filters for the "Pattern Specifications" column
-                let specifications = [];
-                if (p.filters.class) specifications.push(`Class: ${p.filters.class}`);
-                if (p.filters.section) specifications.push(`Sec: ${p.filters.section}`);
-                if (p.filters.house) specifications.push(`House: ${p.filters.house}`);
-                if (p.filters.gender) specifications.push(`Gender: ${p.filters.gender}`);
-                if (p.filters.item) specifications.push(`${p.filters.item}`);
-                // Add Measurement Filters
-                if (p.filters.components) {
-                    for (const [key, val] of Object.entries(p.filters.components)) {
-                        if (val) specifications.push(`${key}: ${val}`);
-                    }
-                }
-
-                return [
-                    p.name,
-                    m.school || "-",
-                    m.desc || "-",
-                    m.cloth || "-",
-                    m.req || "-",
-                    cons.toFixed(2),
-                    correctQty,
-                    totalCloth,
-                    specifications.join(', ')
+                const wb = XLSX.utils.book_new();
+                const wsData = [
+                    ["Pattern Name", "School", "Description", "Cloth Details", "Special Req", "Item Type", "M/Size of Pattern", "Cutting Quantity", "Total Cloth (M)", "Pattern Specifications"]
                 ];
-            });
 
-            doc.autoTable({
-                head: headers,
-                body: rows,
-                startY: 25,
-                styles: { fontSize: 9 },
-                headStyles: { fillColor: [44, 62, 80] }
-            });
+                patterns.forEach(p => {
+                    const m = p.metadata || {};
+                    // Calculate correct quantity on the fly
+                    const correctQty = calculatePatternQty(p);
+                    // Update p.count for consistency (optional)
+                    p.count = correctQty;
 
-            doc.save("All_Patterns_Summary.pdf");
-        }
+                    const cons = parseFloat(m.consumption) || 0;
+                    const totalCloth = (cons * correctQty).toFixed(2);
 
-        // Toast Notification Helper
-        function showToast(message, type = 'success') {
-            const toast = document.createElement('div');
-            toast.className = `fixed bottom-5 right-5 px-4 py-2 rounded shadow-lg text-white text-sm z-50 transition-opacity duration-500 opacity-0 transform translate-y-2 ${type === 'success' ? 'bg-green-600' : 'bg-red-600'}`;
-            toast.textContent = message;
-            document.body.appendChild(toast);
+                    // Construct filter summary
+                    let specifications = [];
+                    if (p.filters.class) specifications.push(`Class: ${p.filters.class}`);
+                    if (p.filters.section) specifications.push(`Sec: ${p.filters.section}`);
+                    if (p.filters.house) specifications.push(`House: ${p.filters.house}`);
+                    if (p.filters.gender) specifications.push(`Gender: ${p.filters.gender}`);
+                    if (p.filters.item) specifications.push(`Item: ${p.filters.item}`);
+                    // Add Measurement Filters
+                    if (p.filters.components) {
+                        for (const [key, val] of Object.entries(p.filters.components)) {
+                            if (val) specifications.push(`${key}: ${val}`);
+                        }
+                    }
 
-            // Animate In
-            requestAnimationFrame(() => {
-                toast.classList.remove('opacity-0', 'translate-y-2');
-            });
+                    wsData.push([
+                        p.name,
+                        m.school || "",
+                        m.desc || "",
+                        m.cloth || "",
+                        m.req || "",
+                        p.filters.item || "Mixed",
+                        cons,
+                        correctQty,
+                        totalCloth,
+                        specifications.join(', ')
+                    ]);
+                });
 
-            // Remove after 3s
-            setTimeout(() => {
-                toast.classList.add('opacity-0', 'translate-y-2');
-                setTimeout(() => toast.remove(), 500);
-            }, 3000);
-        }
+                const ws = XLSX.utils.aoa_to_sheet(wsData);
+                // Auto-width
+                const wscols = wsData[0].map(() => ({ wch: 20 }));
+                ws['!cols'] = wscols;
+
+                XLSX.utils.book_append_sheet(wb, ws, "All Patterns Summary");
+                XLSX.writeFile(wb, "All_Patterns_Summary.xlsx");
+            }
+
+            function exportAllPatternsSummaryPDF() {
+                if (patterns.length === 0) return alert("No patterns to export.");
+
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF({ orientation: 'landscape' });
+
+                doc.setFontSize(16);
+                doc.text("All Patterns Summary", 14, 15);
+                doc.setFontSize(10);
+                doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, 22);
+
+                const headers = [["Pattern Name", "School", "Desc", "Cloth Details", "Special Req", "M/Size of Pattern", "Cutting Quantity", "Total Cloth (M)", "Pattern Specifications"]];
+                const rows = patterns.map(p => {
+                    const m = p.metadata || {};
+                    const correctQty = calculatePatternQty(p); // Use helper
+
+                    const cons = parseFloat(m.consumption) || 0;
+                    const totalCloth = (cons * correctQty).toFixed(2);
+
+                    // Construct a summary of filters for the "Pattern Specifications" column
+                    let specifications = [];
+                    if (p.filters.class) specifications.push(`Class: ${p.filters.class}`);
+                    if (p.filters.section) specifications.push(`Sec: ${p.filters.section}`);
+                    if (p.filters.house) specifications.push(`House: ${p.filters.house}`);
+                    if (p.filters.gender) specifications.push(`Gender: ${p.filters.gender}`);
+                    if (p.filters.item) specifications.push(`${p.filters.item}`);
+                    // Add Measurement Filters
+                    if (p.filters.components) {
+                        for (const [key, val] of Object.entries(p.filters.components)) {
+                            if (val) specifications.push(`${key}: ${val}`);
+                        }
+                    }
+
+                    return [
+                        p.name,
+                        m.school || "-",
+                        m.desc || "-",
+                        m.cloth || "-",
+                        m.req || "-",
+                        cons.toFixed(2),
+                        correctQty,
+                        totalCloth,
+                        specifications.join(', ')
+                    ];
+                });
+
+                doc.autoTable({
+                    head: headers,
+                    body: rows,
+                    startY: 25,
+                    styles: { fontSize: 9 },
+                    headStyles: { fillColor: [44, 62, 80] }
+                });
+
+                doc.save("All_Patterns_Summary.pdf");
+            }
+
+            // Toast Notification Helper
+            function showToast(message, type = 'success') {
+                const toast = document.createElement('div');
+                toast.className = `fixed bottom-5 right-5 px-4 py-2 rounded shadow-lg text-white text-sm z-50 transition-opacity duration-500 opacity-0 transform translate-y-2 ${type === 'success' ? 'bg-green-600' : 'bg-red-600'}`;
+                toast.textContent = message;
+                document.body.appendChild(toast);
+
+                // Animate In
+                requestAnimationFrame(() => {
+                    toast.classList.remove('opacity-0', 'translate-y-2');
+                });
+
+                // Remove after 3s
+                setTimeout(() => {
+                    toast.classList.add('opacity-0', 'translate-y-2');
+                    setTimeout(() => toast.remove(), 500);
+                }, 3000);
+            }
 
     </script>
 </body>
