@@ -1557,13 +1557,17 @@
             }
 
             container.innerHTML = patterns.map(p => `
-                <div class="flex items-center gap-2 bg-white border border-gray-200 rounded-md px-3 py-1 text-sm shadow-sm group">
-                    <button onclick="loadPattern(${p.id})" class="text-blue-600 font-bold hover:underline" title="Load Filters">${p.name}</button>
+                <div class="flex items-center gap-2 bg-white border border-gray-200 rounded-md px-3 py-1.5 text-sm shadow-sm hover:shadow-md transition-shadow">
+                    <button onclick="loadPattern(${p.id})" class="text-blue-600 font-bold hover:underline truncate max-w-[150px]" title="Load Filters">${p.name}</button>
                     <span class="text-xs text-gray-400 font-mono">(${p.count !== undefined ? p.count : (p.student_admission_nos ? p.student_admission_nos.length : '?')})</span>
-                    <button onclick="openExportForPattern(${p.id})" class="text-gray-400 hover:text-green-600 ml-1" title="Export Pattern">
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                    </button>
-                    <button onclick="deletePattern(${p.id})" class="text-gray-300 hover:text-red-500 ml-1 opacity-0 group-hover:opacity-100 transition-opacity">×</button>
+                    <div class="flex items-center ml-2 border-l border-gray-200 pl-2 gap-1">
+                        <button onclick="openExportForPattern(${p.id})" class="text-gray-400 hover:text-green-600 p-1 rounded hover:bg-green-50 transition-colors" title="Export Pattern">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        </button>
+                        <button onclick="deletePattern(${p.id})" class="text-gray-300 hover:text-red-500 p-1 rounded hover:bg-red-50 transition-colors" title="Move to Trash">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        </button>
+                    </div>
                 </div>
             `).join('');
         }
