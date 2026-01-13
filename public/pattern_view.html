@@ -1920,12 +1920,14 @@
         const TRASH_STORAGE_KEY = 'exal_trash_patterns';
 
         async function loadTrash() {
-            if (!currentUser || !currentUser.schoolId) return;
+            // Use the currently selected school, consistent with active active pattern fetch
+            const currentSchoolId = sessionStorage.getItem('schoolId') || (currentUser ? currentUser.schoolId : null);
+            if (!currentSchoolId) return;
 
             // Show loading state if needed, or just update silently
             try {
                 const token = sessionStorage.getItem('token');
-                const res = await fetch(`/api/data/patterns/trash/${currentUser.schoolId}`, {
+                const res = await fetch(`/api/data/patterns/trash/${currentSchoolId}`, {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
 
