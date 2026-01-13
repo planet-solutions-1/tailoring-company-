@@ -1201,8 +1201,9 @@ router.delete('/patterns/:id', authenticateToken, (req, res) => {
             return res.status(403).json({ error: "Forbidden: Not your pattern" });
         }
 
-        db.run("UPDATE patterns SET is_deleted = 1, deleted_at = CURRENT_TIMESTAMP WHERE id = ?", [id], (err2) => {
+        db.run("UPDATE patterns SET is_deleted = 1, deleted_at = CURRENT_TIMESTAMP WHERE id = ?", [id], function (err2) {
             if (err2) return res.status(500).json({ error: err2.message });
+            if (this.changes === 0) return res.status(404).json({ error: "No changes made (ID not found or already deleted)" });
             res.json({ message: "Pattern moved to Trash" });
         });
     });

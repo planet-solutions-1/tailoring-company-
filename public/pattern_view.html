@@ -1956,8 +1956,8 @@
         async function deletePattern(id) {
             if (!confirm("Move pattern to Trash?")) return;
 
-            // UI Optimistic Update
-            const index = patterns.findIndex(p => p.id === id);
+            // UI Optimistic Update (Use loose equality for safety)
+            const index = patterns.findIndex(p => p.id == id);
             if (index > -1) {
                 patterns.splice(index, 1);
                 renderModules();
@@ -1974,6 +1974,7 @@
 
                 if (res.ok) {
                     loadTrash(); // Refresh trash list
+                    fetchPatternsFromBackend(); // Force sync of active list from server
                     showToast("Moved to Trash", "success");
                 } else {
                     const txt = await res.text();
