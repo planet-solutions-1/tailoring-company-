@@ -2699,11 +2699,8 @@
 
         function renderSchoolDetails() {
             const sName = currentSchoolDetails.name;
-            const sId = currentSchoolDetails.id;
-
-            // Filter by ID if available (More robust), fall back to Name
-            const students = globalStudents.filter(s => (s.school_id && sId) ? (parseInt(s.school_id) === parseInt(sId)) : s.school_name === sName);
-            const patterns = globalPatterns.filter(p => (p.school_id && sId) ? (parseInt(p.school_id) === parseInt(sId)) : p.school_name === sName);
+            const students = globalStudents.filter(s => s.school_name === sName);
+            const patterns = globalPatterns.filter(p => p.school_name === sName);
 
             // 1. Render Students List
             document.getElementById('sd-count-students').innerText = `${students.length} records`;
@@ -2732,17 +2729,17 @@
                     <tr class="hover:bg-gray-50 group border-b border-gray-50">
                         <td class="p-3 font-bold text-gray-700 bg-white sticky left-0 shadow-sm">${s.name}</td>
                         <td class="p-3 text-center text-xs text-blue-500 font-bold">${s.pattern_name || '-'}</td>
-                        <td class="p-3 text-center text-xs font-mono text-orange-600 bg-orange-50/30">${m.u1 || m.U1 || '-'}</td>
-                        <td class="p-3 text-center text-xs font-mono text-orange-600 bg-orange-50/30">${m.u2 || m.U2 || '-'}</td>
-                        <td class="p-3 text-center text-xs font-mono text-orange-600 bg-orange-50/30">${m.u3 || m.U3 || '-'}</td>
-                        <td class="p-3 text-center text-xs font-mono text-orange-600 bg-orange-50/30">${m.u4 || m.U4 || '-'}</td>
-                        <td class="p-3 text-center text-xs font-mono text-orange-600 bg-orange-50/30">${m.u5 || m.U5 || '-'}</td>
-                        <td class="p-3 text-center text-xs font-mono text-orange-600 bg-orange-50/30">${m.u6 || m.U6 || '-'}</td>
-                        <td class="p-3 text-center text-xs font-mono text-indigo-600 bg-indigo-50/30">${m.l1 || m.L1 || '-'}</td>
-                        <td class="p-3 text-center text-xs font-mono text-indigo-600 bg-indigo-50/30">${m.l2 || m.L2 || '-'}</td>
-                        <td class="p-3 text-center text-xs font-mono text-indigo-600 bg-indigo-50/30">${m.l3 || m.L3 || '-'}</td>
-                        <td class="p-3 text-center text-xs font-mono text-indigo-600 bg-indigo-50/30">${m.l4 || m.L4 || '-'}</td>
-                        <td class="p-3 text-center text-xs font-mono text-indigo-600 bg-indigo-50/30">${m.l5 || m.L5 || '-'}</td>
+                        <td class="p-3 text-center text-xs font-mono text-orange-600 bg-orange-50/30">${m.u1 || '-'}</td>
+                        <td class="p-3 text-center text-xs font-mono text-orange-600 bg-orange-50/30">${m.u2 || '-'}</td>
+                        <td class="p-3 text-center text-xs font-mono text-orange-600 bg-orange-50/30">${m.u3 || '-'}</td>
+                        <td class="p-3 text-center text-xs font-mono text-orange-600 bg-orange-50/30">${m.u4 || '-'}</td>
+                        <td class="p-3 text-center text-xs font-mono text-orange-600 bg-orange-50/30">${m.u5 || '-'}</td>
+                        <td class="p-3 text-center text-xs font-mono text-orange-600 bg-orange-50/30">${m.u6 || '-'}</td>
+                        <td class="p-3 text-center text-xs font-mono text-indigo-600 bg-indigo-50/30">${m.l1 || '-'}</td>
+                        <td class="p-3 text-center text-xs font-mono text-indigo-600 bg-indigo-50/30">${m.l2 || '-'}</td>
+                        <td class="p-3 text-center text-xs font-mono text-indigo-600 bg-indigo-50/30">${m.l3 || '-'}</td>
+                        <td class="p-3 text-center text-xs font-mono text-indigo-600 bg-indigo-50/30">${m.l4 || '-'}</td>
+                        <td class="p-3 text-center text-xs font-mono text-indigo-600 bg-indigo-50/30">${m.l5 || '-'}</td>
                         <td class="p-3 text-xs text-purple-600 font-bold bg-purple-50/50 max-w-[200px] truncate" title="${qtyStr}">${qtyStr || '-'}</td>
                         <td class="p-3 text-xs text-gray-400 italic pl-6 max-w-[150px] truncate" title="${m.remarks || ''}">${m.remarks || '-'}</td>
                     </tr>`;
@@ -3138,8 +3135,8 @@
                              <div class="font-bold text-gray-700 text-xs">${s.name}</div>
                              <div class="text-[9px] text-gray-400 font-mono">${s.roll_no || '-'}</div>
                          </td>
-                         ${['u1', 'u2', 'u3', 'u4', 'u5', 'u6', 'u7', 'u8'].map(k => `<td class="p-2 text-center text-orange-600 bg-orange-50/10">${m[k] || m[k.toUpperCase()] || '-'}</td>`).join('')}
-                         ${['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7', 'l8'].map((k, i) => `<td class="p-2 text-center text-indigo-600 bg-indigo-50/10 ${i === 0 ? 'border-l border-gray-100' : ''}">${m[k] || m[k.toUpperCase()] || '-'}</td>`).join('')}
+                         ${['u1', 'u2', 'u3', 'u4', 'u5', 'u6', 'u7', 'u8'].map(k => `<td class="p-2 text-center text-orange-600 bg-orange-50/10">${m[k] || '-'}</td>`).join('')}
+                         ${['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7', 'l8'].map((k, i) => `<td class="p-2 text-center text-indigo-600 bg-indigo-50/10 ${i === 0 ? 'border-l border-gray-100' : ''}">${m[k] || '-'}</td>`).join('')}
                          <td class="p-3 text-xs bg-purple-50/30 text-purple-600 font-bold border-l border-gray-100 max-w-[120px] truncate" title="${Object.entries(getItemQuantitiesSafe(s)).map(([k, v]) => `${k}:${v}`).join(', ')}">
                              ${Object.entries(getItemQuantitiesSafe(s)).map(([k, v]) => `${k}:${v}`).join(', ')}
                          </td>
@@ -3223,7 +3220,7 @@
                 const qtyStr = Object.entries(iq).map(([k, v]) => `${k}:${v}`).join(', ');
 
                 // Simplified Measurements string for list view
-                const measStr = `U:[${m.u1 || m.U1 || '-'},${m.u2 || m.U2 || '-'},${m.u3 || m.U3 || '-'}] L:[${m.l1 || m.L1 || '-'},${m.l2 || m.L2 || '-'}]`;
+                const measStr = `U:[${m.u1 || '-'},${m.u2 || '-'},${m.u3 || '-'}] L:[${m.l1 || '-'},${m.l2 || '-'}]`;
 
                 return `
                     <tr class="hover:bg-gray-50 transition-colors border-b border-gray-50">
@@ -4417,27 +4414,6 @@
                 console.error("Log Fetch Error", e);
                 const tbody = document.getElementById('rp-school-table');
                 if (tbody) tbody.innerHTML = `<tr><td colspan="6" class="p-4 text-center text-red-500">Log Fetch Error: ${e.message}</td></tr>`;
-            }
-        }
-
-        async function fetchGlobalPatterns() {
-            try {
-                const res = await fetch(`${API_BASE}/data/patterns/all`, {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                if (res.ok) {
-                    globalPatterns = await res.json();
-
-                    // Also Calculate Global Pattern Stats
-                    const uniquePatterns = [...new Set(globalPatterns.map(p => p.name))];
-                    const countEl = document.getElementById('stat-patterns');
-                    if (countEl) countEl.innerText = globalPatterns.length; // Or unique?
-
-                } else {
-                    console.error("Failed to fetch patterns");
-                }
-            } catch (e) {
-                console.error("Error fetching patterns:", e);
             }
         }
 

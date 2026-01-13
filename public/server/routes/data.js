@@ -816,45 +816,6 @@ router.get('/all_students', authenticateToken, requireRole('company'), (req, res
     });
 });
 
-// GET /api/data/students - My Students (School/Tailor)
-router.get('/students', authenticateToken, (req, res) => {
-    const schoolId = req.user.schoolId;
-    if (!schoolId && req.user.role !== 'company') return res.status(403).json({ error: "No School ID" });
-
-    // If company, require school_id query param or return all? 
-    // For now, let's keep it strict or redirect.
-    if (req.user.role === 'company') return res.redirect('/api/data/all_students');
-
-    const query = `
-        SELECT 
-            st.*,
-            sc.name as school_name,
-            m.data as measurements,
-            m.item_quantities
-        FROM students st
-        JOIN schools sc ON st.school_id = sc.id
-        LEFT JOIN measurements m ON st.id = m.student_id
-        WHERE st.school_id = ? AND st.is_active = 1
-        ORDER BY st.class ASC, st.roll_no ASC
-    `;
-
-    db.all(query, [schoolId], (err, rows) => {
-        if (err) return res.status(500).json({ error: err.message });
-
-        // Parse JSON fields
-        const students = rows.map(r => {
-            if (r.measurements) {
-                try { r.measurements = JSON.parse(r.measurements); } catch (e) { }
-            }
-            if (r.item_quantities) {
-                try { r.item_quantities = JSON.parse(r.item_quantities); } catch (e) { }
-            }
-            return r;
-        });
-        res.json(students);
-    });
-});
-
 // GET /api/data/patterns/all - All Patterns (Company)
 router.get('/patterns/all', authenticateToken, requireRole('company'), (req, res) => {
     const query = `
