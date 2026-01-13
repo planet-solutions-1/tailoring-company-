@@ -1934,14 +1934,37 @@
                 if (res.ok) {
                     trashPatterns = await res.json();
                     updateTrashCount();
-                    if (!document.getElementById('trashModal').classList.contains('hidden')) {
-                        openTrashModal(); // Refresh if open
+                    // Always refresh the list if modal is open
+                    const listContainer = document.getElementById('trashList');
+                    if (listContainer && !document.getElementById('trashModal').classList.contains('hidden')) {
+                        renderTrashList();
                     }
                 } else {
                     console.error("Failed to load trash:", await res.text());
                 }
             } catch (e) {
                 console.error("Trash load error", e);
+            }
+        }
+
+        async function repairTrashSystem() {
+            if (!confirm("This will attempt to fix the database schema for the Trash system. The page will reload. Continue?")) return;
+
+            try {
+                const token = sessionStorage.getItem('token');
+                const res = await fetch('/api/data/debug/fix_trash', {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (res.ok) {
+                    alert("System Repaired! Reloading...");
+                    window.location.reload();
+                } else {
+                    alert("Repair failed: " + await res.text());
+                }
+            } catch (e) {
+                alert("Network Error during repair: " + e.message);
             }
         }
 
@@ -2085,8 +2108,9 @@
         }
 
         function emptyTrash() {
-            if (!confirm("This requires manual deletion of each item currently.")) return;
-            // Todo: Implement bulk delete endpoint if needed
+            if (confirm("Run System Repair? (Try this if items are missing from Trash)\n\nClick OK to Repair, Cancel to skip.")) {
+                repairTrashSystem();
+            }
         }
 
         // --- PACKING LIST EXPORT ---
