@@ -287,25 +287,25 @@
                     </svg>
                     Clear Data
                 </button>
-                <button onclick="syncPatternsToCloud()"
+                <button id="btn-save-cloud" onclick="syncPatternsToCloud()"
                     class="btn-outline px-4 py-2 rounded-md text-sm font-medium text-blue-600 border-blue-200 hover:bg-blue-50 flex items-center gap-2"
                     title="Save current patterns to Cloud Database">
-                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="icon w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12">
                         </path>
                     </svg>
-                    Save to Cloud
+                    <span>Save to Cloud</span>
                 </button>
-                <button onclick="fetchPatternsFromBackend()"
+                <button id="btn-load-cloud" onclick="fetchPatternsFromBackend()"
                     class="btn-outline px-4 py-2 rounded-md text-sm font-medium text-purple-600 border-purple-200 hover:bg-purple-50 flex items-center gap-2"
                     title="Load saved patterns from Cloud Database">
-                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="icon w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3 3m0 0l-3-3m3 3v12"
                             transform="rotate(180 12 12)"></path>
                     </svg>
-                    Load from Cloud
+                    <span>Load from Cloud</span>
                 </button>
             </div>
     </header>
@@ -687,6 +687,11 @@
             if (patterns.length === 0) return alert("No patterns to sync.");
             if (!confirm(`Sync ${patterns.length} patterns to Cloud?`)) return;
 
+            const btn = document.getElementById('btn-save-cloud');
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = `<svg class="animate-spin h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Saving...`;
+            btn.disabled = true;
+
             // Simple Toast
             const showToast = (msg, isErr = false) => {
                 const div = document.createElement('div');
@@ -733,10 +738,20 @@
             } catch (e) {
                 console.error(e);
                 showToast("Sync Failed: " + e.message, true);
+            } finally {
+                btn.innerHTML = originalHTML;
+                btn.disabled = false;
             }
         }
 
         async function fetchPatternsFromBackend() {
+            const btn = document.getElementById('btn-load-cloud');
+            const originalHTML = btn ? btn.innerHTML : '';
+            if (btn) {
+                btn.innerHTML = `<svg class="animate-spin h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Loading...`;
+                btn.disabled = true;
+            }
+
             // Toast Helper Reuse or Re-define if needed (assuming syncPatterns defined it in local scope? No, need duplicate or global)
             const showToast = (msg, isErr = false) => {
                 const existing = document.getElementById('toast-feedback');
@@ -842,6 +857,11 @@
             } catch (e) {
                 console.error("Fetch Patterns Error", e);
                 showToast("Load Failed: " + e.message, true);
+            } finally {
+                if (btn) {
+                    btn.innerHTML = originalHTML;
+                    btn.disabled = false;
+                }
             }
         }
 
