@@ -889,12 +889,12 @@
 
         // Column Aliases for Robust Parsing
         const colAliases = {
-            "S.No": ["s.no", "no", "sno", "sl.no", "#", "ser.no", "serial no"],
-            "Section": ["section", "sec", "sec.", "class section"],
-            "Roll No": ["roll no", "rollno", "roll_no", "roll.no"],
-            "Admission No": ["admission no", "adm no", "admin no", "adm.no", "admission_no"],
-            "Class": ["class", "grade", "standard", "std"],
-            "Gender": ["gender", "sex"]
+            "S.No": ["s.no", "no", "sno", "sl.no", "sl no", "#", "ser.no", "serial no", "serial number"],
+            "Section": ["section", "sec", "sec.", "class section", "class & sec", "class/sec", "grade section"],
+            "Roll No": ["roll no", "rollno", "roll_no", "roll.no", "roll #"],
+            "Admission No": ["admission no", "adm no", "admin no", "adm.no", "admission_no", "reg no", "register no"],
+            "Class": ["class", "grade", "standard", "std", "c"],
+            "Gender": ["gender", "sex", "m/f"]
         };
 
         // --- CORE FUNCTIONS ---
@@ -1383,12 +1383,12 @@
             // Body
             tbody.innerHTML = filtered.map((row, i) => {
                 let r = `<tr class="hover:bg-gray-50 border-b border-gray-100">
-                    <td class="p-2 border-r text-center text-xs text-gray-400 font-mono">${row["S.No"]}</td>
-                    <td class="p-2 border-r font-medium text-gray-700 sticky-col bg-white">${row["Student Name"]}</td>
-                    <td class="p-2 border-r text-center text-gray-600 text-xs">${row["Class"]}</td>
-                    <td class="p-2 border-r text-center text-gray-600 text-xs">${row["Section"]}</td>
-                    <td class="p-2 border-r text-center text-gray-600 text-xs">${row["Gender"]}</td>
-                    <td class="p-2 border-r text-center text-gray-600 text-xs text-mono">${row["Admission No"]}</td>`;
+                    <td class="p-2 border-r text-center text-xs text-gray-400 font-mono">${row["S.No"] || i + 1}</td>
+                    <td class="p-2 border-r font-medium text-gray-700 sticky-col bg-white">${row["Student Name"] || ""}</td>
+                    <td class="p-2 border-r text-center text-gray-600 text-xs">${row["Class"] || ""}</td>
+                    <td class="p-2 border-r text-center text-gray-600 text-xs">${row["Section"] || "-"}</td>
+                    <td class="p-2 border-r text-center text-gray-600 text-xs">${row["Gender"] || ""}</td>
+                    <td class="p-2 border-r text-center text-gray-600 text-xs text-mono">${row["Admission No"] || ""}</td>`;
 
                 measureCols.forEach(c => {
                     let val = row[c];
