@@ -2895,6 +2895,7 @@
 
         async function openSchoolDetails(id) {
             if (globalStudents.length === 0) await fetchAllStudents();
+            if (globalPatterns.length === 0) await fetchGlobalPatterns();
 
             tdCurrentSchoolId = id;
             const s = globalSchools.find(x => x.id == id);
@@ -2912,9 +2913,12 @@
             const schoolStudents = globalStudents.filter(st => st.school_name === s.name);
             document.getElementById('td-cat-students-count').innerText = `${schoolStudents.length} Students`;
 
-            // Pattern Counts
-            const boysPatterns = new Set(schoolStudents.filter(s => s.gender === 'Male').map(s => s.pattern_name || 'Unassigned')).size;
-            const girlsPatterns = new Set(schoolStudents.filter(s => s.gender === 'Female').map(s => s.pattern_name || 'Unassigned')).size;
+            // Pattern Counts (Fixed: Use Global Patterns Definition)
+            // Heuristic: Check if name implies gender or if explicitly tagged. 
+            // Since we don't have explicit 'type' on all global patterns, we default to string check.
+            const schoolPatterns = globalPatterns.filter(p => p.school_name === s.name);
+            const boysPatterns = schoolPatterns.filter(p => p.name.toUpperCase().includes('BOYS') || p.name.toUpperCase().includes('MALE')).length;
+            const girlsPatterns = schoolPatterns.filter(p => p.name.toUpperCase().includes('GIRLS') || p.name.toUpperCase().includes('FEMALE')).length;
 
             document.getElementById('td-cat-boys-count').innerText = `${boysPatterns} Pattern Groups`;
             document.getElementById('td-cat-girls-count').innerText = `${girlsPatterns} Pattern Groups`;
@@ -3147,44 +3151,140 @@
         }
 
         function renderTdPatterns(data, gender) {
-            const genderData = data.filter(s => s.gender === gender);
-            const groups = {};
-            genderData.forEach(s => {
-                const pname = s.pattern_name || 'Unassigned';
-                if (!groups[pname]) groups[pname] = [];
-                groups[pname].push(s);
-            });
-
             const container = document.getElementById(gender === 'Male' ? 'td-list-patterns-boys' : 'td-list-patterns-girls');
 
-            if (Object.keys(groups).length === 0) {
-                container.innerHTML = `<div class="col-span-full text-center py-12 text-gray-300 italic">No patterns found for ${gender} students.</div>`;
+            // Get Patterns from Global DB for this school
+            const schoolName = document.getElementById('td-school-name').innerText;
+            const relevantPatterns = globalPatterns.filter(p => p.school_name === schoolName && (
+                gender === 'Male' ? (p.name.toUpperCase().includes('BOYS') || p.name.toUpperCase().includes('MALE')) :
+                    (p.name.toUpperCase().includes('GIRLS') || p.name.toUpperCase().includes('FEMALE'))
+            ));
+
+            if (relevantPatterns.length === 0) {
+                container.innerHTML = `<div class="col-span-full text-center py-12 text-gray-300 italic">No patterns found in database for ${gender}.</div>`;
                 return;
             }
 
-            container.innerHTML = Object.entries(groups).sort().map(([name, students]) => {
-                const meta = globalPatterns.find(p => p.name === name && p.school_id == tdCurrentSchoolId) || {};
-                // Box Grid Layout (Click to Open Level 3)
+            // Export Buttons Header
+            const header = `
+                <div class="col-span-full flex justify-end gap-2 mb-4">
+                    <button onclick="downloadTdPatternsPDF('${gender}')" class="clay-btn text-xs bg-red-50 text-red-600 hover:bg-red-100 font-bold px-3 py-2 flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                        PDF Summary
+                    </button>
+                    <button onclick="downloadTdPatternsExcel('${gender}')" class="clay-btn text-xs bg-green-50 text-green-600 hover:bg-green-100 font-bold px-3 py-2 flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                        Excel Export
+                    </button>
+                </div>
+            `;
+
+            // Table View
+            const table = `
+                <div class="col-span-full overflow-x-auto rounded-xl shadow-sm border border-gray-100">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="bg-gray-50 text-xs text-gray-500 uppercase tracking-wider">
+                                <th class="p-4 font-bold border-b border-gray-100">Pattern Name</th>
+                                <th class="p-4 font-bold border-b border-gray-100">Consumption</th>
+                                <th class="p-4 font-bold border-b border-gray-100">Cloth Details</th>
+                                <th class="p-4 font-bold border-b border-gray-100">Special Req</th>
+                                <th class="p-4 font-bold border-b border-gray-100 text-center">Linked Students</th>
+                                <th class="p-4 font-bold border-b border-gray-100 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white text-sm divide-y divide-gray-50">
+                            ${relevantPatterns.map(p => {
+                // Calculate Linked Students Count
+                // Filter current data (which might already be filtered by class/section) matching this pattern
+                const linkedCount = data.filter(s => s.pattern_name === p.name).length;
+
                 return `
-                    <div onclick="openPatternDetails('${name}', '${gender}')" class="clay-card p-6 flex flex-col justify-between hover:scale-[1.02] transition-transform cursor-pointer group h-full">
-                        <div>
-                            <div class="flex justify-between items-start mb-4">
-                                <h4 class="font-extrabold text-lg text-gray-700 line-clamp-2" title="${name}">${name}</h4>
-                                <span class="bg-blue-50 text-blue-600 px-2 py-1 rounded text-xs font-bold shadow-sm group-hover:bg-blue-100 transition-colors">View</span>
-                            </div>
-                            <p class="text-xs text-gray-400 font-bold uppercase tracking-wider mb-4">Consumption: <span class="text-emerald-500 text-lg">${meta.consumption ? meta.consumption + 'm' : 'N/A'}</span></p>
-                            <div class="bg-gray-50 p-3 rounded-xl mb-4 border border-gray-100">
-                                <p class="text-[10px] text-gray-400 uppercase font-bold mb-1">Cloth Details</p>
-                                <p class="text-xs text-gray-600 font-medium line-clamp-2">${meta.cloth_details || 'No details provided.'}</p>
-                            </div>
-                        </div>
-                        <div class="mt-auto pt-4 border-t border-gray-50 flex justify-between items-center text-xs font-bold text-gray-500">
-                             <span>${students.length} Students</span>
-                             <span class="text-indigo-400 group-hover:translate-x-1 transition-transform">Details &rarr;</span>
-                        </div>
-                    </div>
-                    `;
-            }).join('');
+                                <tr class="hover:bg-blue-50/20 transition-colors group">
+                                    <td class="p-4 font-bold text-gray-700">${p.name}</td>
+                                    <td class="p-4 text-emerald-600 font-mono font-bold">${p.consumption || '-'} m</td>
+                                    <td class="p-4 text-gray-500 max-w-xs truncate" title="${p.cloth_details}">${p.cloth_details || '-'}</td>
+                                    <td class="p-4 text-gray-400 italic max-w-xs truncate" title="${p.special_req}">${p.special_req || '-'}</td>
+                                    <td class="p-4 text-center">
+                                        <span class="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-bold">${linkedCount}</span>
+                                    </td>
+                                    <td class="p-4 text-right">
+                                        <button onclick="openPatternDetails('${p.name}', '${gender}')" class="text-xs bg-indigo-50 text-indigo-600 hover:bg-indigo-100 px-3 py-1.5 rounded-lg font-bold transition-colors">
+                                            View Details
+                                        </button>
+                                    </td>
+                                </tr>
+                                `;
+            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+
+            container.innerHTML = header + table;
+        }
+
+        // --- NEW EXPORT FUNCTIONS ---
+
+        function downloadTdPatternsPDF(gender) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const schoolName = document.getElementById('td-school-name').innerText;
+
+            // Filter Patterns
+            const relevantPatterns = globalPatterns.filter(p => p.school_name === schoolName && (
+                gender === 'Male' ? (p.name.toUpperCase().includes('BOYS') || p.name.toUpperCase().includes('MALE')) :
+                    (p.name.toUpperCase().includes('GIRLS') || p.name.toUpperCase().includes('FEMALE'))
+            ));
+
+            doc.setFontSize(16);
+            doc.text(`${schoolName} - ${gender} Patterns Summary`, 14, 15);
+            doc.setFontSize(10);
+            doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 22);
+
+            const headers = [['Name', 'Consumption (m)', 'Cloth Details', 'Special Req']];
+            const rows = relevantPatterns.map(p => [
+                p.name,
+                p.consumption || '-',
+                p.cloth_details || '-',
+                p.special_req || '-'
+            ]);
+
+            doc.autoTable({
+                head: headers,
+                body: rows,
+                startY: 30,
+                styles: { fontSize: 9 },
+                headStyles: { fillColor: gender === 'Male' ? [59, 130, 246] : [236, 72, 153] }, // Blue for Boys, Pink for Girls
+                columnStyles: { 0: { fontStyle: 'bold' } }
+            });
+
+            doc.save(`${schoolName}_${gender}_Patterns.pdf`);
+        }
+
+        function downloadTdPatternsExcel(gender) {
+            const schoolName = document.getElementById('td-school-name').innerText;
+
+            // Filter Patterns
+            const relevantPatterns = globalPatterns.filter(p => p.school_name === schoolName && (
+                gender === 'Male' ? (p.name.toUpperCase().includes('BOYS') || p.name.toUpperCase().includes('MALE')) :
+                    (p.name.toUpperCase().includes('GIRLS') || p.name.toUpperCase().includes('FEMALE'))
+            ));
+
+            const exportData = relevantPatterns.map(p => ({
+                "School": schoolName,
+                "Pattern Name": p.name,
+                "Gender": gender,
+                "Consumption (m)": p.consumption || '-',
+                "Cloth Details": p.cloth_details || '-',
+                "Special Requirements": p.special_req || '-',
+                "Defined At": p.created_at ? new Date(p.created_at).toLocaleDateString() : '-'
+            }));
+
+            const ws = XLSX.utils.json_to_sheet(exportData);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, `${gender} Patterns`);
+            XLSX.writeFile(wb, `${schoolName}_${gender}_Patterns.xlsx`);
         }
 
         function openPatternDetails(patternName, gender) {
