@@ -189,6 +189,7 @@ if (process.env.RAILWAY_ENVIRONMENT || process.env.NODE_ENV === 'production') {
                     cloth_details TEXT,
                     special_req TEXT,
                     quantities TEXT,
+                    filters TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                     FOREIGN KEY (school_id) REFERENCES schools(id) ON DELETE CASCADE
                 )`,
@@ -225,6 +226,7 @@ if (process.env.RAILWAY_ENVIRONMENT || process.env.NODE_ENV === 'production') {
 
             // PATTERNS MIGRATION (Ensure description exists if table was old)
             try { await promisePool.execute("ALTER TABLE patterns ADD COLUMN description TEXT"); } catch (e) { }
+            try { await promisePool.execute("ALTER TABLE patterns ADD COLUMN filters TEXT"); } catch (e) { }
 
             // LOGS MIGRATION
             try { await promisePool.execute("ALTER TABLE activity_logs ADD COLUMN school_id INT"); } catch (e) { }
@@ -404,6 +406,7 @@ function initSqliteDb(database) {
              cloth_details TEXT,
              special_req TEXT,
              quantities TEXT,
+             filters TEXT,
              created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
              FOREIGN KEY (school_id) REFERENCES schools(id) ON DELETE CASCADE
         );
@@ -426,6 +429,7 @@ function initSqliteDb(database) {
 
             // Patterns
             database.run("ALTER TABLE patterns ADD COLUMN description TEXT", () => { });
+            database.run("ALTER TABLE patterns ADD COLUMN filters TEXT", () => { });
 
 
             // Complaints Migration
