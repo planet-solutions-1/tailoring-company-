@@ -754,7 +754,7 @@
             try {
                 const schoolId = sessionStorage.getItem('schoolId');
                 if (!schoolId) {
-                    alert("DEBUG ERROR: School ID is missing! Please Logout and Login again.");
+                    // alert("DEBUG ERROR: School ID is missing! Please Logout and Login again.");
                     throw new Error("School ID missing");
                 }
 
@@ -861,10 +861,10 @@
                         });
                         console.log(`[Cloud Load] Loaded ${loadedStudentsCount} students.`);
                     } else {
-                        alert(`DEBUG: API returned 0 students for School ID: ${schoolId}. Check if you have synced students in Editor.`);
+                        // alert(`DEBUG: API returned 0 students for School ID: ${schoolId}. Check if you have synced students in Editor.`);
                     }
                 } else {
-                    alert(`DEBUG ERROR: Student Fetch Failed! Status: ${stuRes ? stuRes.status : 'Unknown'}`);
+                    // alert(`DEBUG ERROR: Student Fetch Failed! Status: ${stuRes ? stuRes.status : 'Unknown'}`);
                 }
 
                 saveToLocal();
@@ -1414,7 +1414,9 @@
                 <th class="p-3 border-b border-r min-w-[80px]">Class</th>
                 <th class="p-3 border-b border-r min-w-[80px]">Sec</th>
                 <th class="p-3 border-b border-r min-w-[80px]">Gender</th>
-                <th class="p-3 border-b border-r min-w-[100px]">Adm No</th>`;
+                <th class="p-3 border-b border-r min-w-[100px]">Adm No</th>
+                <th class="p-3 border-b border-r min-w-[80px]">Roll No</th>
+                <th class="p-3 border-b border-r min-w-[100px]">House</th>`;
 
             measureCols.forEach(c => {
                 const color = c.startsWith('U') ? 'text-blue-600 bg-blue-50' : 'text-green-600 bg-green-50';
@@ -1438,7 +1440,9 @@
                     <td class="p-2 border-r text-center text-gray-600 text-xs">${row["Class"] || ""}</td>
                     <td class="p-2 border-r text-center text-gray-600 text-xs">${row["Section"] || "-"}</td>
                     <td class="p-2 border-r text-center text-gray-600 text-xs">${row["Gender"] || ""}</td>
-                    <td class="p-2 border-r text-center text-gray-600 text-xs text-mono">${row["Admission No"] || ""}</td>`;
+                    <td class="p-2 border-r text-center text-gray-600 text-xs text-mono">${row["Admission No"] || ""}</td>
+                    <td class="p-2 border-r text-center text-gray-600 text-xs">${row["Roll No"] || ""}</td>
+                    <td class="p-2 border-r text-center text-gray-600 text-xs">${row["House"] || ""}</td>`;
 
                 measureCols.forEach(c => {
                     let val = row[c];
