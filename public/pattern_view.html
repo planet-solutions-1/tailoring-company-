@@ -872,6 +872,9 @@
             const headerRow = rawRows[headerRowIndex];
             const dataRows = rawRows.slice(headerRowIndex + 1);
 
+            console.log("DEBUG: Detected Header Row:", headerRow);
+            console.log("DEBUG: Column Aliases:", colAliases);
+
             data = dataRows.map((rArr, i) => {
                 const newRow = {};
                 // fill info/measures
@@ -906,6 +909,8 @@
                 });
 
                 if (!newRow["S.No"]) newRow["S.No"] = i + 1;
+                // Debug: Print keys for first row
+                if (i === 0) console.log("DEBUG: First mapped row:", newRow);
                 return newRow;
             });
 
