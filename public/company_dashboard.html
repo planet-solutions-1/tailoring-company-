@@ -2913,15 +2913,27 @@
             const schoolStudents = globalStudents.filter(st => st.school_name === s.name);
             document.getElementById('td-cat-students-count').innerText = `${schoolStudents.length} Students`;
 
-            // Pattern Counts (Fixed: Use Global Patterns Definition)
-            // Heuristic: Check if name implies gender or if explicitly tagged. 
-            // Since we don't have explicit 'type' on all global patterns, we default to string check.
-            const schoolPatterns = globalPatterns.filter(p => p.school_name === s.name);
-            const boysPatterns = schoolPatterns.filter(p => p.name.toUpperCase().includes('BOYS') || p.name.toUpperCase().includes('MALE')).length;
-            const girlsPatterns = schoolPatterns.filter(p => p.name.toUpperCase().includes('GIRLS') || p.name.toUpperCase().includes('FEMALE')).length;
+            // Pattern Counts (Fixed: Use ID if available, else Name)
+            // Also checking for potential case mismatches or whitespace
+            const schoolPatterns = globalPatterns.filter(p =>
+                (p.school_id && p.school_id == s.id) ||
+                (p.school_name === s.name)
+            );
 
-            document.getElementById('td-cat-boys-count').innerText = `${boysPatterns} Pattern Groups`;
-            document.getElementById('td-cat-girls-count').innerText = `${girlsPatterns} Pattern Groups`;
+            // Heuristic with Fallback
+            const boysPatterns = schoolPatterns.filter(p => {
+                const name = (p.name || '').toUpperCase();
+                return name.includes('BOYS') || name.includes('MALE') || name.includes('SHIRT') || name.includes('PANT');
+            }).length;
+
+            const girlsPatterns = schoolPatterns.filter(p => {
+                const name = (p.name || '').toUpperCase();
+                return name.includes('GIRLS') || name.includes('FEMALE') || name.includes('SKIRT') || name.includes('FROCK') || name.includes('KURTHA');
+            }).length;
+
+            // Update UI
+            document.getElementById('td-cat-boys-count').innerText = `${boysPatterns} Groups`;
+            document.getElementById('td-cat-girls-count').innerText = `${girlsPatterns} Groups`;
 
             const classes = [...new Set(schoolStudents.map(st => st.class).filter(Boolean))].sort();
             const sections = [...new Set(schoolStudents.map(st => st.section).filter(Boolean))].sort();
@@ -3153,15 +3165,31 @@
         function renderTdPatterns(data, gender) {
             const container = document.getElementById(gender === 'Male' ? 'td-list-patterns-boys' : 'td-list-patterns-girls');
 
-            // Get Patterns from Global DB for this school
+            // Get Patterns from Global DB for this school (Robust Match)
             const schoolName = document.getElementById('td-school-name').innerText;
-            const relevantPatterns = globalPatterns.filter(p => p.school_name === schoolName && (
-                gender === 'Male' ? (p.name.toUpperCase().includes('BOYS') || p.name.toUpperCase().includes('MALE')) :
-                    (p.name.toUpperCase().includes('GIRLS') || p.name.toUpperCase().includes('FEMALE'))
-            ));
+            const schoolId = tdCurrentSchoolId; // Use the stored ID
 
-            if (relevantPatterns.length === 0) {
-                container.innerHTML = `<div class="col-span-full text-center py-12 text-gray-300 italic">No patterns found in database for ${gender}.</div>`;
+            const relevantPatterns = globalPatterns.filter(p =>
+                (p.school_id && p.school_id == schoolId) ||
+                (p.school_name === schoolName)
+            );
+
+            // Detailed Gender Filter
+            const displayPatterns = relevantPatterns.filter(p => {
+                const n = (p.name || '').toUpperCase();
+                if (gender === 'Male') return n.includes('BOYS') || n.includes('MALE') || n.includes('SHIRT') || n.includes('PANT');
+                if (gender === 'Female') return n.includes('GIRLS') || n.includes('FEMALE') || n.includes('SKIRT') || n.includes('FROCK') || n.includes('KURTHA');
+                return false;
+            });
+
+            if (displayPatterns.length === 0) {
+                // Fallback Debug Info
+                const totalForSchool = relevantPatterns.length;
+                container.innerHTML = `
+                    <div class="col-span-full text-center py-12 text-gray-300 italic">
+                        No patterns found for ${gender}.<br>
+                        <span class="text-xs text-gray-400">(Found ${totalForSchool} total patterns for this school, but none matched "${gender}" keywords)</span>
+                    </div>`;
                 return;
             }
 
