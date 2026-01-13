@@ -2699,8 +2699,11 @@
 
         function renderSchoolDetails() {
             const sName = currentSchoolDetails.name;
-            const students = globalStudents.filter(s => s.school_name === sName);
-            const patterns = globalPatterns.filter(p => p.school_name === sName);
+            const sId = currentSchoolDetails.id;
+
+            // Filter by ID if available (More robust), fall back to Name
+            const students = globalStudents.filter(s => (s.school_id && sId) ? (parseInt(s.school_id) === parseInt(sId)) : s.school_name === sName);
+            const patterns = globalPatterns.filter(p => (p.school_id && sId) ? (parseInt(p.school_id) === parseInt(sId)) : p.school_name === sName);
 
             // 1. Render Students List
             document.getElementById('sd-count-students').innerText = `${students.length} records`;
