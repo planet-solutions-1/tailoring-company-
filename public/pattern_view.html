@@ -1919,12 +1919,28 @@
         let trashPatterns = [];
         const TRASH_STORAGE_KEY = 'exal_trash_patterns';
 
-        function loadTrash() {
+        async function loadTrash() {
+            if (!currentUser || !currentUser.schoolId) return;
+
+            // Show loading state if needed, or just update silently
             try {
-                const stored = localStorage.getItem(TRASH_STORAGE_KEY);
-                if (stored) trashPatterns = JSON.parse(stored);
-            } catch (e) { console.error("Trash load error", e); }
-            updateTrashCount();
+                const token = sessionStorage.getItem('token');
+                const res = await fetch(`/api/data/patterns/trash/${currentUser.schoolId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (res.ok) {
+                    trashPatterns = await res.json();
+                    updateTrashCount();
+                    if (!document.getElementById('trashModal').classList.contains('hidden')) {
+                        openTrashModal(); // Refresh if open
+                    }
+                } else {
+                    console.error("Failed to load trash:", await res.text());
+                }
+            } catch (e) {
+                console.error("Trash load error", e);
+            }
         }
 
         function updateTrashCount() {
@@ -1932,23 +1948,40 @@
             if (el) el.textContent = trashPatterns.length;
         }
 
+        // Deprecated: Local save no longer needed for cloud trash
         function saveTrash() {
-            localStorage.setItem(TRASH_STORAGE_KEY, JSON.stringify(trashPatterns));
-            updateTrashCount();
+            // No-op or removo
         }
 
-        function deletePattern(id) {
-            // Find by ID now, not index
-            const index = patterns.findIndex(p => p.id === id);
-            if (index === -1) return;
-
+        async function deletePattern(id) {
             if (!confirm("Move pattern to Trash?")) return;
-            const p = patterns[index];
-            trashPatterns.push(p);
-            patterns.splice(index, 1);
-            saveToLocal();
-            saveTrash();
-            renderModules(); // Re-render list
+
+            // UI Optimistic Update
+            const index = patterns.findIndex(p => p.id === id);
+            if (index > -1) {
+                patterns.splice(index, 1);
+                renderModules();
+            }
+
+            try {
+                const token = sessionStorage.getItem('token');
+                const res = await fetch(`/api/data/patterns/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (res.ok) {
+                    loadTrash(); // Refresh trash list
+                    showToast("Moved to Trash", "success");
+                } else {
+                    console.error("Delete failed", await res.text());
+                    alert("Failed to move to trash. Please reload.");
+                    window.location.reload(); // Fallback sync
+                }
+            } catch (e) {
+                console.error("Delete error", e);
+                alert("Network error.");
+            }
         }
 
         function openTrashModal() {
@@ -1988,28 +2021,58 @@
             document.getElementById('trashModal').classList.add('hidden');
         }
 
-        function restorePattern(i) {
+        async function restorePattern(i) {
             const p = trashPatterns[i];
-            patterns.push(p);
-            trashPatterns.splice(i, 1);
-            saveToLocal();
-            saveTrash();
-            renderModules();
-            openTrashModal(); // Refresh modal
+            if (!p || !p.id) return;
+
+            try {
+                const token = sessionStorage.getItem('token');
+                const res = await fetch(`/api/data/patterns/${p.id}/restore`, {
+                    method: 'PUT',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (res.ok) {
+                    showToast("Restored Pattern", "success");
+                    trashPatterns.splice(i, 1); // Optimistic
+                    openTrashModal(); // Refresh UI
+                    fetchPatternsFromBackend(); // Refresh active list
+                } else {
+                    console.error("Restore failed", await res.text());
+                    alert("Failed to restore.");
+                }
+            } catch (e) {
+                console.error("Restore error", e);
+            }
         }
 
-        function permanentDelete(i) {
+        async function permanentDelete(i) {
             if (!confirm("Delete forever? This logic cannot be undone.")) return;
-            trashPatterns.splice(i, 1);
-            saveTrash();
-            openTrashModal();
+            const p = trashPatterns[i];
+            if (!p || !p.id) return;
+
+            try {
+                const token = sessionStorage.getItem('token');
+                const res = await fetch(`/api/data/patterns/${p.id}/permanent`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (res.ok) {
+                    showToast("Permanently Deleted", "success");
+                    trashPatterns.splice(i, 1);
+                    openTrashModal();
+                } else {
+                    alert("Failed to delete permanently.");
+                }
+            } catch (e) {
+                console.error("Perm delete error", e);
+            }
         }
 
         function emptyTrash() {
-            if (!confirm(`Empty Trash? All ${trashPatterns.length} patterns will be lost forever.`)) return;
-            trashPatterns = [];
-            saveTrash();
-            openTrashModal();
+            if (!confirm("This requires manual deletion of each item currently.")) return;
+            // Todo: Implement bulk delete endpoint if needed
         }
 
         // --- PACKING LIST EXPORT ---

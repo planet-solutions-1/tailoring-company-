@@ -1129,10 +1129,22 @@ router.get('/my_complaints', authenticateToken, (req, res) => {
 // === PATTERN ROUTES ===
 
 // GET /api/data/patterns/:schoolId
+// GET /api/data/patterns/:schoolId - Active Patterns Only
 router.get('/patterns/:schoolId', authenticateToken, (req, res) => {
     const { schoolId } = req.params;
     // Security check logic omitted for brevity, assuming standard school match
-    db.all("SELECT * FROM patterns WHERE school_id = ? ORDER BY created_at DESC", [schoolId], (err, rows) => {
+    db.all("SELECT * FROM patterns WHERE school_id = ? AND (is_deleted IS NULL OR is_deleted = 0) ORDER BY created_at DESC", [schoolId], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(rows);
+    });
+});
+
+// GET /api/data/patterns/trash/:schoolId - Trash Patterns Only
+router.get('/patterns/trash/:schoolId', authenticateToken, (req, res) => {
+    const { schoolId } = req.params;
+    if (req.user.role !== 'company' && req.user.schoolId != schoolId) return res.sendStatus(403);
+
+    db.all("SELECT * FROM patterns WHERE school_id = ? AND is_deleted = 1 ORDER BY deleted_at DESC", [schoolId], (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json(rows);
     });
@@ -1177,34 +1189,65 @@ router.post('/patterns', authenticateToken, (req, res) => {
 
 
 // DELETE /api/data/patterns/:id - Delete Pattern & Revert Status
+// DELETE /api/data/patterns/:id - SOFT DELETE Pattern
 router.delete('/patterns/:id', authenticateToken, (req, res) => {
     const { id } = req.params;
 
-    // Check ownership before deleting
     db.get("SELECT school_id FROM patterns WHERE id = ?", [id], (err, row) => {
         if (err) return res.status(500).json({ error: err.message });
         if (!row) return res.status(404).json({ error: "Pattern not found" });
 
-        // Permission Check: Must be Company OR Owner School
         if (req.user.role !== 'company' && row.school_id != req.user.schoolId) {
             return res.status(403).json({ error: "Forbidden: Not your pattern" });
         }
 
+        db.run("UPDATE patterns SET is_deleted = 1, deleted_at = CURRENT_TIMESTAMP WHERE id = ?", [id], (err2) => {
+            if (err2) return res.status(500).json({ error: err2.message });
+            res.json({ message: "Pattern moved to Trash" });
+        });
+    });
+});
+
+// PUT /api/data/patterns/:id/restore - Restore from Trash
+router.put('/patterns/:id/restore', authenticateToken, (req, res) => {
+    const { id } = req.params;
+
+    db.get("SELECT school_id FROM patterns WHERE id = ?", [id], (err, row) => {
+        if (err) return res.status(500).json({ error: err.message });
+        if (!row) return res.status(404).json({ error: "Pattern not found" });
+
+        if (req.user.role !== 'company' && row.school_id != req.user.schoolId) {
+            return res.status(403).json({ error: "Forbidden" });
+        }
+
+        db.run("UPDATE patterns SET is_deleted = 0, deleted_at = NULL WHERE id = ?", [id], (err2) => {
+            if (err2) return res.status(500).json({ error: err2.message });
+            res.json({ message: "Pattern Restored" });
+        });
+    });
+});
+
+// DELETE /api/data/patterns/:id/permanent - Hard Delete
+router.delete('/patterns/:id/permanent', authenticateToken, (req, res) => {
+    const { id } = req.params;
+
+    db.get("SELECT school_id FROM patterns WHERE id = ?", [id], (err, row) => {
+        if (err) return res.status(500).json({ error: err.message });
+        if (!row) return res.status(404).json({ error: "Pattern not found" });
+
+        if (req.user.role !== 'company' && row.school_id != req.user.schoolId) {
+            return res.status(403).json({ error: "Forbidden" });
+        }
+
         db.serialize(() => {
-            // 1. Revert Order Status for linked students
-            const revertSql = "UPDATE orders SET status = 'Pending' WHERE student_id IN (SELECT id FROM students WHERE pattern_id = ?)";
-
-            db.run(revertSql, [id], (err0) => {
-                if (err0) console.error("Warn: Failed to revert order status", err0.message);
-
-                // 2. Unlink students
-                db.run("UPDATE students SET pattern_id = NULL WHERE pattern_id = ?", [id], (err) => {
-                    if (err) return res.status(500).json({ error: "Failed to unlink students: " + err.message });
-
-                    // 3. Delete Pattern
+            // 1. Revert Order Status
+            db.run("UPDATE orders SET status = 'Pending' WHERE student_id IN (SELECT id FROM students WHERE pattern_id = ?)", [id], (err0) => {
+                // 2. Unlink Students
+                db.run("UPDATE students SET pattern_id = NULL WHERE pattern_id = ?", [id], (err1) => {
+                    // 3. Delete Permanently
                     db.run("DELETE FROM patterns WHERE id = ?", [id], (err2) => {
-                        if (err2) return res.status(500).json({ error: "Failed to delete pattern: " + err2.message });
-                        res.json({ message: "Pattern Deleted, Students Unlinked, Status Reverted to Pending" });
+                        if (err2) return res.status(500).json({ error: err2.message });
+                        res.json({ message: "Pattern Deleted Permanently" });
                     });
                 });
             });
@@ -1382,7 +1425,9 @@ router.post('/fix_db', authenticateToken, requireRole('company'), (req, res) => 
         { label: "Add 'item_quantities' to measurements", sql: "ALTER TABLE measurements ADD COLUMN item_quantities TEXT" },
         { label: "Add 'description' to patterns", sql: "ALTER TABLE patterns ADD COLUMN description TEXT" },
         { label: "Add 'start_date' to schools", sql: "ALTER TABLE schools ADD COLUMN start_date DATETIME" },
-        { label: "Add 'deadline' to schools", sql: "ALTER TABLE schools ADD COLUMN deadline DATETIME" }
+        { label: "Add 'deadline' to schools", sql: "ALTER TABLE schools ADD COLUMN deadline DATETIME" },
+        { label: "Add 'is_deleted' to patterns", sql: "ALTER TABLE patterns ADD COLUMN is_deleted TINYINT DEFAULT 0" },
+        { label: "Add 'deleted_at' to patterns", sql: "ALTER TABLE patterns ADD COLUMN deleted_at DATETIME NULL" }
     ];
 
     // Helper to run sequential
