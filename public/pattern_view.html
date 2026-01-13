@@ -890,10 +890,10 @@
         // Column Aliases for Robust Parsing
         const colAliases = {
             "S.No": ["s.no", "no", "sno", "sl.no", "sl no", "#", "ser.no", "serial no", "serial number"],
-            "Section": ["section", "sec", "sec.", "class section", "class & sec", "class/sec", "grade section"],
+            "Section": ["section", "sec", "sec.", "class section", "class & sec", "class/sec", "grade section", "div", "division", "class-sec"],
             "Roll No": ["roll no", "rollno", "roll_no", "roll.no", "roll #"],
-            "Admission No": ["admission no", "adm no", "admin no", "adm.no", "admission_no", "reg no", "register no"],
-            "Class": ["class", "grade", "standard", "std", "c"],
+            "Admission No": ["admission no", "adm no", "admin no", "adm.no", "admission_no", "reg no", "register no", "admn no"],
+            "Class": ["class", "grade", "standard", "std", "c", "class/grade"],
             "Gender": ["gender", "sex", "m/f"]
         };
 
@@ -927,12 +927,26 @@
                 // fill info/measures
                 // fill info/measures
                 infoCols.forEach(col => {
-                    // Try Exact Match
-                    let idx = headerRow.findIndex(h => h && h.toString().trim().toLowerCase() === col.toLowerCase());
+                    // 1. Try Exact Match (Header === Column Name)
+                    const normalizedCol = col.toLowerCase();
+                    let idx = headerRow.findIndex(h => h && h.toString().trim().toLowerCase() === normalizedCol);
 
-                    // Try Aliases if not found
+                    // 2. Try Known Aliases
                     if (idx === -1 && colAliases[col]) {
                         idx = headerRow.findIndex(h => h && colAliases[col].includes(h.toString().trim().toLowerCase()));
+                    }
+
+                    // 3. Last Resort: Fuzzy "Contains" Match (Use with caution, mainly for Section/Class)
+                    if (idx === -1) {
+                        // Only do this for specific columns to avoid false positives (e.g. "Class" matching "Classical Dance")
+                        if (col === "Section" || col === "Class" || col === "Admission No") {
+                            const possibleAliases = colAliases[col] || [col.toLowerCase()];
+                            idx = headerRow.findIndex(h => {
+                                if (!h) return false;
+                                const val = h.toString().toLowerCase();
+                                return possibleAliases.some(alias => val.includes(alias));
+                            });
+                        }
                     }
 
                     if (idx !== -1) newRow[col] = rArr[idx];
