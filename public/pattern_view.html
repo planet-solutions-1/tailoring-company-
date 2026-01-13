@@ -1239,8 +1239,11 @@
             const currentFilters = JSON.parse(JSON.stringify(filters));
             const filteredData = getFilteredData();
 
-            // Extract Admission Numbers for Linkage
-            const studentAdmissionNos = filteredData.map(r => r['Admission No'] || r['Adm No']).filter(x => x);
+            // Extract Admission Numbers for Linkage - Robust Cleaning
+            const studentAdmissionNos = filteredData
+                .map(r => r['Admission No'] || r['Adm No'])
+                .filter(x => x)
+                .map(x => x.toString().trim()); // Clean Whitespace/Types
 
             if (studentAdmissionNos.length === 0) return alert("No students found in current filter!");
 
@@ -1302,7 +1305,12 @@
                 // Ideally we should re-fetch from server, but for now hybrid is fine.
 
                 document.getElementById('patternModal').classList.add('hidden');
-                alert(`Pattern Created! Linked ${result.students_updated} students.`);
+
+                let msg = `Pattern Created! Linked ${result.students_updated} students.`;
+                if (result.students_updated === 0) {
+                    msg += "\n\n⚠️ Warning: No students were linked in the system.\nPlease ensure these students are uploaded to the Cloud via the Planet Editor first.";
+                }
+                alert(msg);
 
             } catch (e) {
                 console.error(e);
