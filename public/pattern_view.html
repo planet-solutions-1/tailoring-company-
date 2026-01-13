@@ -287,6 +287,13 @@
                     </svg>
                     Clear Data
                 </button>
+                <button onclick="fetchStudentsFromCloud()"
+                    class="btn-outline px-4 py-2 rounded-md text-sm font-medium text-blue-700 border-blue-200 hover:bg-blue-50 flex items-center gap-2">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path>
+                    </svg>
+                    Load from Cloud
+                </button>
                 <button onclick="document.getElementById('fileInput').click()"
                     class="btn-outline px-4 py-2 rounded-md text-sm font-medium flex items-center gap-2">
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -569,6 +576,65 @@
                     renderModules();
                 }
             } catch (e) { console.error(e); }
+        }
+
+        // --- BACKEND INTEGRATION ---
+        async function fetchStudentsFromCloud() {
+            try {
+                const btn = document.querySelector('button[onclick="fetchStudentsFromCloud()"]');
+                const originalText = btn.innerHTML;
+                btn.innerText = 'Loading...';
+                btn.disabled = true;
+
+                const res = await fetch('/api/data/students', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!res.ok) throw new Error("Failed to fetch students from Cloud");
+                const dbStudents = await res.json();
+
+                if (dbStudents.length === 0) {
+                    alert("No students found in the cloud for your school. Please upload data in Planet Editor first.");
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                    return;
+                }
+
+                // Map DB format to UI format
+                data = dbStudents.map(s => {
+                    const measurements = s.measurements || {};
+                    // Flatten measurements and ensure keys match UI expectations
+                    return {
+                        'Student Name': s.name,
+                        'Class': s.class,
+                        'Sec': s.section,
+                        'House': s.house,
+                        'Gender': (s.gender || "").toUpperCase(),
+                        'Admission No': s.admission_no,
+                        'Adm No': s.admission_no,
+                        ...measurements
+                    };
+                });
+
+                saveToLocal();
+                populateFilters();
+                renderTable();
+                updateCount();
+
+                alert(`Successfully loaded ${data.length} students from server!`);
+
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+
+            } catch (e) {
+                console.error(e);
+                alert("Error loading students: " + e.message);
+                const btn = document.querySelector('button[onclick="fetchStudentsFromCloud()"]');
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = 'Load from Cloud'; // Reset text on error
+                }
+            }
         }
 
         async function fetchPatternsFromBackend() {
