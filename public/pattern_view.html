@@ -737,18 +737,41 @@
         }
 
         async function fetchPatternsFromBackend() {
+            // Toast Helper Reuse or Re-define if needed (assuming syncPatterns defined it in local scope? No, need duplicate or global)
+            const showToast = (msg, isErr = false) => {
+                const existing = document.getElementById('toast-feedback');
+                if (existing) existing.remove();
+
+                const div = document.createElement('div');
+                div.id = 'toast-feedback';
+                div.className = `fixed top-16 right-4 p-4 rounded shadow-xl text-white font-bold z-50 animate-bounce ${isErr ? 'bg-red-500' : 'bg-purple-500'}`;
+                div.innerText = msg;
+                document.body.appendChild(div);
+                setTimeout(() => div.remove(), 4000);
+            };
+
+            showToast("Loading Cloud Patterns...");
+
             try {
                 const res = await fetch('/api/data/patterns', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
+
                 if (res.ok) {
                     const dbPatterns = await res.json();
 
-                    // Deduplicate & Merge Logic
-                    // We assume Server is Truth. But we keep local-only patterns (no ID).
-                    // If Server has ID, and Local has same ID, update Local.
-                    // If Server has ID, and Local doesn't, add it.
-                    // If Local has no ID (unsaved), keep it.
+                    // --- OPTIMIZED DEDUPLICATION (O(N)) ---
+                    // 1. Index local patterns by ID and Name
+                    const idMap = new Map();
+                    const nameMap = new Map();
+
+                    patterns.forEach(p => {
+                        if (p.id) idMap.set(p.id, p);
+                        if (p.name) nameMap.set(p.name, p);
+                    });
+
+                    let newCount = 0;
+                    let updateCount = 0;
 
                     dbPatterns.forEach(p => {
                         let filters = {};
@@ -760,48 +783,65 @@
                             filters: filters,
                             count: p.student_admission_nos ? JSON.parse(p.student_admission_nos).length : 0,
                             metadata: {
-                                school: p.school_name, // from join
+                                school: p.school_name,
                                 desc: p.special_req,
                                 consumption: p.consumption,
                                 cloth: p.cloth_details,
                                 req: p.special_req,
                                 student_admission_nos: p.student_admission_nos ? JSON.parse(p.student_admission_nos) : []
                             },
-                            student_admission_nos: p.student_admission_nos ? JSON.parse(p.student_admission_nos) : []
+                            student_admission_nos: p.student_admission_nos ? JSON.parse(p.student_admission_nos) : [],
+                            schoolId: p.school_id
                         };
 
-                        // Check for existing by ID
-                        const existingIdx = patterns.findIndex(x => x.id === p.id);
-                        if (existingIdx !== -1) {
-                            patterns[existingIdx] = mapped; // Update
+                        // Merge Logic
+                        if (idMap.has(p.id)) {
+                            // Update existing by ID (Server Authority)
+                            // We replace the object in the map, which we will reconstruct array from later?
+                            // No, simpler to just modify the object in patterns array? 
+                            // Actually, let's rebuild the patterns array from scratch using the Map to ensure uniqueness.
+                            idMap.set(p.id, mapped);
+                            updateCount++;
+                        } else if (nameMap.has(p.name) && !nameMap.get(p.name).id) {
+                            // Link local unsaved pattern to server pattern
+                            // Remove from nameMap (old local) and add to idMap (new server)?
+                            // Better: Update nameMap entry to have ID, then put in idMap.
+                            const existingLocal = nameMap.get(p.name);
+                            // Merge local filters if server filters are empty? No, respect server.
+                            idMap.set(p.id, mapped);
+                            // IMPORTANT: We must ensure this 'name' doesn't produce a duplicate unsaved entry.
+                            // We will process all dbPatterns first, putting them in idMap.
+                            // Then we process local 'unsaved' patterns, adding them only if name not in idMap.
+                            updateCount++;
                         } else {
-                            // Check for existing by Matching Name (prevent dupes if name matches)
-                            const nameMatchIdx = patterns.findIndex(x => x.name === p.name);
-                            if (nameMatchIdx !== -1 && !patterns[nameMatchIdx].id) {
-                                // It was local, now it's on server -> Link it
-                                patterns[nameMatchIdx] = mapped;
-                            } else if (nameMatchIdx === -1) {
-                                patterns.push(mapped);
-                            }
-                            // If name matches but has different ID (shouldn't happen often), we treat as distinct? 
-                            // Or dedupe by name strictly? strict by name is safer for "remove this" request.
+                            // New from Server
+                            idMap.set(p.id, mapped);
+                            newCount++;
                         }
                     });
 
-                    // Self-Healing: Remove strict duplicates (same ID or perfectly same Name+School)
-                    patterns = patterns.filter((p, index, self) =>
-                        index === self.findIndex((t) => (
-                            (t.id && p.id && t.id === p.id) ||
-                            (!t.id && !p.id && t.name === p.name) || // Only dedupe unsaved if names match
-                            (t.id && !p.id && t.name === p.name)   // Server overrides local with same name
-                        ))
-                    );
+                    // Reconstruct patterns array
+                    // 1. All Server Patterns (from idMap)
+                    const newPatternList = Array.from(idMap.values());
+
+                    // 2. Unsaved Local Patterns (that didn't get linked)
+                    // We iterate original patterns, if !id AND name is not covered by newPatternList
+                    const serverNames = new Set(newPatternList.map(p => p.name));
+                    patterns.forEach(p => {
+                        if (!p.id && !serverNames.has(p.name)) {
+                            newPatternList.push(p);
+                        }
+                    });
+
+                    patterns = newPatternList;
 
                     saveToLocal();
                     renderModules();
+                    showToast(`Loaded ${dbPatterns.length} patterns.`);
                 }
             } catch (e) {
                 console.error("Fetch Patterns Error", e);
+                showToast("Load Failed: " + e.message, true);
             }
         }
 
