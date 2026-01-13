@@ -287,14 +287,25 @@
                     </svg>
                     Clear Data
                 </button>
-                <button onclick="document.getElementById('fileInput').click()"
-                    class="btn-outline px-4 py-2 rounded-md text-sm font-medium flex items-center gap-2">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                        <polyline points="17 8 12 3 7 8"></polyline>
-                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                <button onclick="syncPatternsToCloud()"
+                    class="btn-outline px-4 py-2 rounded-md text-sm font-medium text-blue-600 border-blue-200 hover:bg-blue-50 flex items-center gap-2"
+                    title="Save current patterns to Cloud Database">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12">
+                        </path>
                     </svg>
-                    Import Excel
+                    Save to Cloud
+                </button>
+                <button onclick="fetchPatternsFromBackend()"
+                    class="btn-outline px-4 py-2 rounded-md text-sm font-medium text-purple-600 border-purple-200 hover:bg-purple-50 flex items-center gap-2"
+                    title="Load saved patterns from Cloud Database">
+                    <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3 3m0 0l-3-3m3 3v12"
+                            transform="rotate(180 12 12)"></path>
+                    </svg>
+                    Load from Cloud
                 </button>
             </div>
     </header>
