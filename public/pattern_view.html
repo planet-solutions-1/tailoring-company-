@@ -1963,6 +1963,8 @@
                 renderModules();
             }
 
+            // If ID looks like a local timestamp (large number), it might not be on server yet.
+            // But usually we sync immediately. Let's try server, if 404, assume it was local/already gone.
             try {
                 const token = sessionStorage.getItem('token');
                 const res = await fetch(`/api/data/patterns/${id}`, {
@@ -1974,13 +1976,22 @@
                     loadTrash(); // Refresh trash list
                     showToast("Moved to Trash", "success");
                 } else {
-                    console.error("Delete failed", await res.text());
-                    alert("Failed to move to trash. Please reload.");
+                    const txt = await res.text();
+                    console.error("Delete failed", txt);
+                    // If 404, it's already gone from server, so just success.
+                    if (res.status === 404) {
+                        loadTrash();
+                        showToast("Moved to Trash", "success");
+                        return;
+                    }
+                    alert("Failed to move to trash: " + txt);
                     window.location.reload(); // Fallback sync
                 }
             } catch (e) {
                 console.error("Delete error", e);
-                alert("Network error.");
+                // If network error, maybe server is restarting.
+                // But optimistically we removed it from UI.
+                alert("Network error: " + e.message + "\n\n(The item was removed from your view, but might reappear if sync failed. Please reload page in a moment to verify.)");
             }
         }
 
