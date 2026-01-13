@@ -840,6 +840,16 @@
         ];
         const allItems = [...boysItems, ...girlsItems];
 
+        // Column Aliases for Robust Parsing
+        const colAliases = {
+            "S.No": ["s.no", "no", "sno", "sl.no", "#", "ser.no", "serial no"],
+            "Section": ["section", "sec", "sec.", "class section"],
+            "Roll No": ["roll no", "rollno", "roll_no", "roll.no"],
+            "Admission No": ["admission no", "adm no", "admin no", "adm.no", "admission_no"],
+            "Class": ["class", "grade", "standard", "std"],
+            "Gender": ["gender", "sex"]
+        };
+
         // --- CORE FUNCTIONS ---
 
         async function handleFileUpload(e) {
@@ -865,8 +875,16 @@
             data = dataRows.map((rArr, i) => {
                 const newRow = {};
                 // fill info/measures
+                // fill info/measures
                 infoCols.forEach(col => {
-                    const idx = headerRow.findIndex(h => h && h.toString().trim().toLowerCase() === col.toLowerCase());
+                    // Try Exact Match
+                    let idx = headerRow.findIndex(h => h && h.toString().trim().toLowerCase() === col.toLowerCase());
+
+                    // Try Aliases if not found
+                    if (idx === -1 && colAliases[col]) {
+                        idx = headerRow.findIndex(h => h && colAliases[col].includes(h.toString().trim().toLowerCase()));
+                    }
+
                     if (idx !== -1) newRow[col] = rArr[idx];
                 });
                 measureCols.forEach(col => {
