@@ -5624,6 +5624,9 @@
             patterns.forEach(p => {
                 const count = globalStudents.filter(s => s.school_id == tdCurrentSchoolId && s.pattern_name === p.name).length;
                 const meta = p.metadata || {};
+                // Fallback to meta if top-level is missing (for legacy data), but prefer top-level DB columns
+                const desc = p.description || p.desc || meta.desc || "";
+                const req = p.special_req || p.req || meta.req || "";
                 const cons = parseFloat(p.consumption || meta.consumption || 0);
                 const filters = p.filters ? (typeof p.filters === 'string' ? JSON.parse(p.filters) : p.filters) : {};
 
@@ -5642,9 +5645,9 @@
                 wsData.push([
                     p.name,
                     p.school_name || schoolName,
-                    p.desc || meta.desc || "",
+                    desc,
                     p.cloth_details || meta.cloth || "",
-                    p.req || meta.req || "",
+                    req,
                     filters.item || "Mixed",
                     cons,
                     count,
@@ -5677,6 +5680,8 @@
             const body = patterns.map(p => {
                 const count = globalStudents.filter(s => s.school_id == tdCurrentSchoolId && s.pattern_name === p.name).length;
                 const meta = p.metadata || {};
+                const desc = p.description || p.desc || meta.desc || "-";
+                const req = p.special_req || p.req || meta.req || "-";
                 const cons = parseFloat(p.consumption || meta.consumption || 0);
                 const filters = p.filters ? (typeof p.filters === 'string' ? JSON.parse(p.filters) : p.filters) : {};
 
@@ -5689,9 +5694,9 @@
                 return [
                     p.name,
                     p.school_name || schoolName,
-                    p.desc || meta.desc || "-",
+                    desc,
                     p.cloth_details || meta.cloth || "-",
-                    p.req || meta.req || "-",
+                    req,
                     cons.toFixed(2),
                     count,
                     (count * cons).toFixed(2) + ' M',
