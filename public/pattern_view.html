@@ -2043,7 +2043,12 @@
                 fixBtn.onclick = autoFixPatterns;
                 consoleEl.prepend(fixBtn);
 
-                alert(`Found ${issues} duplicates! Click 'Auto-Fix Issues' in the Debug Console.`);
+                // PROACTIVE PROMPT: Ask user immediately
+                setTimeout(() => {
+                    if (confirm(`Found ${issues} duplicates! Do you want to Auto-Fix them now?`)) {
+                        autoFixPatterns();
+                    }
+                }, 100); // Small delay to let UI render
             }
         }
 
