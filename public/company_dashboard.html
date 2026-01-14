@@ -2914,41 +2914,88 @@
             document.getElementById('td-cat-students-count').innerText = `${schoolStudents.length} Students`;
 
             // Pattern Counts (Fixed: Use ID if available, else Name)
-            // Also checking for potential case mismatches or whitespace
             const schoolPatterns = globalPatterns.filter(p =>
                 (p.school_id && p.school_id == s.id) ||
                 (p.school_name === s.name)
             );
 
-            // Heuristic with Fallback + JSON Check
-            const checkGender = (p, genderTarget) => {
-                // 1. Check Explicit 'filters' JSON if available
+            // New Robust Gender Resolver
+            // 1. Explicit Filter -> 2. Keyword -> 3. Usage (Students) -> 4. Unisex
+            const resolvePatternGender = (p) => {
+                // 1. Explicit Filter
                 if (p.filters) {
                     try {
                         const f = typeof p.filters === 'string' ? JSON.parse(p.filters) : p.filters;
-                        if (f.gender && f.gender.toLowerCase() === genderTarget.toLowerCase()) return true;
+                        if (f.gender) return f.gender; // 'Male', 'Female', 'Unisex'
                     } catch (e) { }
                 }
 
-                // 2. Keyword Check
+                // 2. Keyword Check (Strong)
                 const name = (p.name || '').toUpperCase();
-                if (genderTarget === 'Male') {
-                    return name.includes('BOYS') || name.includes('MALE') || name.includes('SHIRT') || name.includes('PANT');
-                } else {
-                    return name.includes('GIRLS') || name.includes('FEMALE') || name.includes('SKIRT') || name.includes('FROCK') || name.includes('KURTHA');
+                // Check Female First (More specific usually)
+                if (name.includes('GIRLS') || name.includes('FEMALE') || name.includes('SKIRT') || name.includes('FROCK') || name.includes('KURTHA')) return 'Female';
+                if (name.includes('BOYS') || name.includes('MALE') || name.includes('SHIRT') || name.includes('PANT')) return 'Male';
+
+                // 3. Student Usage Check
+                // Check if this pattern is used by students of a specific gender
+                if (schoolStudents.length > 0) {
+                    const linked = schoolStudents.filter(s => s.pattern_name === p.name);
+                    if (linked.length > 0) {
+                        const hasBoys = linked.some(s => (s.gender || '').toLowerCase().startsWith('m') || (s.gender || '').toLowerCase() === 'boy');
+                        const hasGirls = linked.some(s => (s.gender || '').toLowerCase().startsWith('f') || (s.gender || '').toLowerCase() === 'girl');
+
+                        if (hasBoys && !hasGirls) return 'Male';
+                        if (!hasBoys && hasGirls) return 'Female';
+                    }
                 }
+
+                return 'Unisex'; // Shows in both
             };
 
-            const boysPatterns = schoolPatterns.filter(p => checkGender(p, 'Male')).length;
-            const girlsPatterns = schoolPatterns.filter(p => checkGender(p, 'Female')).length;
+            // Calculate Counts based on Resolved Gender
+            let boysCount = 0;
+            let girlsCount = 0;
 
-            // Updated Fallback logic for Counts:
-            // If we have patterns but count is 0 for both, maybe they are uncategorized?
-            // We'll show "Uncategorized" if needed, but for now let's hope the looser logic works.
+            schoolPatterns.forEach(p => {
+                const g = resolvePatternGender(p);
+                if (g === 'Male' || g === 'Unisex') boysCount++;
+                if (g === 'Female' || g === 'Unisex') girlsCount++;
+            });
 
             // Update UI
-            document.getElementById('td-cat-boys-count').innerText = `${boysPatterns} Groups`;
-            document.getElementById('td-cat-girls-count').innerText = `${girlsPatterns} Groups`;
+            document.getElementById('td-cat-boys-count').innerText = `${boysCount} Groups`;
+            document.getElementById('td-cat-girls-count').innerText = `${girlsCount} Groups`;
+
+            // Store resolver for other functions to use (Global Helper wouldn't be scoped to schoolStudents unless passed)
+            // Ideally we make resolvePatternGender global but it needs schoolStudents.
+            // Let's attach it to window temporarily or just duplicate the logic in renderTdPatterns?
+            // Better: Make it a global helper that takes schoolStudents as arg.
+            // For now, I'll define it here and Duplicate in renderTdPatterns (or refactor). 
+            // Refactoring to Global Helper is cleaner.
+            window.resolvePatternGenderHelper = (p, students) => {
+                // 1. Explicit Filter
+                if (p.filters) {
+                    try {
+                        const f = typeof p.filters === 'string' ? JSON.parse(p.filters) : p.filters;
+                        if (f.gender) return f.gender;
+                    } catch (e) { }
+                }
+                // 2. Keyword
+                const name = (p.name || '').toUpperCase();
+                if (name.includes('GIRLS') || name.includes('FEMALE') || name.includes('SKIRT') || name.includes('FROCK') || name.includes('KURTHA')) return 'Female';
+                if (name.includes('BOYS') || name.includes('MALE') || name.includes('SHIRT') || name.includes('PANT')) return 'Male';
+                // 3. Usage
+                if (students && students.length > 0) {
+                    const linked = students.filter(s => s.pattern_name === p.name);
+                    if (linked.length > 0) {
+                        const hasBoys = linked.some(s => (s.gender || '').toLowerCase().startsWith('m') || (s.gender || '').toLowerCase() === 'boy');
+                        const hasGirls = linked.some(s => (s.gender || '').toLowerCase().startsWith('f') || (s.gender || '').toLowerCase() === 'girl');
+                        if (hasBoys && !hasGirls) return 'Male';
+                        if (!hasBoys && hasGirls) return 'Female';
+                    }
+                }
+                return 'Unisex';
+            };
 
             const classes = [...new Set(schoolStudents.map(st => st.class).filter(Boolean))].sort();
             const sections = [...new Set(schoolStudents.map(st => st.section).filter(Boolean))].sort();
@@ -3189,58 +3236,14 @@
                 (p.school_name === schoolName)
             );
 
-            // Detailed Gender Filter with JSON support
+            // Detailed Gender Filter using Global Helper
+            const allSchoolStudents = globalStudents.filter(st => st.school_name === schoolName);
+
             const displayPatterns = relevantPatterns.filter(p => {
-                let pGender = null;
+                const resolved = window.resolvePatternGenderHelper ? window.resolvePatternGenderHelper(p, allSchoolStudents) : 'Unisex';
 
-                // 1. Check Explicit 'filters' JSON if available
-                if (p.filters) {
-                    try {
-                        const f = typeof p.filters === 'string' ? JSON.parse(p.filters) : p.filters;
-                        if (f.gender) pGender = f.gender.toLowerCase();
-                    } catch (e) { }
-                }
-
-                // A. Explicit Match
-                if (pGender) {
-                    return pGender === gender.toLowerCase();
-                }
-
-                // 2. Smart Item Classification (User Request)
-                // If no explicit gender, check if 'Item' assumes gender (e.g. "BOYS - PANT")
-                if (p.filters) {
-                    try {
-                        const f = typeof p.filters === 'string' ? JSON.parse(p.filters) : p.filters;
-                        if (f.item) {
-                            const iName = f.item.toUpperCase();
-                            if (iName.includes('BOYS') || iName.includes('MALE')) {
-                                if (gender === 'Male') return true;
-                                if (gender === 'Female') return false;
-                            }
-                            if (iName.includes('GIRLS') || iName.includes('FEMALE')) {
-                                if (gender === 'Female') return true;
-                                if (gender === 'Male') return false;
-                            }
-                        }
-                    } catch (e) { }
-                }
-
-                // B. Fallback to Name (if no explicit filter)
-                const n = (p.name || '').toUpperCase();
-
-                if (gender === 'Male') {
-                    // Show if Name implies Male OR Name is Neutral (not Female)
-                    if (n.includes('BOYS') || n.includes('MALE') || n.includes('SHIRT') || n.includes('PANT')) return true;
-                    // Neutral check: If it DOES NOT contain female keywords, show it here (and potentially in Female too)
-                    if (!n.includes('GIRLS') && !n.includes('FEMALE') && !n.includes('SKIRT') && !n.includes('FROCK') && !n.includes('KURTHA')) return true;
-                }
-
-                if (gender === 'Female') {
-                    if (n.includes('GIRLS') || n.includes('FEMALE') || n.includes('SKIRT') || n.includes('FROCK') || n.includes('KURTHA')) return true;
-                    // Neutral check
-                    if (!n.includes('BOYS') && !n.includes('MALE') && !n.includes('SHIRT') && !n.includes('PANT')) return true;
-                }
-
+                if (gender === 'Male') return resolved === 'Male' || resolved === 'Unisex';
+                if (gender === 'Female') return resolved === 'Female' || resolved === 'Unisex';
                 return false;
             });
 
@@ -3325,10 +3328,13 @@
             const schoolName = document.getElementById('td-school-name').innerText;
 
             // Filter Patterns
-            const relevantPatterns = globalPatterns.filter(p => p.school_name === schoolName && (
-                gender === 'Male' ? (p.name.toUpperCase().includes('BOYS') || p.name.toUpperCase().includes('MALE')) :
-                    (p.name.toUpperCase().includes('GIRLS') || p.name.toUpperCase().includes('FEMALE'))
-            ));
+            // Filter Patterns (Consistent Logic)
+            const allSchoolStudents = globalStudents.filter(st => st.school_name === schoolName);
+            const relevantPatterns = globalPatterns.filter(p => p.school_name === schoolName).filter(p => {
+                const resolved = window.resolvePatternGenderHelper ? window.resolvePatternGenderHelper(p, allSchoolStudents) : 'Unisex';
+                if (gender === 'Male') return resolved === 'Male' || resolved === 'Unisex';
+                return resolved === 'Female' || resolved === 'Unisex';
+            });
 
             doc.setFontSize(16);
             doc.text(`${schoolName} - ${gender} Patterns Summary`, 14, 15);
@@ -3359,10 +3365,13 @@
             const schoolName = document.getElementById('td-school-name').innerText;
 
             // Filter Patterns
-            const relevantPatterns = globalPatterns.filter(p => p.school_name === schoolName && (
-                gender === 'Male' ? (p.name.toUpperCase().includes('BOYS') || p.name.toUpperCase().includes('MALE')) :
-                    (p.name.toUpperCase().includes('GIRLS') || p.name.toUpperCase().includes('FEMALE'))
-            ));
+            // Filter Patterns (Consistent Logic)
+            const allSchoolStudents = globalStudents.filter(st => st.school_name === schoolName);
+            const relevantPatterns = globalPatterns.filter(p => p.school_name === schoolName).filter(p => {
+                const resolved = window.resolvePatternGenderHelper ? window.resolvePatternGenderHelper(p, allSchoolStudents) : 'Unisex';
+                if (gender === 'Male') return resolved === 'Male' || resolved === 'Unisex';
+                return resolved === 'Female' || resolved === 'Unisex';
+            });
 
             const exportData = relevantPatterns.map(p => ({
                 "School": schoolName,
