@@ -2205,6 +2205,36 @@
             return 'bg-gray-100 text-gray-500';
         }
 
+        // === ITEM DEFINITIONS (For Smart Measurements) ===
+        const ALL_PATTERN_ITEMS = [
+            // BOYS
+            { name: "BOYS - FORMAL SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Male" },
+            { name: "BOYS - TRACK T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Male" },
+            { name: "BOYS - UNIFORM T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Male" },
+            { name: "BOYS - JERKIN", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Male" },
+            { name: "BOYS - PULLOVER", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Male" },
+            { name: "BOYS - FORMAL PANT", cols: ["L1", "L2"], type: "Male" },
+            { name: "BOYS - TRACK PANT", cols: ["L1", "L2"], type: "Male" },
+            { name: "BOYS - FORMAL SHORTS", cols: ["L3", "L2"], type: "Male" },
+            { name: "BOYS - TRACK SHORTS", cols: ["L3", "L2"], type: "Male" },
+            { name: "BOYS - PANT SPECIAL CASE", cols: ["L1", "L2", "L6", "L7"], type: "Male" },
+            // GIRLS
+            { name: "GIRLS - FORMAL SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Female" },
+            { name: "GIRLS - TRACK T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Female" },
+            { name: "GIRLS - UNIFORM T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Female" },
+            { name: "GIRLS - JERKIN", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Female" },
+            { name: "GIRLS - FULL SLEEVE SHIRT", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Female" },
+            { name: "GIRLS - PULLOVER", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Female" },
+            { name: "GIRLS - KURTHA SHIRT", cols: ["U7", "U2", "U3", "U4", "U6"], type: "Female" },
+            { name: "GIRLS - SPECIAL FROCKS", cols: ["U7", "U2", "U3", "U4", "U6"], type: "Female" },
+            { name: "GIRLS - FORMAL PANT", cols: ["L1", "L2"], type: "Female" },
+            { name: "GIRLS - TRACK PANT", cols: ["L1", "L2"], type: "Female" },
+            { name: "GIRLS - TRACK SHORTS", cols: ["L3", "L2"], type: "Female" },
+            { name: "GIRLS - PINOFORE", cols: ["L4", "L2"], type: "Female" },
+            { name: "GIRLS - SKIRT", cols: ["L5", "L2"], type: "Female" },
+            { name: "GIRLS - PANT SPECIAL CASE", cols: ["L1", "L2", "L6", "L7"], type: "Female" }
+        ];
+
         function getMeasurementsSafe(s) {
             if (!s.measurements) return {};
             if (typeof s.measurements === 'string') {
@@ -3545,16 +3575,61 @@
 
             document.getElementById('td-p3-list').innerHTML = students.map(s => {
                 const m = getMeasurementsSafe(s);
-                // Simplified Measurements string for list view (Stacked)
-                const measStr = `
-            <div class="flex flex-col gap-1.5">
-                <span class="font-mono text-[10px] text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded border border-orange-100 w-fit whitespace-nowrap">
-                    <span class="font-bold opacity-50 mr-1">UPPER:</span>${m.u1 || '-'}-${m.u2 || '-'}...
-                </span> 
-                <span class="font-mono text-[10px] text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 w-fit whitespace-nowrap">
-                    <span class="font-bold opacity-50 mr-1">LOWER:</span>${m.l1 || '-'}-${m.l2 || '-'}...
-                </span>
-            </div>`;
+
+                // --- SMART MEASUREMENT LOGIC ---
+                let activeCols = null;
+                if (meta.filters) {
+                    try {
+                        const f = typeof meta.filters === 'string' ? JSON.parse(meta.filters) : meta.filters;
+                        if (f.item) {
+                            const matchedItem = ALL_PATTERN_ITEMS.find(i => i.name === f.item);
+                            if (matchedItem) activeCols = matchedItem.cols;
+                        }
+                    } catch (e) { }
+                }
+
+                let uContent = '';
+                let lContent = '';
+
+                if (activeCols) {
+                    // STRICT MODE: Show only specific columns defined for this Item
+                    const uCols = activeCols.filter(c => c.startsWith('U'));
+                    const lCols = activeCols.filter(c => c.startsWith('L'));
+
+                    if (uCols.length > 0) {
+                        const valStr = uCols.map(c => {
+                            const k = c.toLowerCase();
+                            const v = m[k] || m[c] || '-'; // Try lower and upper case keys
+                            return `<span class="mr-1.5"><strong class="opacity-60">${c}:</strong>${v}</span>`;
+                        }).join('');
+                        uContent = `<span class="font-mono text-[10px] text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded border border-orange-100 w-fit whitespace-nowrap block mb-1">
+                                        ${valStr}
+                                    </span>`;
+                    }
+
+                    if (lCols.length > 0) {
+                        const valStr = lCols.map(c => {
+                            const k = c.toLowerCase();
+                            const v = m[k] || m[c] || '-';
+                            return `<span class="mr-1.5"><strong class="opacity-60">${c}:</strong>${v}</span>`;
+                        }).join('');
+                        lContent = `<span class="font-mono text-[10px] text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 w-fit whitespace-nowrap block">
+                                        ${valStr}
+                                    </span>`;
+                    }
+
+                } else {
+                    // FALLBACK: Standard behavior (Upper/Lower Grouped)
+                    uContent = `<span class="font-mono text-[10px] text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded border border-orange-100 w-fit whitespace-nowrap block mb-1">
+                                    <span class="font-bold opacity-50 mr-1">UPPER:</span>${m.u1 || '-'}-${m.u2 || '-'}...
+                                </span>`;
+                    lContent = `<span class="font-mono text-[10px] text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 w-fit whitespace-nowrap block">
+                                    <span class="font-bold opacity-50 mr-1">LOWER:</span>${m.l1 || '-'}-${m.l2 || '-'}...
+                                </span>`;
+                }
+
+                const measStr = `<div class="flex flex-col">${uContent}${lContent}</div>`;
+                // -------------------------------
 
                 // Avatar Generation
                 const initials = s.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
