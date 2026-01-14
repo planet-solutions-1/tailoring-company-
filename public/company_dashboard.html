@@ -2927,16 +2927,23 @@
                     try {
                         const f = typeof p.filters === 'string' ? JSON.parse(p.filters) : p.filters;
                         if (f.gender) return f.gender; // 'Male', 'Female', 'Unisex'
+
+                        // 2. Dress Type (Item) Check - User Requested
+                        if (f.item) {
+                            const iName = f.item.toUpperCase();
+                            if (iName.includes('GIRLS') || iName.includes('FEMALE') || iName.includes('SKIRT') || iName.includes('FROCK') || iName.includes('KURTHA') || iName.includes('PINAFORE')) return 'Female';
+                            if (iName.includes('BOYS') || iName.includes('MALE') || iName.includes('SHIRT') || iName.includes('PANT') || iName.includes('TROUSER')) return 'Male';
+                        }
                     } catch (e) { }
                 }
 
-                // 2. Keyword Check (Strong)
+                // 3. Keyword Check (Strong)
                 const name = (p.name || '').toUpperCase();
                 // Check Female First (More specific usually)
-                if (name.includes('GIRLS') || name.includes('FEMALE') || name.includes('SKIRT') || name.includes('FROCK') || name.includes('KURTHA')) return 'Female';
-                if (name.includes('BOYS') || name.includes('MALE') || name.includes('SHIRT') || name.includes('PANT')) return 'Male';
+                if (name.includes('GIRLS') || name.includes('FEMALE') || name.includes('SKIRT') || name.includes('FROCK') || name.includes('KURTHA') || name.includes('PINAFORE')) return 'Female';
+                if (name.includes('BOYS') || name.includes('MALE') || name.includes('SHIRT') || name.includes('PANT') || name.includes('TROUSER')) return 'Male';
 
-                // 3. Student Usage Check
+                // 4. Student Usage Check
                 // Check if this pattern is used by students of a specific gender
                 if (schoolStudents.length > 0) {
                     const linked = schoolStudents.filter(s => s.pattern_name === p.name);
@@ -2978,13 +2985,19 @@
                     try {
                         const f = typeof p.filters === 'string' ? JSON.parse(p.filters) : p.filters;
                         if (f.gender) return f.gender;
+                        // 2. Dress Type (Item) Check
+                        if (f.item) {
+                            const iName = f.item.toUpperCase();
+                            if (iName.includes('GIRLS') || iName.includes('FEMALE') || iName.includes('SKIRT') || iName.includes('FROCK') || iName.includes('KURTHA') || iName.includes('PINAFORE')) return 'Female';
+                            if (iName.includes('BOYS') || iName.includes('MALE') || iName.includes('SHIRT') || iName.includes('PANT') || iName.includes('TROUSER')) return 'Male';
+                        }
                     } catch (e) { }
                 }
-                // 2. Keyword
+                // 3. Keyword
                 const name = (p.name || '').toUpperCase();
-                if (name.includes('GIRLS') || name.includes('FEMALE') || name.includes('SKIRT') || name.includes('FROCK') || name.includes('KURTHA')) return 'Female';
-                if (name.includes('BOYS') || name.includes('MALE') || name.includes('SHIRT') || name.includes('PANT')) return 'Male';
-                // 3. Usage
+                if (name.includes('GIRLS') || name.includes('FEMALE') || name.includes('SKIRT') || name.includes('FROCK') || name.includes('KURTHA') || name.includes('PINAFORE')) return 'Female';
+                if (name.includes('BOYS') || name.includes('MALE') || name.includes('SHIRT') || name.includes('PANT') || name.includes('TROUSER')) return 'Male';
+                // 4. Usage
                 if (students && students.length > 0) {
                     const linked = students.filter(s => s.pattern_name === p.name);
                     if (linked.length > 0) {
