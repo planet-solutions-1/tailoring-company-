@@ -2025,40 +2025,70 @@
     </div>
 
 
-    <!-- 3. USER MANAGEMENT -->
-    <div id="td-level-3-pattern" class="hidden space-y-6 fade-in p-6">
-        <div class="flex items-center gap-4 mb-6">
-            <button onclick="closePatternDetails()"
-                class="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500 hover:text-blue-600 bg-white shadow-sm border border-gray-100">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-                </svg>
-            </button>
-            <div class="bg-white px-6 py-3 rounded-2xl shadow-sm border border-gray-100 flex-1">
-                <h2 class="text-xl font-extrabold text-gray-800 flex items-center gap-3" id="td-p3-title">
-                    Pattern Name
-                    <span class="text-xs px-2 py-1 rounded bg-blue-50 text-blue-600 font-bold uppercase tracking-wider"
-                        id="td-p3-count">0 Students</span>
-                </h2>
-                <p class="text-gray-400 text-xs font-bold uppercase tracking-wider mt-1" id="td-p3-meta">Consumption
-                    Details</p>
+    <!-- 3. USER MANAGEMENT -> LEVEL 4: PATTERN SPECIFIC DETAILS (Premium Redesign) -->
+    <div id="td-level-3-pattern" class="hidden animate-in zoom-in-95 duration-300 ease-out p-1">
+
+        <!-- Hero Header for Pattern -->
+        <div
+            class="relative bg-white rounded-3xl p-8 mb-8 shadow-xl shadow-slate-200/50 overflow-hidden border border-slate-100 group">
+            <div
+                class="absolute top-0 right-0 w-64 h-64 bg-orange-50 rounded-full blur-3xl opacity-50 -translate-y-1/2 translate-x-1/2">
+            </div>
+
+            <div class="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                <div class="flex items-center gap-6">
+                    <button onclick="closePatternDetails()"
+                        class="w-12 h-12 rounded-2xl bg-white border border-slate-200 text-slate-400 hover:text-orange-600 hover:border-orange-200 hover:shadow-lg hover:shadow-orange-500/20 flex items-center justify-center transition-all duration-300 group/btn">
+                        <svg class="w-6 h-6 transform group-hover/btn:-translate-x-1 transition-transform" fill="none"
+                            stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                        </svg>
+                    </button>
+
+                    <div>
+                        <div class="flex items-center gap-3 mb-2">
+                            <h2 class="text-3xl font-black text-slate-800 tracking-tight" id="td-p3-title">Pattern Name
+                            </h2>
+                            <span id="td-p3-count"
+                                class="px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-widest bg-orange-50 text-orange-600 border border-orange-100">
+                                0 Students
+                            </span>
+                        </div>
+                        <p class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2"
+                            id="td-p3-meta">Consumption Details</p>
+                    </div>
+                </div>
+
+                <div>
+                    <button onclick="exportTdCurrentData()"
+                        class="px-5 py-2.5 bg-white border border-slate-200 hover:border-emerald-300 hover:text-emerald-600 rounded-xl text-xs font-bold uppercase tracking-wider shadow-sm transition-all flex items-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                        </svg>
+                        Export List
+                    </button>
+                </div>
             </div>
         </div>
 
-        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <!-- Student List Container -->
+        <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden">
             <div class="overflow-x-auto custom-scrollbar">
                 <table class="w-full text-left border-collapse">
-                    <thead class="bg-gray-50/50">
-                        <tr class="text-xs font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100">
-                            <th class="p-4 pl-6">Student</th>
-                            <th class="p-4">Class</th>
-                            <th class="p-4">Measurements (U/L)</th>
-                            <th class="p-4">Qty</th>
-                            <th class="p-4 text-center">Status</th>
+                    <thead class="bg-slate-50/50">
+                        <tr
+                            class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider border-b border-slate-100">
+                            <th class="p-5 pl-8">Student Identity</th>
+                            <th class="p-5">Class Details</th>
+                            <th class="p-5">Gender</th>
+                            <th class="p-5">Measurement Data</th>
+                            <th class="p-5 text-center">Status</th>
                         </tr>
                     </thead>
-                    <tbody id="td-p3-list" class="text-sm font-medium text-gray-600 divide-y divide-gray-50">
+                    <tbody id="td-p3-list" class="text-sm font-medium text-slate-600 divide-y divide-slate-50">
+                        <!-- JS Injected Rows -->
                     </tbody>
                 </table>
             </div>
@@ -3519,32 +3549,40 @@
             // So we should HIDE Level 2 Container entirely to show Level 3 Pattern Detail?
             // Or Hide the specific Level 3 View?
 
-            // Let's simply HIDE Level 2 Container and SHOW Level 3 Pattern Detail Container
+            // Bug Fix: Hide Level 2 Container AND All Level 3 Views to prevent overlap
             document.getElementById('td-level-2').classList.add('hidden');
+            document.querySelectorAll('[id^="td-view-"]').forEach(el => el.classList.add('hidden'));
+
+            // Show Level 4 (Pattern Details)
             document.getElementById('td-level-3-pattern').classList.remove('hidden');
 
             document.getElementById('td-p3-title').innerText = patternName;
-            document.getElementById('td-p3-title').setAttribute('data-gender', gender); // Store for back button
+            document.getElementById('td-p3-title').setAttribute('data-gender', gender);
             document.getElementById('td-p3-count').innerText = `${students.length} Students`;
-            document.getElementById('td-p3-meta').innerText = meta.consumption ? `Consumption: ${meta.consumption}m • ${meta.cloth_details || ''}` : 'No additional metadata';
+            document.getElementById('td-p3-meta').innerText = meta.consumption ? `Consumption: ${meta.consumption}m • ${meta.cloth_details || ''}` : 'No additional metadata available';
 
             document.getElementById('td-p3-list').innerHTML = students.map(s => {
                 const m = getMeasurementsSafe(s);
-                const iq = getItemQuantitiesSafe(s);
-                const qtyStr = Object.entries(iq).map(([k, v]) => `${k}:${v}`).join(', ');
-
                 // Simplified Measurements string for list view
-                const measStr = `U:[${m.u1 || '-'},${m.u2 || '-'},${m.u3 || '-'}] L:[${m.l1 || '-'},${m.l2 || '-'}]`;
+                const measStr = `<span class="font-mono text-xs text-orange-600 bg-orange-50 px-1 rounded">U:${m.u1 || '-'},${m.u2 || '-'}...</span> <span class="font-mono text-xs text-indigo-600 bg-indigo-50 px-1 rounded">L:${m.l1 || '-'},${m.l2 || '-'}...</span>`;
 
                 return `
-                    <tr class="hover:bg-gray-50 transition-colors border-b border-gray-50">
-                        <td class="p-4 pl-6 font-bold text-gray-700">${s.name} <span class="block text-xs font-mono text-gray-400 font-normal">${s.roll_no || '-'}</span></td>
-                        <td class="p-4 text-xs font-bold text-gray-500">${s.class || ''} ${s.section || ''}</td>
-                        <td class="p-4 text-xs">${s.gender || '-'}</td>
-                        <td class="p-4 text-xs font-mono text-blue-500 bg-blue-50/30 rounded">${measStr}</td>
-                        <td class="p-4 text-xs font-bold text-purple-600 bg-purple-50/30 rounded">${qtyStr}</td>
-                        <td class="p-4 text-center">
-                            <span class="px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wide ${getStatusColor(s.order_status, s.is_packed)}">
+                    <tr class="hover:bg-slate-50 transition-colors border-b border-slate-50 group">
+                        <td class="p-5 pl-8">
+                            <div class="font-bold text-slate-700 group-hover:text-blue-600 transition-colors">${s.name}</div>
+                            <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Roll: ${s.roll_no || '-'}</div>
+                        </td>
+                        <td class="p-5">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200">
+                                Cls ${s.class || '-'} • ${s.section || '-'}
+                            </span>
+                        </td>
+                        <td class="p-5 text-xs font-bold text-slate-500 uppercase">${s.gender || '-'}</td>
+                        <td class="p-5">
+                            ${measStr}
+                        </td>
+                        <td class="p-5 text-center">
+                            <span class="px-3 py-1.5 rounded-lg text-[10px] font-extrabold uppercase tracking-wider ${getStatusColor(s.order_status, s.is_packed)} shadow-sm">
                                 ${s.order_status || (s.is_packed ? 'PACKED' : 'PENDING')}
                             </span>
                         </td>
@@ -3553,19 +3591,13 @@
         }
 
         function closePatternDetails() {
+            // Hide Level 4
             document.getElementById('td-level-3-pattern').classList.add('hidden');
-            // Return to Level 3 (Pattern Grid) NOT Level 2 (Category Grid)
-            const gender = document.getElementById('td-p3-title').getAttribute('data-gender');
-            // We need to know which Level 3 view to show. 
-            // Let's rely on hidden states. The Level 3 container (e.g. boys patterns) was NOT hidden when we opened L4?
-            // Actually, best practice: Hide L3 when opening L4.
 
-            // Let's fix openPatternDetails to hide L2/L3 correctly.
-            document.getElementById('td-level-2').classList.remove('hidden'); // Ensure parent is visible
+            // Restore Level 2 (School Header)
+            document.getElementById('td-level-2').classList.remove('hidden');
 
-            // If we came from Boys Patterns
-            // We need to restore the correct sub-view.
-            // Simple hack: Re-open the last active tab (tdCurrentTab)
+            // Restore the correct Level 3 View
             if (tdCurrentTab) openLevel3(tdCurrentTab);
         }
 
