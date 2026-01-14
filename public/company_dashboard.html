@@ -3517,38 +3517,14 @@
 
         function openPatternDetails(patternName, gender) {
             // Find data
-            // Robust Gender Check: Handle case variations and nulls
-            const normalize = (g) => (g ? g.toString().toLowerCase() : '');
-            const targetGender = normalize(gender);
-
-            // Filter students: Match School AND (Strict Gender match OR rough partial match)
-            // Note: If pattern is neutral and viewed in 'Male' tab, we only show Male students.
-            const schoolStudents = globalStudents.filter(st => {
-                if (st.school_id != tdCurrentSchoolId) return false;
-
-                const sGen = normalize(st.gender);
-                // Strict match of normalized strings
-                if (sGen === targetGender) return true;
-
-                // Loose match
-                if (targetGender === 'male' && (sGen === 'm' || sGen === 'boy')) return true;
-                if (targetGender === 'female' && (sGen === 'f' || sGen === 'girl')) return true;
-
-                return false;
-            });
+            // Fix: Remove strict gender filtering. Show ALL students linked to this pattern name for this school.
+            // This allows 'Male' views to show students even if their gender record is messy (e.g. 'm', 'Boy', etc)
+            // or if the pattern was misclassified but the student link is valid.
+            const schoolStudents = globalStudents.filter(st => st.school_id == tdCurrentSchoolId);
             const students = schoolStudents.filter(s => (s.pattern_name || 'Unassigned') === patternName);
             const meta = globalPatterns.find(p => p.name === patternName && p.school_id == tdCurrentSchoolId) || {};
 
             // UI
-            // Hide Level 2 (which contains the L2 Grid AND L3 Views)
-            // Actually, the Structure is:
-            // Level 2 Container 
-            //    -> Category Grid
-            //    -> Level 3 Views (Students, Patterns Grid etc)
-
-            // So we should HIDE Level 2 Container entirely to show Level 3 Pattern Detail?
-            // Or Hide the specific Level 3 View?
-
             // Bug Fix: Hide Level 2 Container AND All Level 3 Views to prevent overlap
             document.getElementById('td-level-2').classList.add('hidden');
             document.querySelectorAll('[id^="td-view-"]').forEach(el => el.classList.add('hidden'));
@@ -3566,11 +3542,22 @@
                 // Simplified Measurements string for list view
                 const measStr = `<span class="font-mono text-xs text-orange-600 bg-orange-50 px-1 rounded">U:${m.u1 || '-'},${m.u2 || '-'}...</span> <span class="font-mono text-xs text-indigo-600 bg-indigo-50 px-1 rounded">L:${m.l1 || '-'},${m.l2 || '-'}...</span>`;
 
+                // Avatar Generation
+                const initials = s.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+                const avatarColor = s.gender && s.gender.toLowerCase().startsWith('f') ? 'bg-pink-100 text-pink-600' : 'bg-blue-100 text-blue-600';
+
                 return `
                     <tr class="hover:bg-slate-50 transition-colors border-b border-slate-50 group">
                         <td class="p-5 pl-8">
-                            <div class="font-bold text-slate-700 group-hover:text-blue-600 transition-colors">${s.name}</div>
-                            <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Roll: ${s.roll_no || '-'}</div>
+                            <div class="flex items-center gap-4">
+                                <div class="w-10 h-10 rounded-full ${avatarColor} flex items-center justify-center text-xs font-extra-bold tracking-wider">
+                                    ${initials}
+                                </div>
+                                <div>
+                                    <div class="font-bold text-slate-700 group-hover:text-blue-600 transition-colors">${s.name}</div>
+                                    <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Roll: ${s.roll_no || '-'}</div>
+                                </div>
+                            </div>
                         </td>
                         <td class="p-5">
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200">
