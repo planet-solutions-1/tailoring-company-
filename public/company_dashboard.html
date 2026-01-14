@@ -3191,19 +3191,37 @@
 
             // Detailed Gender Filter with JSON support
             const displayPatterns = relevantPatterns.filter(p => {
+                let pGender = null;
+
                 // 1. Check Explicit 'filters' JSON if available
                 if (p.filters) {
                     try {
                         const f = typeof p.filters === 'string' ? JSON.parse(p.filters) : p.filters;
-                        // Strict check if gender is present
-                        if (f.gender) return f.gender.toLowerCase() === gender.toLowerCase();
+                        if (f.gender) pGender = f.gender.toLowerCase();
                     } catch (e) { }
                 }
 
-                // 2. Fallback to Name
+                // A. Explicit Match
+                if (pGender) {
+                    return pGender === gender.toLowerCase();
+                }
+
+                // B. Fallback to Name (if no explicit filter)
                 const n = (p.name || '').toUpperCase();
-                if (gender === 'Male') return n.includes('BOYS') || n.includes('MALE') || n.includes('SHIRT') || n.includes('PANT');
-                if (gender === 'Female') return n.includes('GIRLS') || n.includes('FEMALE') || n.includes('SKIRT') || n.includes('FROCK') || n.includes('KURTHA');
+
+                if (gender === 'Male') {
+                    // Show if Name implies Male OR Name is Neutral (not Female)
+                    if (n.includes('BOYS') || n.includes('MALE') || n.includes('SHIRT') || n.includes('PANT')) return true;
+                    // Neutral check: If it DOES NOT contain female keywords, show it here (and potentially in Female too)
+                    if (!n.includes('GIRLS') && !n.includes('FEMALE') && !n.includes('SKIRT') && !n.includes('FROCK') && !n.includes('KURTHA')) return true;
+                }
+
+                if (gender === 'Female') {
+                    if (n.includes('GIRLS') || n.includes('FEMALE') || n.includes('SKIRT') || n.includes('FROCK') || n.includes('KURTHA')) return true;
+                    // Neutral check
+                    if (!n.includes('BOYS') && !n.includes('MALE') && !n.includes('SHIRT') && !n.includes('PANT')) return true;
+                }
+
                 return false;
             });
 
