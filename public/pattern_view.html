@@ -167,15 +167,8 @@
                         placeholder="Brief description..."></textarea>
                 </div>
 
-                <div>
-                    <label class="block text-xs font-semibold text-[#7F8C8D] uppercase mb-1">Target Gender</label>
-                    <select id="newPatternGender"
-                        class="w-full border border-gray-300 rounded p-2 text-sm focus:border-blue-500 outline-none bg-white">
-                        <option value="">Unisex / Mixed</option>
-                        <option value="Male">Male (Boys)</option>
-                        <option value="Female">Female (Girls)</option>
-                    </select>
-                </div>
+                <!-- Target Gender Removed as per user request (Redundant with filters) -->
+
 
                 <div>
                     <label class="block text-xs font-semibold text-[#7F8C8D] uppercase mb-1">Cloth Details</label>
@@ -1524,7 +1517,7 @@
             document.getElementById('newPatternName').value = `Pattern ${patterns.length + 1}`;
             // Pre-select Gender based on current filter or guess
             const currentGenderFilter = document.getElementById('filterGender').value;
-            document.getElementById('newPatternGender').value = currentGenderFilter || "";
+
 
             updateCount();
             document.getElementById('patternModal').classList.remove('hidden');
@@ -1541,9 +1534,8 @@
             syncFiltersFromDOM();
 
             // 1. Capture Data
-            // Override Gender Filter with Explicit Selection
-            const explicitGender = document.getElementById('newPatternGender').value;
-            if (explicitGender) filters.gender = explicitGender;
+            // Gender is taken from filters.gender logic below (synced from DOM)
+
 
             const currentFilters = JSON.parse(JSON.stringify(filters));
             const filteredData = getFilteredData();
