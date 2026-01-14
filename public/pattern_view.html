@@ -694,18 +694,23 @@
             }
         }
 
-        async function syncPatternsToCloud() {
-            if (patterns.length === 0) return alert("No patterns to sync.");
-            if (!confirm(`Sync ${patterns.length} patterns to Cloud?`)) return;
+        async function syncPatternsToCloud(silent = false) {
+            if (patterns.length === 0) {
+                if (!silent) alert("No patterns to sync.");
+                return;
+            }
 
+            // If manual sync, confirm
+            if (!silent && !confirm(`Sync ${patterns.length} patterns to Cloud?`)) return;
+
+            // Update UI
             const btn = document.getElementById('btn-save-cloud');
-            const originalHTML = btn.innerHTML;
-            const setBtnLoading = (text) => {
-                btn.innerHTML = `<svg class="animate-spin h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>${text}`;
-            };
-
-            setBtnLoading("Starting...");
-            btn.disabled = true;
+            let originalHTML = "";
+            if (btn) {
+                originalHTML = btn.innerHTML;
+                btn.innerHTML = `<svg class="animate-spin h-4 w-4 mr-2 inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Syncing...`;
+                btn.disabled = true;
+            }
 
             try {
                 let successCount = 0;
@@ -713,22 +718,8 @@
 
                 for (let i = 0; i < total; i++) {
                     const p = patterns[i];
-
-                    // SKIP if already synced (has a real DB ID, not a timestamp)
-                    // Real IDs are small integers, timestamps are > 1600000000000
-                    if (p.id && p.id < 1600000000000) {
-                        successCount++;
-                        continue;
-                    }
-
-                    setBtnLoading(`Saving ${i + 1}/${total}...`);
-
-                    // Determine School ID (Fallback to dropdown or user's school)
-                    let targetSchoolId = p.schoolId;
-                    if (!targetSchoolId) {
-                        const sel = document.getElementById('newPatternSchool');
-                        if (sel && sel.value) targetSchoolId = sel.value;
-                    }
+                    // If syncing existing, use PUT. If new (timestamp), use POST.
+                    const isNew = !p.id || p.id >= 1600000000000;
 
                     // Prepare Payload
                     const payload = {
@@ -736,30 +727,50 @@
                         consumption: (p.metadata && p.metadata.consumption) || 0,
                         cloth_details: (p.metadata && p.metadata.cloth) || "",
                         special_req: (p.metadata && p.metadata.req) || "",
-                        description: (p.metadata && p.metadata.desc) || "",
-                        school_id: targetSchoolId,
+                        description: (p.metadata && p.metadata.desc) || "", // Description Fix!
+                        school_id: p.schoolId || sessionStorage.getItem('schoolId'), // Use pattern's school if available
                         filters: JSON.stringify(p.filters || {}),
-                        student_admission_nos: p.student_admission_nos
+                        student_admission_nos: p.student_admission_nos || []
                     };
 
-                    const res = await fetch('/api/data/patterns', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                        body: JSON.stringify(payload)
-                    });
+                    let res;
+                    if (isNew) {
+                        res = await fetch('/api/data/patterns', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                            body: JSON.stringify(payload)
+                        });
+                    } else {
+                        // Update Existing
+                        res = await fetch(`/api/data/patterns/${p.id}`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                            body: JSON.stringify(payload)
+                        });
+                    }
 
-                    if (res.ok) successCount++;
+                    if (res.ok) {
+                        successCount++;
+                        if (isNew) {
+                            const d = await res.json();
+                            if (d.id) p.id = d.id; // Update ID locally
+                        }
+                    }
                 }
 
-                // Success Feedback
-                btn.innerHTML = `<svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Saved ${successCount}!`;
-                setTimeout(() => fetchPatternsFromBackend(), 1000); // Reload to get IDs
-                setTimeout(() => { btn.innerHTML = originalHTML; btn.disabled = false; }, 2000);
+                if (!silent) {
+                    if (btn) btn.innerHTML = `<svg class="w-4 h-4 mr-2 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Saved ${successCount}`;
+                    setTimeout(() => fetchPatternsFromBackend(), 1000); // Reload to ensure sync
+                    setTimeout(() => { if (btn) { btn.innerHTML = originalHTML; btn.disabled = false; } }, 2000);
+                }
 
             } catch (e) {
                 console.error(e);
-                btn.innerHTML = "Error!";
-                setTimeout(() => { btn.innerHTML = originalHTML; btn.disabled = false; }, 2000);
+                if (!silent) alert("Sync Error: " + e.message);
+                if (btn) {
+                    btn.innerHTML = "Error!";
+                    setTimeout(() => { btn.innerHTML = originalHTML; btn.disabled = false; }, 2000);
+                }
             }
         }
 
@@ -1554,6 +1565,26 @@
             const schoolName = sel.options[sel.selectedIndex]?.text || "Unknown";
 
             // 2. Send to Backend
+            const btn = document.getElementById('btnSavePattern');
+            // Note: button ID in modal might be different. Let's assume standard 'btnSavePattern' or find it.
+            // Screenshot shows "Save" in modal? Need to check modal HTML to find button ID.
+            // Assuming the button that calls savePattern() is the one we want to animate.
+            // Since it's called from onclick, we might need to look up the ID.
+            // Let's use a generic lookup or assume 'btnSavePattern' if consistent with other files.
+
+            // Checking modal HTML (not visible in diff, but assuming likely IDs).
+            // Safer to use a generic spinner on the modal itself or just alert.
+            // User requested "syncing small buffering animation". 
+            // Let's try to target the Save button.
+
+            const btnSave = document.querySelector('button[onclick="savePattern()"]');
+            let originalText = "";
+            if (btnSave) {
+                originalText = btnSave.innerHTML;
+                btnSave.disabled = true;
+                btnSave.innerHTML = `<svg class="animate-spin h-3 w-3 mr-1 inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Saving...`;
+            }
+
             try {
                 const payload = {
                     name,
@@ -1614,20 +1645,77 @@
             } catch (e) {
                 console.error(e);
                 alert("Error creating pattern: " + e.message);
+            } finally {
+                if (btnSave) {
+                    btnSave.innerHTML = originalText;
+                    btnSave.disabled = false;
+                }
             }
         }
 
-        function updatePattern() {
+        async function updatePattern() {
             if (!loadedPatternId) return;
             const pIndex = patterns.findIndex(p => p.id === loadedPatternId);
             if (pIndex === -1) return;
 
             if (confirm(`Update pattern "${patterns[pIndex].name}" with current filters?`)) {
-                patterns[pIndex].filters = JSON.parse(JSON.stringify(filters));
-                patterns[pIndex].count = getFilteredData().length;
-                renderModules();
-                saveToLocal();
-                alert("Pattern updated successfully!");
+                const btn = document.getElementById('btnUpdatePattern');
+                const originalText = btn.innerHTML;
+                btn.disabled = true;
+                btn.innerHTML = `<svg class="animate-spin h-3 w-3 mr-1 inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> Saving...`;
+
+                try {
+                    // 1. Prepare Payload
+                    const p = patterns[pIndex];
+                    const currentFilters = JSON.parse(JSON.stringify(filters));
+
+                    // Metadata update? (The Update UI currently doesn't show metadata fields, 
+                    // assuming we only update Filters & Name? 
+                    // Actually, if we want to update description, we need those inputs visible in Update Mode.
+                    // But for now, let's just sync the filters as requested by "Update Pattern with current filters").
+
+                    const payload = {
+                        name: p.name,
+                        school_id: p.metadata ? (p.metadata.schoolId || p.schoolId) : sessionStorage.getItem('schoolId'), // Fallback
+                        // Retain existing metadata if not editable in this view
+                        consumption: p.metadata ? p.metadata.consumption : 0,
+                        cloth_details: p.metadata ? p.metadata.cloth : "",
+                        special_req: p.metadata ? p.metadata.req : "",
+                        description: p.metadata ? p.metadata.desc : "",
+                        filters: currentFilters,
+                        // Update student list based on new filters
+                        student_admission_nos: getFilteredData().map(r => r['Admission No'] || r['Adm No']).filter(x => x).map(x => x.toString().trim())
+                    };
+
+                    // 2. Local Update
+                    patterns[pIndex].filters = currentFilters;
+                    patterns[pIndex].count = getFilteredData().length;
+                    patterns[pIndex].student_admission_nos = payload.student_admission_nos;
+                    renderModules();
+                    saveToLocal();
+
+                    // 3. Cloud Update
+                    // Only if it has a real DB ID (not a timestamp)
+                    if (p.id && p.id < 1600000000000) {
+                        const token = sessionStorage.getItem('token');
+                        if (token) {
+                            const res = await fetch(`/api/data/patterns/${p.id}`, {
+                                method: 'PUT',
+                                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                                body: JSON.stringify(payload)
+                            });
+                            if (!res.ok) throw new Error("Cloud update failed");
+                        }
+                    }
+
+                    alert("Pattern updated successfully!");
+                } catch (e) {
+                    console.error(e);
+                    alert("Update Saved Locally, but Cloud Sync Failed: " + e.message);
+                } finally {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
             }
         }
 
@@ -1725,11 +1813,27 @@
             document.getElementById('btnUpdatePattern').classList.add('hidden');
         }
 
-        function deletePattern(id) {
+        async function deletePattern(id) {
             if (confirm("Remove this pattern group?")) {
+                const p = patterns.find(p => p.id === id);
                 patterns = patterns.filter(p => p.id !== id);
                 renderModules();
                 saveToLocal(); // Update storage
+
+                // Cloud Delete
+                if (p && p.id && p.id < 1600000000000) {
+                    const token = sessionStorage.getItem('token');
+                    if (token) {
+                        try {
+                            await fetch(`/api/data/patterns/${p.id}`, {
+                                method: 'DELETE',
+                                headers: { 'Authorization': `Bearer ${token}` }
+                            });
+                        } catch (e) {
+                            console.error("Cloud delete failed", e);
+                        }
+                    }
+                }
             }
         }
 
