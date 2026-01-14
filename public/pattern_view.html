@@ -2097,28 +2097,7 @@
                 alert("Network Error: " + e.message);
             }
         }
-        loadTrash(); // Refresh trash list
-        fetchPatternsFromBackend(); // Force sync of active list from server
-        showToast("Moved to Trash", "success");
-                } else {
-            const txt = await res.text();
-            console.error("Delete failed", txt);
-            // If 404, it's already gone from server, so just success.
-            if (res.status === 404) {
-                loadTrash();
-                showToast("Moved to Trash", "success");
-                return;
-            }
-            alert("Failed to move to trash: " + txt);
-            window.location.reload(); // Fallback sync
-        }
-            } catch (e) {
-            console.error("Delete error", e);
-            // If network error, maybe server is restarting.
-            // But optimistically we removed it from UI.
-            alert("Network error: " + e.message + "\n\n(The item was removed from your view, but might reappear if sync failed. Please reload page in a moment to verify.)");
-        }
-        }
+
 
         function openTrashModal() {
             const modal = document.getElementById('trashModal');
