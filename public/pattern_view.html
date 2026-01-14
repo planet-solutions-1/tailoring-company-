@@ -2052,45 +2052,85 @@
             }
         }
 
-        function autoFixPatterns() {
-            if (!confirm("Attempt to automatically remove duplicates? (We will keep the Server version over the Local version)")) return;
+        async function autoFixPatterns() {
+            if (!confirm("Attempt to automatically remove duplicates? (This will PERMANENTLY DELETE duplicate copies from the Server)")) return;
 
             logDebug("Starting Auto-Fix...", "info");
             const uniqueMap = new Map();
             let removedCount = 0;
+            const toDeleteIds = [];
 
-            // Strategy: Keep Server ID (small int) over Local ID (large int)
+            // Strategy: Identify IDs to delete
             patterns.forEach(p => {
                 const existing = uniqueMap.get(p.name);
                 if (!existing) {
                     uniqueMap.set(p.name, p);
                 } else {
-                    // Conflict! Decide which to keep.
+                    // Conflict! Decide which to keep and which to DELETE.
                     const isP_Server = p.id && p.id < 1600000000000;
                     const isEx_Server = existing.id && existing.id < 1600000000000;
 
+                    let loser = null;
+
                     if (isP_Server && !isEx_Server) {
-                        // Current 'p' is Server, existing is Local. Replace existing.
+                        // Current 'p' is Server, existing is Local. Keep 'p'.
                         uniqueMap.set(p.name, p);
-                        logDebug(`Kept Server version of '${p.name}' (ID: ${p.id})`, "success");
+                        loser = existing;
+                        logDebug(`Kept Server '${p.name}' (${p.id}). Dropping Local (${existing.id})`, "success");
                     } else if (isEx_Server && !isP_Server) {
-                        // Existing is Server, 'p' is Local. Keep existing. Ignore 'p'.
-                        logDebug(`Dropped Local duplicate of '${p.name}' (ID: ${p.id})`, "info");
+                        // Existing is Server, 'p' is Local. Keep existing.
+                        loser = p;
+                        logDebug(`Kept Server '${existing.name}' (${existing.id}). Dropping Local (${p.id})`, "success");
+                    } else if (isP_Server && isEx_Server) {
+                        // BOTH ARE SERVER IDs. We must Delete one from DB.
+                        // Keep the Lower ID (older).
+                        if (parseInt(p.id) < parseInt(existing.id)) {
+                            uniqueMap.set(p.name, p);
+                            loser = existing; // Delete existing
+                        } else {
+                            loser = p; // Delete current
+                        }
+                        logDebug(`DUPLICATE SERVER RECORDS for '${p.name}'. Scheduled ID ${loser.id} for DELETION.`, "error");
+                        toDeleteIds.push(loser.id);
                     } else {
-                        // Both Local or Both Server? Keep the one with ID if one is missing.
-                        // If both have IDs, keep the one we saw first (arbitrary, but safe).
-                        logDebug(`Dropped duplicate '${p.name}'`, "info");
+                        // Both Local. Just drop one.
+                        loser = p;
+                        logDebug(`Dropped duplicate local '${p.name}'`, "info");
                     }
                     removedCount++;
                 }
             });
 
+            // Process Deletions
+            if (toDeleteIds.length > 0) {
+                logDebug(`Deleting ${toDeleteIds.length} duplicate records from Server...`, "info");
+                const token = sessionStorage.getItem('token');
+
+                for (const id of toDeleteIds) {
+                    try {
+                        const res = await fetch(`/api/data/patterns/${id}`, {
+                            method: 'DELETE',
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+                        if (res.ok) logDebug(`Deleted Server Backup ID: ${id}`, "success");
+                        else logDebug(`Failed to delete Server ID ${id}`, "error");
+                    } catch (e) {
+                        logDebug(`Network Error deleting ID ${id}: ${e.message}`, "error");
+                    }
+                }
+            }
+
+            // Update Local State
             patterns = Array.from(uniqueMap.values());
             saveToLocal();
             renderModules();
 
-            logDebug(`Auto-Fix Complete. Removed ${removedCount} duplicates.`, "success");
-            setTimeout(diagnosePatterns, 1000); // Re-scan to verify
+            logDebug(`Auto-Fix Complete. Cleared ${removedCount} duplicates. Reloading in 2s...`, "success");
+
+            // Force reload to resync fresh state from server
+            setTimeout(() => {
+                window.location.reload();
+            }, 2000);
         }
 
         async function deletePattern(id) {
