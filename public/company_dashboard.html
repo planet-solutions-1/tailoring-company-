@@ -3611,6 +3611,12 @@
             document.getElementById('td-p3-count').innerText = `${students.length} Students`;
             document.getElementById('td-p3-meta').innerText = meta.consumption ? `Consumption: ${meta.consumption}m • ${meta.cloth_details || ''}` : 'No additional metadata available';
 
+            // Update the table header for QTY
+            const qtyHeader = document.getElementById('th-qty-header');
+            if (qtyHeader) {
+                qtyHeader.innerText = 'QTY';
+            }
+
             document.getElementById('td-p3-list').innerHTML = students.map(s => {
                 const m = getMeasurementsSafe(s);
 
@@ -3669,6 +3675,9 @@
                 const measStr = `<div class="flex flex-col">${uContent}${lContent}</div>`;
                 // -------------------------------
 
+                // QTY Calculation (Default to 1)
+                const qty = 1;
+
                 // Avatar Generation
                 const initials = s.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
                 const avatarColor = s.gender && s.gender.toLowerCase().startsWith('f') ? 'bg-pink-100 text-pink-600' : 'bg-blue-100 text-blue-600';
@@ -3716,6 +3725,9 @@
                 <td class="p-5 text-xs font-bold text-slate-500 uppercase">${s.gender || '-'}</td>
                 <td class="p-5">
                     ${measStr}
+                </td>
+                 <td class="p-5 text-center text-xs font-bold text-slate-600">
+                    ${qty}
                 </td>
                 <td class="p-5 text-center">
                     <span class="px-3 py-1.5 rounded-lg text-[10px] font-extrabold uppercase tracking-wider ${getStatusColor(s.order_status, s.is_packed)} shadow-sm">
@@ -5523,30 +5535,80 @@
         function exportTdCurrentData() {
             const patternName = document.getElementById('td-p3-title').innerText;
             const students = globalStudents.filter(st => st.school_id == tdCurrentSchoolId && (st.pattern_name || 'Unassigned') === patternName);
+            const meta = globalPatterns.find(p => p.name === patternName && p.school_id == tdCurrentSchoolId) || {};
 
             if (students.length === 0) return alert("No students to export.");
 
-            const data = students.map((s, i) => {
+            // --- DATA PREPARATION (Match PDF Logic) ---
+            const filters = meta.filters ? (typeof meta.filters === 'string' ? JSON.parse(meta.filters) : meta.filters) : {};
+            const activeItemName = filters.item;
+            const measureCols = ['U1', 'U2', 'U3', 'U4', 'U5', 'U6', 'U7', 'U8', 'L1', 'L2', 'L3', 'L4', 'L5', 'L6', 'L7', 'L8'];
+            const itemHeaders = activeItemName ? [activeItemName, "Quantity"] : [];
+
+            // Helper: Calculate Item Value
+            function calculateItemValue(r, item) {
+                const m = getMeasurementsSafe(r);
+                if (!item || !item.cols) return "";
+                return item.cols.map(c => {
+                    const k = c.toLowerCase();
+                    let val = m[k] || m[c] || "00";
+                    if (!val || val === '-') val = "00";
+                    return val;
+                }).join(',');
+            }
+
+            // Construct Header Block
+            const specs = [];
+            if (filters.class) specs.push(`Class: ${filters.class}`);
+            if (filters.section) specs.push(`Sec: ${filters.section}`);
+            if (filters.house) specs.push(`House: ${filters.house}`);
+            if (filters.gender) specs.push(`Gender: ${filters.gender}`);
+            if (filters.item) specs.push(`Item: ${filters.item}`);
+
+            const wsData = [
+                ["PATTERN LIST EXPORT"],
+                ["Pattern Code", patternName],
+                ["School Name", document.getElementById('td-school-name').innerText],
+                ["Description", meta.metadata?.desc || ""], // Access nested metadata if present, or fallback
+                ["Cloth Details", meta.cloth_details || ""],
+                ["Special Requirements", ""], // Field not fully available in simple meta, leave blank or map if found
+                ["Pattern Specifications", specs.join(', ')],
+                ["Total Qty", students.length],
+                ["Total Cloth Needed", (students.length * parseFloat(meta.consumption || 0)).toFixed(2) + " M"],
+                [], // Empty Row
+                ["S.No", "Roll No", "Student Name", "Admission No", "House", "Class", "Section", "Gender", ...measureCols, ...itemHeaders] // Table Headers
+            ];
+
+            // Rows
+            students.forEach((s, i) => {
                 const m = getMeasurementsSafe(s);
-                return {
-                    "S.No": i + 1,
-                    "Roll No": s.roll_no,
-                    "Admission No": s.admission_no,
-                    "Name": s.name,
-                    "Class": s.class,
-                    "Section": s.section,
-                    "Gender": s.gender,
-                    "House": s.house,
-                    "Measurements": JSON.stringify(m).replace(/["{}]/g, '').replace(/,/g, ', '),
-                    "Status": s.order_status || (s.is_packed ? 'PACKED' : 'PENDING'),
-                    "Packed": s.is_packed ? 'Yes' : 'No'
-                };
+                const row = [
+                    i + 1,
+                    s.roll_no || '-',
+                    s.name,
+                    s.admission_no || '-',
+                    s.house || '-',
+                    s.class || '-',
+                    s.section || '-',
+                    s.gender,
+                    ...measureCols.map(c => m[c.toLowerCase()] || '00')
+                ];
+
+                if (activeItemName) {
+                    const item = ALL_PATTERN_ITEMS.find(it => it.name === activeItemName);
+                    if (item) {
+                        row.push(calculateItemValue(s, item));
+                        row.push(1); // Default Qty 1
+                    }
+                }
+                wsData.push(row);
             });
 
-            const ws = XLSX.utils.json_to_sheet(data);
+            // WRITE
+            const ws = XLSX.utils.aoa_to_sheet(wsData);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Students");
-            XLSX.writeFile(wb, `${patternName}_Student_List.xlsx`);
+            XLSX.writeFile(wb, `${patternName}_Detailed_List.xlsx`);
         }
 
         function exportSchoolSummaryXLS() {
