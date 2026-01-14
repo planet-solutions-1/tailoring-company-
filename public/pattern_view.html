@@ -1984,6 +1984,29 @@
             }
         }
 
+        async function emptyTrash() {
+            if (!confirm("Are you sure you want to PERMANENTLY delete all items in the Trash? This cannot be undone.")) return;
+
+            try {
+                const token = sessionStorage.getItem('token');
+                const schoolId = sessionStorage.getItem('schoolId');
+                const res = await fetch(`/api/data/patterns/trash/${schoolId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (res.ok) {
+                    showToast("Trash Emptied", "success");
+                    loadTrash(); // Refresh list (should be empty)
+                } else {
+                    alert("Failed to empty trash: " + await res.text());
+                }
+            } catch (e) {
+                console.error("Empty trash error", e);
+                alert("Network Error: " + e.message);
+            }
+        }
+
         function updateTrashCount() {
             const el = document.getElementById('trashCount');
             if (el) el.textContent = trashPatterns.length;

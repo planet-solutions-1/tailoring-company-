@@ -1172,6 +1172,16 @@ router.get('/patterns/trash/:schoolId', authenticateToken, (req, res) => {
     });
 });
 
+router.delete('/patterns/trash/:schoolId', authenticateToken, (req, res) => {
+    const { schoolId } = req.params;
+    if (req.user.role !== 'company' && req.user.schoolId != schoolId) return res.sendStatus(403);
+
+    db.run("DELETE FROM patterns WHERE school_id = ? AND is_deleted > 0", [schoolId], function (err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ message: "Trash Emptied", count: this.changes });
+    });
+});
+
 router.post('/patterns', authenticateToken, (req, res) => {
     const { school_id, name, description, consumption, cloth_details, special_req, quantities, student_ids } = req.body;
 
