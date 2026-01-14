@@ -3468,25 +3468,25 @@
 
             // Export Buttons Header (Restored as per user request)
             const header = `
-        <div class="flex items-center justify-between mb-4 bg-gray-50 p-3 rounded-xl border border-gray-100">
-            <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">
+        <div class="flex flex-wrap items-center justify-between mb-4 bg-gray-50 p-3 rounded-xl border border-gray-100 gap-2">
+            <span class="text-xs font-bold text-gray-400 uppercase tracking-wider whitespace-nowrap">
                 Export Actions (${gender})
             </span>
-            <div class="flex gap-2">
-                 <button onclick="exportSchoolSummaryXLS()" class="px-2 py-1 bg-green-50 text-green-600 rounded-lg text-[10px] font-bold uppercase hover:bg-green-100 border border-green-100 flex items-center gap-1">
+            <div class="flex gap-2 flex-wrap sm:flex-nowrap">
+                 <button onclick="exportSchoolSummaryXLS()" class="px-3 py-1.5 bg-green-50 text-green-600 rounded-lg text-[10px] font-bold uppercase hover:bg-green-100 border border-green-100 flex items-center gap-1 whitespace-nowrap transition-colors">
                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                     XLS
                 </button>
-                <button onclick="exportSchoolSummaryPDF()" class="px-2 py-1 bg-red-50 text-red-600 rounded-lg text-[10px] font-bold uppercase hover:bg-red-100 border border-red-100 flex items-center gap-1">
+                <button onclick="exportSchoolSummaryPDF()" class="px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-[10px] font-bold uppercase hover:bg-red-100 border border-red-100 flex items-center gap-1 whitespace-nowrap transition-colors">
                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
                     PDF
                 </button>
-                <div class="h-4 w-px bg-gray-200 mx-1"></div>
-                <button onclick="exportSchoolPackingPDF()" class="px-2 py-1 bg-purple-50 text-purple-600 rounded-lg text-[10px] font-bold uppercase hover:bg-purple-100 border border-purple-100 flex items-center gap-1">
+                <div class="h-6 w-px bg-gray-200 mx-1 hidden sm:block"></div>
+                <button onclick="exportSchoolPackingPDF()" class="px-3 py-1.5 bg-purple-50 text-purple-600 rounded-lg text-[10px] font-bold uppercase hover:bg-purple-100 border border-purple-100 flex items-center gap-1 whitespace-nowrap transition-colors">
                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 2H7a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                     Pack PDF
                 </button>
-                 <button onclick="exportSchoolPackingXLS()" class="px-2 py-1 bg-purple-50 text-purple-600 rounded-lg text-[10px] font-bold uppercase hover:bg-purple-100 border border-purple-100 flex items-center gap-1">
+                 <button onclick="exportSchoolPackingXLS()" class="px-3 py-1.5 bg-purple-50 text-purple-600 rounded-lg text-[10px] font-bold uppercase hover:bg-purple-100 border border-purple-100 flex items-center gap-1 whitespace-nowrap transition-colors">
                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
                     Pack XLS
                 </button>
@@ -5763,7 +5763,6 @@
                     "Roll No": s.roll_no,
                     "Admission No": s.student_admission_no || s.admission_no || '',
                     "Name": s.name,
-                    "School": s.school_name,
                     "Class": s.class,
                     "Section": s.section,
                     "House": s.house || '',
@@ -5806,7 +5805,6 @@
                     s.roll_no || '',
                     s.student_admission_no || s.admission_no || '',
                     s.name,
-                    s.school_name,
                     s.class,
                     s.section,
                     s.house || '',
@@ -5817,13 +5815,13 @@
             });
 
             doc.autoTable({
-                head: [["Roll", "Adm No", "Name", "School", "Class", "Sec", "House", "Pattern", "Gen", "Qty"]],
+                head: [["Roll", "Adm No", "Name", "Class", "Sec", "House", "Pattern", "Gen", "Qty"]],
                 body: rows,
                 startY: 28,
                 styles: { fontSize: 8 },
                 headStyles: { fillColor: [88, 28, 135] }, // Purple base
                 columnStyles: {
-                    2: { cellWidth: 30 } // Name
+                    2: { cellWidth: 40 } // Name - wider since School is gone
                 }
             });
 
