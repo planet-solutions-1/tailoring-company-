@@ -2882,10 +2882,11 @@
                 `).join('');
 
             // 2. Render Measurements (Detailed)
+            // 2. Render Measurements (Detailed)
             document.getElementById('sd-list-measurements').innerHTML = students.map(s => {
                 const m = getMeasurementsSafe(s);
                 const iq = getItemQuantitiesSafe(s);
-                const qtyStr = Object.entries(iq).map(([k, v]) => `${k}: ${v}`).join(', ');
+                const qtyStr = Object.entries(iq).map(([k, v]) => `${v} ${k.replace(/BOYS - |GIRLS - /g, '')}`).join(', ');
 
                 return `
                     <tr class="hover:bg-gray-50 group border-b border-gray-50">
@@ -2897,11 +2898,16 @@
                         <td class="p-3 text-center text-xs font-mono text-orange-600 bg-orange-50/30">${m.u4 || '-'}</td>
                         <td class="p-3 text-center text-xs font-mono text-orange-600 bg-orange-50/30">${m.u5 || '-'}</td>
                         <td class="p-3 text-center text-xs font-mono text-orange-600 bg-orange-50/30">${m.u6 || '-'}</td>
+                        <td class="p-3 text-center text-xs font-mono text-orange-600 bg-orange-50/30">${m.u7 || '-'}</td>
+                        <td class="p-3 text-center text-xs font-mono text-orange-600 bg-orange-50/30">${m.u8 || '-'}</td>
                         <td class="p-3 text-center text-xs font-mono text-indigo-600 bg-indigo-50/30">${m.l1 || '-'}</td>
                         <td class="p-3 text-center text-xs font-mono text-indigo-600 bg-indigo-50/30">${m.l2 || '-'}</td>
                         <td class="p-3 text-center text-xs font-mono text-indigo-600 bg-indigo-50/30">${m.l3 || '-'}</td>
                         <td class="p-3 text-center text-xs font-mono text-indigo-600 bg-indigo-50/30">${m.l4 || '-'}</td>
                         <td class="p-3 text-center text-xs font-mono text-indigo-600 bg-indigo-50/30">${m.l5 || '-'}</td>
+                        <td class="p-3 text-center text-xs font-mono text-indigo-600 bg-indigo-50/30">${m.l6 || '-'}</td>
+                        <td class="p-3 text-center text-xs font-mono text-indigo-600 bg-indigo-50/30">${m.l7 || '-'}</td>
+                        <td class="p-3 text-center text-xs font-mono text-indigo-600 bg-indigo-50/30">${m.l8 || '-'}</td>
                         <td class="p-3 text-xs text-purple-600 font-bold bg-purple-50/50 max-w-[200px] truncate" title="${qtyStr}">${qtyStr || '-'}</td>
                         <td class="p-3 text-xs text-gray-400 italic pl-6 max-w-[150px] truncate" title="${m.remarks || ''}">${m.remarks || '-'}</td>
                     </tr>`;
@@ -3416,8 +3422,8 @@
                          </td>
                          ${['u1', 'u2', 'u3', 'u4', 'u5', 'u6', 'u7', 'u8'].map(k => `<td class="p-2 text-center text-orange-600 bg-orange-50/10">${m[k] || '-'}</td>`).join('')}
                          ${['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7', 'l8'].map((k, i) => `<td class="p-2 text-center text-indigo-600 bg-indigo-50/10 ${i === 0 ? 'border-l border-gray-100' : ''}">${m[k] || '-'}</td>`).join('')}
-                         <td class="p-3 text-xs bg-purple-50/30 text-purple-600 font-bold border-l border-gray-100 max-w-[120px] truncate" title="${Object.entries(getItemQuantitiesSafe(s)).map(([k, v]) => `${k}:${v}`).join(', ')}">
-                             ${Object.entries(getItemQuantitiesSafe(s)).map(([k, v]) => `${k}:${v}`).join(', ')}
+                         <td class="p-3 text-xs bg-purple-50/30 text-purple-600 font-bold border-l border-gray-100 max-w-[120px] truncate" title="${Object.entries(getItemQuantitiesSafe(s)).map(([k, v]) => `${v} ${k.replace(/BOYS - |GIRLS - /g, '')}`).join(', ')}">
+                             ${Object.entries(getItemQuantitiesSafe(s)).map(([k, v]) => `${v} ${k.replace(/BOYS - |GIRLS - /g, '')}`).join(', ')}
                          </td>
                          <td class="p-3 text-xs italic text-gray-400 truncate max-w-[150px]" title="${m.remarks || ''}">${m.remarks || '-'}</td>
                      </tr>
