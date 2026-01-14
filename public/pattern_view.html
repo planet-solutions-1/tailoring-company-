@@ -613,7 +613,7 @@
                         metadata: {
                             school: "Server Linked", // We could fetch name but logic is tricky
                             // We can use the 'users' school name or fetch from /schools lookup
-                            desc: "",
+                            desc: p.description || "",
                             consumption: p.consumption,
                             cloth: p.cloth_details,
                             req: p.special_req
@@ -736,6 +736,7 @@
                         consumption: (p.metadata && p.metadata.consumption) || 0,
                         cloth_details: (p.metadata && p.metadata.cloth) || "",
                         special_req: (p.metadata && p.metadata.req) || "",
+                        description: (p.metadata && p.metadata.desc) || "",
                         school_id: targetSchoolId,
                         filters: JSON.stringify(p.filters || {}),
                         student_admission_nos: p.student_admission_nos
@@ -807,7 +808,7 @@
                             count: 0, // Will be updated later
                             metadata: {
                                 school: p.school_name,
-                                desc: p.special_req,
+                                desc: p.description || "",
                                 consumption: p.consumption,
                                 cloth: p.cloth_details,
                                 req: p.special_req,
@@ -1560,6 +1561,7 @@
                     consumption: parseFloat(consumption),
                     cloth_details: cloth,
                     special_req: req,
+                    description: document.getElementById('newPatternDesc').value || "",
                     student_admission_nos: studentAdmissionNos,
                     filters: currentFilters // Send Filters!
                 };
