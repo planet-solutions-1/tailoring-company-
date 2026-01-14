@@ -2266,11 +2266,17 @@
         ];
 
         function getMeasurementsSafe(s) {
+            let m = {};
             if (!s.measurements) return {};
             if (typeof s.measurements === 'string') {
-                try { return JSON.parse(s.measurements); } catch (e) { return {}; }
+                try { m = JSON.parse(s.measurements); } catch (e) { return {}; }
+            } else {
+                m = s.measurements || {};
             }
-            return s.measurements || {};
+            // Normalize keys to lowercase to fix UI case mismatch (e.g. U1 vs u1)
+            const normalized = {};
+            Object.keys(m).forEach(k => normalized[k.toLowerCase()] = m[k]);
+            return { ...m, ...normalized };
         }
 
         function getItemQuantitiesSafe(s) {
