@@ -702,6 +702,14 @@
 
                 for (let i = 0; i < total; i++) {
                     const p = patterns[i];
+
+                    // SKIP if already synced (has a real DB ID, not a timestamp)
+                    // Real IDs are small integers, timestamps are > 1600000000000
+                    if (p.id && p.id < 1600000000000) {
+                        successCount++;
+                        continue;
+                    }
+
                     setBtnLoading(`Saving ${i + 1}/${total}...`);
 
                     // Determine School ID (Fallback to dropdown or user's school)
@@ -773,6 +781,7 @@
                     // --- STRICT SYNC LOGIC ---
                     // 1. Start with Server Data (Source of Truth)
                     const serverIdMap = new Set();
+                    const serverNameMap = new Set(); // Track names to prevent duplicates
                     const newPatternList = [];
 
                     dbPatterns.forEach(p => {
@@ -796,15 +805,17 @@
                             schoolId: p.school_id
                         });
                         serverIdMap.add(p.id);
+                        if (p.name) serverNameMap.add(p.name);
                     });
 
                     // 2. Merge Local-Only (Unsaved) Patterns
                     // If a pattern is in local 'patterns' but NOT in server response:
-                    // - If ID is a small integer (real DB id), it means it was DELETED on server -> Drop it.
-                    // - If ID is large timestamp (> 1600000000000), it's local/unsaved -> Keep it.
+                    // - If ID is a small integer (real DB id), DROP IT (Deleted on server).
+                    // - If ID is timestamp (> 1.6T), KEEP IT ONLY IF name is not already in server list.
                     patterns.forEach(p => {
                         const isLocalId = p.id && p.id > 1600000000000;
-                        if (isLocalId && !serverIdMap.has(p.id)) {
+                        // Deduplicate by Name: If server has "Pattern A", drop local "Pattern A"
+                        if (isLocalId && !serverIdMap.has(p.id) && !serverNameMap.has(p.name)) {
                             newPatternList.push(p);
                         }
                     });
