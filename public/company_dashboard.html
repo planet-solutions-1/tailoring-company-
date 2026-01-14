@@ -5768,7 +5768,6 @@
                     "Section": s.section,
                     "House": s.house || '',
                     "Pattern Name": s.pattern_name || 'Unassigned',
-                    "Description": desc,
                     "Gender": s.gender,
                     "Quantity": 1,
                     "Status": s.order_status || 'PENDING',
@@ -5803,10 +5802,6 @@
             doc.text(`${schoolName} | Generated: ${new Date().toLocaleDateString()} | Total Items: ${students.length}`, 14, 22);
 
             const rows = students.map(s => {
-                // Find Pattern to get Description
-                const pattern = globalPatterns.find(p => p.name === s.pattern_name && (p.school_id == s.school_id || p.school_name === s.school_name));
-                const desc = pattern?.description || pattern?.metadata?.desc || "";
-
                 return [
                     s.roll_no || '',
                     s.student_admission_no || s.admission_no || '',
@@ -5816,21 +5811,19 @@
                     s.section,
                     s.house || '',
                     s.pattern_name || 'Unassigned',
-                    desc,
                     s.gender,
                     '1' // Qty defaults to 1 per student row
                 ];
             });
 
             doc.autoTable({
-                head: [["Roll", "Adm No", "Name", "School", "Class", "Sec", "House", "Pattern", "Desc", "Gen", "Qty"]],
+                head: [["Roll", "Adm No", "Name", "School", "Class", "Sec", "House", "Pattern", "Gen", "Qty"]],
                 body: rows,
                 startY: 28,
                 styles: { fontSize: 8 },
                 headStyles: { fillColor: [88, 28, 135] }, // Purple base
                 columnStyles: {
-                    2: { cellWidth: 30 }, // Name
-                    8: { cellWidth: 30 }  // Desc
+                    2: { cellWidth: 30 } // Name
                 }
             });
 
