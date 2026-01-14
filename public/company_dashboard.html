@@ -346,7 +346,7 @@
         <!-- Header -->
         <div id="vertical-enforcer" class="flex flex-col w-full relative min-h-screen">
             <!-- Header -->
-            <header class="px-8 py-6 flex justify-between items-center z-30 w-full gap-8">
+            <header id="global-header" class="px-8 py-6 flex justify-between items-center z-30 w-full gap-8">
                 <div class="flex-1 min-w-0">
                     <h2 id="page-title"
                         class="text-2xl font-extrabold text-gray-700 tracking-tight whitespace-nowrap overflow-hidden text-overflow-ellipsis">
@@ -3526,10 +3526,14 @@
 
             // UI
             // Bug Fix: Hide Level 2 Container AND All Level 3 Views to prevent overlap
-            // ALSO Hide Level 1 (School List) which might be lingering or taking up layout space
+            // Hide Level 1 (School List) to clear layout space
             document.getElementById('td-level-1').classList.add('hidden');
             document.getElementById('td-level-2').classList.add('hidden');
             document.querySelectorAll('[id^="td-view-"]').forEach(el => el.classList.add('hidden'));
+
+            // Hide Global Header to give full focus to Pattern Details
+            const globalHeader = document.getElementById('global-header');
+            if (globalHeader) globalHeader.classList.add('hidden');
 
             // Show Level 4 (Pattern Details)
             document.getElementById('td-level-3-pattern').classList.remove('hidden');
@@ -3593,6 +3597,10 @@
 
             // Restore Level 2 (School Header)
             document.getElementById('td-level-2').classList.remove('hidden');
+
+            // Restore Global Header
+            const globalHeader = document.getElementById('global-header');
+            if (globalHeader) globalHeader.classList.remove('hidden');
 
             // Restore the correct Level 3 View
             if (tdCurrentTab) openLevel3(tdCurrentTab);
