@@ -1183,36 +1183,62 @@ router.delete('/patterns/trash/:schoolId', authenticateToken, (req, res) => {
 });
 
 router.post('/patterns', authenticateToken, (req, res) => {
-    const { school_id, name, description, consumption, cloth_details, special_req, quantities, student_ids } = req.body;
+    const { school_id, name, description, consumption, cloth_details, special_req, quantities, student_ids, filters, student_admission_nos } = req.body;
 
-    // Ensure quantities is stringified if it's an object/array, passing raw string if already string
-    // Default to '[]' (empty array) instead of '{}' (object) to satisfy Array.isArray checks in frontend
+    // Ensure quantities/filters are stringified
     let qtyJson = '[]';
     if (quantities) {
         qtyJson = (typeof quantities === 'object') ? JSON.stringify(quantities) : quantities;
     }
 
+    let filtersJson = '{}';
+    if (filters) {
+        filtersJson = (typeof filters === 'object') ? JSON.stringify(filters) : filters;
+    }
+
     db.serialize(() => {
-        db.run("INSERT INTO patterns (school_id, name, description, consumption, cloth_details, special_req, quantities) VALUES (?, ?, ?, ?, ?, ?, ?)",
-            [school_id, name, description, consumption, cloth_details, special_req, qtyJson],
+        db.run("INSERT INTO patterns (school_id, name, description, consumption, cloth_details, special_req, quantities, filters) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            [school_id, name, description, consumption, cloth_details, special_req, qtyJson, filtersJson],
             function (err) {
                 if (err) return res.status(500).json({ error: err.message });
                 const patternId = this.lastID;
 
-                // Link Students if IDs provided
-                if (student_ids && Array.isArray(student_ids) && student_ids.length > 0) {
-                    const placeholders = student_ids.map(() => '?').join(',');
-                    const sqlLink = `UPDATE students SET pattern_id = ? WHERE id IN (${placeholders})`;
-                    const params = [patternId, ...student_ids];
+                // Helper to perform linking
+                const linkStudents = (idsToLink) => {
+                    if (idsToLink && Array.isArray(idsToLink) && idsToLink.length > 0) {
+                        const placeholders = idsToLink.map(() => '?').join(',');
+                        const sqlLink = `UPDATE students SET pattern_id = ? WHERE id IN (${placeholders})`;
+                        const params = [patternId, ...idsToLink];
 
-                    db.run(sqlLink, params, (errLink) => {
-                        if (errLink) console.error("Failed to link students to pattern", errLink);
-                        // We respond success even if link fails partially, or we could handle it.
-                        // Ideally transaction.
-                        res.json({ id: patternId, message: "Pattern Created & Students Linked" });
+                        db.run(sqlLink, params, (errLink) => {
+                            if (errLink) console.error("Failed to link students to pattern", errLink);
+                            res.json({ id: patternId, message: "Pattern Created & Students Linked", count: idsToLink.length });
+                        });
+                    } else {
+                        res.json({ id: patternId, message: "Pattern Created (No students linked)" });
+                    }
+                };
+
+                // 1. Direct ID Linking (Preferred)
+                if (student_ids && Array.isArray(student_ids) && student_ids.length > 0) {
+                    linkStudents(student_ids);
+                }
+                // 2. Admission Number Lookup (Fallback for Sync)
+                else if (student_admission_nos && Array.isArray(student_admission_nos) && student_admission_nos.length > 0) {
+                    // Look up IDs based on admission numbers and school_id
+                    const place = student_admission_nos.map(() => '?').join(',');
+                    const sqlLookup = `SELECT id FROM students WHERE school_id = ? AND admission_no IN (${place})`;
+
+                    db.all(sqlLookup, [school_id, ...student_admission_nos], (errLookup, rows) => {
+                        if (errLookup) {
+                            console.error("Lookup failed", errLookup);
+                            return res.json({ id: patternId, message: "Pattern Created but Student Lookup Failed" });
+                        }
+                        const foundIds = rows.map(r => r.id);
+                        linkStudents(foundIds);
                     });
                 } else {
-                    res.json({ id: patternId, message: "Pattern Created (No students linked)" });
+                    res.json({ id: patternId, message: "Pattern Created (No students provided)" });
                 }
             }
         );
