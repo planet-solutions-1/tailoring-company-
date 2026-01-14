@@ -5745,23 +5745,37 @@
         function exportSchoolPackingXLS() {
             if (!tdCurrentSchoolId) return alert("Please select a school first.");
             const schoolName = document.getElementById('td-school-name').innerText;
+
+            // Consistent Data Fetching (Same as PDF)
             const students = globalStudents.filter(s => s.school_id == tdCurrentSchoolId);
-            students.sort((a, b) => (a.pattern_name || 'Z').localeCompare(b.pattern_name || 'Z'));
+            students.sort((a, b) => {
+                if ((a.pattern_name || 'Z') !== (b.pattern_name || 'Z')) return (a.pattern_name || 'Z').localeCompare(b.pattern_name || 'Z');
+                return a.name.localeCompare(b.name);
+            });
 
             const data = students.map((s, i) => {
-                const m = getMeasurementsSafe(s);
+                // Find Pattern to get Description (Same as PDF logic)
+                const pattern = globalPatterns.find(p => p.name === s.pattern_name && (p.school_id == s.school_id || p.school_name === s.school_name));
+                const desc = pattern?.description || pattern?.metadata?.desc || "";
+
                 return {
                     "S.No": i + 1,
-                    "Pattern Group": s.pattern_name || 'Unassigned',
-                    "Name": s.name,
                     "Roll No": s.roll_no,
-                    "Class": s.class + ' ' + s.section,
+                    "Admission No": s.student_admission_no || s.admission_no || '',
+                    "Name": s.name,
+                    "School": s.school_name,
+                    "Class": s.class,
+                    "Section": s.section,
+                    "House": s.house || '',
+                    "Pattern Name": s.pattern_name || 'Unassigned',
+                    "Description": desc,
                     "Gender": s.gender,
-                    "U1": m.u1 || '', "U2": m.u2 || '', "L1": m.l1 || '', "L2": m.l2 || '',
+                    "Quantity": 1,
                     "Status": s.order_status || 'PENDING',
                     "Packed": s.is_packed ? 'YES' : 'NO'
                 };
             });
+
             const ws = XLSX.utils.json_to_sheet(data);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Packing List");
