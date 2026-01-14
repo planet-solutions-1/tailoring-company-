@@ -1649,6 +1649,16 @@
                                     </svg>
                                     PDF
                                 </button>
+                                <button onclick="exportSchoolPackingPDF()"
+                                    class="px-3 py-2 bg-purple-50 text-purple-600 rounded-xl text-[10px] font-bold uppercase tracking-wider hover:bg-purple-100 transition-colors border border-purple-100 flex items-center gap-2"
+                                    title="Export Packing List (PDF)">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 2H7a2 2 0 00-2 2v12a2 2 0 002 2z">
+                                        </path>
+                                    </svg>
+                                    Packing (PDF)
+                                </button>
                                 <button onclick="exportSchoolPackingXLS()"
                                     class="px-3 py-2 bg-purple-50 text-purple-600 rounded-xl text-[10px] font-bold uppercase tracking-wider hover:bg-purple-100 transition-colors border border-purple-100 flex items-center gap-2"
                                     title="Export Packing List">
@@ -5728,11 +5738,65 @@
                     "Packed": s.is_packed ? 'YES' : 'NO'
                 };
             });
-
             const ws = XLSX.utils.json_to_sheet(data);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Packing List");
             XLSX.writeFile(wb, `${schoolName}_Packing_List.xlsx`);
+        }
+
+        function exportSchoolPackingPDF() {
+            if (!tdCurrentSchoolId) return alert("Please select a school first.");
+            const schoolName = document.getElementById('td-school-name').innerText;
+
+            // Filter and Sort Students
+            const students = globalStudents.filter(s => s.school_id == tdCurrentSchoolId);
+            students.sort((a, b) => {
+                // Sort by Pattern -> Class -> Name
+                if ((a.pattern_name || 'Z') !== (b.pattern_name || 'Z')) return (a.pattern_name || 'Z').localeCompare(b.pattern_name || 'Z');
+                return a.name.localeCompare(b.name);
+            });
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ orientation: 'landscape' });
+
+            doc.setFontSize(16);
+            doc.text("Packing List Report", 14, 15);
+            doc.setFontSize(10);
+            doc.text(`${schoolName} | Generated: ${new Date().toLocaleDateString()} | Total Items: ${students.length}`, 14, 22);
+
+            const rows = students.map(s => {
+                // Find Pattern to get Description
+                const pattern = globalPatterns.find(p => p.name === s.pattern_name && (p.school_id == s.school_id || p.school_name === s.school_name));
+                const desc = pattern?.description || pattern?.metadata?.desc || "";
+
+                return [
+                    s.roll_no || '',
+                    s.student_admission_no || s.admission_no || '',
+                    s.name,
+                    s.school_name,
+                    s.class,
+                    s.section,
+                    s.house || '',
+                    s.pattern_name || 'Unassigned',
+                    desc,
+                    s.gender,
+                    '1' // Qty defaults to 1 per student row
+                ];
+            });
+
+            doc.autoTable({
+                head: [["Roll", "Adm No", "Name", "School", "Class", "Sec", "House", "Pattern", "Desc", "Gen", "Qty"]],
+                body: rows,
+                startY: 28,
+                styles: { fontSize: 8 },
+                headStyles: { fillColor: [88, 28, 135] }, // Purple base
+                columnStyles: {
+                    2: { cellWidth: 30 }, // Name
+                    8: { cellWidth: 30 }  // Desc
+                }
+            });
+
+            doc.save(`${schoolName}_Packing_List.pdf`);
         }
 
         function exportTdCurrentDataPDF() {
