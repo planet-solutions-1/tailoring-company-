@@ -2313,11 +2313,8 @@
             }
         }
 
-        function emptyTrash() {
-            if (confirm("Run System Repair? (Try this if items are missing from Trash)\n\nClick OK to Repair, Cancel to skip.")) {
-                repairTrashSystem();
-            }
-        }
+        // Legacy function removed
+        const renderTrashList = openTrashModal; // Fix for function alias
 
         // --- PACKING LIST EXPORT ---
 
