@@ -2080,11 +2080,11 @@
                     <thead class="bg-slate-50/50">
                         <tr
                             class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider border-b border-slate-100">
-                            <th class="p-5 pl-8">Student Identity</th>
-                            <th class="p-5">Class Details</th>
-                            <th class="p-5">Gender</th>
-                            <th class="p-5">Measurement Data</th>
-                            <th class="p-5 text-center">Status</th>
+                            <th class="p-5 pl-8 w-1/3 min-w-[250px]">Student Identity</th>
+                            <th class="p-5 whitespace-nowrap w-[15%]">Class Details</th>
+                            <th class="p-5 whitespace-nowrap w-[10%]">Gender</th>
+                            <th class="p-5 w-[25%] min-w-[200px]">Measurement Data</th>
+                            <th class="p-5 text-center whitespace-nowrap w-[15%]">Status</th>
                         </tr>
                     </thead>
                     <tbody id="td-p3-list" class="text-sm font-medium text-slate-600 divide-y divide-slate-50">
@@ -3539,8 +3539,16 @@
 
             document.getElementById('td-p3-list').innerHTML = students.map(s => {
                 const m = getMeasurementsSafe(s);
-                // Simplified Measurements string for list view
-                const measStr = `<span class="font-mono text-xs text-orange-600 bg-orange-50 px-1 rounded">U:${m.u1 || '-'},${m.u2 || '-'}...</span> <span class="font-mono text-xs text-indigo-600 bg-indigo-50 px-1 rounded">L:${m.l1 || '-'},${m.l2 || '-'}...</span>`;
+                // Simplified Measurements string for list view (Stacked)
+                const measStr = `
+                    <div class="flex flex-col gap-1.5">
+                        <span class="font-mono text-[10px] text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded border border-orange-100 w-fit whitespace-nowrap">
+                            <span class="font-bold opacity-50 mr-1">UPPER:</span>${m.u1 || '-'}-${m.u2 || '-'}...
+                        </span> 
+                        <span class="font-mono text-[10px] text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 w-fit whitespace-nowrap">
+                            <span class="font-bold opacity-50 mr-1">LOWER:</span>${m.l1 || '-'}-${m.l2 || '-'}...
+                        </span>
+                    </div>`;
 
                 // Avatar Generation
                 const initials = s.name.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
@@ -3550,16 +3558,16 @@
                     <tr class="hover:bg-slate-50 transition-colors border-b border-slate-50 group">
                         <td class="p-5 pl-8">
                             <div class="flex items-center gap-4">
-                                <div class="w-10 h-10 rounded-full ${avatarColor} flex items-center justify-center text-xs font-extra-bold tracking-wider">
+                                <div class="w-10 h-10 rounded-full ${avatarColor} flex items-center justify-center text-xs font-extra-bold tracking-wider shadow-sm border border-white ring-1 ring-slate-100">
                                     ${initials}
                                 </div>
                                 <div>
-                                    <div class="font-bold text-slate-700 group-hover:text-blue-600 transition-colors">${s.name}</div>
+                                    <div class="font-bold text-slate-700 group-hover:text-blue-600 transition-colors truncate max-w-[180px]" title="${s.name}">${s.name}</div>
                                     <div class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Roll: ${s.roll_no || '-'}</div>
                                 </div>
                             </div>
                         </td>
-                        <td class="p-5">
+                        <td class="p-5 whitespace-nowrap">
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-lg text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200">
                                 Cls ${s.class || '-'} • ${s.section || '-'}
                             </span>
