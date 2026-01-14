@@ -766,10 +766,11 @@
                     throw new Error("School ID missing");
                 }
 
-                // Fetch Patterns AND Students in parallel
+                // Fetch Patterns AND Students in parallel (Add cache busting)
+                const t = Date.now();
                 const [patRes, stuRes] = await Promise.all([
-                    fetch('/api/data/patterns', { headers: { 'Authorization': `Bearer ${token}` } }),
-                    fetch(`/api/data/students/${schoolId}`, { headers: { 'Authorization': `Bearer ${token}` } })
+                    fetch(`/api/data/patterns?_t=${t}`, { headers: { 'Authorization': `Bearer ${token}` } }),
+                    fetch(`/api/data/students/${schoolId}?_t=${t}`, { headers: { 'Authorization': `Bearer ${token}` } })
                 ]);
 
                 // 1. Process Patterns
