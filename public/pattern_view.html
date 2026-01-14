@@ -883,6 +883,23 @@
                     // alert(`DEBUG ERROR: Student Fetch Failed! Status: ${stuRes ? stuRes.status : 'Unknown'}`);
                 }
 
+                // 3. Re-Calculate Pattern Counts (Hydration)
+                // Now that we have fresh 'data' (Students) and 'patterns', we must update the counts.
+                // We use the "Swap Strategy" to reuse the complex getFilteredData logic.
+                const savedGlobalFilters = JSON.parse(JSON.stringify(filters)); // Backup
+                patterns.forEach(p => {
+                    try {
+                        filters = p.filters || {};
+                        // Ensure defaults if missing
+                        if (!filters.components) filters.components = {};
+                        p.count = getFilteredData().length;
+                    } catch (e) {
+                        console.warn("Failed to count pattern", p.id, e);
+                        p.count = 0;
+                    }
+                });
+                filters = savedGlobalFilters; // Restore
+
                 saveToLocal();
                 renderModules();
                 renderTable();
