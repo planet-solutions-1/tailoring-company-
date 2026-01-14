@@ -3206,6 +3206,25 @@
                     return pGender === gender.toLowerCase();
                 }
 
+                // 2. Smart Item Classification (User Request)
+                // If no explicit gender, check if 'Item' assumes gender (e.g. "BOYS - PANT")
+                if (p.filters) {
+                    try {
+                        const f = typeof p.filters === 'string' ? JSON.parse(p.filters) : p.filters;
+                        if (f.item) {
+                            const iName = f.item.toUpperCase();
+                            if (iName.includes('BOYS') || iName.includes('MALE')) {
+                                if (gender === 'Male') return true;
+                                if (gender === 'Female') return false;
+                            }
+                            if (iName.includes('GIRLS') || iName.includes('FEMALE')) {
+                                if (gender === 'Female') return true;
+                                if (gender === 'Male') return false;
+                            }
+                        }
+                    } catch (e) { }
+                }
+
                 // B. Fallback to Name (if no explicit filter)
                 const n = (p.name || '').toUpperCase();
 
@@ -3363,9 +3382,25 @@
 
         function openPatternDetails(patternName, gender) {
             // Find data
-            // Need to re-filter because we passed string names. 
-            // Context is tdCurrentSchoolId
-            const schoolStudents = globalStudents.filter(st => st.school_id == tdCurrentSchoolId && st.gender === gender);
+            // Robust Gender Check: Handle case variations and nulls
+            const normalize = (g) => (g ? g.toString().toLowerCase() : '');
+            const targetGender = normalize(gender);
+
+            // Filter students: Match School AND (Strict Gender match OR rough partial match)
+            // Note: If pattern is neutral and viewed in 'Male' tab, we only show Male students.
+            const schoolStudents = globalStudents.filter(st => {
+                if (st.school_id != tdCurrentSchoolId) return false;
+
+                const sGen = normalize(st.gender);
+                // Strict match of normalized strings
+                if (sGen === targetGender) return true;
+
+                // Loose match
+                if (targetGender === 'male' && (sGen === 'm' || sGen === 'boy')) return true;
+                if (targetGender === 'female' && (sGen === 'f' || sGen === 'girl')) return true;
+
+                return false;
+            });
             const students = schoolStudents.filter(s => (s.pattern_name || 'Unassigned') === patternName);
             const meta = globalPatterns.find(p => p.name === patternName && p.school_id == tdCurrentSchoolId) || {};
 
