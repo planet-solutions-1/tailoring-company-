@@ -3218,7 +3218,9 @@
         // Level 2 -> Level 3 Transition
         function openLevel3(category) {
             resetTdViews();
-            document.getElementById('td-level-2').classList.remove('hidden'); // Header remains visible
+            // Hide Level 2 (School Header) for cleaner view, as requested
+            document.getElementById('td-level-2').classList.add('hidden');
+
             const view = document.getElementById(`td-view-${category}`);
             if (view) {
                 view.classList.remove('hidden');
@@ -3230,6 +3232,8 @@
         function closeLevel3() {
             document.querySelectorAll('div[id^="td-view-"]').forEach(d => d.classList.add('hidden'));
             document.getElementById('td-category-grid').classList.remove('hidden');
+            // Restore School Header
+            document.getElementById('td-level-2').classList.remove('hidden');
             tdCurrentTab = null;
         }
 
