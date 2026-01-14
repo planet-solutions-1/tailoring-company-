@@ -1982,47 +1982,142 @@
             // No-op or removo
         }
 
-        async function deletePattern(id) {
-            if (!confirm("Move pattern to Trash?")) return;
+        // --- DEBUG & DIAGNOSTICS SYSTEM ---
+        function logDebug(msg, type = 'info') {
+            console.log(`[DEBUG] ${msg}`);
+            const consoleEl = document.getElementById('debugConsole');
+            if (consoleEl) {
+                const colors = { info: 'text-gray-600', success: 'text-green-600', error: 'text-red-600' };
+                const line = document.createElement('div');
+                line.className = `border-b border-gray-100 py-1 ${colors[type] || 'text-gray-800'}`;
+                line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+                consoleEl.prepend(line);
+            }
+        }
 
-            // UI Optimistic Update (Use loose equality for safety)
-            const index = patterns.findIndex(p => p.id == id);
-            if (index > -1) {
-                patterns.splice(index, 1);
-                renderModules();
+        async function diagnosePatterns() {
+            document.getElementById('debugConsole').classList.remove('hidden');
+            logDebug("Starting Bug Scan...", "info");
+            let issues = 0;
+            const seenIds = new Set();
+            const seenNames = new Set();
+
+            patterns.forEach(p => {
+                // Check ID Validity
+                if (p.id !== undefined && p.id !== null) {
+                    if (seenIds.has(p.id)) {
+                        logDebug(`DUPLICATE ID Found: ${p.id} (${p.name})`, "error");
+                        issues++;
+                    }
+                    seenIds.add(p.id);
+                }
+
+                if (seenNames.has(p.name)) {
+                    logDebug(`POSSIBLE DUPLICATE NAME: ${p.name}`, "error");
+                    issues++;
+                }
+                seenNames.add(p.name);
+            });
+
+            if (issues === 0) {
+                logDebug("Scan Complete. No obvious data corruption found.", "success");
+                alert("System seems healthy. No duplicate IDs found.");
+            } else {
+                logDebug(`Scan Complete. Found ${issues} potential issues. Check log below.`, "error");
+                alert(`Found ${issues} issues! Check the Debug Log at the bottom of the page.`);
+            }
+        }
+
+        async function deletePattern(id) {
+            const p = patterns.find(x => x.id == id); // Loose equality match
+            if (!p) return alert("Error: Pattern not found in local memory.");
+
+            if (!confirm(`Confirm Deletion of: ${p.name}\n(ID: ${id})`)) return;
+
+            logDebug(`Attempting delete for ID: ${id} (${p.name})...`, "info");
+
+            // 1. Check if Local (Timestamp ID)
+            if (id > 1600000000000) {
+                logDebug("Identified as LOCAL pattern (unsaved). Removing locally...", "info");
+                const idx = patterns.findIndex(x => x.id == id);
+                if (idx > -1) {
+                    patterns.splice(idx, 1);
+                    renderModules();
+                    saveToLocal();
+                    logDebug("Local delete successful.", "success");
+                    showToast("Deleted Local Pattern");
+                }
+                return;
             }
 
-            // If ID looks like a local timestamp (large number), it might not be on server yet.
-            // But usually we sync immediately. Let's try server, if 404, assume it was local/already gone.
+            // 2. Server Delete (Real ID)
             try {
+                const btn = document.querySelector(`button[onclick*='deletePattern(${id})']`);
+                const originalIcon = btn ? btn.innerHTML : '';
+                if (btn) btn.innerHTML = '⏳'; // Loading indicator
+
                 const token = sessionStorage.getItem('token');
+                logDebug(`Sending DELETE request to server for ID ${id}...`, "info");
+
                 const res = await fetch(`/api/data/patterns/${id}`, {
                     method: 'DELETE',
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
 
                 if (res.ok) {
-                    loadTrash(); // Refresh trash list
-                    fetchPatternsFromBackend(); // Force sync of active list from server
+                    logDebug("Server responded 200 OK.", "success");
+
+                    // STRICT REMOVAL
+                    const idx = patterns.findIndex(x => x.id == id);
+                    if (idx > -1) patterns.splice(idx, 1);
+
+                    renderModules();
+                    loadTrash();
                     showToast("Moved to Trash", "success");
+
+                    logDebug("Removed from UI. Verifying with Server...", "info");
+                    // fetchPatternsFromBackend(); // Optional: Validated strictly above, keeping sync for safety
                 } else {
                     const txt = await res.text();
-                    console.error("Delete failed", txt);
-                    // If 404, it's already gone from server, so just success.
+                    logDebug(`Server Error: ${res.status} - ${txt}`, "error");
+
                     if (res.status === 404) {
-                        loadTrash();
-                        showToast("Moved to Trash", "success");
-                        return;
+                        logDebug("404 Not Found - Treating as success (already deleted).", "success");
+                        const idx = patterns.findIndex(x => x.id == id);
+                        if (idx > -1) patterns.splice(idx, 1);
+                        renderModules();
+                        showToast("Already Deleted (Synced)");
+                    } else {
+                        alert("Delete Failed: " + txt);
                     }
-                    alert("Failed to move to trash: " + txt);
-                    window.location.reload(); // Fallback sync
                 }
+                if (btn) btn.innerHTML = originalIcon;
             } catch (e) {
-                console.error("Delete error", e);
-                // If network error, maybe server is restarting.
-                // But optimistically we removed it from UI.
-                alert("Network error: " + e.message + "\n\n(The item was removed from your view, but might reappear if sync failed. Please reload page in a moment to verify.)");
+                logDebug(`Network Exception: ${e.message}`, "error");
+                alert("Network Error: " + e.message);
             }
+        }
+        loadTrash(); // Refresh trash list
+        fetchPatternsFromBackend(); // Force sync of active list from server
+        showToast("Moved to Trash", "success");
+                } else {
+            const txt = await res.text();
+            console.error("Delete failed", txt);
+            // If 404, it's already gone from server, so just success.
+            if (res.status === 404) {
+                loadTrash();
+                showToast("Moved to Trash", "success");
+                return;
+            }
+            alert("Failed to move to trash: " + txt);
+            window.location.reload(); // Fallback sync
+        }
+            } catch (e) {
+            console.error("Delete error", e);
+            // If network error, maybe server is restarting.
+            // But optimistically we removed it from UI.
+            alert("Network error: " + e.message + "\n\n(The item was removed from your view, but might reappear if sync failed. Please reload page in a moment to verify.)");
+        }
         }
 
         function openTrashModal() {
