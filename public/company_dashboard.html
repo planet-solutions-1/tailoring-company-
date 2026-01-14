@@ -3135,8 +3135,9 @@
             });
 
             // Update UI
-            document.getElementById('td-cat-boys-count').innerText = `${boysCount} Groups`;
-            document.getElementById('td-cat-girls-count').innerText = `${girlsCount} Groups`;
+            // Update UI (Unified)
+            const patternEl = document.getElementById('td-cat-patterns-count');
+            if (patternEl) patternEl.innerText = `${schoolPatterns.length} Groups`;
 
             // Store resolver for other functions to use (Global Helper wouldn't be scoped to schoolStudents unless passed)
             // Ideally we make resolvePatternGender global but it needs schoolStudents.
