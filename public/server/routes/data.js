@@ -841,7 +841,9 @@ router.get('/patterns', authenticateToken, (req, res) => {
 
     if (!schoolId) return res.status(403).json({ error: "No School ID" });
 
-    db.all("SELECT * FROM patterns WHERE school_id = ? ORDER BY created_at DESC", [schoolId], (err, rows) => {
+    // FIX: Filter out deleted patterns
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    db.all("SELECT * FROM patterns WHERE school_id = ? AND (is_deleted IS NULL OR is_deleted = 0) ORDER BY created_at DESC", [schoolId], (err, rows) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json(rows);
     });
