@@ -513,17 +513,6 @@
                     </svg>
                     Update Pattern
                 </button>
-
-                <button onclick="diagnosePatterns()"
-                    class="bg-purple-100 text-purple-700 hover:bg-purple-200 px-3 py-1.5 rounded-md text-sm font-medium flex items-center gap-2 border border-purple-200 ml-2">
-                    🐞 Bug Finder
-                </button>
-            </div>
-
-            <!-- DEBUG CONSOLE -->
-            <div id="debugConsole"
-                class="mt-2 p-2 bg-gray-900 text-green-400 border border-gray-700 rounded text-xs font-mono h-32 overflow-y-auto hidden w-full clear-both shadow-inner">
-                <div class="text-gray-500 border-b border-gray-700 mb-1 pb-1">Debug Log (System Activity)</div>
             </div>
 
 
@@ -2034,144 +2023,7 @@
             // No-op or removo
         }
 
-        // --- DEBUG & DIAGNOSTICS SYSTEM ---
-        function logDebug(msg, type = 'info') {
-            console.log(`[DEBUG] ${msg}`);
-            const consoleEl = document.getElementById('debugConsole');
-            if (consoleEl) {
-                const colors = { info: 'text-gray-600', success: 'text-green-600', error: 'text-red-600' };
-                const line = document.createElement('div');
-                line.className = `border-b border-gray-100 py-1 ${colors[type] || 'text-gray-800'}`;
-                line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
-                consoleEl.prepend(line);
-            }
-        }
 
-        async function diagnosePatterns() {
-            document.getElementById('debugConsole').classList.remove('hidden');
-            logDebug("Starting Bug Scan...", "info");
-            let issues = 0;
-            const seenIds = new Set();
-            const seenNames = new Set();
-
-            patterns.forEach(p => {
-                if (p.id !== undefined && p.id !== null) {
-                    if (seenIds.has(p.id)) {
-                        logDebug(`DUPLICATE ID Found: ${p.id} (${p.name})`, "error");
-                        issues++;
-                    }
-                    seenIds.add(p.id);
-                }
-                if (seenNames.has(p.name)) {
-                    logDebug(`POSSIBLE DUPLICATE NAME: ${p.name}`, "error");
-                    issues++;
-                }
-                seenNames.add(p.name);
-            });
-
-            if (issues === 0) {
-                logDebug("Scan Complete. System healthy.", "success");
-                alert("System seems healthy.");
-            } else {
-                logDebug(`Scan Complete. Found ${issues} issues.`, "error");
-
-                // Add Auto-Fix Button to Console
-                const consoleEl = document.getElementById('debugConsole');
-                const fixBtn = document.createElement('button');
-                fixBtn.className = "mt-2 bg-green-600 text-white px-3 py-1 rounded text-xs font-bold w-full hover:bg-green-700";
-                fixBtn.textContent = "🛠️ Auto-Fix Issues";
-                fixBtn.onclick = autoFixPatterns;
-                consoleEl.prepend(fixBtn);
-
-                // PROACTIVE PROMPT: Ask user immediately
-                setTimeout(() => {
-                    if (confirm(`Found ${issues} duplicates! Do you want to Auto-Fix them now?`)) {
-                        autoFixPatterns();
-                    }
-                }, 100); // Small delay to let UI render
-            }
-        }
-
-        async function autoFixPatterns() {
-            if (!confirm("Attempt to automatically remove duplicates? (This will PERMANENTLY DELETE duplicate copies from the Server)")) return;
-
-            logDebug("Starting Auto-Fix...", "info");
-            const uniqueMap = new Map();
-            let removedCount = 0;
-            const toDeleteIds = [];
-
-            // Strategy: Identify IDs to delete
-            patterns.forEach(p => {
-                const existing = uniqueMap.get(p.name);
-                if (!existing) {
-                    uniqueMap.set(p.name, p);
-                } else {
-                    // Conflict! Decide which to keep and which to DELETE.
-                    const isP_Server = p.id && p.id < 1600000000000;
-                    const isEx_Server = existing.id && existing.id < 1600000000000;
-
-                    let loser = null;
-
-                    if (isP_Server && !isEx_Server) {
-                        // Current 'p' is Server, existing is Local. Keep 'p'.
-                        uniqueMap.set(p.name, p);
-                        loser = existing;
-                        logDebug(`Kept Server '${p.name}' (${p.id}). Dropping Local (${existing.id})`, "success");
-                    } else if (isEx_Server && !isP_Server) {
-                        // Existing is Server, 'p' is Local. Keep existing.
-                        loser = p;
-                        logDebug(`Kept Server '${existing.name}' (${existing.id}). Dropping Local (${p.id})`, "success");
-                    } else if (isP_Server && isEx_Server) {
-                        // BOTH ARE SERVER IDs. We must Delete one from DB.
-                        // Keep the Lower ID (older).
-                        if (parseInt(p.id) < parseInt(existing.id)) {
-                            uniqueMap.set(p.name, p);
-                            loser = existing; // Delete existing
-                        } else {
-                            loser = p; // Delete current
-                        }
-                        logDebug(`DUPLICATE SERVER RECORDS for '${p.name}'. Scheduled ID ${loser.id} for DELETION.`, "error");
-                        toDeleteIds.push(loser.id);
-                    } else {
-                        // Both Local. Just drop one.
-                        loser = p;
-                        logDebug(`Dropped duplicate local '${p.name}'`, "info");
-                    }
-                    removedCount++;
-                }
-            });
-
-            // Process Deletions
-            if (toDeleteIds.length > 0) {
-                logDebug(`Deleting ${toDeleteIds.length} duplicate records from Server...`, "info");
-                const token = sessionStorage.getItem('token');
-
-                for (const id of toDeleteIds) {
-                    try {
-                        const res = await fetch(`/api/data/patterns/${id}`, {
-                            method: 'DELETE',
-                            headers: { 'Authorization': `Bearer ${token}` }
-                        });
-                        if (res.ok) logDebug(`Deleted Server Backup ID: ${id}`, "success");
-                        else logDebug(`Failed to delete Server ID ${id}`, "error");
-                    } catch (e) {
-                        logDebug(`Network Error deleting ID ${id}: ${e.message}`, "error");
-                    }
-                }
-            }
-
-            // Update Local State
-            patterns = Array.from(uniqueMap.values());
-            saveToLocal();
-            renderModules();
-
-            logDebug(`Auto-Fix Complete. Cleared ${removedCount} duplicates. Reloading in 2s...`, "success");
-
-            // Force reload to resync fresh state from server
-            setTimeout(() => {
-                window.location.reload();
-            }, 2000);
-        }
 
         async function deletePattern(id) {
             const p = patterns.find(x => x.id == id); // Loose equality match
@@ -2179,17 +2031,17 @@
 
             if (!confirm(`Confirm Deletion of: ${p.name}\n(ID: ${id})`)) return;
 
-            logDebug(`Attempting delete for ID: ${id} (${p.name})...`, "info");
+            console.log(`[Info] Attempting delete for ID: ${id} (${p.name})...`);
 
             // 1. Check if Local (Timestamp ID)
             if (id > 1600000000000) {
-                logDebug("Identified as LOCAL pattern (unsaved). Removing locally...", "info");
+                console.log("[Info] Identified as LOCAL pattern (unsaved). Removing locally...");
                 const idx = patterns.findIndex(x => x.id == id);
                 if (idx > -1) {
                     patterns.splice(idx, 1);
                     renderModules();
                     saveToLocal();
-                    logDebug("Local delete successful.", "success");
+                    console.log("[Success] Local delete successful.");
                     showToast("Deleted Local Pattern");
                 }
                 return;
@@ -2202,7 +2054,7 @@
                 if (btn) btn.innerHTML = '⏳'; // Loading indicator
 
                 const token = sessionStorage.getItem('token');
-                logDebug(`Sending DELETE request to server for ID ${id}...`, "info");
+                console.log(`[Info] Sending DELETE request to server for ID ${id}...`);
 
                 const res = await fetch(`/api/data/patterns/${id}`, {
                     method: 'DELETE',
@@ -2210,7 +2062,7 @@
                 });
 
                 if (res.ok) {
-                    logDebug("Server responded 200 OK.", "success");
+                    console.log("[Success] Server responded 200 OK.");
 
                     // STRICT REMOVAL
                     const idx = patterns.findIndex(x => x.id == id);
@@ -2220,14 +2072,13 @@
                     loadTrash();
                     showToast("Moved to Trash", "success");
 
-                    logDebug("Removed from UI. Verifying with Server...", "info");
-                    // fetchPatternsFromBackend(); // Optional: Validated strictly above, keeping sync for safety
+                    console.log("[Info] Removed from UI. Verifying with Server...");
                 } else {
                     const txt = await res.text();
-                    logDebug(`Server Error: ${res.status} - ${txt}`, "error");
+                    console.error(`[Error] Server Error: ${res.status} - ${txt}`);
 
                     if (res.status === 404) {
-                        logDebug("404 Not Found - Treating as success (already deleted).", "success");
+                        console.log("[Success] 404 Not Found - Treating as success (already deleted).");
                         const idx = patterns.findIndex(x => x.id == id);
                         if (idx > -1) patterns.splice(idx, 1);
                         renderModules();
@@ -2238,7 +2089,7 @@
                 }
                 if (btn) btn.innerHTML = originalIcon;
             } catch (e) {
-                logDebug(`Network Exception: ${e.message}`, "error");
+                console.error(`[Error] Network Exception: ${e.message}`);
                 alert("Network Error: " + e.message);
             }
         }
