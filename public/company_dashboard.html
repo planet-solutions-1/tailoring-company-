@@ -2026,7 +2026,7 @@
 
 
     <!-- 3. USER MANAGEMENT -> LEVEL 4: PATTERN SPECIFIC DETAILS (Premium Redesign) -->
-    <div id="td-level-3-pattern" class="hidden animate-in zoom-in-95 duration-300 ease-out p-1">
+    <div id="td-level-3-pattern" class="hidden w-full mt-4 animate-in zoom-in-95 duration-300 ease-out p-1">
 
         <!-- Hero Header for Pattern -->
         <div
@@ -3526,6 +3526,8 @@
 
             // UI
             // Bug Fix: Hide Level 2 Container AND All Level 3 Views to prevent overlap
+            // ALSO Hide Level 1 (School List) which might be lingering or taking up layout space
+            document.getElementById('td-level-1').classList.add('hidden');
             document.getElementById('td-level-2').classList.add('hidden');
             document.querySelectorAll('[id^="td-view-"]').forEach(el => el.classList.add('hidden'));
 
