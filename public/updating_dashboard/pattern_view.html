@@ -307,6 +307,15 @@
             </svg>
             Trash (<span id="trashCount">0</span>)
         </button>
+        <button id="btnSyncPatterns" onclick="syncPatternsToCloud()"
+            class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded border border-blue-200 hover:bg-blue-200 flex items-center gap-1">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+            </svg>
+            Sync Patterns
+        </button>
         <button onclick="exportAllPatternsSummary()"
             class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded border border-green-200 hover:bg-green-200 flex items-center gap-1">
             <svg width="12" height="12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1151,12 +1160,10 @@
             patterns.push(pattern);
             renderModules();
             saveToLocal(); // Save patterns
-            saveToLocal(); // Save patterns
             document.getElementById('patternModal').classList.add('hidden');
-            // Auto-load the new pattern to allow immediate editing? 
-            // Better to stay in "Create" mode or switch? 
-            // Let's just reset view to prompt user to start fresh OR keep filters?
-            // Standard: keep filters, but user might want to reset.
+
+            // Auto-Sync
+            syncPatternsToCloud(true);
         }
 
         function updatePattern() {
@@ -1169,6 +1176,10 @@
                 patterns[pIndex].count = getFilteredData().length;
                 renderModules();
                 saveToLocal();
+
+                // Auto-Sync
+                syncPatternsToCloud(true);
+
                 alert("Pattern updated successfully!");
             }
         }
@@ -1265,9 +1276,13 @@
 
         function deletePattern(id) {
             if (confirm("Remove this pattern group?")) {
+                const p = patterns.find(p => p.id === id);
                 patterns = patterns.filter(p => p.id !== id);
                 renderModules();
                 saveToLocal(); // Update storage
+
+                // Auto-Sync Delete
+                if (p) deletePatternOnCloud(p.id);
             }
         }
 
@@ -1833,7 +1848,135 @@
             doc.save("All_Patterns_Summary.pdf");
         }
 
-    </script>
-</body>
 
-</html>
+
+        async function syncPatternsToCloud(silent = false) {
+            if (patterns.length === 0) {
+                if (!silent) alert("No patterns to sync.");
+                return;
+            }
+
+            // Auth Check
+            let token = sessionStorage.getItem('token');
+            let schoolId = sessionStorage.getItem('schoolId');
+
+            if (!token || !schoolId) {
+                if (silent) return; // Fail silently in background
+
+                // Try to login via prompt
+                const u = prompt("Enter School Username to Sync:");
+                if (!u) return;
+                const p = prompt("Enter Password:");
+                if (!p) return;
+
+                try {
+                    const res = await fetch('/api/auth/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username: u, password: p })
+                    });
+                    const d = await res.json();
+                    if (!res.ok) throw new Error(d.error);
+
+                    token = d.accessToken;
+                    schoolId = d.schoolId;
+                    sessionStorage.setItem('token', token);
+                    sessionStorage.setItem('schoolId', schoolId);
+                } catch (e) {
+                    return alert("Login Failed: " + e.message);
+                }
+            }
+
+            const btn = document.getElementById('btnSyncPatterns');
+            const originalText = btn.innerHTML;
+            btn.disabled = true;
+            // distinct buffering animation
+            btn.innerHTML = `<svg class="animate-spin h-3 w-3 mr-1 inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> ${silent ? 'Saving...' : 'Syncing...'}`;
+
+            try {
+                let successCount = 0;
+                for (const p of patterns) {
+                    const isNew = !p.id || p.id >= 1600000000000;
+
+                    const payload = {
+                        name: p.name,
+                        consumption: (p.metadata && p.metadata.consumption) || 0,
+                        cloth_details: (p.metadata && p.metadata.cloth) || "",
+                        special_req: (p.metadata && p.metadata.req) || "",
+                        description: (p.metadata && p.metadata.desc) || "",
+                        school_id: schoolId,
+                        filters: JSON.stringify(p.filters || {}),
+                        student_admission_nos: p.student_admission_nos || []
+                    };
+
+                    let res;
+                    if (isNew) {
+                        // CREATE (POST)
+                        res = await fetch('/api/data/patterns', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                            body: JSON.stringify(payload)
+                        });
+                    } else {
+                        // UPDATE (PUT)
+                        // For PUT, we might not need to send everything if partial updates supported, 
+                        // but sending full payload ensures consistency.
+                        res = await fetch(`/api/data/patterns/${p.id}`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                            body: JSON.stringify(payload)
+                        });
+                    }
+
+                    if (res.ok) {
+                        successCount++;
+                        if (isNew) {
+                            const d = await res.json();
+                            if (d.id) {
+                                p.id = d.id; // Convert to DB ID
+                                saveToLocal();
+                            }
+                        }
+                    } else {
+                        console.error(`Failed to sync pattern ${p.name}`);
+                    }
+                }
+
+                if (!silent) {
+                    alert(`Sync Complete! Synced ${successCount} patterns.`);
+                    location.reload();
+                } else {
+                    // In silent mode, maybe just briefly show "Saved!" checkmark on button?
+                    btn.innerHTML = `<svg class="w-3 h-3 mr-1 inline text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Saved`;
+                    await new Promise(r => setTimeout(r, 1500));
+                }
+
+            } catch (e) {
+                console.error(e);
+                if (!silent) alert("Sync Error: " + e.message);
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        async function deletePatternOnCloud(id) {
+            // If it's a local-only pattern (Timestamp ID), no need to call server
+            if (id >= 1600000000000) return;
+
+            const token = sessionStorage.getItem('token');
+            if (!token) return; // Cannot sync delete without auth
+
+            try {
+                await fetch(`/api/data/patterns/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+            } catch (e) {
+                console.error("Failed to delete on cloud", e);
+            }
+        }
+
+</body >
+
+</html >
