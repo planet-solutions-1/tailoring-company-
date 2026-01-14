@@ -2015,7 +2015,6 @@
             const seenNames = new Set();
 
             patterns.forEach(p => {
-                // Check ID Validity
                 if (p.id !== undefined && p.id !== null) {
                     if (seenIds.has(p.id)) {
                         logDebug(`DUPLICATE ID Found: ${p.id} (${p.name})`, "error");
@@ -2023,7 +2022,6 @@
                     }
                     seenIds.add(p.id);
                 }
-
                 if (seenNames.has(p.name)) {
                     logDebug(`POSSIBLE DUPLICATE NAME: ${p.name}`, "error");
                     issues++;
@@ -2032,12 +2030,62 @@
             });
 
             if (issues === 0) {
-                logDebug("Scan Complete. No obvious data corruption found.", "success");
-                alert("System seems healthy. No duplicate IDs found.");
+                logDebug("Scan Complete. System healthy.", "success");
+                alert("System seems healthy.");
             } else {
-                logDebug(`Scan Complete. Found ${issues} potential issues. Check log below.`, "error");
-                alert(`Found ${issues} issues! Check the Debug Log at the bottom of the page.`);
+                logDebug(`Scan Complete. Found ${issues} issues.`, "error");
+
+                // Add Auto-Fix Button to Console
+                const consoleEl = document.getElementById('debugConsole');
+                const fixBtn = document.createElement('button');
+                fixBtn.className = "mt-2 bg-green-600 text-white px-3 py-1 rounded text-xs font-bold w-full hover:bg-green-700";
+                fixBtn.textContent = "🛠️ Auto-Fix Issues";
+                fixBtn.onclick = autoFixPatterns;
+                consoleEl.prepend(fixBtn);
+
+                alert(`Found ${issues} duplicates! Click 'Auto-Fix Issues' in the Debug Console.`);
             }
+        }
+
+        function autoFixPatterns() {
+            if (!confirm("Attempt to automatically remove duplicates? (We will keep the Server version over the Local version)")) return;
+
+            logDebug("Starting Auto-Fix...", "info");
+            const uniqueMap = new Map();
+            let removedCount = 0;
+
+            // Strategy: Keep Server ID (small int) over Local ID (large int)
+            patterns.forEach(p => {
+                const existing = uniqueMap.get(p.name);
+                if (!existing) {
+                    uniqueMap.set(p.name, p);
+                } else {
+                    // Conflict! Decide which to keep.
+                    const isP_Server = p.id && p.id < 1600000000000;
+                    const isEx_Server = existing.id && existing.id < 1600000000000;
+
+                    if (isP_Server && !isEx_Server) {
+                        // Current 'p' is Server, existing is Local. Replace existing.
+                        uniqueMap.set(p.name, p);
+                        logDebug(`Kept Server version of '${p.name}' (ID: ${p.id})`, "success");
+                    } else if (isEx_Server && !isP_Server) {
+                        // Existing is Server, 'p' is Local. Keep existing. Ignore 'p'.
+                        logDebug(`Dropped Local duplicate of '${p.name}' (ID: ${p.id})`, "info");
+                    } else {
+                        // Both Local or Both Server? Keep the one with ID if one is missing.
+                        // If both have IDs, keep the one we saw first (arbitrary, but safe).
+                        logDebug(`Dropped duplicate '${p.name}'`, "info");
+                    }
+                    removedCount++;
+                }
+            });
+
+            patterns = Array.from(uniqueMap.values());
+            saveToLocal();
+            renderModules();
+
+            logDebug(`Auto-Fix Complete. Removed ${removedCount} duplicates.`, "success");
+            setTimeout(diagnosePatterns, 1000); // Re-scan to verify
         }
 
         async function deletePattern(id) {
