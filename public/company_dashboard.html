@@ -5646,72 +5646,129 @@
         function exportTdCurrentDataPDF() {
             const patternName = document.getElementById('td-p3-title').innerText;
             const students = globalStudents.filter(st => st.school_id == tdCurrentSchoolId && (st.pattern_name || 'Unassigned') === patternName);
+            const meta = globalPatterns.find(p => p.name === patternName && p.school_id == tdCurrentSchoolId) || {};
 
             if (students.length === 0) return alert("No students to export.");
 
             const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
+            const doc = new jsPDF({ orientation: 'landscape' });
 
-            doc.setFontSize(18);
-            doc.text(`${patternName} - Student List`, 14, 20);
+            // --- METADATA HEADER (Matching Local Dashboard) ---
+            const schoolName = document.getElementById('td-school-name').innerText;
+            const filters = meta.filters ? (typeof meta.filters === 'string' ? JSON.parse(meta.filters) : meta.filters) : {};
+            const code = patternName;
+            const desc = meta.metadata?.desc || ''; // Meta structure might differ slightly in company DB? Using patterns fields directly usually.
+            // In company dashboard, `meta` IS the pattern object.
+            // Let's assume keys: `cloth_details` (mapped to cloth), `req`? 
+            // Company DB simplified schema: consumption, cloth_details.
+            const cloth = meta.cloth_details || '';
+            const consumption = parseFloat(meta.consumption || 0);
+
+            // Construct Specs String
+            let specs = [];
+            if (filters.class) specs.push(`Class: ${filters.class}`);
+            if (filters.section) specs.push(`Sec: ${filters.section}`);
+            if (filters.house) specs.push(`House: ${filters.house}`);
+            if (filters.gender) specs.push(`Gender: ${filters.gender}`);
+            if (filters.item) specs.push(`Item: ${filters.item}`);
+            if (filters.components) {
+                for (const [key, val] of Object.entries(filters.components)) {
+                    if (val) specs.push(`${key}: ${val}`);
+                }
+            }
+
+            const totalQty = students.length;
+            const totalCloth = (totalQty * consumption).toFixed(2);
+
+            let y = 15;
+            doc.setFontSize(14); doc.text(`Pattern List`, 14, y); y += 8;
+            doc.setFontSize(12); doc.text(`Pattern Code: ${code}`, 14, y); y += 6;
             doc.setFontSize(10);
-            doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 28);
+            doc.text(`School: ${schoolName}`, 14, y); y += 6;
+            if (desc) { doc.text(`Desc: ${desc}`, 14, y); y += 6; }
+            if (cloth) { doc.text(`Cloth: ${cloth}`, 14, y); y += 6; }
+
+            if (specs.length > 0) {
+                doc.text(`Specs: ${specs.join(', ')}`, 14, y); y += 6;
+            }
+            // Add Timestamp
+            doc.text(`Generated: ${new Date().toLocaleString()}`, 14, y); y += 8;
+
+            doc.setFont(undefined, 'bold');
+            doc.text(`Total Qty: ${totalQty} Students | Total Cloth: ${totalCloth} M`, 14, y); y += 10;
+            doc.setFont(undefined, 'normal');
+
+            // --- TABLE GENERATION (Full Matrix) ---
+            const measureCols = ['U1', 'U2', 'U3', 'U4', 'U5', 'U6', 'U7', 'U8', 'L1', 'L2', 'L3', 'L4', 'L5', 'L6', 'L7', 'L8'];
+            const activeItemName = filters.item;
+            const itemHeaders = activeItemName ? [activeItemName, "Qty"] : [];
+
+            // Helper: Calculate Item Value (e.g. "16,22,00,00...")
+            function calculateItemValue(r, item) {
+                const m = getMeasurementsSafe(r);
+                if (!item || !item.cols) return "";
+                return item.cols.map(c => {
+                    const k = c.toLowerCase();
+                    let val = m[k] || m[c] || "00";
+                    if (!val || val === '-') val = "00";
+                    return val;
+                }).join(',');
+            }
 
             const body = students.map((s, i) => {
                 const m = getMeasurementsSafe(s);
-                // Smart Measurement Formatting for PDF
-                let activeCols = null;
-                const meta = globalPatterns.find(p => p.name === patternName && p.school_id == tdCurrentSchoolId) || {};
 
-                if (meta.filters) {
-                    try {
-                        const f = typeof meta.filters === 'string' ? JSON.parse(meta.filters) : meta.filters;
-                        if (f.item) {
-                            const matchedItem = ALL_PATTERN_ITEMS.find(i => i.name === f.item);
-                            if (matchedItem) activeCols = matchedItem.cols;
-                        }
-                    } catch (e) { }
-                }
-
-                let measStr = '';
-                if (activeCols) {
-                    const uCols = activeCols.filter(c => c.startsWith('U'));
-                    const lCols = activeCols.filter(c => c.startsWith('L'));
-
-                    if (uCols.length > 0) {
-                        measStr += 'UPPER: ' + uCols.map(c => `${c}:${m[c.toLowerCase()] || '-'}`).join(' ') + '\n';
-                    }
-                    if (lCols.length > 0) {
-                        measStr += 'LOWER: ' + lCols.map(c => `${c}:${m[c.toLowerCase()] || '-'}`).join(' ');
-                    }
-                } else {
-                    measStr = `U: ${m.u1 || '-'}-${m.u2 || '-'}... L: ${m.l1 || '-'}-${m.l2 || '-'}...`;
-                }
-
-
-                return [
-                    i + 1,
+                const base = [
+                    i + 1, // S.No instead of Roll as primary index? No, let's follow local: Roll, Name
                     s.roll_no || '-',
-                    s.admission_no || '-',
                     s.name,
-                    `${s.class} ${s.section}`,
-                    s.gender,
-                    measStr, // Formatted Measurements
-                    s.order_status || (s.is_packed ? 'PACKED' : 'PENDING')
+                    s.admission_no || '-',
+                    s.house || '-',
+                    s.class || '-',
+                    s.section || '-',
+                    // Spread all measurements
+                    ...measureCols.map(c => m[c.toLowerCase()] || '00')
                 ];
+
+                if (activeItemName) {
+                    const item = ALL_PATTERN_ITEMS.find(i => i.name === activeItemName);
+                    if (item) {
+                        base.push(calculateItemValue(s, item));
+                        // Qty Logic: Check if explicit Qty exists, else 1
+                        // In company DB `s` might not have `Qty_ItemName` usually. 
+                        // But `getItemQuantitiesSafe` suggests we might have it or default to 1?
+                        // Let's assume 1 per student for standard lists unless parsed from imports.
+                        base.push("1");
+                    }
+                }
+                return base;
             });
+
+            // Headers
+            const headRow = [['S.No', 'Roll', 'Name', 'Adm No', 'House', 'Class', 'Sec', ...measureCols, ...itemHeaders]];
 
             doc.autoTable({
-                head: [['S.No', 'Roll', 'Reg No', 'Name', 'Class', 'Gender', 'Measurements', 'Status']],
+                head: headRow,
                 body: body,
-                startY: 35,
+                startY: y,
                 theme: 'grid',
-                headStyles: { fillColor: [22, 160, 133] }, // Emerald Green Header
-                styles: { fontSize: 8, cellPadding: 2 },
-                columnStyles: { 6: { cellWidth: 50 } } // Wider measurement column
+                headStyles: {
+                    fillColor: [22, 160, 133],
+                    fontSize: 7,
+                    cellPadding: 1
+                },
+                styles: {
+                    fontSize: 6,
+                    cellPadding: 1,
+                    overflow: 'linebreak'
+                },
+                columnStyles: {
+                    2: { cellWidth: 25 }, // Name
+                    // Squeeze measurement cols
+                }
             });
 
-            doc.save(`${patternName}_Student_List.pdf`);
+            doc.save(`${patternName}_Detailed_Report.pdf`);
         }
 
     </script>
