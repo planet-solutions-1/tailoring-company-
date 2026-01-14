@@ -5617,23 +5617,43 @@
             const patterns = globalPatterns.filter(p => p.school_id == tdCurrentSchoolId);
             const schoolName = document.getElementById('td-school-name').innerText;
 
-            const summary = patterns.map(p => {
+            const wsData = [
+                ["Pattern Name", "School", "Description", "Cloth Details", "Special Req", "Item Type", "M/Size of Pattern", "Cutting Quantity", "Total Cloth (M)", "Pattern Specifications"]
+            ];
+
+            patterns.forEach(p => {
                 const count = globalStudents.filter(s => s.school_id == tdCurrentSchoolId && s.pattern_name === p.name).length;
-                return {
-                    "Pattern Name": p.name,
-                    "Item Type": p.filters ? (typeof p.filters === 'string' ? JSON.parse(p.filters).item : p.filters.item) : '-',
-                    "Student Count": count,
-                    "Consumption (m)": parseFloat(p.consumption || 0),
-                    "Cloth Details": p.cloth_details || '',
-                    "Total Cloth Needed (m)": (count * parseFloat(p.consumption || 0)).toFixed(2)
-                };
+                const meta = p.metadata || {};
+                const cons = parseFloat(p.consumption || meta.consumption || 0);
+                const filters = p.filters ? (typeof p.filters === 'string' ? JSON.parse(p.filters) : p.filters) : {};
+
+                let specs = [];
+                if (filters.class) specs.push(`Class: ${filters.class}`);
+                if (filters.section) specs.push(`Sec: ${filters.section}`);
+                if (filters.house) specs.push(`House: ${filters.house}`);
+                if (filters.gender) specs.push(`Gender: ${filters.gender}`);
+                if (filters.item) specs.push(`${filters.item}`);
+                if (filters.components) {
+                    for (const [key, val] of Object.entries(filters.components)) {
+                        if (val) specs.push(`${key}: ${val}`);
+                    }
+                }
+
+                wsData.push([
+                    p.name,
+                    p.school_name || schoolName,
+                    p.desc || meta.desc || "",
+                    p.cloth_details || meta.cloth || "",
+                    p.req || meta.req || "",
+                    filters.item || "Mixed",
+                    cons,
+                    count,
+                    (count * cons).toFixed(2),
+                    specs.join(', ')
+                ]);
             });
 
-            const totalStudents = summary.reduce((a, b) => a + b["Student Count"], 0);
-            const totalCloth = summary.reduce((a, b) => a + parseFloat(b["Total Cloth Needed (m)"]), 0);
-            summary.push({ "Pattern Name": "TOTAL", "Student Count": totalStudents, "Total Cloth Needed (m)": totalCloth.toFixed(2) });
-
-            const ws = XLSX.utils.json_to_sheet(summary);
+            const ws = XLSX.utils.aoa_to_sheet(wsData);
             const wb = XLSX.utils.book_new();
             XLSX.utils.book_append_sheet(wb, ws, "Summary");
             XLSX.writeFile(wb, `${schoolName}_Pattern_Summary.xlsx`);
@@ -5642,38 +5662,53 @@
         function exportSchoolSummaryPDF() {
             if (!tdCurrentSchoolId) return alert("Please select a school first.");
             const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
+            const doc = new jsPDF({ orientation: 'landscape' });
             const schoolName = document.getElementById('td-school-name').innerText;
 
-            doc.setFontSize(18);
-            doc.text(`${schoolName} - Pattern Summary`, 14, 20);
+            doc.setFontSize(16);
+            doc.text(`${schoolName} - All Patterns Summary`, 14, 15);
             doc.setFontSize(10);
-            doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 28);
+            doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, 22);
 
             const patterns = globalPatterns.filter(p => p.school_id == tdCurrentSchoolId);
+
+            const headers = [["Pattern Name", "School", "Desc", "Cloth Details", "Special Req", "M/Size", "Qty", "Total Cloth", "Specs"]];
+
             const body = patterns.map(p => {
                 const count = globalStudents.filter(s => s.school_id == tdCurrentSchoolId && s.pattern_name === p.name).length;
-                const cons = parseFloat(p.consumption || 0);
+                const meta = p.metadata || {};
+                const cons = parseFloat(p.consumption || meta.consumption || 0);
+                const filters = p.filters ? (typeof p.filters === 'string' ? JSON.parse(p.filters) : p.filters) : {};
+
+                let specs = [];
+                if (filters.class) specs.push(`Class: ${filters.class}`);
+                if (filters.house) specs.push(`House: ${filters.house}`);
+                if (filters.gender) specs.push(`Gen: ${filters.gender}`);
+                if (filters.item) specs.push(`${filters.item}`);
+
                 return [
                     p.name,
-                    p.filters ? (typeof p.filters === 'string' ? JSON.parse(p.filters).item : p.filters.item) : '-',
+                    p.school_name || schoolName,
+                    p.desc || meta.desc || "-",
+                    p.cloth_details || meta.cloth || "-",
+                    p.req || meta.req || "-",
+                    cons.toFixed(2),
                     count,
-                    cons.toFixed(2) + ' m',
-                    p.cloth_details || '-',
-                    (count * cons).toFixed(2) + ' m'
+                    (count * cons).toFixed(2) + ' M',
+                    specs.join(', ')
                 ];
             });
 
-            const totalStudents = body.reduce((a, b) => a + b[2], 0);
-            const totalCloth = body.reduce((a, b) => a + parseFloat(b[5]), 0);
-            body.push(['TOTAL', '', totalStudents, '', '', totalCloth.toFixed(2) + ' m']);
-
             doc.autoTable({
-                head: [['Pattern Name', 'Type', 'Students', 'Cons.', 'Details', 'Total Cloth']],
+                head: headers,
                 body: body,
-                startY: 35,
+                startY: 28,
                 theme: 'grid',
-                headStyles: { fillColor: [41, 128, 185] },
+                headStyles: { fillColor: [44, 62, 80], fontSize: 9 },
+                styles: { fontSize: 8, cellPadding: 2 },
+                columnStyles: {
+                    8: { cellWidth: 50 }
+                }
             });
 
             doc.save(`${schoolName}_Summary.pdf`);
