@@ -2411,19 +2411,23 @@
                 r["School"],
                 r["Class"],
                 r["Section"],
+                r["House"], // Now Included
                 r["Pattern Name"],
+                r["Description"], // Now Included
                 r["Gender"],
-                // r["House"], // Optional: Hide House if space is tight, or keep it
-                // r["Description"], // Keep essential fields
                 r["Quantity"]
             ]);
 
             doc.autoTable({
-                head: [["Roll", "Adm No", "Name", "School", "Class", "Sec", "Pattern", "Gen", "Qty"]],
+                head: [["Roll", "Adm No", "Name", "School", "Class", "Sec", "House", "Pattern", "Desc", "Gen", "Qty"]],
                 body: tableRows,
                 startY: 28,
-                styles: { fontSize: 9 },
-                headStyles: { fillColor: [44, 62, 80] }
+                styles: { fontSize: 8 }, // Slightly smaller font to fit colums
+                headStyles: { fillColor: [44, 62, 80] },
+                columnStyles: {
+                    2: { cellWidth: 30 }, // Name
+                    8: { cellWidth: 30 }  // Desc
+                }
             });
 
             doc.save("Packing_List.pdf");
