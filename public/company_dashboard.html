@@ -2968,7 +2968,8 @@
                 'td-view-students',
                 'td-view-measurements',
                 'td-view-patterns-boys',
-                'td-view-patterns-girls'
+                'td-view-patterns-girls',
+                'td-view-patterns-all'
             ];
             views.forEach(id => {
                 const el = document.getElementById(id);
@@ -3205,6 +3206,8 @@
             resetTdViews();
             // Hide Level 2 (School Header) for cleaner view, as requested
             document.getElementById('td-level-2').classList.add('hidden');
+            // Hide Category Grid (Cards) so View takes full screen
+            document.getElementById('td-category-grid').classList.add('hidden');
 
             const view = document.getElementById(`td-view-${category}`);
             if (view) {
