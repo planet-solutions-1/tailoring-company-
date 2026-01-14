@@ -851,7 +851,7 @@ router.get('/patterns', authenticateToken, (req, res) => {
 
 // POST /api/data/patterns - Create Pattern (All Roles)
 router.post('/patterns', authenticateToken, async (req, res) => {
-    const { name, school_id, consumption, cloth_details, special_req, student_admission_nos, filters } = req.body;
+    const { name, school_id, description, consumption, cloth_details, special_req, student_admission_nos, filters } = req.body;
     let targetSchoolId = school_id;
 
     // RBAC: Verify School ID
@@ -867,8 +867,8 @@ router.post('/patterns', authenticateToken, async (req, res) => {
     try {
         // 1. Create Pattern
         const patternId = await new Promise((resolve, reject) => {
-            db.run(`INSERT INTO patterns (school_id, name, consumption, cloth_details, special_req, filters) VALUES (?, ?, ?, ?, ?, ?)`,
-                [targetSchoolId, name, consumption || 0, cloth_details || "", special_req || "", JSON.stringify(filters || {})],
+            db.run(`INSERT INTO patterns (school_id, name, description, consumption, cloth_details, special_req, filters) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+                [targetSchoolId, name, description || "", consumption || 0, cloth_details || "", special_req || "", JSON.stringify(filters || {})],
                 function (err) {
                     if (err) reject(err); else resolve(this.lastID);
                 });
