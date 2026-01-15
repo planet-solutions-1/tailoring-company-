@@ -62,6 +62,14 @@ class ConfigLoader {
             if (normalizedBase.endsWith('/api')) normalizedBase = normalizedBase.slice(0, -4);
             if (normalizedBase.endsWith('/')) normalizedBase = normalizedBase.slice(0, -1);
 
+            // PRE-CHECK: Skip request for non-admin roles to avoid 403 Console Errors
+            const userRole = sessionStorage.getItem('role');
+            // If role exists and is NOT company/super_admin, return defaults immediately
+            if (userRole && !['company', 'super_admin'].includes(userRole)) {
+                console.log("ConfigLoader: Skipping system config for non-admin role (using defaults).");
+                return { items: DEFAULT_ITEMS };
+            }
+
             // Unified Endpoint: Use /api/data/schools (Same as Dashboard) instead of /api/schools
             const r = await fetch(`${normalizedBase}/api/data/schools`, {
                 headers: { 'Authorization': `Bearer ${token}` }
