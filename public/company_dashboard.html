@@ -1898,6 +1898,7 @@
                                         </svg>
                                     </div>
                                 </div>
+
                                 <!-- Gender -->
                                 <div class="relative">
                                     <select id="td-filter-gender" onchange="renderTdCurrentTab()"
@@ -1910,7 +1911,41 @@
                                         class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
                                         <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                d="M19 9l-7 7-7-7"></path>
+                                                d="M19 9l-7 7-7 7"></path>
+                                        </svg>
+                                    </div>
+                                </div>
+
+                                <!-- Attendance Filter -->
+                                <div class="relative">
+                                    <select id="td-filter-attendance" onchange="renderTdCurrentTab()"
+                                        class="clay-input h-12 py-3 text-sm font-bold w-full pl-3 pr-8 appearance-none border-none focus:ring-0 cursor-pointer hover:bg-white transition-colors bg-white text-gray-700 leading-tight">
+                                        <option value="all">Attendance</option>
+                                        <option value="present">Present</option>
+                                        <option value="absent">Absent</option>
+                                    </select>
+                                    <div
+                                        class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M19 9l-7 7-7 7"></path>
+                                        </svg>
+                                    </div>
+                                </div>
+
+                                <!-- Measurement Status Filter -->
+                                <div class="relative">
+                                    <select id="td-filter-meas" onchange="renderTdCurrentTab()"
+                                        class="clay-input h-12 py-3 text-sm font-bold w-full pl-3 pr-8 appearance-none border-none focus:ring-0 cursor-pointer hover:bg-white transition-colors bg-white text-gray-700 leading-tight">
+                                        <option value="all">Meas. Status</option>
+                                        <option value="taken">Taken</option>
+                                        <option value="not_taken">Not Taken</option>
+                                    </select>
+                                    <div
+                                        class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-500">
+                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M19 9l-7 7-7 7"></path>
                                         </svg>
                                     </div>
                                 </div>
@@ -3538,15 +3573,13 @@
                 for (let i = Math.min(start, end); i <= Math.max(start, end); i++) res.push(String.fromCharCode(i));
                 return res;
             }
-
             return null; // Not a range
         }
 
         function renderTdCurrentTab() {
             if (!tdCurrentSchoolId) return;
 
-            // 1. Get Base Data
-            // 1. Get Base Data (Use Name for consistency with other fixes)
+            // 1. Get Base Data (Use Name for consistency)
             const schoolName = document.getElementById('td-school-name').innerText;
             let data = globalStudents.filter(st => st.school_name === schoolName);
 
@@ -3554,26 +3587,34 @@
             const cls = document.getElementById('td-filter-class').value;
             const sec = document.getElementById('td-filter-section').value;
             const gender = document.getElementById('td-filter-gender').value;
+            const attendance = document.getElementById('td-filter-attendance').value;
+            const measStatus = document.getElementById('td-filter-meas').value;
             const search = document.getElementById('td-filter-search').value.trim();
 
             if (cls !== 'all') data = data.filter(st => st.class == cls);
             if (sec !== 'all') data = data.filter(st => st.section == sec);
             if (gender !== 'all') data = data.filter(st => st.gender && st.gender.toLowerCase() === gender.toLowerCase());
 
+            // New Filters Logic
+            if (attendance !== 'all') {
+                if (attendance === 'present') data = data.filter(st => st.is_present !== false && st.status !== 'Absent');
+                if (attendance === 'absent') data = data.filter(st => st.is_present === false || st.status === 'Absent');
+            }
+
+            if (measStatus !== 'all') {
+                if (measStatus === 'taken') data = data.filter(st => st.measurements && Object.keys(st.measurements).length > 0);
+                if (measStatus === 'not_taken') data = data.filter(st => !st.measurements || Object.keys(st.measurements).length === 0);
+            }
+
             // 3. Search Logic (Range + Keyword)
             if (search) {
                 const rangeFilter = parseRange(search);
                 if (rangeFilter) {
-                    // Try to match Class OR Section
-                    // If range is numeric [1,2,3], likely class.
-                    // If range is alpha [A,B,C], likely section.
-                    // But simpler: Check if Class OR Section is IN the range list.
                     data = data.filter(st =>
                         rangeFilter.includes(String(st.class).toUpperCase()) ||
                         rangeFilter.includes(String(st.section).toUpperCase())
                     );
                 } else {
-                    // Normal Text Search
                     const lowerQ = search.toLowerCase();
                     data = data.filter(st =>
                         st.name.toLowerCase().includes(lowerQ) ||
@@ -3595,7 +3636,6 @@
             if (tdCurrentTab === 'patterns-boys') renderTdPatterns(data, 'Male');
             if (tdCurrentTab === 'patterns-girls') renderTdPatterns(data, 'Female');
         }
-
         // PDF Export Implementation
         function downloadTdPDF() {
             const { jsPDF } = window.jspdf;
@@ -3634,19 +3674,40 @@
         }
 
         function renderTdStudents(data) {
-            document.getElementById('td-list-students').innerHTML = data.map(s => `
-                    <tr class="hover:bg-gray-50 transition-colors border-b border-gray-50">
-                        <td class="p-4 font-mono text-xs text-gray-500">${s.roll_no || '-'}</td>
-                        <td class="p-4 text-gray-800">${s.name}</td>
-                        <td class="p-4 text-xs font-bold text-gray-500">${s.class || ''} ${s.section || ''}</td>
-                        <td class="p-4 text-xs">${s.gender || '-'}</td>
-                        <td class="p-4 text-center">
-                            <span class="px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wide ${getStatusColor(s.order_status, s.is_packed)}">
-                                ${s.order_status || (s.is_packed ? 'PACKED' : 'PENDING')}
-                            </span>
-                        </td>
-                    </tr>
-                `).join('');
+            document.getElementById('td-list-students').innerHTML = data.map(s => {
+                // Determine Status Badge & Row Style
+                let statusBadge = '';
+                let rowClass = 'hover:bg-gray-50 transition-colors border-b border-gray-50';
+
+                // Check Attendance
+                const isAbsent = s.is_present === false || s.status === 'Absent';
+                // Check Measurements
+                const hasMeasurements = s.measurements && Object.keys(s.measurements).length > 0;
+
+                if (isAbsent) {
+                    statusBadge = `<span class="px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wide bg-red-100 text-red-600">ABSENT</span>`;
+                    rowClass += ' bg-red-50/30'; // Subtle red tint for whole row
+                } else if (!hasMeasurements) {
+                    statusBadge = `<span class="px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wide bg-amber-100 text-amber-600">NO MEASUREMENTS</span>`;
+                } else {
+                    // Default Status Logic
+                    statusBadge = `<span class="px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wide ${getStatusColor(s.order_status, s.is_packed)}">
+                        ${s.order_status || (s.is_packed ? 'PACKED' : 'PENDING')}
+                    </span>`;
+                }
+
+                return `
+            <tr class="${rowClass}">
+                <td class="p-4 font-mono text-xs text-gray-500">${s.roll_no || '-'}</td>
+                <td class="p-4 text-gray-800 font-bold">${s.name}</td>
+                <td class="p-4 text-xs font-bold text-gray-500">${s.class || ''} ${s.section || ''}</td>
+                <td class="p-4 text-xs">${s.gender || '-'}</td>
+                <td class="p-4 text-center">
+                    ${statusBadge}
+                </td>
+            </tr>
+        `;
+            }).join('');
             const metaEl = document.getElementById('td-school-meta');
             if (metaEl) metaEl.innerText = `${data.length} Students Shown`;
         }
