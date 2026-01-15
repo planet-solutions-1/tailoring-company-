@@ -453,7 +453,146 @@
                 </div>
             </div>
 
-            <!-- UNIVERSAL VIEW CONTAINER (Relocated Sections) -->
+
+            <!-- 1. SYSTEM OVERVIEW (High Fidelity - Relocated) -->
+            <div id="view-overview" class="space-y-8 w-full px-8 pb-8"> <!-- Removed fade-in -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                    <!-- Stat Card 1: Total Students (Blue/Cyan Theme) -->
+                    <div
+                        class="clay-card p-7 flex flex-col justify-between h-48 relative overflow-hidden group transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl bg-gradient-to-br from-[#eff6ff] via-white to-[#eff6ff]">
+                        <div class="flex justify-between items-start z-10 relative">
+                            <div
+                                class="w-14 h-14 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center text-2xl clay-inner group-hover:scale-110 transition-transform duration-300">
+                                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0z">
+                                    </path>
+                                </svg>
+                            </div>
+                            <span
+                                class="bg-blue-400 text-white px-4 py-1.5 rounded-full text-[11px] font-extrabold uppercase tracking-wide shadow-md shadow-blue-200">+12%</span>
+                        </div>
+                        <div class="z-10 relative">
+                            <p class="text-[11px] font-extrabold text-slate-400 uppercase tracking-widest mb-1.5">Total
+                                Students</p>
+                            <p class="text-[42px] font-black text-slate-800 leading-none tracking-tight user-select-none"
+                                id="stat-students">0</p>
+                        </div>
+                        <div
+                            class="absolute -bottom-6 -right-6 w-32 h-32 bg-blue-100/40 rounded-full blur-2xl group-hover:bg-blue-200/40 transition-colors">
+                        </div>
+                    </div>
+
+                    <!-- Stat Card 2: Orders Pending -->
+                    <div
+                        class="clay-card p-7 flex flex-col justify-between h-48 relative overflow-hidden group transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl bg-gradient-to-br from-[#fffbeb] via-white to-[#fffbeb]">
+                        <div class="flex justify-between items-start z-10 relative">
+                            <div
+                                class="w-14 h-14 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center text-2xl clay-inner group-hover:scale-110 transition-transform duration-300">
+                                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <circle cx="12" cy="12" r="10" stroke-width="2"></circle>
+                                    <polyline points="12 6 12 12 16 14" stroke-width="2"></polyline>
+                                </svg>
+                            </div>
+                            <span
+                                class="bg-amber-400 text-white px-4 py-1.5 rounded-full text-[11px] font-extrabold uppercase tracking-wide shadow-md shadow-amber-200">Pending</span>
+                        </div>
+                        <div class="z-10 relative">
+                            <p class="text-[11px] font-extrabold text-slate-400 uppercase tracking-widest mb-1.5">Orders
+                                Pending</p>
+                            <p class="text-[42px] font-black text-slate-800 leading-none tracking-tight user-select-none"
+                                id="stat-pending">0</p>
+                        </div>
+                        <div
+                            class="absolute -bottom-6 -right-6 w-32 h-32 bg-amber-100/40 rounded-full blur-2xl group-hover:bg-amber-200/40 transition-colors">
+                        </div>
+                    </div>
+
+                    <!-- Stat Card 3: Completed -->
+                    <div
+                        class="clay-card p-7 flex flex-col justify-between h-48 relative overflow-hidden group transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl bg-gradient-to-br from-[#ecfdf5] via-white to-[#ecfdf5]">
+                        <div class="flex justify-between items-start z-10 relative">
+                            <div
+                                class="w-14 h-14 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center text-2xl clay-inner group-hover:scale-110 transition-transform duration-300">
+                                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="z-10 relative">
+                            <p class="text-[11px] font-extrabold text-slate-400 uppercase tracking-widest mb-1.5">
+                                Completed</p>
+                            <p class="text-[42px] font-black text-slate-800 leading-none tracking-tight user-select-none"
+                                id="stat-packed">0</p>
+                        </div>
+                        <div
+                            class="absolute -bottom-6 -right-6 w-32 h-32 bg-emerald-100/40 rounded-full blur-2xl group-hover:bg-emerald-200/40 transition-colors">
+                        </div>
+                    </div>
+
+                    <!-- Stat Card 4: Total Schools -->
+                    <div
+                        class="clay-card p-7 flex flex-col justify-between h-48 relative overflow-hidden group transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl bg-gradient-to-br from-[#fff1f2] via-white to-[#fff1f2]">
+                        <div class="flex justify-between items-start z-10 relative">
+                            <div
+                                class="w-14 h-14 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center text-2xl clay-inner group-hover:scale-110 transition-transform duration-300">
+                                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4">
+                                    </path>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="z-10 relative">
+                            <p class="text-[11px] font-extrabold text-slate-400 uppercase tracking-widest mb-1.5">Total
+                                Schools</p>
+                            <p class="text-[42px] font-black text-slate-800 leading-none tracking-tight user-select-none"
+                                id="stat-schools">0</p>
+                        </div>
+                        <div
+                            class="absolute -bottom-6 -right-6 w-32 h-32 bg-rose-100/40 rounded-full blur-2xl group-hover:bg-rose-200/40 transition-colors">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Urgent Deadlines -->
+                <div class="mt-8">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2"><span
+                            class="text-2xl animate-pulse">⏳</span> Upcoming Deadlines & Priority</h3>
+                    <div id="urgent-deadlines-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div class="clay-card p-6 flex items-center justify-center text-gray-400 italic">No upcoming
+                            deadlines set.</div>
+                    </div>
+                </div>
+
+                <!-- Charts & Pipeline -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <!-- Production Pipeline -->
+                    <div class="clay-card p-6 flex flex-col lg:col-span-2 min-h-[450px]">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-lg font-bold text-gray-700 flex items-center gap-2">Production Pipeline</h3>
+                        </div>
+                        <div class="flex-1 overflow-y-auto custom-scrollbar pr-2" id="production-pipeline-list">
+                            <div class="animate-pulse space-y-4">
+                                <div class="h-12 bg-gray-100 rounded-xl"></div>
+                                <div class="h-12 bg-gray-100 rounded-xl"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Recent Issues -->
+                    <div class="clay-card p-6 flex flex-col lg:col-span-1 min-h-[450px]">
+                        <div class="flex justify-between items-center mb-6">
+                            <h3 class="text-lg font-bold text-gray-700">Recent Issues</h3>
+                            <button onclick="switchTab('complaints')"
+                                class="text-xs text-blue-500 font-bold uppercase">View All</button>
+                        </div>
+                        <div class="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-3" id="recent-issues-list">
+                            <div class="text-center text-gray-400 text-xs italic py-10">No recent issues found.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             <!-- 4. ACCESS CODES -->
             <div id="view-access" class="hidden fade-in space-y-8 w-full">
@@ -1465,236 +1604,7 @@
                 </div>
             </div>
 
-            <!-- 1. OVERVIEW -->
-            <div id="view-overview" class="space-y-8 fade-in">
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-                    <!-- Stat Card 1: Total Students (Blue/Cyan Theme) -->
-                    <div
-                        class="clay-card p-7 flex flex-col justify-between h-48 relative overflow-hidden group transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl bg-gradient-to-br from-[#eff6ff] via-white to-[#eff6ff]">
-                        <div class="flex justify-between items-start z-10 relative">
-                            <div
-                                class="w-14 h-14 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center text-2xl clay-inner group-hover:scale-110 transition-transform duration-300">
-                                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0z">
-                                    </path>
-                                </svg>
-                            </div>
-                            <span
-                                class="bg-blue-400 text-white px-4 py-1.5 rounded-full text-[11px] font-extrabold uppercase tracking-wide shadow-md shadow-blue-200">+12%</span>
-                        </div>
-                        <div class="z-10 relative">
-                            <p class="text-[11px] font-extrabold text-slate-400 uppercase tracking-widest mb-1.5">Total
-                                Students</p>
-                            <p class="text-[42px] font-black text-slate-800 leading-none tracking-tight user-select-none"
-                                id="stat-students">0</p>
-                        </div>
-                        <!-- Decorative Blur -->
-                        <div
-                            class="absolute -bottom-6 -right-6 w-32 h-32 bg-blue-100/40 rounded-full blur-2xl group-hover:bg-blue-200/40 transition-colors">
-                        </div>
-                    </div>
 
-                    <!-- Stat Card 2: Orders Pending (Amber/Cream Theme - REFERENCE MATCH) -->
-                    <div
-                        class="clay-card p-7 flex flex-col justify-between h-48 relative overflow-hidden group transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl bg-gradient-to-br from-[#fffbeb] via-white to-[#fffbeb]">
-                        <div class="flex justify-between items-start z-10 relative">
-                            <div
-                                class="w-14 h-14 rounded-full bg-amber-50 text-amber-500 flex items-center justify-center text-2xl clay-inner group-hover:scale-110 transition-transform duration-300">
-                                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <circle cx="12" cy="12" r="10" stroke-width="2"></circle>
-                                    <polyline points="12 6 12 12 16 14" stroke-width="2"></polyline>
-                                </svg>
-                            </div>
-                            <span
-                                class="bg-amber-400 text-white px-4 py-1.5 rounded-full text-[11px] font-extrabold uppercase tracking-wide shadow-md shadow-amber-200">Pending</span>
-                        </div>
-                        <div class="z-10 relative">
-                            <p class="text-[11px] font-extrabold text-slate-400 uppercase tracking-widest mb-1.5">Orders
-                                Pending</p>
-                            <p class="text-[42px] font-black text-slate-800 leading-none tracking-tight user-select-none"
-                                id="stat-pending">0</p>
-                        </div>
-                        <!-- Decorative Blur -->
-                        <div
-                            class="absolute -bottom-6 -right-6 w-32 h-32 bg-amber-100/40 rounded-full blur-2xl group-hover:bg-amber-200/40 transition-colors">
-                        </div>
-                    </div>
-
-                    <!-- Stat Card 3: Completed (Emerald/Mint Theme) -->
-                    <div
-                        class="clay-card p-7 flex flex-col justify-between h-48 relative overflow-hidden group transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl bg-gradient-to-br from-[#ecfdf5] via-white to-[#ecfdf5]">
-                        <div class="flex justify-between items-start z-10 relative">
-                            <div
-                                class="w-14 h-14 rounded-full bg-emerald-50 text-emerald-500 flex items-center justify-center text-2xl clay-inner group-hover:scale-110 transition-transform duration-300">
-                                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                            </div>
-                            <!-- Dynamic Badge for Completed (Hidden if 0 or styled differently) -->
-                            <div
-                                class="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M5 13l4 4L19 7"></path>
-                                </svg>
-                            </div>
-                        </div>
-                        <div class="z-10 relative">
-                            <p class="text-[11px] font-extrabold text-slate-400 uppercase tracking-widest mb-1.5">
-                                Completed
-                            </p>
-                            <p class="text-[42px] font-black text-slate-800 leading-none tracking-tight user-select-none"
-                                id="stat-packed">0</p>
-                        </div>
-                        <!-- Decorative Blur -->
-                        <div
-                            class="absolute -bottom-6 -right-6 w-32 h-32 bg-emerald-100/40 rounded-full blur-2xl group-hover:bg-emerald-200/40 transition-colors">
-                        </div>
-                    </div>
-
-                    <!-- Stat Card 4: Total Schools (Rose/Pink Theme) -->
-                    <div
-                        class="clay-card p-7 flex flex-col justify-between h-48 relative overflow-hidden group transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl bg-gradient-to-br from-[#fff1f2] via-white to-[#fff1f2]">
-                        <div class="flex justify-between items-start z-10 relative">
-                            <div
-                                class="w-14 h-14 rounded-full bg-rose-50 text-rose-500 flex items-center justify-center text-2xl clay-inner group-hover:scale-110 transition-transform duration-300">
-                                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4">
-                                    </path>
-                                </svg>
-                            </div>
-                        </div>
-                        <div class="z-10 relative">
-                            <p class="text-[11px] font-extrabold text-slate-400 uppercase tracking-widest mb-1.5">Total
-                                Schools</p>
-                            <p class="text-[42px] font-black text-slate-800 leading-none tracking-tight user-select-none"
-                                id="stat-schools">0</p>
-                        </div>
-                        <!-- Decorative Blur -->
-                        <div
-                            class="absolute -bottom-6 -right-6 w-32 h-32 bg-rose-100/40 rounded-full blur-2xl group-hover:bg-rose-200/40 transition-colors">
-                        </div>
-                    </div>
-
-
-
-
-                </div>
-
-                <!-- URGENT DEADLINES WIDGET -->
-                <div class="mt-8 animate-in slide-in-from-bottom-4 duration-500 delay-150">
-                    <h3 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-                        <span class="text-2xl animate-pulse">⏳</span> Upcoming Deadlines & Priority
-                    </h3>
-                    <div id="urgent-deadlines-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        <div class="clay-card p-6 flex items-center justify-center text-gray-400 italic">
-                            No upcoming deadlines set.
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Charts Row (Restored) -->
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 h-96">
-                    <!-- Chart 1: Schools Distribution -->
-                    <div class="clay-card p-6 flex flex-col justify-between lg:col-span-2 relative overflow-hidden">
-                        <div class="flex justify-between items-start z-10">
-                            <div>
-                                <h3 class="font-extrabold text-lg text-slate-700">School Distribution</h3>
-                                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">
-                                    Student
-                                    Capacity &
-                                    Enrollment</p>
-                            </div>
-                            <span class="p-2 rounded-xl bg-purple-50 text-purple-500 shadow-sm">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
-                                    </path>
-                                </svg>
-                            </span>
-                        </div>
-                        <div class="flex-1 w-full mt-4 relative">
-                            <canvas id="chart-schools"></canvas>
-                        </div>
-                    </div>
-
-                    <!-- Chart 2: Packing Status -->
-                    <div class="clay-card p-6 flex flex-col justify-between relative overflow-hidden">
-                        <div class="flex justify-between items-start z-10">
-                            <div>
-                                <h3 class="font-extrabold text-lg text-slate-700">Order Status</h3>
-                                <p class="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">
-                                    Completion
-                                    Rate
-                                </p>
-                            </div>
-                            <div class="flex -space-x-2">
-                                <!-- Decor -->
-                            </div>
-                        </div>
-                        <div class="flex-1 w-full mt-4 relative flex items-center justify-center">
-                            <canvas id="chart-packing"></canvas>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Smart Insights Row (New) -->
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <!-- 1. Production Pipeline Status -->
-                    <div class="clay-card p-6 flex flex-col lg:col-span-2 min-h-[450px]">
-                        <div class="flex justify-between items-center mb-6">
-                            <h3 class="text-lg font-bold text-gray-700 flex items-center gap-2">
-                                <span class="p-2 rounded-lg bg-indigo-100 text-indigo-600">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
-                                        </path>
-                                    </svg>
-                                </span>
-                                Production Pipeline
-                            </h3>
-                            <span class="text-[10px] font-bold uppercase text-gray-400 tracking-wider">Live Status
-                                Overview</span>
-                        </div>
-
-                        <div class="flex-1 overflow-y-auto custom-scrollbar pr-2" id="production-pipeline-list">
-                            <!-- Injected JS Content -->
-                            <div class="animate-pulse space-y-4">
-                                <div class="h-12 bg-gray-100 rounded-xl"></div>
-                                <div class="h-12 bg-gray-100 rounded-xl"></div>
-                                <div class="h-12 bg-gray-100 rounded-xl"></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- 2. Recent Complaints / Quick Actions -->
-                    <div class="clay-card p-6 flex flex-col lg:col-span-1 min-h-[450px]">
-                        <div class="flex justify-between items-center mb-6">
-                            <h3 class="text-lg font-bold text-gray-700 flex items-center gap-2">
-                                <span class="p-2 rounded-lg bg-rose-100 text-rose-600">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
-                                        </path>
-                                    </svg>
-                                </span>
-                                Recent Issues
-                            </h3>
-                            <button onclick="switchTab('complaints')"
-                                class="text-[10px] font-bold uppercase text-blue-500 hover:text-blue-700 tracking-wider transition-colors">View
-                                All</button>
-                        </div>
-
-                        <div class="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-3" id="recent-issues-list">
-                            <div class="text-center text-gray-400 text-xs italic py-10">No recent issues found.
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div> <!-- End of view-overview -->
 
             <!-- 2. TAILORING DATA (Restructured) -->
             <div id="view-data" class="hidden space-y-6 fade-in min-h-screen">
