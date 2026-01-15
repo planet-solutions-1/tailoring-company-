@@ -11,6 +11,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="js/config_loader.js"></script>
     <link
         href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Nunito:wght@400;600;700;800&display=swap"
         rel="stylesheet">
@@ -2218,6 +2219,80 @@
                         SCHOOL</button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- DRESS MANAGER VIEW -->
+    <div id="view-settings" class="hidden fade-in w-full space-y-8 px-8 pb-8">
+        <div class="clay-card p-8">
+            <h3 class="text-xl font-bold text-gray-700 mb-6 flex items-center gap-2">
+                <span class="text-purple-500">●</span> Dress Types & Formulas
+            </h3>
+            <p class="text-sm text-gray-400 mb-6">Manage global dress definitions and calculation formulas. These
+                settings will override defaults in all apps.</p>
+
+            <!-- Add New Item Form -->
+            <div class="bg-gray-50/50 p-6 rounded-2xl mb-8 border border-gray-100">
+                <h4 class="text-sm font-bold text-gray-600 uppercase mb-4">Add New Item</h4>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                    <div class="md:col-span-1">
+                        <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Type Name</label>
+                        <input type="text" id="set-item-name" placeholder="BOYS - SUPER SHIRT"
+                            class="clay-input py-2 text-xs">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Gender</label>
+                        <select id="set-item-gender" class="clay-input py-2 text-xs">
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                        </select>
+                    </div>
+                    <div class="md:col-span-2">
+                        <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Required Columns (Comma
+                            Sep)</label>
+                        <input type="text" id="set-item-cols" placeholder="U1, U2, L1" class="clay-input py-2 text-xs">
+                    </div>
+                    <div class="md:col-span-4 mt-2">
+                        <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Formula
+                            (Optional)</label>
+                        <input type="text" id="set-item-formula" placeholder="e.g. U1 + 2"
+                            class="clay-input py-2 text-xs font-mono">
+                        <p class="text-[10px] text-gray-400 mt-1">Use column keys (U1, U2, L1...). Result will be
+                            displayed as 'Size' in Planet Editor.</p>
+                    </div>
+                </div>
+                <div class="mt-4 flex justify-end">
+                    <button onclick="addDressItem()"
+                        class="clay-btn clay-primary px-6 py-2 text-xs uppercase shadow-sm">
+                        + Add Item
+                    </button>
+                </div>
+            </div>
+
+            <!-- Items Table -->
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left">
+                    <thead>
+                        <tr class="text-xs font-bold text-gray-400 uppercase border-b border-gray-100">
+                            <th class="p-3">Name</th>
+                            <th class="p-3">Gender</th>
+                            <th class="p-3">Columns</th>
+                            <th class="p-3">Formula</th>
+                            <th class="p-3 text-right">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="settings-items-list" class="divide-y divide-gray-50 text-gray-600 font-medium">
+                        <!-- Dynamic Items -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="mt-8 flex justify-end">
+                <button onclick="saveDressConfig()"
+                    class="clay-btn bg-emerald-50 text-emerald-600 px-8 py-3 text-sm hover:bg-emerald-100 uppercase transition-transform active:scale-95">
+                    Save Changes
+                </button>
+            </div>
         </div>
     </div>
 
@@ -6046,6 +6121,79 @@
             });
 
             doc.save(`${patternName}_Detailed_Report.pdf`);
+        }
+
+        // --- DRESS MANAGER LOGIC ---
+        let dressConfig = { items: [] };
+
+        async function fetchSettings() {
+            // Load from ConfigLoader
+            const loaded = await ConfigLoader.load(API_BASE, token);
+            dressConfig.items = loaded || [];
+            if (!Array.isArray(dressConfig.items)) dressConfig.items = []; // Safety
+            renderSettingsTable();
+        }
+
+        function renderSettingsTable() {
+            const tbody = document.getElementById('settings-items-list');
+            tbody.innerHTML = '';
+
+            dressConfig.items.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-gray-50/50 transition-colors";
+                tr.innerHTML = `
+                    <td class="p-3 text-gray-800">${item.name}</td>
+                    <td class="p-3"><span class="px-2 py-1 rounded text-[10px] font-bold uppercase ${item.type === 'Male' ? 'bg-blue-50 text-blue-500' : 'bg-pink-50 text-pink-500'}">${item.type}</span></td>
+                    <td class="p-3 font-mono text-xs text-gray-500">${(item.cols || []).join(', ')}</td>
+                    <td class="p-3 font-mono text-xs text-purple-500">${item.formula || '-'}</td>
+                    <td class="p-3 text-right">
+                        <button onclick="deleteDressItem(${index})" class="text-red-400 hover:text-red-600 font-bold text-xs uppercase px-2">Delete</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function addDressItem() {
+            const name = document.getElementById('set-item-name').value.trim();
+            const type = document.getElementById('set-item-gender').value;
+            const colsStr = document.getElementById('set-item-cols').value.trim();
+            const formula = document.getElementById('set-item-formula').value.trim();
+
+            if (!name) return alert("Name is required");
+            if (!colsStr) return alert("At least one column is required");
+
+            const cols = colsStr.split(',').map(s => s.trim().toUpperCase()).filter(s => s);
+
+            dressConfig.items.push({
+                name,
+                type,
+                cols,
+                formula
+            });
+
+            renderSettingsTable();
+            // Clear form
+            document.getElementById('set-item-name').value = '';
+            document.getElementById('set-item-cols').value = '';
+            document.getElementById('set-item-formula').value = '';
+        }
+
+        function deleteDressItem(index) {
+            if (!confirm("Remove this item?")) return;
+            dressConfig.items.splice(index, 1);
+            renderSettingsTable();
+        }
+
+        async function saveDressConfig() {
+            if (!confirm("Save changes? This will propagate to ALL dashboards.")) return;
+            try {
+                await ConfigLoader.save(API_BASE, token, dressConfig.items);
+                alert("Configuration Saved!");
+            } catch (e) {
+                alert("Failed to save: " + e.message);
+                console.error(e);
+            }
         }
 
     </script>

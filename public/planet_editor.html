@@ -7,6 +7,7 @@
     <title>Planet Editor - Rapid Entry</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <script src="js/config_loader.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script>window.jsPDF = window.jspdf.jsPDF;</script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
@@ -579,37 +580,10 @@
         const measureCols = ["U1", "U2", "U3", "U4", "U5", "U6", "U7", "U8", "L1", "L2", "L3", "L4", "L5", "L6", "L7", "L8"];
 
         // Item Definitions
-        const boysItems = [
-            { name: "BOYS - FORMAL SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Male" },
-            { name: "BOYS - TRACK T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Male" },
-            { name: "BOYS - UNIFORM T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Male" },
-            { name: "BOYS - JERKIN", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Male" },
-            { name: "BOYS - PULLOVER", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Male" },
-            { name: "BOYS - FORMAL PANT", cols: ["L1", "L2"], type: "Male" },
-            { name: "BOYS - TRACK PANT", cols: ["L1", "L2"], type: "Male" },
-            { name: "BOYS - FORMAL SHORTS", cols: ["L3", "L2"], type: "Male" },
-            { name: "BOYS - TRACK SHORTS", cols: ["L3", "L2"], type: "Male" },
-            { name: "BOYS - PANT SPECIAL CASE", cols: ["L1", "L2", "L6", "L7"], type: "Male" },
-        ];
-
-        const girlsItems = [
-            { name: "GIRLS - FORMAL SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Female" },
-            { name: "GIRLS - TRACK T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Female" },
-            { name: "GIRLS - UNIFORM T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Female" },
-            { name: "GIRLS - JERKIN", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Female" },
-            { name: "GIRLS - FULL SLEEVE SHIRT", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Female" },
-            { name: "GIRLS - PULLOVER", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Female" },
-            { name: "GIRLS - KURTHA SHIRT", cols: ["U7", "U2", "U3", "U4", "U6"], type: "Female" },
-            { name: "GIRLS - SPECIAL FROCKS", cols: ["U7", "U2", "U3", "U4", "U6"], type: "Female" },
-            { name: "GIRLS - FORMAL PANT", cols: ["L1", "L2"], type: "Female" },
-            { name: "GIRLS - TRACK PANT", cols: ["L1", "L2"], type: "Female" },
-            { name: "GIRLS - TRACK SHORTS", cols: ["L3", "L2"], type: "Female" },
-            { name: "GIRLS - PINOFORE", cols: ["L4", "L2"], type: "Female" },
-            { name: "GIRLS - SKIRT", cols: ["L5", "L2"], type: "Female" },
-            { name: "GIRLS - PANT SPECIAL CASE", cols: ["L1", "L2", "L6", "L7"], type: "Female" },
-        ];
-
-        const allItems = [...boysItems, ...girlsItems];
+        // Item Definitions (Dynamic)
+        let boysItems = [];
+        let girlsItems = [];
+        let allItems = [];
 
         // Global Listener Removed (Handled in init)
 
@@ -698,7 +672,27 @@
 
 
         // --- INITIALIZATION ---
-        function init() {
+        async function init() {
+            // Load Dynamic Config
+            try {
+                const token = sessionStorage.getItem('token');
+                const config = await ConfigLoader.load('/api', token); // Use relative /api since we are on same domain
+                if (config && Array.isArray(config.items) && config.items.length > 0) {
+                    boysItems = config.items.filter(i => i.type === 'Male');
+                    girlsItems = config.items.filter(i => i.type === 'Female');
+                    allItems = config.items;
+                    console.log("Loaded Dynamic Items:", allItems.length);
+                } else {
+                    console.warn("Using Default/Empty Items (Config Load Failed or Empty)");
+                    // If needed, we could set defaults here if ConfigLoader returns empty 
+                    // (ConfigLoader already defaults to Hardcoded in practice? Yes, if load fails it returns defaults)
+                    // ConfigLoader.load returns { items: DEFAULT_ITEMS } on error.
+                    // So we should be safe.
+                }
+            } catch (e) {
+                console.error("Critical Config Load Error", e);
+            }
+
             const saved = localStorage.getItem('planetEditorData');
             if (saved) {
                 try {
@@ -1034,10 +1028,57 @@
             }
         }
 
+        function calculateFormulas(row) {
+            if (!row || !allItems) return;
+
+            allItems.forEach(item => {
+                if (!item.formula) return;
+
+                let expr = item.formula.trim().toUpperCase();
+                if (!expr) return;
+
+                // Replace columns (U1, L2 etc) with values
+                measureCols.forEach(col => {
+                    const reg = new RegExp(`\\b${col}\\b`, 'g');
+                    // Only replace if present to avoid regex overhead on all cols
+                    if (expr.includes(col)) {
+                        let val = parseFloat(row[col]);
+                        if (isNaN(val)) val = 0;
+                        expr = expr.replace(reg, val);
+                    }
+                });
+
+                try {
+                    // Safety check: ensure no residual variable names (letters)
+                    if (/[A-Z]/.test(expr)) return;
+
+                    // Evaluate
+                    const result = new Function('return ' + expr)();
+
+                    if (!isNaN(result) && isFinite(result)) {
+                        // Round to nearest 0.5 or integer? Let's use 1 decimal for now.
+                        const finalVal = Math.round(result * 10) / 10;
+
+                        // Update Qty
+                        const qtyKey = `Qty_${item.name}`;
+                        // Only update if changed to avoid unnecessary renders if binding triggers
+                        if (row[qtyKey] !== finalVal) {
+                            row[qtyKey] = finalVal;
+                        }
+                    }
+                } catch (e) { /* Ignore invalid formulas */ }
+            });
+        }
+
         function updateCell(index, field, value) {
             const oldVal = data[index][field];
             if (oldVal !== value) {
                 data[index][field] = value;
+
+                // TRIGGER FORMULAS (If measurement changed)
+                if (measureCols.includes(field)) {
+                    calculateFormulas(data[index]);
+                }
 
                 // Define needsRerender based on field type
                 const needsRerender = ['Class', 'Section', 'House', 'Gender', 'Absent/Present'].includes(field) ||

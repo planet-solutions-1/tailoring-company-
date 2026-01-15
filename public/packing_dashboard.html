@@ -10,6 +10,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="js/config_loader.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <script>
         // Shim for jspdf
@@ -489,6 +490,25 @@
                 ph.classList.remove('hidden');
             }
 
+            // Load Dynamic Config
+            try {
+                // Determine API_BASE and TOKEN (Already defined globally)
+                const config = await ConfigLoader.load(API_BASE, token);
+                if (config && Array.isArray(config.items) && config.items.length > 0) {
+                    boysItems = config.items.filter(i => i.type === 'Male');
+                    girlsItems = config.items.filter(i => i.type === 'Female');
+                    allItems = config.items;
+                    console.log("Packing Dashboard: Dynamic Items Loaded", allItems.length);
+                } else {
+                    console.warn("Packing Dashboard: Config Load Failed/Empty. Using Empty Default.");
+                    // If needed, we can construct hardcoded fallback here or in ConfigLoader
+                    // ConfigLoader has DEFAULT_ITEMS fallback!
+                    // But wait, ConfigLoader.load() returns them.
+                    // The default fallback logic in ConfigLoader.load() *returns* the defaults.
+                    // So config.items should have them if fetch fails.
+                }
+            } catch (e) { console.error("Config Load Error", e); }
+
             // Parallel Fetch: Patterns & Schools
             await Promise.all([
                 fetchPatterns(),
@@ -548,35 +568,11 @@
 
 
         // --- ITEM DEFINITIONS (Synced with Planet Editor) ---
-        const boysItems = [
-            { name: "BOYS - FORMAL SHIRT", type: "Male" },
-            { name: "BOYS - TRACK T-SHIRT", type: "Male" },
-            { name: "BOYS - UNIFORM T-SHIRT", type: "Male" },
-            { name: "BOYS - JERKIN", type: "Male" },
-            { name: "BOYS - PULLOVER", type: "Male" },
-            { name: "BOYS - FORMAL PANT", type: "Male" },
-            { name: "BOYS - TRACK PANT", type: "Male" },
-            { name: "BOYS - FORMAL SHORTS", type: "Male" },
-            { name: "BOYS - TRACK SHORTS", type: "Male" },
-            { name: "BOYS - PANT SPECIAL CASE", type: "Male" },
-        ];
-        const girlsItems = [
-            { name: "GIRLS - FORMAL SHIRT", type: "Female" },
-            { name: "GIRLS - TRACK T-SHIRT", type: "Female" },
-            { name: "GIRLS - UNIFORM T-SHIRT", type: "Female" },
-            { name: "GIRLS - JERKIN", type: "Female" },
-            { name: "GIRLS - FULL SLEEVE SHIRT", type: "Female" },
-            { name: "GIRLS - PULLOVER", type: "Female" },
-            { name: "GIRLS - KURTHA SHIRT", type: "Female" },
-            { name: "GIRLS - SPECIAL FROCKS", type: "Female" },
-            { name: "GIRLS - FORMAL PANT", type: "Female" },
-            { name: "GIRLS - TRACK PANT", type: "Female" },
-            { name: "GIRLS - TRACK SHORTS", type: "Female" },
-            { name: "GIRLS - PINOFORE", type: "Female" },
-            { name: "GIRLS - SKIRT", type: "Female" },
-            { name: "GIRLS - PANT SPECIAL CASE", type: "Female" },
-        ];
-        const allItems = [...boysItems, ...girlsItems];
+        // --- ITEM DEFINITIONS (Synced with Planet Editor) ---
+        // Dynamic Loading
+        let boysItems = [];
+        let girlsItems = [];
+        let allItems = []; // Populated in init()
 
         let lastPatternError = "None";
 
