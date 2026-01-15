@@ -470,6 +470,7 @@
         let allData = [];
         let filteredData = [];
         let packedState = {};
+        let patternMap = {};
         let currentMetadata = [];
         let myChart = null;
         let selectedIndex = -1;
@@ -479,7 +480,7 @@
         const token = localStorage.getItem('token') || sessionStorage.getItem('token');
         if (!token) window.location.href = 'index.html';
 
-        function init() {
+        async function init() {
             // Show Loading
             const ph = document.getElementById('welcomePlaceholder');
             if (ph) {
@@ -487,6 +488,8 @@
                 ph.classList.remove('hidden');
             }
 
+            // Fetch Patterns FIRST
+            await fetchPatterns();
             fetchPackingData();
             document.addEventListener('keydown', handleKeyboardNavigation);
 
@@ -542,6 +545,29 @@
             { name: "GIRLS - PANT SPECIAL CASE", type: "Female" },
         ];
         const allItems = [...boysItems, ...girlsItems];
+
+        async function fetchPatterns() {
+            try {
+                // Try /api prefix first
+                const r = await fetch(`${API_BASE}/api/data/patterns/all`, { headers: { 'Authorization': `Bearer ${token}` } });
+                if (r.ok) {
+                    const pats = await r.json();
+                    pats.forEach(p => {
+                        patternMap[p.id] = p.name || p.code || "Unknown Pattern";
+                    });
+                    console.log("Patterns mapped:", Object.keys(patternMap).length);
+                } else {
+                    console.warn("Retrying legacy pattern fetch...");
+                    const r2 = await fetch(`${API_BASE}/data/patterns/all`, { headers: { 'Authorization': `Bearer ${token}` } });
+                    if (r2.ok) {
+                        const pats = await r2.json();
+                        pats.forEach(p => { patternMap[p.id] = p.name || p.code; });
+                    }
+                }
+            } catch (e) {
+                console.error("Pattern Fetch Failed", e);
+            }
+        }
 
         async function fetchPackingData() {
             try {
@@ -620,20 +646,17 @@
 
                     // Fallback: Show students as single rows (Generic)
                     allData = students.map((s, i) => {
-                        let schoolDisplay = s.school_name || `School #${s.school_id || '?'}`;
-                        // DEBUG: Show keys in the first row's school column
-                        if (i === 0) {
-                            schoolDisplay += ` (Keys: ${Object.keys(s).filter(k => k.toLowerCase().includes('pattern')).join(',') || 'No Pattern Keys'})`;
-                        }
+                        // Resolve Pattern Name
+                        const pName = patternMap[s.pattern_id] || s.pattern_name || s.pattern_code || "-";
 
                         return {
                             _internalId: `row_${i}`,
                             dbId: s.id,
                             'Admission No': s.admission_no || `UNK_${i}`,
-                            'School': schoolDisplay,
+                            'School': s.school_name || `School #${s.school_id || '?'}`,
                             'Student Name': s.name,
                             'Dress Name': "Full Set (Generic)",
-                            'Pattern Name': s.pattern_name || s.pattern_code || s.Pattern || s.pattern || "-",
+                            'Pattern Name': pName,
                             'Class': s.class || "-",
                             'Section': s.section || "-",
                             'House': s.house || "-",
@@ -642,7 +665,7 @@
                             'Quantity': 1,
                             'Status': s.order_status || "Pending",
                             _isPacked: s.is_packed // Inherit from student
-                        }
+                        };
                     });
                 }
 
