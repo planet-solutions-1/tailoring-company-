@@ -648,10 +648,97 @@
                 });
 
                 if (allData.length === 0 && students.length > 0) {
-                    console.warn("No item quantities found. Falling back to generic rows.");
-                    console.log("Available Keys on first student:", Object.keys(students[0]));
+                    console.warn("No item quantities found (initially). Checking nested 'item_quantities'...");
 
-                    // Fallback: Show students as single rows (Generic)
+                    // PRE-PROCESS: Flatten item_quantities if it exists
+                    students.forEach(s => {
+                        if (s.item_quantities) {
+                            try {
+                                let iq = s.item_quantities;
+                                if (typeof iq === 'string') iq = JSON.parse(iq);
+
+                                if (iq && typeof iq === 'object') {
+                                    // Merge Qty_ keys into student object
+                                    Object.keys(iq).forEach(k => {
+                                        // Planet Editor saves them as "Qty_Item Name"
+                                        // But just in case, we check.
+                                        s[k] = iq[k];
+                                    });
+                                }
+                            } catch (e) {
+                                console.error("Failed to parse item_quantities for student", s.id, e);
+                            }
+                        }
+                    });
+
+                    // Re-run the Item Expansion Logic with the flattened data
+                    // We need to re-evaluate 'foundSpecificItems' logic if we want to avoid the fallback.
+                    // But simpler: just Map again using the standard logic?
+                    // The standard logic (lines 620-642) used 'allItems'.
+                    // Let's TRY to re-run the expansion logic manually here since the first pass missed them.
+
+                    const expandedData = [];
+                    students.forEach((s, i) => {
+                        let hasItems = false;
+                        const pName = patternMap[s.pattern_id] || s.pattern_name || s.pattern_code || "-";
+                        const schoolDisplay = s.school_name || `School #${s.school_id || '?'}`;
+
+                        allItems.forEach(item => {
+                            const qtyKey = `Qty_${item.name}`;
+                            const qtyVal = s[qtyKey]; // Now available!
+
+                            // Check valid quantity (exists, not "0", not "00")
+                            if (qtyVal && qtyVal != "0" && qtyVal != "00") {
+                                hasItems = true;
+                                expandedData.push({
+                                    _internalId: `row_${i}_${item.name}`,
+                                    dbId: s.id,
+                                    'Admission No': s.admission_no || `UNK_${i}`,
+                                    'School': schoolDisplay,
+                                    'Student Name': s.name,
+                                    'Dress Name': item.name, // Specific Item Name!
+                                    'Pattern Name': pName,
+                                    'Class': s.class || "-",
+                                    'Section': s.section || "-",
+                                    'House': s.house || "-",
+                                    'Gender': s.gender || "-",
+                                    'Roll No': s.roll_no || "-",
+                                    'Quantity': parseInt(qtyVal) || 1,
+                                    'Status': s.order_status || "Pending",
+                                    _isPacked: s.is_packed
+                                });
+                            }
+                        });
+
+                        // If still no items, fallback to generic
+                        if (!hasItems) {
+                            expandedData.push({
+                                _internalId: `row_${i}`,
+                                dbId: s.id,
+                                'Admission No': s.admission_no || `UNK_${i}`,
+                                'School': schoolDisplay,
+                                'Student Name': s.name,
+                                'Dress Name': "Full Set (Generic)",
+                                'Pattern Name': pName,
+                                'Class': s.class || "-",
+                                'Section': s.section || "-",
+                                'House': s.house || "-",
+                                'Gender': s.gender || "-",
+                                'Roll No': s.roll_no || "-",
+                                'Quantity': 1,
+                                'Status': s.order_status || "Pending",
+                                _isPacked: s.is_packed
+                            });
+                        }
+                    });
+
+                    if (expandedData.length > 0) {
+                        allData = expandedData; // Override with fixed data
+                    }
+                }
+
+                if (allData.length === 0 && students.length > 0) {
+                    // Safety Fallback (should be covered above, but keeping for robustness)
                     allData = students.map((s, i) => {
                         // Resolve Pattern Name
                         const pName = patternMap[s.pattern_id] || s.pattern_name || s.pattern_code || "-";
