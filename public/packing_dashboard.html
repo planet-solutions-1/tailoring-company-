@@ -550,25 +550,49 @@
 
         async function fetchPatterns() {
             try {
-                // Try /api prefix first
+                // 1. Try Global Patterns (Admin Access)
                 const r = await fetch(`${API_BASE}/api/data/patterns/all`, { headers: { 'Authorization': `Bearer ${token}` } });
+
                 if (r.ok) {
                     const pats = await r.json();
                     pats.forEach(p => {
                         patternMap[p.id] = p.name || p.code || "Unknown Pattern";
                     });
-                    lastPatternError = "Success (API)";
+                    lastPatternError = "Success (Global)";
+                } else if (r.status === 403) {
+                    // 2. Access Denied (Likely School Admin) - Fetch OWN School Details
+                    const schoolId = localStorage.getItem('schoolId') || sessionStorage.getItem('schoolId');
+                    if (schoolId) {
+                        lastPatternError = `Global 403, Trying School #${schoolId}...`;
+                        const r2 = await fetch(`${API_BASE}/api/data/schools/${schoolId}`, { headers: { 'Authorization': `Bearer ${token}` } });
+                        if (r2.ok) {
+                            const school = await r2.json();
+                            // Expect school object to have pattern_id and pattern_name
+                            if (school.pattern_id && school.pattern_name) {
+                                patternMap[school.pattern_id] = school.pattern_name;
+                                lastPatternError = "Success (School)";
+                            } else if (school.Pattern) {
+                                // Fallback: Sometimes returned as just 'Pattern' string?
+                                // We need ID-Name map. If we only get NAME, we can't map ID.
+                                // But wait, the student has pattern_id.
+                                // If school.pattern_id matches student.pattern_id, use school.Pattern.
+                                if (school.pattern_id) {
+                                    patternMap[school.pattern_id] = school.Pattern;
+                                    lastPatternError = "Success (School.Pattern)";
+                                } else {
+                                    lastPatternError = "School Loaded (No PID)";
+                                }
+                            } else {
+                                lastPatternError = `School Loaded (Keys: ${Object.keys(school).join(',')})`;
+                            }
+                        } else {
+                            lastPatternError = `School Fetch Failed (${r2.status})`;
+                        }
+                    } else {
+                        lastPatternError = "Global 403 (No School ID)";
+                    }
                 } else {
                     lastPatternError = `API Failed (${r.status})`;
-                    console.warn("Retrying legacy pattern fetch...");
-                    const r2 = await fetch(`${API_BASE}/data/patterns/all`, { headers: { 'Authorization': `Bearer ${token}` } });
-                    if (r2.ok) {
-                        const pats = await r2.json();
-                        pats.forEach(p => { patternMap[p.id] = p.name || p.code; });
-                        lastPatternError = "Success (Legacy)";
-                    } else {
-                        lastPatternError += ` | Legacy Failed (${r2.status})`;
-                    }
                 }
             } catch (e) {
                 lastPatternError = `Exception: ${e.message}`;
