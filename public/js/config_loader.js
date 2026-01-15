@@ -67,6 +67,11 @@ class ConfigLoader {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 
+            if (r.status === 403 || r.status === 401) {
+                console.warn("ConfigLoader: Access denied to system config (using defaults).");
+                return { items: DEFAULT_ITEMS };
+            }
+
             if (r.ok) {
                 const schools = await r.json();
                 const configSchool = schools.find(s => s.name === CONFIG_SCHOOL_NAME);
@@ -84,7 +89,7 @@ class ConfigLoader {
                 }
             }
         } catch (e) {
-            console.error("ConfigLoader: Load failed", e);
+            console.warn("ConfigLoader: Network request failed, using defaults.", e);
         }
 
         console.log("ConfigLoader: Using default configuration.");
