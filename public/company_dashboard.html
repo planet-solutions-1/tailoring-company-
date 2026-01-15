@@ -3602,14 +3602,15 @@
             }
 
             if (measStatus !== 'all') {
-                if (measStatus === 'taken') data = data.filter(st => {
+                // Helper to check for real values
+                const hasRealValues = (st) => {
                     const m = getMeasurementsSafe(st);
-                    return Object.keys(m).length > 0;
-                });
-                if (measStatus === 'not_taken') data = data.filter(st => {
-                    const m = getMeasurementsSafe(st);
-                    return Object.keys(m).length === 0;
-                });
+                    // Check if there is at least one value that is NOT empty, null, or '-'
+                    return Object.values(m).some(v => v && String(v).trim() !== '' && String(v).trim() !== '-');
+                };
+
+                if (measStatus === 'taken') data = data.filter(st => hasRealValues(st));
+                if (measStatus === 'not_taken') data = data.filter(st => !hasRealValues(st));
             }
 
             // 3. Search Logic (Range + Keyword)
@@ -3688,9 +3689,9 @@
                 // Check Attendance
                 const isAbsent = s.is_present === false || s.status === 'Absent' || s.order_status === 'Absent';
 
-                // Check Measurements (Use Helper to Parse JSON String)
+                // Check Measurements (Strict check for values)
                 const m = getMeasurementsSafe(s);
-                const hasMeasurements = Object.keys(m).length > 0;
+                const hasMeasurements = Object.values(m).some(v => v && String(v).trim() !== '' && String(v).trim() !== '-');
 
                 if (isAbsent) {
                     statusBadge = `<span class="px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wide bg-red-100 text-red-600">ABSENT</span>`;
