@@ -656,11 +656,18 @@
                         // Resolve Pattern Name
                         const pName = patternMap[s.pattern_id] || s.pattern_name || s.pattern_code || "-";
 
+                        let schoolDisplay = s.school_name || `School #${s.school_id || '?'}`;
+                        // DEBUG: DUMP KEYS
+                        if (i === 0) {
+                            const qKeys = Object.keys(s).filter(k => k.startsWith("Qty"));
+                            schoolDisplay += ` [KEYS: ${Object.keys(s).join(',')}]`; // Dump ALL keys to see what is missing
+                        }
+
                         return {
                             _internalId: `row_${i}`,
                             dbId: s.id,
                             'Admission No': s.admission_no || `UNK_${i}`,
-                            'School': s.school_name || `School #${s.school_id || '?'}`,
+                            'School': schoolDisplay,
                             'Student Name': s.name,
                             'Dress Name': "Full Set (Generic)",
                             'Pattern Name': pName,
