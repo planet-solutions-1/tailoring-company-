@@ -2475,6 +2475,12 @@
             } else {
                 m = s.measurements || {};
             }
+
+            // AUTO-FLATTEN: If m has a 'data' property (Payload structure), mix it in.
+            if (m.data && typeof m.data === 'object') {
+                m = { ...m, ...m.data };
+            }
+
             // Normalize keys to lowercase to fix UI case mismatch (e.g. U1 vs u1)
             const normalized = {};
             Object.keys(m).forEach(k => normalized[k.toLowerCase()] = m[k]);
@@ -3624,10 +3630,14 @@
                 const hasRealValues = (st) => {
                     const m = getMeasurementsSafe(st);
                     // Check if there is at least one value that is NOT empty, null, '-', '0', '00', '0.0'
-                    return Object.values(m).some(v => {
+                    // AND NOT a metadata key
+                    const metaKeys = ['is_absent', 'remarks', 'student_id', 'data', 'item_quantities', 'school_id'];
+                    return Object.keys(m).some(k => {
+                        if (metaKeys.includes(k) || metaKeys.includes(k.toLowerCase())) return false;
+                        const v = m[k];
                         if (!v) return false; // null, undefined, 0, ""
                         const s = String(v).trim();
-                        return s !== '' && s !== '-' && s !== '0' && s !== '00' && s !== '0.0';
+                        return s !== '' && s !== '-' && s !== '0' && s !== '00' && s !== '0.0' && s !== '[object Object]';
                     });
                 };
 
@@ -3720,10 +3730,14 @@
 
                 // Check Measurements (Strict check for values)
                 const m = getMeasurementsSafe(s);
-                const hasMeasurements = Object.values(m).some(v => {
-                    if (!v) return false; // null, undefined, 0, ""
+                // Exclude meta keys from "Taken" check
+                const metaKeys = ['is_absent', 'remarks', 'student_id', 'data', 'item_quantities', 'school_id'];
+                const hasMeasurements = Object.keys(m).some(k => {
+                    if (metaKeys.includes(k) || metaKeys.includes(k.toLowerCase())) return false;
+                    const v = m[k];
+                    if (!v) return false;
                     const str = String(v).trim();
-                    return str !== '' && str !== '-' && str !== '0' && str !== '00' && str !== '0.0';
+                    return str !== '' && str !== '-' && str !== '0' && str !== '00' && str !== '0.0' && str !== '[object Object]';
                 });
 
                 // Visual Indicators for Row (Optional: Keep subtle tint for Absent)
