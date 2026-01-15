@@ -55,9 +55,15 @@ class ConfigLoader {
             // WORKAROUND: For now, we assume the user has access.
             // If 403, we fall back to defaults.
 
-            // Fix: Ensure we don't double up on /api if apiBase already has it
-            const normalizedBase = apiBase.replace(/\/api\/?$/, '');
-            const r = await fetch(`${normalizedBase}/api/schools`, {
+            // Fix: Normalize API Base to remove trailing /api or /, and handle 'api' (no slash)
+            // Goal: We want the Root URL (e.g. "" or "http://localhost:3000") so we can append /api/data/schools
+            // If apiBase is "/api", we want "".
+            let normalizedBase = apiBase;
+            if (normalizedBase.endsWith('/api')) normalizedBase = normalizedBase.slice(0, -4);
+            if (normalizedBase.endsWith('/')) normalizedBase = normalizedBase.slice(0, -1);
+
+            // Unified Endpoint: Use /api/data/schools (Same as Dashboard) instead of /api/schools
+            const r = await fetch(`${normalizedBase}/api/data/schools`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 
@@ -89,8 +95,12 @@ class ConfigLoader {
         // Only Company Admin can usually do this
         try {
             // 1. Find existing
-            const normalizedBase = apiBase.replace(/\/api\/?$/, '');
-            const r = await fetch(`${normalizedBase}/api/schools`, {
+            // 1. Find existing
+            let normalizedBase = apiBase;
+            if (normalizedBase.endsWith('/api')) normalizedBase = normalizedBase.slice(0, -4);
+            if (normalizedBase.endsWith('/')) normalizedBase = normalizedBase.slice(0, -1);
+
+            const r = await fetch(`${normalizedBase}/api/data/schools`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const schools = await r.json();
@@ -117,7 +127,7 @@ class ConfigLoader {
                 // and maybe PUT /api/schools/:id or /api/data/schools/:id
                 // Let's try PUT /api/schools/:id
 
-                const r2 = await fetch(`${normalizedBase}/api/schools/${configSchool.id}`, {
+                const r2 = await fetch(`${normalizedBase}/api/data/schools/${configSchool.id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                     body: JSON.stringify(updatePayload)
@@ -134,7 +144,7 @@ class ConfigLoader {
                     password: "system_config_locked"
                 };
 
-                const r2 = await fetch(`${normalizedBase}/api/schools`, {
+                const r2 = await fetch(`${normalizedBase}/api/data/schools`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                     body: JSON.stringify(createPayload)

@@ -2446,7 +2446,8 @@
         const boysItems = [{ name: "BOYS - FORMAL SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Male" }, { name: "BOYS - TRACK T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Male" }, { name: "BOYS - UNIFORM T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Male" }, { name: "BOYS - JERKIN", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Male" }, { name: "BOYS - PULLOVER", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Male" }, { name: "BOYS - FORMAL PANT", cols: ["L1", "L2"], type: "Male" }, { name: "BOYS - TRACK PANT", cols: ["L1", "L2"], type: "Male" }, { name: "BOYS - FORMAL SHORTS", cols: ["L3", "L2"], type: "Male" }, { name: "BOYS - TRACK SHORTS", cols: ["L3", "L2"], type: "Male" }, { name: "BOYS - PANT SPECIAL CASE", cols: ["L1", "L2", "L6", "L7"], type: "Male" }];
         const girlsItems = [{ name: "GIRLS - FORMAL SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Female" }, { name: "GIRLS - TRACK T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Female" }, { name: "GIRLS - UNIFORM T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Female" }, { name: "GIRLS - JERKIN", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Female" }, { name: "GIRLS - FULL SLEEVE SHIRT", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Female" }, { name: "GIRLS - PULLOVER", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Female" }, { name: "GIRLS - KURTHA SHIRT", cols: ["U7", "U2", "U3", "U4", "U6"], type: "Female" }, { name: "GIRLS - SPECIAL FROCKS", cols: ["U7", "U2", "U3", "U4", "U6"], type: "Female" }, { name: "GIRLS - FORMAL PANT", cols: ["L1", "L2"], type: "Female" }, { name: "GIRLS - TRACK PANT", cols: ["L1", "L2"], type: "Female" }, { name: "GIRLS - TRACK SHORTS", cols: ["L3", "L2"], type: "Female" }, { name: "GIRLS - PINOFORE", cols: ["L4", "L2"], type: "Female" }, { name: "GIRLS - SKIRT", cols: ["L5", "L2"], type: "Female" }, { name: "GIRLS - PANT SPECIAL CASE", cols: ["L1", "L2", "L6", "L7"], type: "Female" }];
         // Consolidated Item Definitions for Lookup
-        const itemDefinitions = [...boysItems, ...girlsItems];
+        // CHANGED to let for ConfigLoader support
+        let itemDefinitions = [...boysItems, ...girlsItems];
 
         // Format time ago helper
         function timeAgo(date) {
@@ -2545,6 +2546,16 @@
         }
 
         async function init() {
+            // LOAD CONFIGURATION FIRST
+            try {
+                console.log("Loading System Config...");
+                const configItems = await ConfigLoader.load(API_BASE, token);
+                if (configItems && configItems.items && Array.isArray(configItems.items)) {
+                    itemDefinitions = configItems.items;
+                    console.log("Loaded Dynamic Items:", itemDefinitions.length);
+                }
+            } catch (e) { console.error("Config Load Failed", e); }
+
             await Promise.all([fetchStats(), fetchAllStudents(), fetchSchoolsForSelect(), fetchGlobalPatterns()]);
             renderTailoringData();
             renderCharts();
