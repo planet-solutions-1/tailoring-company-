@@ -649,11 +649,17 @@
                         // Resolve Pattern Name
                         const pName = patternMap[s.pattern_id] || s.pattern_name || s.pattern_code || "-";
 
+                        let schoolDisplay = s.school_name || `School #${s.school_id || '?'}`;
+                        // DEBUG PATTERN
+                        if (i === 0) {
+                            schoolDisplay += ` [PID=${s.pattern_id} (${typeof s.pattern_id}) | MapLen=${Object.keys(patternMap).length} | Val=${patternMap[s.pattern_id]}]`;
+                        }
+
                         return {
                             _internalId: `row_${i}`,
                             dbId: s.id,
                             'Admission No': s.admission_no || `UNK_${i}`,
-                            'School': s.school_name || `School #${s.school_id || '?'}`,
+                            'School': schoolDisplay,
                             'Student Name': s.name,
                             'Dress Name': "Full Set (Generic)",
                             'Pattern Name': pName,
