@@ -1,0 +1,105 @@
+<!-- MEASUREMENT DETAILS MODAL -->
+<div id="measurement-modal"
+    class="fixed inset-0 bg-slate-900/40 backdrop-blur-md hidden z-[9999] flex items-center justify-center p-4 transition-all duration-300">
+    <div
+        class="clay-card relative w-full max-w-4xl p-0 overflow-hidden shadow-2xl animate-in zoom-in-95 duration-300 max-h-[90vh] flex flex-col">
+        <!-- Header -->
+        <div
+            class="bg-gradient-to-r from-purple-50 to-white p-6 border-b border-purple-100/50 flex justify-between items-center shrink-0">
+            <div>
+                <h3 class="text-xl font-black text-gray-800 tracking-tight" id="md-student-name">Student Name</h3>
+                <p class="text-xs text-gray-500 font-bold uppercase tracking-wider mt-1" id="md-student-meta">Class 1 •
+                    Female</p>
+            </div>
+            <button onclick="closeMeasurementModal()"
+                class="w-10 h-10 rounded-xl bg-white hover:bg-purple-50 text-gray-400 hover:text-purple-500 flex items-center justify-center transition-all shadow-sm">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                    </path>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Body -->
+        <div class="p-6 bg-gray-50/50 overflow-y-auto custom-scrollbar flex-1" id="md-content">
+            <!-- Injected Items -->
+        </div>
+    </div>
+</div>
+
+<script>
+    function openMeasurementDetails(studentId) {
+        const s = globalStudents.find(x => x.id == studentId);
+        if (!s) return;
+
+        document.getElementById('md-student-name').innerText = s.name;
+        document.getElementById('md-student-meta').innerText = `${s.class || ''} ${s.section || ''} • ${s.gender}`;
+
+        const m = getMeasurementsSafe(s);
+        const container = document.getElementById('md-content');
+        container.innerHTML = '';
+
+        // Calculate Items
+        const items = [];
+        itemDefinitions.forEach(def => {
+            // Heuristic: Check if ALL required 'primary' columns have data? 
+            // Or at least ONE? The previous logic used "some". Let's stick to that or "every" if strict.
+            // Re-using the logic from getItemQuantitiesSafe but capturing the definition.
+            // Ensure gender matches if strict, though sometimes they cross-wear (e.g. tracks).
+            // Let's filter by gender if present and strict, OR just check measurements.
+            // Assuming Type matches s.gender or is generic.
+
+            // Let's match purely on measurement presence for now to show what we "detected".
+            const primaryCols = def.cols || [];
+            // Check if we have values for the KEY columns
+            // Filter out empty strings
+            const presentCols = primaryCols.filter(c => m[c.toLowerCase()] && String(m[c.toLowerCase()]).trim() !== '' && m[c.toLowerCase()] !== '00');
+
+            if (presentCols.length > 0) {
+                // We detected this item
+                items.push({
+                    name: def.name.replace('BOYS - ', '').replace('GIRLS - ', ''),
+                    full_name: def.name,
+                    cols: primaryCols,
+                    vals: primaryCols.map(c => ({ col: c, val: m[c.toLowerCase()] || '-' }))
+                });
+            }
+        });
+
+        if (items.length === 0) {
+            container.innerHTML = `
+                    <div class="flex flex-col items-center justify-center py-12 text-center opacity-50">
+                        <svg class="w-16 h-16 text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path></svg>
+                        <p class="text-sm font-bold text-gray-500 uppercase tracking-widest">No Items Detected</p>
+                    </div>`;
+        } else {
+            // Render Grid
+            container.innerHTML = `<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    ${items.map(item => `
+                        <div class="clay-card p-5 bg-white border border-gray-100 hover:shadow-lg transition-all duration-300">
+                            <div class="flex justify-between items-start mb-4">
+                                <h4 class="font-bold text-gray-800 text-sm uppercase tracking-wide border-l-4 border-purple-500 pl-3">${item.name}</h4>
+                                <span class="bg-purple-100 text-purple-600 text-[10px] font-black px-2 py-1 rounded">QTY: 1</span>
+                            </div>
+                            
+                            <!-- Measurements Grid -->
+                            <div class="grid grid-cols-4 gap-2">
+                                ${item.vals.map(v => `
+                                    <div class="bg-gray-50 rounded-lg p-2 text-center border border-gray-100">
+                                        <div class="text-[9px] font-bold text-gray-400 uppercase mb-0.5">${v.col}</div>
+                                        <div class="text-sm font-mono font-bold text-gray-700 bg-white rounded shadow-sm border border-gray-100/50">${v.val}</div>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>`;
+        }
+
+        document.getElementById('measurement-modal').classList.remove('hidden');
+    }
+
+    function closeMeasurementModal() {
+        document.getElementById('measurement-modal').classList.add('hidden');
+    }
+</script>
