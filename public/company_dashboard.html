@@ -1617,9 +1617,7 @@
                                                 </path>
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                     d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                            </svg>
-                                            <span id="td-school-meta">0 Students • 0 Patterns</span>
-                                        </span>
+                                                <span id="td-school-meta">Checking Data...</span>
                                     </div>
                                 </div>
                             </div>
@@ -2896,7 +2894,7 @@
             const patterns = globalPatterns.filter(p => p.school_id == sId);
 
             // Update Header Meta
-            document.getElementById('td-school-meta').innerText = `${students.length} Students • ${patterns.length} Patterns`;
+            document.getElementById('td-school-meta').innerText = `${students.length} Students | ${patterns.length} Patterns`;
             document.getElementById('td-school-badge').innerText = 'PRODUCTION'; // Or fetch actual status
 
             // 1. Render Students List
