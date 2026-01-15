@@ -546,6 +546,8 @@
         ];
         const allItems = [...boysItems, ...girlsItems];
 
+        let lastPatternError = "None";
+
         async function fetchPatterns() {
             try {
                 // Try /api prefix first
@@ -555,16 +557,21 @@
                     pats.forEach(p => {
                         patternMap[p.id] = p.name || p.code || "Unknown Pattern";
                     });
-                    console.log("Patterns mapped:", Object.keys(patternMap).length);
+                    lastPatternError = "Success (API)";
                 } else {
+                    lastPatternError = `API Failed (${r.status})`;
                     console.warn("Retrying legacy pattern fetch...");
                     const r2 = await fetch(`${API_BASE}/data/patterns/all`, { headers: { 'Authorization': `Bearer ${token}` } });
                     if (r2.ok) {
                         const pats = await r2.json();
                         pats.forEach(p => { patternMap[p.id] = p.name || p.code; });
+                        lastPatternError = "Success (Legacy)";
+                    } else {
+                        lastPatternError += ` | Legacy Failed (${r2.status})`;
                     }
                 }
             } catch (e) {
+                lastPatternError = `Exception: ${e.message}`;
                 console.error("Pattern Fetch Failed", e);
             }
         }
@@ -652,7 +659,7 @@
                         let schoolDisplay = s.school_name || `School #${s.school_id || '?'}`;
                         // DEBUG PATTERN
                         if (i === 0) {
-                            schoolDisplay += ` [PID=${s.pattern_id} (${typeof s.pattern_id}) | MapLen=${Object.keys(patternMap).length} | Val=${patternMap[s.pattern_id]}]`;
+                            schoolDisplay += ` [PID=${s.pattern_id} | MapLen=${Object.keys(patternMap).length} | Err=${lastPatternError}]`;
                         }
 
                         return {
