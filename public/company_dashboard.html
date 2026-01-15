@@ -1617,7 +1617,7 @@
                                                 </path>
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                     d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                                                <span id="td-school-meta">Checking Data...</span>
+                                                <span id="td-school-meta-debug">Checking Data...</span>
                                     </div>
                                 </div>
                             </div>
@@ -2901,7 +2901,9 @@
             const patterns = globalPatterns.filter(p => p.school_id == sId);
 
             // Update Header Meta
-            document.getElementById('td-school-meta').innerText = `${students.length} Students | ${patterns.length} Patterns`;
+            const metaTag = document.getElementById('td-school-meta-debug');
+            if (metaTag) metaTag.innerHTML = `<span class="text-blue-600">${students.length} Students</span> | <span class="text-purple-600">${patterns.length} Patterns</span>`;
+            else console.error("Meta Tag Not Found");
             document.getElementById('td-school-badge').innerText = 'PRODUCTION'; // Or fetch actual status
 
             // 1. Render Students List
