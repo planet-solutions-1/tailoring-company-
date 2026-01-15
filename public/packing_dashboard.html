@@ -619,23 +619,31 @@
                     console.log("Available Keys on first student:", Object.keys(students[0]));
 
                     // Fallback: Show students as single rows (Generic)
-                    allData = students.map((s, i) => ({
-                        _internalId: `row_${i}`,
-                        dbId: s.id,
-                        'Admission No': s.admission_no || `UNK_${i}`,
-                        'School': s.school_name || `School #${s.school_id || '?'}`,
-                        'Student Name': s.name,
-                        'Dress Name': "Full Set (Generic)",
-                        'Pattern Name': s.pattern_name || s.pattern_code || "-",
-                        'Class': s.class || "-",
-                        'Section': s.section || "-",
-                        'House': s.house || "-",
-                        'Gender': s.gender || "-",
-                        'Roll No': s.roll_no || "-",
-                        'Quantity': 1,
-                        'Status': s.order_status || "Pending",
-                        _isPacked: s.is_packed // Inherit from student
-                    }));
+                    allData = students.map((s, i) => {
+                        let schoolDisplay = s.school_name || `School #${s.school_id || '?'}`;
+                        // DEBUG: Show keys in the first row's school column
+                        if (i === 0) {
+                            schoolDisplay += ` (Keys: ${Object.keys(s).filter(k => k.toLowerCase().includes('pattern')).join(',') || 'No Pattern Keys'})`;
+                        }
+
+                        return {
+                            _internalId: `row_${i}`,
+                            dbId: s.id,
+                            'Admission No': s.admission_no || `UNK_${i}`,
+                            'School': schoolDisplay,
+                            'Student Name': s.name,
+                            'Dress Name': "Full Set (Generic)",
+                            'Pattern Name': s.pattern_name || s.pattern_code || s.Pattern || s.pattern || "-",
+                            'Class': s.class || "-",
+                            'Section': s.section || "-",
+                            'House': s.house || "-",
+                            'Gender': s.gender || "-",
+                            'Roll No': s.roll_no || "-",
+                            'Quantity': 1,
+                            'Status': s.order_status || "Pending",
+                            _isPacked: s.is_packed // Inherit from student
+                        }
+                    });
                 }
 
                 // DEBUG: If still empty (no students?), show error
