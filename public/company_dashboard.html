@@ -3417,7 +3417,8 @@
                         </td>
                     </tr>
                 `).join('');
-            document.getElementById('td-school-meta').innerText = `${data.length} Students Shown`;
+            const metaEl = document.getElementById('td-school-meta');
+            if (metaEl) metaEl.innerText = `${data.length} Students Shown`;
         }
 
         function renderLogsTable(logs) {
