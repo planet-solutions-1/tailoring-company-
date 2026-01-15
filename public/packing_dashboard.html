@@ -511,6 +511,38 @@
         }
 
 
+
+        // --- ITEM DEFINITIONS (Synced with Planet Editor) ---
+        const boysItems = [
+            { name: "BOYS - FORMAL SHIRT", type: "Male" },
+            { name: "BOYS - TRACK T-SHIRT", type: "Male" },
+            { name: "BOYS - UNIFORM T-SHIRT", type: "Male" },
+            { name: "BOYS - JERKIN", type: "Male" },
+            { name: "BOYS - PULLOVER", type: "Male" },
+            { name: "BOYS - FORMAL PANT", type: "Male" },
+            { name: "BOYS - TRACK PANT", type: "Male" },
+            { name: "BOYS - FORMAL SHORTS", type: "Male" },
+            { name: "BOYS - TRACK SHORTS", type: "Male" },
+            { name: "BOYS - PANT SPECIAL CASE", type: "Male" },
+        ];
+        const girlsItems = [
+            { name: "GIRLS - FORMAL SHIRT", type: "Female" },
+            { name: "GIRLS - TRACK T-SHIRT", type: "Female" },
+            { name: "GIRLS - UNIFORM T-SHIRT", type: "Female" },
+            { name: "GIRLS - JERKIN", type: "Female" },
+            { name: "GIRLS - FULL SLEEVE SHIRT", type: "Female" },
+            { name: "GIRLS - PULLOVER", type: "Female" },
+            { name: "GIRLS - KURTHA SHIRT", type: "Female" },
+            { name: "GIRLS - SPECIAL FROCKS", type: "Female" },
+            { name: "GIRLS - FORMAL PANT", type: "Female" },
+            { name: "GIRLS - TRACK PANT", type: "Female" },
+            { name: "GIRLS - TRACK SHORTS", type: "Female" },
+            { name: "GIRLS - PINOFORE", type: "Female" },
+            { name: "GIRLS - SKIRT", type: "Female" },
+            { name: "GIRLS - PANT SPECIAL CASE", type: "Female" },
+        ];
+        const allItems = [...boysItems, ...girlsItems];
+
         async function fetchPackingData() {
             try {
                 // Fetch Students
@@ -518,26 +550,93 @@
                 if (!r.ok) throw new Error("Failed to fetch students");
                 const students = await r.json();
 
-                // Map to Dashboard Format
-                allData = students.map((s, i) => ({
-                    id: s.id,
-                    'Admission No': s.admission_no || `UNK_${i}`,
-                    'Student Name': s.name,
-                    'Class': s.class,
-                    'Section': s.section,
-                    'House': s.house,
-                    'Gender': s.gender,
-                    'Roll No': s.roll_no,
-                    'Quantity': 1,
-                    'Pattern Name': s.pattern_name,
-                    'Pattern Code': s.pattern_code, // If available
-                    _isPacked: s.is_packed // Internal status
-                }));
+                // EXPLODE: Map 1 Student -> Many Items
+                allData = [];
+                let rowId = 0;
 
-                // Init Packed State
+                students.forEach((s, idx) => {
+                    // Fallbacks
+                    const sName = s.name || "Unknown";
+                    const adm = s.admission_no || `UNK_${idx}`;
+                    const school = s.school_name || `School #${s.school_id || '?'}`;
+                    const pCode = s.pattern_code || "-";
+                    const gender = s.gender || "-";
+
+                    // Iterate all possible items
+                    allItems.forEach(item => {
+                        // Key format: "Qty_BOYS - FORMAL SHIRT"
+                        const qtyKey = `Qty_${item.name}`;
+                        // Also check for raw "Qty" if it's a simple record
+                        // Check if quantity exists and is valid (>0)
+                        let qty = s[qtyKey];
+                        // Parsing: could be string "1" or number 1
+                        if (qty && !isNaN(qty) && Number(qty) > 0) {
+
+                            // Create a row for this item
+                            allData.push({
+                                _internalId: `row_${rowId++}`, // UI Key
+                                dbId: s.id, // For API updates
+                                'Admission No': adm,
+                                'School': school,
+                                'Student Name': sName,
+                                'Pattern Name': pCode, // Assuming Code is the "Pattern" identifier
+                                'Dress Name': item.name,
+                                'Roll No': s.roll_no || "-",
+                                'Section': s.section || "-",
+                                'Class': s.class || "-",
+                                'House': s.house || "-",
+                                'Gender': gender,
+                                'Quantity': Number(qty),
+                                'Status': s.order_status || "Pending",
+                                // Status Tracking:
+                                // Since 'is_packed' is a boolean on the STUDENT, 
+                                // it applies to ALL items for that student currently.
+                                // Ideal: 'is_packed' per item. 
+                                // Current: Inherit from student.
+                                _isPacked: s.is_packed
+                            });
+                        }
+                    });
+                    // If no specific items found (Legacy Mode or Simple Mode), 
+                    // maybe just show one row? 
+                    // For now, if allData didn't grow, maybe add a generic row?
+                    // (Skipping for now to enforce Item logic)
+                });
+
+                if (allData.length === 0 && students.length > 0) {
+                    console.warn("No items found in student data. Check Qty keys.");
+                    // Fallback: Show students as single rows if no items detected
+                    allData = students.map((s, i) => ({
+                        _internalId: `row_${i}`,
+                        dbId: s.id,
+                        'Admission No': s.admission_no,
+                        'School': s.school_name || "",
+                        'Student Name': s.name,
+                        'Dress Name': "Full Set (Legacy)",
+                        'Pattern Name': s.pattern_code,
+                        'Class': s.class,
+                        'Section': s.section,
+                        'House': s.house,
+                        'Gender': s.gender,
+                        'Roll No': s.roll_no,
+                        'Quantity': 1,
+                        'Status': s.order_status,
+                        _isPacked: s.is_packed
+                    }));
+                }
+
+                // Init Packed State (Local Mapping)
+                // We map by Admission + Item Name to be specific if we ever support partial packing
+                // But for now, packedState logic relies on AdmissionNo.
+                // Let's stick to AdmissionNo for the Toggle to keep it simple: 
+                // Packing ONE item packs the STUDENT (all items).
+                // Or do we want item-level packing? 
+                // The API `PUT /students/:id {is_packed}` packs the WHOLE student.
+                // So all items for that student will toggle together.
+
                 packedState = {};
-                allData.forEach(s => {
-                    if (s._isPacked) packedState[s['Admission No']] = true;
+                allData.forEach(row => {
+                    if (row._isPacked) packedState[row['Admission No']] = true;
                 });
 
                 // UI Ready
@@ -552,7 +651,7 @@
                 document.getElementById('statsContainer').classList.add('flex');
 
                 populateFilters();
-                applyFilters();
+                applyFilters(); // Renders the table
 
                 // Restore Panel
                 const panelState = localStorage.getItem('planet_packing_progress_panel');
@@ -1155,72 +1254,79 @@
         }
 
         function renderTable() {
-            const tbody = document.getElementById('tableBody');
-            tbody.innerHTML = '';
+            const currentItem = filteredData[0];
+            const isMobile = window.innerWidth < 768;
 
-            const emptyState = document.getElementById('emptyState');
+            const tableHead = document.getElementById('tableHead');
+            const tableBody = document.getElementById('tableBody');
+
+            // Define Column Order
+            const columns = ['Admission No', 'Student Name', 'School', 'Dress Name', 'Pattern Name', 'Quantity', 'Class', 'Section', 'Roll No', 'House', 'Gender', 'Status'];
+
+            // Inject Header
+            let headHTML = `<tr><th class="p-4 text-left font-semibold text-gray-500 w-12 sticky left-0 bg-white z-10 border-b border-gray-200">Pack</th>`;
+            columns.forEach(col => {
+                headHTML += `<th class="p-4 text-left font-semibold text-gray-500 cursor-pointer border-b border-gray-200 whitespace-nowrap" onclick="sortData('${col}')">${col}</th>`;
+            });
+            headHTML += '</tr>';
+
+            if (tableHead) tableHead.innerHTML = headHTML;
+
+            // Render Body
             if (filteredData.length === 0) {
-                emptyState.classList.remove('hidden');
+                tableBody.innerHTML = `<tr><td colspan="${columns.length + 1}" class="p-8 text-center text-gray-400">No matching records found.</td></tr>`;
+                document.getElementById('mobileList').innerHTML = '<div class="text-center p-8 text-gray-400">No records found</div>';
                 return;
-            } else {
-                emptyState.classList.add('hidden');
             }
 
-            // Standard Keys + Individual Measurement Keys to IGNORE
-            const excludedKeys = new Set([
-                'S.No', 'Admission No', 'Student Name', 'Class', 'Section', 'House', 'Gender',
-                'Pattern', 'Pattern Code', '_originalIndex', 'Absent/Present'
-            ]);
+            // Desktop View
+            tableBody.innerHTML = filteredData.map(row => {
+                const isPacked = packedState[row['Admission No']];
+                const rowClass = isPacked ? 'bg-green-50' : 'hover:bg-gray-50';
 
-            // Regex for U1-U8, L1-L8 style keys (and those with descriptions like "U1 (Length)")
-            const isMeasurementKey = (key) => /^[UL]\d/.test(key);
+                let tds = `<td class="p-4 sticky left-0 bg-white z-10 border-b border-gray-100/50">
+                    <input type="checkbox" onchange="togglePack('${row['Admission No']}', this.checked)" ${isPacked ? 'checked' : ''} class="h-4 w-4 text-green-600 rounded border-gray-300 focus:ring-green-500 cursor-pointer">
+                </td>`;
 
-            const mobileList = document.getElementById('mobileList');
-            mobileList.innerHTML = '';
+                columns.forEach(col => {
+                    let val = row[col];
+                    if (col === 'Dress Name') val = `<span class="font-medium text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-100 text-xs">${val}</span>`;
+                    else if (col === 'Student Name') val = `<span class="font-bold text-gray-800">${val}</span>`;
+                    else if (col === 'Status') val = `<span class="text-xs font-bold px-2 py-0.5 rounded-full ${val === 'Packed' ? 'bg-green-100 text-green-700' : 'bg-yellow-50 text-yellow-700'}">${val}</span>`;
 
-            filteredData.forEach(item => {
-                const adm = item['Admission No'];
-                const isPacked = !!packedState[adm];
-
-                // --- Desktop Row ---
-                const tr = document.createElement('tr');
-                tr.id = `row-${adm}`;
-                tr.className = `border-b border-gray-100 transition-colors ${isPacked ? 'packed-row' : ''}`;
-
-                // Smart Item Detection
-                let mainItemHTML = '';
-                let patternHTML = '';
-
-                if (item['Pattern Code']) {
-                    patternHTML = `<div class="text-xs text-gray-500 mb-1">Pattern: <span class="font-bold text-gray-700">${item['Pattern Code']}</span></div>`;
-                }
-
-                // Find "The Item Column" (e.g., "BOYS - SHIRT")
-                Object.keys(item).forEach(key => {
-                    if (!excludedKeys.has(key) && !isMeasurementKey(key)) {
-                        // This is likely our Item Name
-                        const val = item[key];
-                        if (val) {
-                            mainItemHTML += `
-                                <div class="mb-1.5">
-                                    <div class="text-[11px] font-bold text-blue-600 uppercase tracking-wide bg-blue-50 w-fit px-1.5 py-0.5 rounded border border-blue-100">
-                                        ${key}
-                                    </div>
-                                    <div class="text-xs font-mono text-gray-800 mt-0.5 ml-0.5">${val.toString().replace(/\b00\b/g, '-').replace(/\b0\b/g, '-')}</div>
-                                </div>
-                            `;
-                        }
-                    }
+                    tds += `<td class="p-4 text-sm text-gray-600 border-b border-gray-100/50 whitespace-nowrap">${val || '-'}</td>`;
                 });
 
-                // If no specific item column found, fallback to just pattern
-                if (!mainItemHTML && patternHTML) {
-                    mainItemHTML = patternHTML;
-                    patternHTML = ''; // Don't dup
-                }
+                return `<tr id="row-${row['Admission No']}" class="transition-colors ${rowClass} group">${tds}</tr>`;
+            }).join('');
+
+            // Mobile View (Cards)
+            const mobileList = document.getElementById('mobileList');
+            if (mobileList) {
+                mobileList.innerHTML = filteredData.map(row => {
+                    const isPacked = packedState[row['Admission No']];
+                    return `
+                        <div id="card-${row['Admission No']}" class="bg-white p-4 rounded-xl shadow-sm border ${isPacked ? 'border-green-200 bg-green-50/20' : 'border-gray-200'} active:scale-[0.99] transition-all">
+                            <div class="flex justify-between items-start mb-2">
+                                <div>
+                                    <div class="font-bold text-base text-gray-800">${row['Student Name']}</div>
+                                    <div class="text-xs text-gray-400 font-mono">#${row['Admission No']}</div>
+                                </div>
+                                <input type="checkbox" onchange="togglePack('${row['Admission No']}', this.checked)" ${isPacked ? 'checked' : ''} class="h-5 w-5 text-green-600 rounded">
+                            </div>
+                            <div class="flex flex-wrap gap-2 text-xs mb-3">
+                                <span class="px-2 py-1 bg-blue-50 text-blue-700 rounded border border-blue-100 font-medium">${row['Dress Name']}</span>
+                                <span class="px-2 py-1 bg-gray-100 text-gray-600 rounded">${row['Class']}-${row['Section']}</span>
+                                <span class="px-2 py-1 bg-purple-50 text-purple-600 rounded border border-purple-100">${row['School']}</span>
+                            </div>
+                         </div>
+                     `;
+                }).join('');
+            }
+        }
 
 
-                tr.innerHTML = `
+        tr.innerHTML = `
                     <td class="p-3 text-center cursor-pointer hover:bg-blue-50 transition-colors select-none"
                         onclick="togglePack('${adm}', !packedState['${adm}']); selectRow(${filteredData.indexOf(item)});"
                         title="Click to Toggle Status">
@@ -1232,11 +1338,11 @@
                     </td>
                     <td class="p-3 font-medium text-gray-900">
                         ${item['_isMissingAdm'] ?
-                        `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-red-50 text-red-600 border border-red-100 text-[10px] font-bold tracking-wide uppercase">
+                `<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-red-50 text-red-600 border border-red-100 text-[10px] font-bold tracking-wide uppercase">
                                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
                                 MISSING ID
                              </span>`
-                        : adm}
+                : adm}
                     </td>
                     <td class="p-3 font-medium text-gray-900">${item['Student Name'] || '-'}</td>
                     <td class="p-3"><span class="bg-gray-100 text-gray-700 px-2 py-0.5 rounded text-xs font-bold border border-gray-200">${item['Class'] || '-'}</span></td>
@@ -1249,22 +1355,22 @@
                         ${patternHTML}
                     </td>
                 `;
-                tbody.appendChild(tr);
+        tbody.appendChild(tr);
 
-                // --- Mobile Card ---
-                const card = document.createElement('div');
-                card.id = `card-${adm}`;
-                // If packed, add opacity styling
-                card.className = `bg-white p-4 rounded-lg shadow-sm border ${isPacked ? 'border-green-200 bg-green-50/50' : 'border-gray-200'} transition-all cursor-pointer active:scale-[0.99]`;
-                card.onclick = (e) => {
-                    // Prevent double triggering if clicked directly on checkbox (though we made it pointer-events-none above, usually good practice to handle)
-                    if (e.target.tagName !== 'INPUT') {
-                        togglePack(adm, !packedState[adm]);
-                        selectRow(filteredData.indexOf(item));
-                    }
-                };
+        // --- Mobile Card ---
+        const card = document.createElement('div');
+        card.id = `card-${adm}`;
+        // If packed, add opacity styling
+        card.className = `bg-white p-4 rounded-lg shadow-sm border ${isPacked ? 'border-green-200 bg-green-50/50' : 'border-gray-200'} transition-all cursor-pointer active:scale-[0.99]`;
+        card.onclick = (e) => {
+            // Prevent double triggering if clicked directly on checkbox (though we made it pointer-events-none above, usually good practice to handle)
+            if (e.target.tagName !== 'INPUT') {
+                togglePack(adm, !packedState[adm]);
+                selectRow(filteredData.indexOf(item));
+            }
+        };
 
-                card.innerHTML = `
+        card.innerHTML = `
                     <div class="flex justify-between items-start mb-3">
                         <div class="flex gap-3 items-center">
                              <div class="relative">
@@ -1281,16 +1387,6 @@
                              <span class="text-[10px] font-bold uppercase text-gray-400 tracking-wider">${item['House'] || ''}</span>
                              <span class="text-xs font-bold text-blue-600">Qty: ${item['Quantity'] || '1'}</span>
                         </div>
-                    </div>
-                    
-                    <div class="pt-3 border-t border-gray-100 border-dashed">
-                        ${mainItemHTML}
-                        ${patternHTML}
-                    </div>
-                `;
-                mobileList.appendChild(card);
-            });
-        }
 
         function updateStats() {
             const total = allData.length;
@@ -1339,7 +1435,7 @@
                 if (btn) {
                     btn.classList.add('bg-blue-50', 'text-blue-600');
                     btn.title = "Collapse Details";
-                    btn.innerHTML = `<svg class="pointer-events-none" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"></polyline></svg>`;
+                    btn.innerHTML = `< svg class="pointer-events-none" width = "18" height = "18" viewBox = "0 0 24 24" fill = "none" stroke = "currentColor" stroke - width="2.5" > <polyline points="18 15 12 9 6 15"></polyline></svg > `;
                 }
             } else {
                 panel.classList.add('hidden');
@@ -1347,12 +1443,12 @@
                 if (btn) {
                     btn.classList.remove('bg-blue-50', 'text-blue-600');
                     btn.title = "Expand Details";
-                    btn.innerHTML = `<svg class="pointer-events-none" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>`;
+                    btn.innerHTML = `< svg class="pointer-events-none" width = "18" height = "18" viewBox = "0 0 24 24" fill = "none" stroke = "currentColor" stroke - width="2.5" > <polyline points="6 9 12 15 18 9"></polyline></svg > `;
                 }
             }
 
             // Save state
-            localStorage.setItem(STORAGE_KEY_PREFIX + 'progress_panel', newState);
+            localStorage.setItem('planet_packing_progress_panel', newState);
         }
 
         function renderClassProgress() {
@@ -1366,7 +1462,10 @@
             });
 
             // Sort Classes
-            const sortedClasses = Object.keys(stats).sort((a, b) => parseClass(a) - parseClass(b));
+            // Use existing parseClass helper if available, else simple sort
+            const sortedClasses = Object.keys(stats).sort((a, b) => {
+                 return (parseInt(a) || 0) - (parseInt(b) || 0);
+            });
 
             const container = document.getElementById('classProgressGrid');
             if (!container) return;
@@ -1379,7 +1478,7 @@
                 else if (pct < 30) colorClass = 'bg-orange-500';
 
                 return `
-                    <div class="bg-white p-2 rounded border border-gray-100 shadow-sm">
+            < div class="bg-white p-2 rounded border border-gray-100 shadow-sm" >
                         <div class="flex justify-between items-end mb-1">
                             <div class="text-xs font-bold text-gray-700">Class ${cls}</div>
                             <div class="text-[10px] font-mono text-gray-500">${s.packed}/${s.total}</div>
@@ -1388,8 +1487,8 @@
                             <div class="${colorClass} h-2 rounded-full transition-all duration-500" style="width: ${pct}%"></div>
                         </div>
                         <div class="text-[9px] text-right mt-0.5 text-gray-400 font-medium">${pct}% Done</div>
-                    </div>
-                `;
+                    </div >
+            `;
             }).join('');
         }
 
@@ -1419,7 +1518,7 @@
             // Sticker Size: 70mm x 46mm (approx)
             // Margins: Top/Bottom ~9mm, Left/Right ~0mm
 
-            if (!confirm(`Generate stickers for ${filteredData.length} visible students? This creates an A4 PDF with 18 labels per sheet.`)) return;
+            if (!confirm(`Generate stickers for ${ filteredData.length } visible students ? This creates an A4 PDF with 18 labels per sheet.`)) return;
 
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
@@ -1492,38 +1591,37 @@
                 const roll = item['Roll No'] || "-";
 
                 // Line 1: Class & Sec
-                doc.text(`Class: ${cls} ${sec}`, x + (labelWidth / 2), y + 19, { align: 'center' });
+                doc.text(`Class: ${ cls } ${ sec } `, x + (labelWidth / 2), y + 19, { align: 'center' });
 
                 // Line 2: Adm & Roll
                 doc.setFontSize(8);
                 doc.setTextColor(80);
-                doc.text(`Adm: ${adm}   |   Roll: ${roll}`, x + (labelWidth / 2), y + 23, { align: 'center' });
+                doc.text(`Adm: ${ adm } | Roll: ${ roll } `, x + (labelWidth / 2), y + 23, { align: 'center' });
 
                 // House Pill (if exists)
                 if (house) {
                     doc.setFontSize(7);
                     doc.setTextColor(100);
-                    doc.text(`(${house} House)`, x + (labelWidth / 2), y + 27, { align: 'center' });
+                    doc.text(`(${ house } House)`, x + (labelWidth / 2), y + 27, { align: 'center' });
                 }
 
                 // 5. Footer / Item Info (Left Aligned)
                 const pattern = item['Pattern Name'] || "";
-                const desc = item['Description'] || "";
+                const desc = item['Dress Name'] || ""; 
 
                 let footerY = y + 32;
                 doc.setFontSize(8);
                 doc.setTextColor(50);
                 doc.setFont('helvetica', 'bold');
 
-                if (pattern) {
-                    doc.text(pattern.substring(0, 28), x + 4, footerY);
+                if (desc) { // Prioritize Dress Name
+                    doc.text(desc.substring(0, 28), x + 4, footerY);
                     footerY += 4;
                 }
-
-                if (desc) {
+                 if (pattern) {
                     doc.setFontSize(7);
                     doc.setFont('helvetica', 'normal');
-                    doc.text(desc.substring(0, 35), x + 4, footerY);
+                    doc.text(pattern.substring(0, 35), x + 4, footerY);
                 }
 
                 // 6. Quantity Badge (Bottom Right)
@@ -1544,7 +1642,7 @@
                 doc.text("QTY", x + labelWidth - 9, y + labelHeight - 4.5, { align: 'center' });
             });
 
-            doc.save(`Stickers_18up_${new Date().toISOString().slice(0, 10)}.pdf`);
+            doc.save(`Stickers_18up_${ new Date().toISOString().slice(0, 10) }.pdf`);
         }
 
         window.onload = init;
