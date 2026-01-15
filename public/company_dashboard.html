@@ -3602,9 +3602,13 @@
                 // Robust check for Absent
                 const isAbs = (st) => {
                     const val = st.is_present;
-                    // Check explicit false, string 'false', 0, or status text
+                    // Check 'is_absent' (from backend) OR 'is_present' (legacy)
+                    if (st.is_absent === true || st.is_absent === 1 || String(st.is_absent) === 'true') return true;
+
+                    // Fallback to existing checks
                     return val === false || val === 0 || String(val).toLowerCase() === 'false' ||
-                        st.status === 'Absent' || st.order_status === 'Absent';
+                        st.status === 'Absent' || st.order_status === 'Absent' ||
+                        st['Absent/Present'] === 'Absent';
                 };
 
                 if (attendance === 'present') data = data.filter(st => !isAbs(st));
@@ -3615,11 +3619,11 @@
                 // Helper to check for real values
                 const hasRealValues = (st) => {
                     const m = getMeasurementsSafe(st);
-                    // Check if there is at least one value that is NOT empty, null, '-', '0', or 0
+                    // Check if there is at least one value that is NOT empty, null, '-', '0', '00', '0.0'
                     return Object.values(m).some(v => {
                         if (!v) return false; // null, undefined, 0, ""
                         const s = String(v).trim();
-                        return s !== '' && s !== '-' && s !== '0';
+                        return s !== '' && s !== '-' && s !== '0' && s !== '00' && s !== '0.0';
                     });
                 };
 
@@ -3700,14 +3704,18 @@
                 let rowClass = 'hover:bg-gray-50 transition-colors border-b border-gray-50';
 
                 // Check Attendance
-                const isAbsent = s.is_present === false || s.is_present === 0 || String(s.is_present).toLowerCase() === 'false' || s.status === 'Absent' || s.order_status === 'Absent';
+                // Include is_absent check from backend
+                const isAbsent = s.is_absent === true || s.is_absent === 1 || String(s.is_absent) === 'true' ||
+                    s.is_present === false || s.is_present === 0 || String(s.is_present).toLowerCase() === 'false' ||
+                    s.status === 'Absent' || s.order_status === 'Absent' ||
+                    s['Absent/Present'] === 'Absent';
 
                 // Check Measurements (Strict check for values)
                 const m = getMeasurementsSafe(s);
                 const hasMeasurements = Object.values(m).some(v => {
                     if (!v) return false; // null, undefined, 0, ""
                     const str = String(v).trim();
-                    return str !== '' && str !== '-' && str !== '0';
+                    return str !== '' && str !== '-' && str !== '0' && str !== '00' && str !== '0.0';
                 });
 
                 // Visual Indicators for Row (Optional: Keep subtle tint for Absent)
