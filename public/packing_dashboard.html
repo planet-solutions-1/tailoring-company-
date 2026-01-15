@@ -604,25 +604,36 @@
                 });
 
                 if (allData.length === 0 && students.length > 0) {
-                    console.warn("No items found in student data. Check Qty keys.");
-                    // Fallback: Show students as single rows if no items detected
+                    console.warn("No item quantities found. Falling back to generic rows.");
+                    console.log("Available Keys on first student:", Object.keys(students[0]));
+
+                    // Fallback: Show students as single rows (Generic)
                     allData = students.map((s, i) => ({
                         _internalId: `row_${i}`,
                         dbId: s.id,
-                        'Admission No': s.admission_no,
-                        'School': s.school_name || "",
+                        'Admission No': s.admission_no || `UNK_${i}`,
+                        'School': s.school_name || `School #${s.school_id || '?'}`,
                         'Student Name': s.name,
-                        'Dress Name': "Full Set (Legacy)",
-                        'Pattern Name': s.pattern_code,
-                        'Class': s.class,
-                        'Section': s.section,
-                        'House': s.house,
-                        'Gender': s.gender,
-                        'Roll No': s.roll_no,
+                        'Dress Name': "Full Set (Generic)",
+                        'Pattern Name': s.pattern_name || s.pattern_code || "-",
+                        'Class': s.class || "-",
+                        'Section': s.section || "-",
+                        'House': s.house || "-",
+                        'Gender': s.gender || "-",
+                        'Roll No': s.roll_no || "-",
                         'Quantity': 1,
-                        'Status': s.order_status,
-                        _isPacked: s.is_packed
+                        'Status': s.order_status || "Pending",
+                        _isPacked: s.is_packed // Inherit from student
                     }));
+                }
+
+                // DEBUG: If still empty (no students?), show error
+                if (allData.length === 0) {
+                    // Maybe authentication failed or school has no students?
+                    // Verify by checking student length
+                    if (students.length === 0) {
+                        alert("No students found for this school in the database.");
+                    }
                 }
 
                 // Init Packed State (Local Mapping)
@@ -1519,7 +1530,8 @@
             // Sticker Size: 70mm x 46mm (approx)
             // Margins: Top/Bottom ~9mm, Left/Right ~0mm
 
-            if (!confirm(`Generate stickers for ${ filteredData.length } visible students ? This creates an A4 PDF with 18 labels per sheet.`)) return;
+            var msg = "Generate stickers for " + filteredData.length + " visible students? This creates an A4 PDF with 18 labels per sheet.";
+            if (!confirm(msg)) return;
 
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
@@ -1592,18 +1604,18 @@
                 const roll = item['Roll No'] || "-";
 
                 // Line 1: Class & Sec
-                doc.text(`Class: ${ cls } ${ sec } `, x + (labelWidth / 2), y + 19, { align: 'center' });
+                doc.text("Class: " + cls + " " + sec, x + (labelWidth / 2), y + 19, { align: 'center' });
 
                 // Line 2: Adm & Roll
                 doc.setFontSize(8);
                 doc.setTextColor(80);
-                doc.text(`Adm: ${ adm } | Roll: ${ roll } `, x + (labelWidth / 2), y + 23, { align: 'center' });
+                doc.text("Adm: " + adm + " | Roll: " + roll, x + (labelWidth / 2), y + 23, { align: 'center' });
 
                 // House Pill (if exists)
                 if (house) {
                     doc.setFontSize(7);
                     doc.setTextColor(100);
-                    doc.text(`(${ house } House)`, x + (labelWidth / 2), y + 27, { align: 'center' });
+                    doc.text("(" + house + " House)", x + (labelWidth / 2), y + 27, { align: 'center' });
                 }
 
                 // 5. Footer / Item Info (Left Aligned)
