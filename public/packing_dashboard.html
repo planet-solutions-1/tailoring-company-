@@ -550,49 +550,25 @@
 
         async function fetchPatterns() {
             try {
-                // 1. Try Global Patterns (Admin Access)
-                const r = await fetch(`${API_BASE}/api/data/patterns/all`, { headers: { 'Authorization': `Bearer ${token}` } });
+                // Correct Endpoint for School Users: /api/data/patterns (My Patterns)
+                // (Previously failed with /all which is Admin only)
+                // Using /api/data/patterns which returns patterns for the logged-in user.
+                const r = await fetch(`${API_BASE}/api/data/patterns`, { headers: { 'Authorization': `Bearer ${token}` } });
 
                 if (r.ok) {
                     const pats = await r.json();
                     pats.forEach(p => {
+                        // Map ID -> Name
                         patternMap[p.id] = p.name || p.code || "Unknown Pattern";
                     });
-                    lastPatternError = "Success (Global)";
-                } else if (r.status === 403) {
-                    // 2. Access Denied (Likely School Admin) - Fetch OWN School Details
-                    const schoolId = localStorage.getItem('schoolId') || sessionStorage.getItem('schoolId');
-                    if (schoolId) {
-                        lastPatternError = `Global 403, Trying School #${schoolId}...`;
-                        const r2 = await fetch(`${API_BASE}/api/data/schools/${schoolId}`, { headers: { 'Authorization': `Bearer ${token}` } });
-                        if (r2.ok) {
-                            const school = await r2.json();
-                            // Expect school object to have pattern_id and pattern_name
-                            if (school.pattern_id && school.pattern_name) {
-                                patternMap[school.pattern_id] = school.pattern_name;
-                                lastPatternError = "Success (School)";
-                            } else if (school.Pattern) {
-                                // Fallback: Sometimes returned as just 'Pattern' string?
-                                // We need ID-Name map. If we only get NAME, we can't map ID.
-                                // But wait, the student has pattern_id.
-                                // If school.pattern_id matches student.pattern_id, use school.Pattern.
-                                if (school.pattern_id) {
-                                    patternMap[school.pattern_id] = school.Pattern;
-                                    lastPatternError = "Success (School.Pattern)";
-                                } else {
-                                    lastPatternError = "School Loaded (No PID)";
-                                }
-                            } else {
-                                lastPatternError = `School Loaded (Keys: ${Object.keys(school).join(',')})`;
-                            }
-                        } else {
-                            lastPatternError = `School Fetch Failed (${r2.status})`;
-                        }
-                    } else {
-                        lastPatternError = "Global 403 (No School ID)";
-                    }
+                    lastPatternError = "Success"; // Clear error
                 } else {
-                    lastPatternError = `API Failed (${r.status})`;
+                    lastPatternError = `Fetch Failed (${r.status})`;
+                    console.warn("Pattern fetch failed:", r.status);
+
+                    // Helper: Try to deduce if it was 403 or 404
+                    if (r.status === 404) lastPatternError += " (Endpoint Not Found)";
+                    if (r.status === 403) lastPatternError += " (Forbidden)";
                 }
             } catch (e) {
                 lastPatternError = `Exception: ${e.message}`;
@@ -680,17 +656,11 @@
                         // Resolve Pattern Name
                         const pName = patternMap[s.pattern_id] || s.pattern_name || s.pattern_code || "-";
 
-                        let schoolDisplay = s.school_name || `School #${s.school_id || '?'}`;
-                        // DEBUG PATTERN
-                        if (i === 0) {
-                            schoolDisplay += ` [PID=${s.pattern_id} | MapLen=${Object.keys(patternMap).length} | Err=${lastPatternError}]`;
-                        }
-
                         return {
                             _internalId: `row_${i}`,
                             dbId: s.id,
                             'Admission No': s.admission_no || `UNK_${i}`,
-                            'School': schoolDisplay,
+                            'School': s.school_name || `School #${s.school_id || '?'}`,
                             'Student Name': s.name,
                             'Dress Name': "Full Set (Generic)",
                             'Pattern Name': pName,
