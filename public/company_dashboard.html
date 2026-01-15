@@ -2851,7 +2851,10 @@
         async function viewSchoolDetails(schoolName, schoolId) {
             switchTab('view-school-details');
             currentSchoolDetails = { name: schoolName, id: schoolId };
-            document.getElementById('sd-school-name').innerText = schoolName;
+
+            // Set Header
+            document.getElementById('td-school-name').innerText = schoolName;
+            document.getElementById('td-school-badge').innerText = 'LOADING...';
 
             // Reset Lock Status (Fix ghosting issue)
             currentSchoolLocked = false;
@@ -2888,9 +2891,13 @@
         }
 
         function renderSchoolDetails() {
-            const sName = currentSchoolDetails.name;
-            const students = globalStudents.filter(s => s.school_name === sName);
-            const patterns = globalPatterns.filter(p => p.school_name === sName);
+            const sId = currentSchoolDetails.id;
+            const students = globalStudents.filter(s => s.school_id == sId);
+            const patterns = globalPatterns.filter(p => p.school_id == sId);
+
+            // Update Header Meta
+            document.getElementById('td-school-meta').innerText = `${students.length} Students • ${patterns.length} Patterns`;
+            document.getElementById('td-school-badge').innerText = 'PRODUCTION'; // Or fetch actual status
 
             // 1. Render Students List
             document.getElementById('sd-count-students').innerText = `${students.length} records`;
