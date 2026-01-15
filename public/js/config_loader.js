@@ -55,7 +55,9 @@ class ConfigLoader {
             // WORKAROUND: For now, we assume the user has access.
             // If 403, we fall back to defaults.
 
-            const r = await fetch(`${apiBase}/api/schools`, {
+            // Fix: Ensure we don't double up on /api if apiBase already has it
+            const normalizedBase = apiBase.replace(/\/api\/?$/, '');
+            const r = await fetch(`${normalizedBase}/api/schools`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 
@@ -87,7 +89,8 @@ class ConfigLoader {
         // Only Company Admin can usually do this
         try {
             // 1. Find existing
-            const r = await fetch(`${apiBase}/api/schools`, {
+            const normalizedBase = apiBase.replace(/\/api\/?$/, '');
+            const r = await fetch(`${normalizedBase}/api/schools`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const schools = await r.json();
@@ -114,7 +117,7 @@ class ConfigLoader {
                 // and maybe PUT /api/schools/:id or /api/data/schools/:id
                 // Let's try PUT /api/schools/:id
 
-                const r2 = await fetch(`${apiBase}/api/schools/${configSchool.id}`, {
+                const r2 = await fetch(`${normalizedBase}/api/schools/${configSchool.id}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                     body: JSON.stringify(updatePayload)
@@ -131,7 +134,7 @@ class ConfigLoader {
                     password: "system_config_locked"
                 };
 
-                const r2 = await fetch(`${apiBase}/api/schools`, {
+                const r2 = await fetch(`${normalizedBase}/api/schools`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                     body: JSON.stringify(createPayload)
