@@ -546,7 +546,8 @@
         async function fetchPackingData() {
             try {
                 // Fetch Students
-                const r = await fetch(`${API_BASE}/data/students`, { headers: { 'Authorization': `Bearer ${token}` } });
+                // Fetch Students (Corrected Endpoint)
+                const r = await fetch(`${API_BASE}/api/data/students`, { headers: { 'Authorization': `Bearer ${token}` } });
                 if (!r.ok) throw new Error("Failed to fetch students");
                 const students = await r.json();
 
