@@ -546,9 +546,19 @@
         async function fetchPackingData() {
             try {
                 // Fetch Students
-                // Fetch Students (Corrected Endpoint)
-                const r = await fetch(`${API_BASE}/api/data/students`, { headers: { 'Authorization': `Bearer ${token}` } });
-                if (!r.ok) throw new Error("Failed to fetch students");
+                // Priority: Specific School -> All Students (if API supports it)
+                const schoolId = localStorage.getItem('schoolId') || sessionStorage.getItem('schoolId');
+                let url = `${API_BASE}/api/data/students`;
+                if (schoolId) {
+                    url = `${API_BASE}/api/data/students/${schoolId}`;
+                    console.log("Fetching for School ID:", schoolId);
+                }
+
+                const r = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+                if (!r.ok) {
+                    const txt = await r.text();
+                    throw new Error(`Failed to fetch students (${r.status}): ${txt.substring(0, 100)}`);
+                }
                 const students = await r.json();
 
                 // EXPLODE: Map 1 Student -> Many Items
