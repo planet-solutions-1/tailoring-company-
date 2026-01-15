@@ -1435,7 +1435,7 @@
                 if (btn) {
                     btn.classList.add('bg-blue-50', 'text-blue-600');
                     btn.title = "Collapse Details";
-                    btn.innerHTML = `< svg class="pointer-events-none" width = "18" height = "18" viewBox = "0 0 24 24" fill = "none" stroke = "currentColor" stroke - width="2.5" > <polyline points="18 15 12 9 6 15"></polyline></svg > `;
+                    btn.innerHTML = '<svg class="pointer-events-none" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"></polyline></svg>';
                 }
             } else {
                 panel.classList.add('hidden');
@@ -1443,7 +1443,8 @@
                 if (btn) {
                     btn.classList.remove('bg-blue-50', 'text-blue-600');
                     btn.title = "Expand Details";
-                    btn.innerHTML = `< svg class="pointer-events-none" width = "18" height = "18" viewBox = "0 0 24 24" fill = "none" stroke = "currentColor" stroke - width="2.5" > <polyline points="6 9 12 15 18 9"></polyline></svg > `;
+                    // Using single quotes to avoid any template literal confusion
+                    btn.innerHTML = '<svg class="pointer-events-none" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>';
                 }
             }
 
