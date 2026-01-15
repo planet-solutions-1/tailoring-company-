@@ -471,6 +471,7 @@
         let filteredData = [];
         let packedState = {};
         let patternMap = {};
+        let schoolMap = {}; // ID -> Name
         let currentMetadata = [];
         let myChart = null;
         let selectedIndex = -1;
@@ -488,8 +489,12 @@
                 ph.classList.remove('hidden');
             }
 
-            // Fetch Patterns FIRST
-            await fetchPatterns();
+            // Parallel Fetch: Patterns & Schools
+            await Promise.all([
+                fetchPatterns(),
+                fetchSchools()
+            ]);
+
             fetchPackingData();
             document.addEventListener('keydown', handleKeyboardNavigation);
 
@@ -510,6 +515,33 @@
                     console.log("Close Button Clicked");
                     toggleProgressPanel(false); // Force Close
                 };
+            }
+        }
+
+        async function fetchSchools() {
+            try {
+                const res = await fetch(`${API_BASE}/api/schools`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const schools = await res.json();
+                    schools.forEach(s => {
+                        schoolMap[s.id] = s.name;
+                    });
+                    console.log("Schools mapped:", Object.keys(schoolMap).length);
+                } else {
+                    console.warn("School fetch failed:", res.status);
+                    // Try legacy if API fails
+                    const res2 = await fetch(`${API_BASE}/data/schools`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (res2.ok) {
+                        const schools2 = await res2.json();
+                        schools2.forEach(s => { schoolMap[s.id] = s.name; });
+                    }
+                }
+            } catch (e) {
+                console.error("School Fetch Error", e);
             }
         }
 
@@ -681,7 +713,7 @@
                     students.forEach((s, i) => {
                         let hasItems = false;
                         const pName = patternMap[s.pattern_id] || s.pattern_name || s.pattern_code || "-";
-                        const schoolDisplay = s.school_name || `School #${s.school_id || '?'}`;
+                        const schoolDisplay = s.school_name || schoolMap[s.school_id] || `School #${s.school_id || '?'}`;
 
                         allItems.forEach(item => {
                             const qtyKey = `Qty_${item.name}`;
@@ -743,12 +775,8 @@
                         // Resolve Pattern Name
                         const pName = patternMap[s.pattern_id] || s.pattern_name || s.pattern_code || "-";
 
-                        let schoolDisplay = s.school_name || `School #${s.school_id || '?'}`;
-                        // DEBUG: DUMP KEYS
-                        if (i === 0) {
-                            const qKeys = Object.keys(s).filter(k => k.startsWith("Qty"));
-                            schoolDisplay += ` [KEYS: ${Object.keys(s).join(',')}]`; // Dump ALL keys to see what is missing
-                        }
+                        // Resolve School Name
+                        const sNameRaw = s.school_name || schoolMap[s.school_id] || `School #${s.school_id || '?'}`;
 
                         return {
                             _internalId: `row_${i}`,
