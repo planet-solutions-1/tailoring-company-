@@ -3598,12 +3598,18 @@
             // New Filters Logic
             if (attendance !== 'all') {
                 if (attendance === 'present') data = data.filter(st => st.is_present !== false && st.status !== 'Absent');
-                if (attendance === 'absent') data = data.filter(st => st.is_present === false || st.status === 'Absent');
+                if (attendance === 'absent') data = data.filter(st => st.is_present === false || st.status === 'Absent' || st.order_status === 'Absent');
             }
 
             if (measStatus !== 'all') {
-                if (measStatus === 'taken') data = data.filter(st => st.measurements && Object.keys(st.measurements).length > 0);
-                if (measStatus === 'not_taken') data = data.filter(st => !st.measurements || Object.keys(st.measurements).length === 0);
+                if (measStatus === 'taken') data = data.filter(st => {
+                    const m = getMeasurementsSafe(st);
+                    return Object.keys(m).length > 0;
+                });
+                if (measStatus === 'not_taken') data = data.filter(st => {
+                    const m = getMeasurementsSafe(st);
+                    return Object.keys(m).length === 0;
+                });
             }
 
             // 3. Search Logic (Range + Keyword)
@@ -3680,9 +3686,11 @@
                 let rowClass = 'hover:bg-gray-50 transition-colors border-b border-gray-50';
 
                 // Check Attendance
-                const isAbsent = s.is_present === false || s.status === 'Absent';
-                // Check Measurements
-                const hasMeasurements = s.measurements && Object.keys(s.measurements).length > 0;
+                const isAbsent = s.is_present === false || s.status === 'Absent' || s.order_status === 'Absent';
+
+                // Check Measurements (Use Helper to Parse JSON String)
+                const m = getMeasurementsSafe(s);
+                const hasMeasurements = Object.keys(m).length > 0;
 
                 if (isAbsent) {
                     statusBadge = `<span class="px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wide bg-red-100 text-red-600">ABSENT</span>`;
