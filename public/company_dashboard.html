@@ -1978,11 +1978,13 @@
                                 <thead>
                                     <tr
                                         class="text-xs font-bold text-gray-400 uppercase tracking-wider border-b border-gray-100">
-                                        <th class="p-4">Roll No</th>
-                                        <th class="p-4">Name</th>
-                                        <th class="p-4">Class</th>
-                                        <th class="p-4">Gender</th>
-                                        <th class="p-4 text-center">Status</th>
+                                        <th class="p-4 font-normal">Roll No</th>
+                                        <th class="p-4 font-normal">Name</th>
+                                        <th class="p-4 font-normal">Class</th>
+                                        <th class="p-4 font-normal">Gender</th>
+                                        <th class="p-4 font-normal text-center">Attendance</th>
+                                        <th class="p-4 font-normal text-center">Measurements</th>
+                                        <th class="p-4 font-normal text-center">Status</th>
                                     </tr>
                                 </thead>
                                 <tbody id="td-list-students"
@@ -3683,7 +3685,6 @@
         function renderTdStudents(data) {
             document.getElementById('td-list-students').innerHTML = data.map(s => {
                 // Determine Status Badge & Row Style
-                let statusBadge = '';
                 let rowClass = 'hover:bg-gray-50 transition-colors border-b border-gray-50';
 
                 // Check Attendance
@@ -3693,17 +3694,26 @@
                 const m = getMeasurementsSafe(s);
                 const hasMeasurements = Object.values(m).some(v => v && String(v).trim() !== '' && String(v).trim() !== '-');
 
+                // Visual Indicators for Row (Optional: Keep subtle tint for Absent)
                 if (isAbsent) {
-                    statusBadge = `<span class="px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wide bg-red-100 text-red-600">ABSENT</span>`;
-                    rowClass += ' bg-red-50/30'; // Subtle red tint for whole row
-                } else if (!hasMeasurements) {
-                    statusBadge = `<span class="px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wide bg-amber-100 text-amber-600">NO MEASUREMENTS</span>`;
-                } else {
-                    // Default Status Logic
-                    statusBadge = `<span class="px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wide ${getStatusColor(s.order_status, s.is_packed)}">
+                    rowClass += ' bg-red-50/30';
+                }
+
+                // Attendance Badge
+                const attendanceBadge = isAbsent
+                    ? `<span class="px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wide bg-red-100 text-red-600">ABSENT</span>`
+                    : `<span class="px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wide bg-emerald-100 text-emerald-600">PRESENT</span>`;
+
+                // Measurements Badge
+                const measBadge = hasMeasurements
+                    ? `<span class="px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wide bg-emerald-100 text-emerald-600">TAKEN</span>`
+                    : `<span class="px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wide bg-amber-100 text-amber-600">NOT TAKEN</span>`;
+
+                // Production Status Badge (Only show production status here)
+                // If absent, maybe we don't show production status or show it as is? keeping as is.
+                const prodBadge = `<span class="px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wide ${getStatusColor(s.order_status, s.is_packed)}">
                         ${s.order_status || (s.is_packed ? 'PACKED' : 'PENDING')}
                     </span>`;
-                }
 
                 return `
             <tr class="${rowClass}">
@@ -3711,11 +3721,12 @@
                 <td class="p-4 text-gray-800 font-bold">${s.name}</td>
                 <td class="p-4 text-xs font-bold text-gray-500">${s.class || ''} ${s.section || ''}</td>
                 <td class="p-4 text-xs">${s.gender || '-'}</td>
-                <td class="p-4 text-center">
-                    ${statusBadge}
-                </td>
+                <td class="p-4 text-center">${attendanceBadge}</td>
+                <td class="p-4 text-center">${measBadge}</td>
+                <td class="p-4 text-center">${prodBadge}</td>
             </tr>
         `;
+                const roleBadge = l.role
             }).join('');
             const metaEl = document.getElementById('td-school-meta');
             if (metaEl) metaEl.innerText = `${data.length} Students Shown`;
