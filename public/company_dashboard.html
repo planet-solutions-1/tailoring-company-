@@ -2870,7 +2870,14 @@
             renderSchoolDetails();
         }
 
+
+
         // Alias for compatibility
+        async function openSchoolDetails(schoolId) {
+            const s = globalSchools.find(x => x.id == schoolId);
+            const sName = s ? s.name : 'Unknown School';
+            await viewSchoolDetails(sName, schoolId);
+        }
 
 
         function switchSchoolTab(t) {
