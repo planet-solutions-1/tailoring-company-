@@ -1979,7 +1979,7 @@
                                         <th class="p-2 text-center text-indigo-600 bg-indigo-50/30">L8</th>
                                         <th
                                             class="p-3 text-center bg-purple-50/30 text-purple-600 border-l border-gray-100">
-                                            Qty</th>
+                                            Details</th>
                                         <th class="p-3 text-center">Remarks</th>
                                     </tr>
                                 </thead>
@@ -3422,8 +3422,10 @@
                          </td>
                          ${['u1', 'u2', 'u3', 'u4', 'u5', 'u6', 'u7', 'u8'].map(k => `<td class="p-2 text-center text-orange-600 bg-orange-50/10">${m[k] || '-'}</td>`).join('')}
                          ${['l1', 'l2', 'l3', 'l4', 'l5', 'l6', 'l7', 'l8'].map((k, i) => `<td class="p-2 text-center text-indigo-600 bg-indigo-50/10 ${i === 0 ? 'border-l border-gray-100' : ''}">${m[k] || '-'}</td>`).join('')}
-                         <td class="p-3 text-xs bg-purple-50/30 text-purple-600 font-bold border-l border-gray-100 max-w-[120px] truncate" title="${Object.entries(getItemQuantitiesSafe(s)).map(([k, v]) => `${v} ${k.replace(/BOYS - |GIRLS - /g, '')}`).join(', ')}">
-                             ${Object.entries(getItemQuantitiesSafe(s)).map(([k, v]) => `${v} ${k.replace(/BOYS - |GIRLS - /g, '')}`).join(', ')}
+                         <td class="p-3 text-center bg-purple-50/10 border-l border-gray-100">
+                             <button onclick="openMeasurementDetails('${s.id}')" class="px-3 py-1 bg-white hover:bg-purple-50 text-purple-600 border border-purple-100 hover:border-purple-200 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all shadow-sm hover:shadow-md">
+                                 View Details
+                             </button>
                          </td>
                          <td class="p-3 text-xs italic text-gray-400 truncate max-w-[150px]" title="${m.remarks || ''}">${m.remarks || '-'}</td>
                      </tr>
