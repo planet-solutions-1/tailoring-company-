@@ -276,17 +276,15 @@
                 </button>
 
                 <!-- Upload Excel Button -->
-                <label
-                    class="col-span-2 md:col-span-1 bg-[#2C3E50] hover:bg-[#1A252F] text-white px-4 py-2 rounded-md shadow-sm cursor-pointer transition-all flex items-center justify-center gap-2 text-xs font-medium h-9">
+                <button onclick="fetchPackingData()"
+                    class="col-span-2 md:col-span-1 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md shadow-sm cursor-pointer transition-all flex items-center justify-center gap-2 text-xs font-medium h-9 active:scale-95">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                        <polyline points="17 8 12 3 7 8"></polyline>
-                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                        <path d="M23 4v6h-6"></path>
+                        <path d="M1 20v-6h6"></path>
+                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
                     </svg>
-                    Upload Excel
-                    <input type="file" id="fileUpload" class="hidden" accept=".xlsx,.xls"
-                        onchange="handleFileUpload(event)">
-                </label>
+                    Refresh Data
+                </button>
 
                 <a href="pattern_view.html"
                     class="hidden md:flex items-center gap-2 text-gray-500 hover:text-[#2C3E50] transition-colors p-2 rounded-md hover:bg-gray-100"
@@ -467,19 +465,28 @@
 
     </main>
     <script>
+        // API & STATE
+        const API_BASE = 'https://tailoring-company-production.up.railway.app';
         let allData = [];
         let filteredData = [];
         let packedState = {};
         let currentMetadata = [];
-        let myChart = null; // Chart Instance
-        let selectedIndex = -1; // -1 means none selected
+        let myChart = null;
+        let selectedIndex = -1;
 
-        // Persistence Key
-        const STORAGE_KEY_PREFIX = 'planet_packing_';
-        let currentFileKey = 'default';
+        // AUTH
+        const token = localStorage.getItem('token');
+        if (!token) window.location.href = 'index.html';
 
         function init() {
-            loadDashboardData();
+            // Show Loading
+            const ph = document.getElementById('welcomePlaceholder');
+            if (ph) {
+                ph.innerHTML = '<div class="flex flex-col items-center justify-center p-10"><div class="animate-spin h-10 w-10 border-4 border-blue-600 border-t-transparent rounded-full mb-4"></div><div class="text-gray-500 font-medium animate-pulse">Connecting to Database...</div></div>';
+                ph.classList.remove('hidden');
+            }
+
+            fetchPackingData();
             document.addEventListener('keydown', handleKeyboardNavigation);
 
             // Manual Bind for safety
@@ -499,6 +506,102 @@
                     console.log("Close Button Clicked");
                     toggleProgressPanel(false); // Force Close
                 };
+            }
+        }
+
+
+        async function fetchPackingData() {
+            try {
+                // Fetch Students
+                const r = await fetch(`${API_BASE}/data/students`, { headers: { 'Authorization': `Bearer ${token}` } });
+                if (!r.ok) throw new Error("Failed to fetch students");
+                const students = await r.json();
+
+                // Map to Dashboard Format
+                allData = students.map((s, i) => ({
+                    id: s.id,
+                    'Admission No': s.admission_no || `UNK_${i}`,
+                    'Student Name': s.name,
+                    'Class': s.class,
+                    'Section': s.section,
+                    'House': s.house,
+                    'Gender': s.gender,
+                    'Roll No': s.roll_no,
+                    'Quantity': 1,
+                    'Pattern Name': s.pattern_name,
+                    'Pattern Code': s.pattern_code, // If available
+                    _isPacked: s.is_packed // Internal status
+                }));
+
+                // Init Packed State
+                packedState = {};
+                allData.forEach(s => {
+                    if (s._isPacked) packedState[s['Admission No']] = true;
+                });
+
+                // UI Ready
+                document.getElementById('welcomePlaceholder').classList.add('hidden');
+                document.getElementById('filterBar').classList.remove('hidden');
+                document.getElementById('tableContainer').classList.remove('hidden');
+                document.getElementById('statsContainer').classList.remove('hidden');
+                document.getElementById('btnReport').classList.remove('hidden');
+                document.getElementById('btnSticker').classList.remove('hidden');
+                document.getElementById('btnExport').classList.remove('hidden');
+                document.getElementById('filterBar').classList.add('flex');
+                document.getElementById('statsContainer').classList.add('flex');
+
+                populateFilters();
+                applyFilters();
+
+                // Restore Panel
+                const panelState = localStorage.getItem('planet_packing_progress_panel');
+                if (panelState === 'true') toggleProgressPanel(true);
+
+            } catch (e) {
+                console.error(e);
+                alert("Data Load Error: " + e.message);
+                document.getElementById('welcomePlaceholder').innerHTML = `<div class="text-red-500 font-bold p-10">Connection Failed.<br><a href="javascript:location.reload()" class="underline">Retry</a></div>`;
+            }
+        }
+
+        async function togglePack(adm, newState) {
+            // 1. Optimistic Update
+            packedState[adm] = newState;
+            // Immediate UI feedback on Row (Faster than full render)
+            const row = document.getElementById(`row-${adm}`);
+            if (row) {
+                if (newState) row.classList.add('packed-row');
+                else row.classList.remove('packed-row');
+                const cb = row.querySelector('input[type="checkbox"]');
+                if (cb) cb.checked = newState;
+            }
+            const card = document.getElementById(`card-${adm}`);
+            if (card) {
+                const cb = card.querySelector('input[type="checkbox"]');
+                if (cb) cb.checked = newState;
+                if (newState) card.classList.add('border-green-200', 'bg-green-50/50');
+                else { card.classList.remove('border-green-200', 'bg-green-50/50'); card.classList.add('border-gray-200'); }
+            }
+            updateStats();
+
+            // 2. API Update
+            const item = allData.find(s => s['Admission No'] == adm);
+            if (!item || !item.id) return; // Cannot sync if no ID
+
+            try {
+                const r = await fetch(`${API_BASE}/data/students/${item.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ is_packed: newState })
+                });
+                if (!r.ok) throw new Error("API Update Failed");
+            } catch (e) {
+                console.error("Sync Error", e);
+                // Revert
+                packedState[adm] = !newState;
+                packedState[adm] ? row?.classList.add('packed-row') : row?.classList.remove('packed-row');
+                alert("Sync failed. Check connection.");
+                updateStats(); // Revert stats
             }
         }
 
@@ -753,20 +856,28 @@
             container.classList.toggle('hidden');
         }
 
-        function packVisible() {
-            if (!confirm(`Mark all ${filteredData.length} visible students as PACKED?`)) return;
+
+        async function packVisible() {
+            if (!confirm(`Mark all ${filteredData.length} visible students as PACKED? This will update the database.`)) return;
 
             let count = 0;
-            filteredData.forEach(item => {
-                const adm = item['Admission No'];
-                if (!packedState[adm]) {
-                    packedState[adm] = true;
-                    count++;
-                }
-            });
-            savePackedState();
-            renderTable(); // Re-render to show checks
-            alert(`Marked ${count} students as Packed!`);
+            const updates = [];
+
+            // Limit to avoid browser freeze if thousands
+            const limit = 200;
+            const itemsToPack = filteredData.filter(i => !packedState[i['Admission No']]).slice(0, limit);
+
+            if (itemsToPack.length < filteredData.length && filteredData.length > limit) {
+                alert(`Warning: Only packing first ${limit} pending items to avoid overload.`);
+            }
+
+            for (const item of itemsToPack) {
+                updates.push(togglePack(item['Admission No'], true));
+                count++;
+            }
+
+            await Promise.all(updates);
+            // alert(`Marked ${count} students as Packed!`); // togglePack handles UI
         }
 
         function exportToExcel() {
@@ -805,58 +916,8 @@
             return 999;
         }
 
-        function loadPackedState() {
-            try {
-                const stored = localStorage.getItem(currentFileKey);
-                if (stored) {
-                    packedState = JSON.parse(stored);
-                } else {
-                    packedState = {};
-                }
-            } catch (e) {
-                console.error("Storage Error", e);
-                packedState = {};
-            }
-        }
 
-        function savePackedState() {
-            localStorage.setItem(currentFileKey, JSON.stringify(packedState));
-            updateStats();
-        }
-
-        function togglePack(admissionNo, checked) {
-            if (checked) {
-                packedState[admissionNo] = true;
-            } else {
-                delete packedState[admissionNo];
-            }
-            savePackedState();
-
-            const row = document.getElementById(`row-${admissionNo}`);
-            if (row) {
-                if (checked) row.classList.add('packed-row', 'bg-green-50');
-                else row.classList.remove('packed-row', 'bg-green-50');
-            }
-
-            // Mobile Card Update
-            const card = document.getElementById(`card-${admissionNo}`);
-            if (card) {
-                if (checked) {
-                    card.classList.add('border-green-200', 'bg-green-50/50');
-                    card.classList.remove('border-gray-200');
-                } else {
-                    card.classList.remove('border-green-200', 'bg-green-50/50');
-                    card.classList.add('border-gray-200');
-                }
-                // Also update the checkbox in the card if different
-                const cb = card.querySelector('input[type="checkbox"]');
-                if (cb) cb.checked = checked;
-
-                // Update Desktop Checkbox too if triggered from mobile
-                const dtCb = row ? row.querySelector('input[type="checkbox"]') : null;
-                if (dtCb) dtCb.checked = checked;
-            }
-        }
+        // Legacy functions removed in favor of API
 
         function populateFilters() {
             const classes = new Set(allData.map(d => d['Class']).filter(Boolean));
