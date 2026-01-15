@@ -1,0 +1,43 @@
+<!-- FILTERS TOOLBAR -->
+<div class="bg-gray-50/50 p-3 rounded-xl border border-gray-100 flex flex-wrap gap-4 items-center">
+    <!-- Search -->
+    <div class="relative flex-1 min-w-[200px]">
+        <input type="text" id="td-meas-search" onkeyup="applyMeasurementFilters()"
+            placeholder="Search by Name or Roll No..."
+            class="w-full pl-10 pr-4 py-2 bg-white border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all">
+        <svg class="w-5 h-5 text-gray-400 absolute left-3 top-2.5" fill="none" stroke="currentColor"
+            viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+        </svg>
+    </div>
+
+    <!-- Class Filter -->
+    <select id="td-meas-class" onchange="applyMeasurementFilters()"
+        class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-600 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all cursor-pointer">
+        <option value="">All Classes</option>
+        <!-- Populated JS -->
+    </select>
+
+    <!-- Gender Filter -->
+    <select id="td-meas-gender" onchange="applyMeasurementFilters()"
+        class="px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm font-medium text-gray-600 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all cursor-pointer">
+        <option value="">All Genders</option>
+        <option value="Male">Boys</option>
+        <option value="Female">Girls</option>
+    </select>
+
+    <!-- Clear Button (Hidden by default) -->
+    <button onclick="clearMeasurementFilters()" id="td-meas-clear"
+        class="hidden px-3 py-2 text-xs font-bold text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+        CLEAR
+    </button>
+</div>
+
+<!-- SCROLL TO TOP BUTTON -->
+<button id="scrollToTopBtn" onclick="scrollToTop()"
+    class="fixed bottom-8 right-8 w-12 h-12 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-lg shadow-blue-600/30 flex items-center justify-center transition-all duration-300 translate-y-20 z-50 transition-transform">
+    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
+    </svg>
+</button>
