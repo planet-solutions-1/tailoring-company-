@@ -2213,10 +2213,27 @@
                                     d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                             </svg>
                         </button>
-                        <div>
+                        <div class="flex items-center gap-4">
                             <h3 class="text-2xl font-black text-slate-800 tracking-tight">Incomplete Records</h3>
-                            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Action Required Items
-                            </p>
+                            <div class="flex gap-2">
+                                <button onclick="downloadIncompletePDF()"
+                                    class="px-3 py-1.5 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 text-xs font-bold transition-all flex items-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                                        </path>
+                                    </svg>
+                                    PDF
+                                </button>
+                                <button onclick="downloadIncompleteExcel()"
+                                    class="px-3 py-1.5 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 border border-emerald-200 text-xs font-bold transition-all flex items-center gap-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                                    </svg>
+                                    Excel
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -7109,36 +7126,167 @@
         return m || {};
     }
 
+    // --- GLOBAL HELPERS FOR INCOMPLETE VIEW ---
+    function checkIsAbsent(st) {
+        const m = getMeasurementsSafe(st);
+        if (m && (m.is_absent === true || m.is_absent === 'true')) return true;
+        const val = st.is_present; // Legacy boolean/int
+        if (st.is_absent === true || st.is_absent === 1 || String(st.is_absent) === 'true') return true;
+        // String checks
+        const s = String(m['Absent/Present'] || st['Absent/Present'] || '').trim().toLowerCase();
+        return s === 'absent' || val === false || val === 0 || String(val).toLowerCase() === 'false';
+    }
+
+    function checkIsPending(st) {
+        if (checkIsAbsent(st)) return false; // If absent, measurements are expected to be empty/skipped
+        const m = getMeasurementsSafe(st);
+        const metaKeys = ['is_absent', 'remarks', 'student_id', 'data', 'item_quantities', 'school_id'];
+        // Check if there is AT LEAST ONE real value to consider it "Taken"
+        const hasReal = Object.keys(m).some(k => {
+            if (metaKeys.includes(k) || metaKeys.includes(k.toLowerCase())) return false;
+            const v = m[k];
+            if (!v) return false;
+            const s = String(v).trim();
+            return s !== '' && s !== '-' && s !== '0' && s !== '00' && s !== '0.0' && s !== '[object Object]';
+        });
+        return !hasReal; // Return true if NO real values
+    }
+
+    // --- EXPORT FUNCTIONS FOR INCOMPLETE VIEW ---
+    function downloadIncompletePDF() {
+        const schoolName = document.getElementById('td-school-name').innerText || "School";
+        const data = window.filteredDataForExport || globalStudents.filter(st => st.school_id == tdCurrentSchoolId);
+
+        const absentList = data.filter(checkIsAbsent);
+        const pendingList = data.filter(checkIsPending);
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+
+        // Title
+        doc.setFontSize(16);
+        doc.setTextColor(44, 62, 80);
+        doc.text(`${schoolName} - Incomplete Records`, 14, 15);
+
+        doc.setFontSize(10);
+        doc.setTextColor(100);
+        doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 22);
+
+        let finalY = 30;
+
+        // SECTION 1: ABSENT STUDENTS
+        if (absentList.length > 0) {
+            doc.setFontSize(12);
+            doc.setTextColor(220, 38, 38); // Red-600
+            doc.text(`Absent Students (${absentList.length})`, 14, finalY);
+            finalY += 5;
+
+            doc.autoTable({
+                startY: finalY,
+                head: [['Roll No', 'Name', 'Class', 'Section', 'Gender']],
+                body: absentList.map(s => [
+                    s.roll_no || s['ADM NO'] || '-',
+                    s.name,
+                    s.class || '-',
+                    s.section || '-',
+                    s.gender || '-'
+                ]),
+                theme: 'grid',
+                headStyles: { fillColor: [239, 68, 68] }, // Red Header
+                styles: { fontSize: 8 }
+            });
+            finalY = doc.lastAutoTable.finalY + 15;
+        } else {
+            doc.setFontSize(10);
+            doc.setTextColor(22, 163, 74); // Green
+            doc.text("No Absent Students.", 14, finalY);
+            finalY += 15;
+        }
+
+        // SECTION 2: PENDING MEASUREMENTS
+        if (pendingList.length > 0) {
+            // Check page break
+            if (finalY > 250) { doc.addPage(); finalY = 20; }
+
+            doc.setFontSize(12);
+            doc.setTextColor(234, 88, 12); // Orange-600
+            doc.text(`Pending Measurements (${pendingList.length})`, 14, finalY);
+            finalY += 5;
+
+            doc.autoTable({
+                startY: finalY,
+                head: [['Roll No', 'Name', 'Class', 'Section', 'Gender']],
+                body: pendingList.map(s => [
+                    s.roll_no || s['ADM NO'] || '-',
+                    s.name,
+                    s.class || '-',
+                    s.section || '-',
+                    s.gender || '-'
+                ]),
+                theme: 'grid',
+                headStyles: { fillColor: [249, 115, 22] }, // Orange Header
+                styles: { fontSize: 8 }
+            });
+        } else {
+            if (finalY > 250) { doc.addPage(); finalY = 20; }
+            doc.setFontSize(10);
+            doc.setTextColor(22, 163, 74);
+            doc.text("No Pending Measurements.", 14, finalY);
+        }
+
+        doc.save(`${schoolName}_Incomplete_Report.pdf`);
+    }
+
+    function downloadIncompleteExcel() {
+        const schoolName = document.getElementById('td-school-name').innerText || "School";
+        const data = window.filteredDataForExport || globalStudents.filter(st => st.school_id == tdCurrentSchoolId);
+
+        const absentList = data.filter(checkIsAbsent);
+        const pendingList = data.filter(checkIsPending);
+
+        const wb = XLSX.utils.book_new();
+
+        // Sheet 1: Absent
+        if (absentList.length > 0) {
+            const wsAbsent = XLSX.utils.json_to_sheet(absentList.map(s => ({
+                "Roll No": s.roll_no,
+                "Name": s.name,
+                "Class": s.class,
+                "Section": s.section,
+                "Gender": s.gender,
+                "Status": "Absent"
+            })));
+            XLSX.utils.book_append_sheet(wb, wsAbsent, "Absent Students");
+        } else {
+            // Create empty sheet saying "None"
+            const ws = XLSX.utils.aoa_to_sheet([["No Absent Students"]]);
+            XLSX.utils.book_append_sheet(wb, ws, "Absent Students");
+        }
+
+        // Sheet 2: Pending
+        if (pendingList.length > 0) {
+            const wsPending = XLSX.utils.json_to_sheet(pendingList.map(s => ({
+                "Roll No": s.roll_no,
+                "Name": s.name,
+                "Class": s.class,
+                "Section": s.section,
+                "Gender": s.gender,
+                "Status": "Measurement Pending"
+            })));
+            XLSX.utils.book_append_sheet(wb, wsPending, "Pending Measurements");
+        } else {
+            const ws = XLSX.utils.aoa_to_sheet([["No Pending Measurements"]]);
+            XLSX.utils.book_append_sheet(wb, ws, "Pending Measurements");
+        }
+
+        XLSX.writeFile(wb, `${schoolName}_Incomplete_Report.xlsx`);
+    }
+
     function renderTdIncomplete(allSchoolStudents) {
         console.log("Rendering Incomplete Data View", allSchoolStudents.length);
-        // Helpers (Duplicated for isolation/robustness)
-        const isIncAbsent = (st) => {
-            const m = getMeasurementsSafe(st);
-            if (m && (m.is_absent === true || m.is_absent === 'true')) return true;
-            const val = st.is_present; // Legacy boolean/int
-            if (st.is_absent === true || st.is_absent === 1 || String(st.is_absent) === 'true') return true;
-            // String checks
-            const s = String(m['Absent/Present'] || st['Absent/Present'] || '').trim().toLowerCase();
-            return s === 'absent' || val === false || val === 0 || String(val).toLowerCase() === 'false';
-        };
 
-        const isIncPending = (st) => {
-            if (isIncAbsent(st)) return false; // If absent, measurements are expected to be empty/skipped
-            const m = getMeasurementsSafe(st);
-            const metaKeys = ['is_absent', 'remarks', 'student_id', 'data', 'item_quantities', 'school_id'];
-            // Check if there is AT LEAST ONE real value to consider it "Taken"
-            const hasReal = Object.keys(m).some(k => {
-                if (metaKeys.includes(k) || metaKeys.includes(k.toLowerCase())) return false;
-                const v = m[k];
-                if (!v) return false;
-                const s = String(v).trim();
-                return s !== '' && s !== '-' && s !== '0' && s !== '00' && s !== '0.0' && s !== '[object Object]';
-            });
-            return !hasReal; // Return true if NO real values
-        };
-
-        const absentList = allSchoolStudents.filter(isIncAbsent);
-        const pendingList = allSchoolStudents.filter(isIncPending);
+        const absentList = allSchoolStudents.filter(checkIsAbsent);
+        const pendingList = allSchoolStudents.filter(checkIsPending);
 
         // Update Counts
         const absEl = document.getElementById('td-inc-absent-count');
