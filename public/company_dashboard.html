@@ -3810,7 +3810,7 @@
                     // Fallback to existing checks
                     return val === false || val === 0 || String(val).toLowerCase() === 'false' ||
                         st.status === 'Absent' || st.order_status === 'Absent' ||
-                        st['Absent/Present'] === 'Absent';
+                        st['Absent/Present'] === 'Absent' || (m && m['Absent/Present'] === 'Absent');
                 };
 
                 if (attendance === 'present') data = data.filter(st => !isAbs(st));
@@ -7118,7 +7118,7 @@
             const val = st.is_present; // Legacy boolean/int
             if (st.is_absent === true || st.is_absent === 1 || String(st.is_absent) === 'true') return true;
             // String checks
-            const s = String(st['Absent/Present'] || '').trim().toLowerCase();
+            const s = String(m['Absent/Present'] || st['Absent/Present'] || '').trim().toLowerCase();
             return s === 'absent' || val === false || val === 0 || String(val).toLowerCase() === 'false';
         };
 
