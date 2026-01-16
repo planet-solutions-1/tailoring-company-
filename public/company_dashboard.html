@@ -3733,9 +3733,10 @@
                 const isAbsent = (m && (m.is_absent === true || m.is_absent === 'true')) ||
                     s.is_absent === true || s.is_absent === 1 || String(s.is_absent) === 'true' ||
                     s.is_present === false || s.is_present === 0 || String(s.is_present).toLowerCase() === 'false' ||
-                    s.status === 'Absent' || s.order_status === 'Absent' ||
-                    s['Absent/Present'] === 'Absent' ||
-                    String(s.attendance).toLowerCase() === 'absent' ||
+                    (s.status && String(s.status).trim().toLowerCase() === 'absent') ||
+                    (s.order_status && String(s.order_status).trim().toLowerCase() === 'absent') ||
+                    (s['Absent/Present'] && String(s['Absent/Present']).trim().toLowerCase() === 'absent') ||
+                    (s.attendance && String(s.attendance).trim().toLowerCase() === 'absent') ||
                     s.isAbsent === true;
 
 
@@ -3773,7 +3774,12 @@
                 return `
             <tr class="${rowClass}">
                 <td class="p-4 font-mono text-xs text-gray-500">${s.roll_no || '-'}</td>
-                <td class="p-4 text-gray-800 font-bold">${s.name}</td>
+                <td class="p-4 text-gray-800 font-bold cursor-pointer hover:text-blue-600"
+                    onclick="alert('DEBUG DATA:\\n' + JSON.stringify(this.dataset.raw ? JSON.parse(this.dataset.raw) : {}, null, 2))"
+                    data-raw='${JSON.stringify(s).replace(/'/g, "&apos;")}'
+                    title="Click to Debug Data">
+                    ${s.name}
+                </td>
                 <td class="p-4 text-xs font-bold text-gray-500">${s.class || ''} ${s.section || ''}</td>
                 <td class="p-4 text-xs">${s.gender || '-'}</td>
                 <td class="p-4 text-center">${attendanceBadge}</td>
