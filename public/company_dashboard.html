@@ -2202,95 +2202,240 @@
                 </div>
 
                 <!-- 6. INCOMPLETE DATA GRID (Level 3 - New) -->
-                <div id="td-view-incomplete" class="hidden space-y-8 animate-in slide-in-from-bottom-4 duration-500">
+                <!-- 6. INCOMPLETE DATA GRID (Level 3 - New Professional UI) -->
+                <div id="td-view-incomplete" class="hidden space-y-6 animate-in slide-in-from-bottom-4 duration-500">
+                    <!-- Header -->
                     <div class="flex items-center gap-4">
                         <button onclick="closeLevel3()"
-                            class="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500 hover:text-blue-600 bg-white shadow-sm border border-gray-100">
+                            class="group p-2 hover:bg-white rounded-full transition-all text-slate-400 hover:text-blue-600 hover:shadow-lg hover:shadow-blue-500/20 active:scale-95 border border-transparent hover:border-slate-100">
                             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"
                                     d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
                             </svg>
                         </button>
-                        <h3 class="text-xl font-extrabold text-gray-800">Incomplete Records</h3>
+                        <div>
+                            <h3 class="text-2xl font-black text-slate-800 tracking-tight">Incomplete Records</h3>
+                            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Action Required Items
+                            </p>
+                        </div>
                     </div>
 
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        <!-- Absent List -->
-                        <div class="space-y-4">
-                            <div class="flex items-center justify-between">
-                                <h4
-                                    class="text-lg font-bold text-red-500 uppercase tracking-widest flex items-center gap-2">
-                                    <span class="w-2 h-2 rounded-full bg-red-500"></span>
-                                    Absent Students
-                                </h4>
-                                <span class="bg-red-50 text-red-600 px-3 py-1 rounded-full text-xs font-bold"
-                                    id="td-inc-absent-count">0</span>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 h-[calc(100vh-200px)] max-h-[700px]">
+                        <!-- ABSENT STUDENTS CARD -->
+                        <div
+                            class="flex flex-col bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
+                            <!-- Header -->
+                            <div
+                                class="px-8 py-6 bg-red-50/50 border-b border-red-100 flex items-center justify-between">
+                                <div class="flex items-center gap-5">
+                                    <div
+                                        class="w-12 h-12 rounded-2xl bg-white text-red-500 flex items-center justify-center shadow-sm border border-red-50">
+                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M13 7a4 4 0 11-8 0 4 4 0 018 0zM9 14a6 6 0 00-6 6v1h12v-1a6 6 0 00-6-6zM21 12h-6">
+                                            </path>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-lg font-black text-slate-800">Absent Students</h4>
+                                        <div class="flex items-center gap-2">
+                                            <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+                                            <p class="text-xs font-bold text-red-500 uppercase tracking-widest">Critical
+                                                Attention</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex flex-col items-end">
+                                    <span class="text-2xl font-black text-slate-800" id="td-inc-absent-count">0</span>
+                                    <span
+                                        class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Students</span>
+                                </div>
                             </div>
-                            <div class="clay-card p-0 overflow-hidden bg-white">
-                                <div class="max-h-[500px] overflow-y-auto custom-scrollbar">
-                                    <table class="w-full text-left text-sm">
-                                        <thead class="bg-gray-50/50 sticky top-0 backdrop-blur-sm z-10">
-                                            <tr class="text-xs font-bold text-gray-400 uppercase tracking-wider">
-                                                <th class="p-4">Roll No</th>
-                                                <th class="p-4">Name</th>
-                                                <th class="p-4">Class</th>
-                                                <th class="p-4 text-center">Status</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="td-list-absent" class="divide-y divide-gray-50">
-                                            <!-- Injected -->
-                                        </tbody>
-                                        <tfoot id="td-no-absent" class="hidden">
-                                            <tr>
-                                                <td colspan="4" class="p-8 text-center text-gray-400 italic">No absent
-                                                    students found.</td>
-                                            </tr>
-                                        </tfoot>
-                                    </table>
+
+                            <!-- List -->
+                            <div class="flex-1 overflow-y-auto custom-scrollbar bg-slate-50/30 relative">
+                                <table class="w-full text-left border-collapse">
+                                    <thead class="sticky top-0 bg-white/80 backdrop-blur-md z-10 shadow-sm">
+                                        <tr class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">
+                                            <th class="p-5 pl-8">Student Details</th>
+                                            <th class="p-5 text-center">Class / Section</th>
+                                            <th class="p-5 text-center pr-8">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="td-list-absent" class="divide-y divide-slate-100">
+                                        <!-- JS Injected -->
+                                    </tbody>
+                                </table>
+
+                                <!-- Empty State -->
+                                <div id="td-no-absent"
+                                    class="hidden absolute inset-0 flex flex-col items-center justify-center text-slate-300 pointer-events-none pb-10">
+                                    <div
+                                        class="w-20 h-20 rounded-full bg-emerald-50 text-emerald-200 flex items-center justify-center mb-4">
+                                        <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                    </div>
+                                    <p class="font-black text-emerald-600/50">Great Job!</p>
+                                    <p class="text-xs font-bold uppercase tracking-wider mt-1 opacity-70">No Absent
+                                        Students</p>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Measurements Pending List -->
-                        <div class="space-y-4">
-                            <div class="flex items-center justify-between">
-                                <h4
-                                    class="text-lg font-bold text-orange-500 uppercase tracking-widest flex items-center gap-2">
-                                    <span class="w-2 h-2 rounded-full bg-orange-500"></span>
-                                    Measurements Pending
-                                </h4>
-                                <span class="bg-orange-50 text-orange-600 px-3 py-1 rounded-full text-xs font-bold"
-                                    id="td-inc-pending-count">0</span>
+                        <!-- PENDING MEASUREMENTS CARD -->
+                        <div
+                            class="flex flex-col bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
+                            <!-- Header -->
+                            <div
+                                class="px-8 py-6 bg-orange-50/50 border-b border-orange-100 flex items-center justify-between">
+                                <div class="flex items-center gap-5">
+                                    <div
+                                        class="w-12 h-12 rounded-2xl bg-white text-orange-500 flex items-center justify-center shadow-sm border border-orange-50">
+                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10">
+                                            </path>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-lg font-black text-slate-800">Measurements Pending</h4>
+                                        <div class="flex items-center gap-2">
+                                            <span class="w-2 h-2 rounded-full bg-orange-500"></span>
+                                            <p class="text-xs font-bold text-orange-500 uppercase tracking-widest">
+                                                Incomplete Data</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex flex-col items-end">
+                                    <span class="text-2xl font-black text-slate-800" id="td-inc-pending-count">0</span>
+                                    <span
+                                        class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Students</span>
+                                </div>
                             </div>
-                            <div class="clay-card p-0 overflow-hidden bg-white">
-                                <div class="max-h-[500px] overflow-y-auto custom-scrollbar">
-                                    <table class="w-full text-left text-sm">
-                                        <thead class="bg-gray-50/50 sticky top-0 backdrop-blur-sm z-10">
-                                            <tr class="text-xs font-bold text-gray-400 uppercase tracking-wider">
-                                                <th class="p-4">Roll No</th>
-                                                <th class="p-4">Name</th>
-                                                <th class="p-4">Class</th>
-                                                <th class="p-4 text-center">Status</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="td-list-pending" class="divide-y divide-gray-50">
-                                            <!-- Injected -->
-                                        </tbody>
-                                        <tfoot id="td-no-pending" class="hidden">
-                                            <tr>
-                                                <td colspan="4" class="p-8 text-center text-gray-400 italic">All
-                                                    measurements taken!</td>
-                                            </tr>
-                                        </tfoot>
-                                    </table>
+
+                            <!-- List -->
+                            <div class="flex-1 overflow-y-auto custom-scrollbar bg-slate-50/30 relative">
+                                <table class="w-full text-left border-collapse">
+                                    <thead class="sticky top-0 bg-white/80 backdrop-blur-md z-10 shadow-sm">
+                                        <tr class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">
+                                            <th class="p-5 pl-8">Student Details</th>
+                                            <th class="p-5 text-center">Class / Section</th>
+                                            <th class="p-5 text-center pr-8">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="td-list-pending" class="divide-y divide-slate-100">
+                                        <!-- JS Injected -->
+                                    </tbody>
+                                </table>
+
+                                <!-- Empty State -->
+                                <div id="td-no-pending"
+                                    class="hidden absolute inset-0 flex flex-col items-center justify-center text-slate-300 pointer-events-none pb-10">
+                                    <div
+                                        class="w-20 h-20 rounded-full bg-emerald-50 text-emerald-200 flex items-center justify-center mb-4">
+                                        <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                    </div>
+                                    <p class="font-black text-emerald-600/50">All Clear!</p>
+                                    <p class="text-xs font-bold uppercase tracking-wider mt-1 opacity-70">Measurements
+                                        Complete</p>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
+                <div class="flex items-center gap-4">
+                    <button onclick="closeLevel3()"
+                        class="p-2 hover:bg-gray-100 rounded-full transition-colors text-gray-500 hover:text-blue-600 bg-white shadow-sm border border-gray-100">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                        </svg>
+                    </button>
+                    <h3 class="text-xl font-extrabold text-gray-800">Incomplete Records</h3>
+                </div>
 
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Absent List -->
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <h4
+                                class="text-lg font-bold text-red-500 uppercase tracking-widest flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-red-500"></span>
+                                Absent Students
+                            </h4>
+                            <span class="bg-red-50 text-red-600 px-3 py-1 rounded-full text-xs font-bold"
+                                id="td-inc-absent-count">0</span>
+                        </div>
+                        <div class="clay-card p-0 overflow-hidden bg-white">
+                            <div class="max-h-[500px] overflow-y-auto custom-scrollbar">
+                                <table class="w-full text-left text-sm">
+                                    <thead class="bg-gray-50/50 sticky top-0 backdrop-blur-sm z-10">
+                                        <tr class="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                                            <th class="p-4">Roll No</th>
+                                            <th class="p-4">Name</th>
+                                            <th class="p-4">Class</th>
+                                            <th class="p-4 text-center">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="td-list-absent" class="divide-y divide-gray-50">
+                                        <!-- Injected -->
+                                    </tbody>
+                                    <tfoot id="td-no-absent" class="hidden">
+                                        <tr>
+                                            <td colspan="4" class="p-8 text-center text-gray-400 italic">No absent
+                                                students found.</td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Measurements Pending List -->
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <h4
+                                class="text-lg font-bold text-orange-500 uppercase tracking-widest flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-orange-500"></span>
+                                Measurements Pending
+                            </h4>
+                            <span class="bg-orange-50 text-orange-600 px-3 py-1 rounded-full text-xs font-bold"
+                                id="td-inc-pending-count">0</span>
+                        </div>
+                        <div class="clay-card p-0 overflow-hidden bg-white">
+                            <div class="max-h-[500px] overflow-y-auto custom-scrollbar">
+                                <table class="w-full text-left text-sm">
+                                    <thead class="bg-gray-50/50 sticky top-0 backdrop-blur-sm z-10">
+                                        <tr class="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                                            <th class="p-4">Roll No</th>
+                                            <th class="p-4">Name</th>
+                                            <th class="p-4">Class</th>
+                                            <th class="p-4 text-center">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="td-list-pending" class="divide-y divide-gray-50">
+                                        <!-- Injected -->
+                                    </tbody>
+                                    <tfoot id="td-no-pending" class="hidden">
+                                        <tr>
+                                            <td colspan="4" class="p-8 text-center text-gray-400 italic">All
+                                                measurements taken!</td>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
+
         </div>
+    </div>
     </div>
 
 
@@ -7037,6 +7182,15 @@
         XLSX.utils.book_append_sheet(wb, ws, "Measurements");
         XLSX.writeFile(wb, `${schoolName}_Measurements_Matrix.xlsx`);
     }
+    function getMeasurementsSafe(st) {
+        if (!st) return {};
+        let m = st.data || st.measurements || {};
+        if (typeof m === 'string') {
+            try { m = JSON.parse(m); } catch (e) { m = {}; }
+        }
+        return m || {};
+    }
+
     function renderTdIncomplete(allSchoolStudents) {
         console.log("Rendering Incomplete Data View", allSchoolStudents.length);
         // Helpers (Duplicated for isolation/robustness)
@@ -7080,12 +7234,22 @@
         const absEmpty = document.getElementById('td-no-absent');
         if (absTable) {
             absTable.innerHTML = absentList.map(s => `
-                    <tr class="hover:bg-red-50/50 transition-colors border-b border-gray-50 group">
-                        <td class="p-4 font-mono text-xs text-gray-500">${s.roll_no || s['ADM NO'] || '-'}</td>
-                        <td class="p-4 font-bold text-gray-700 group-hover:text-red-700">${s.name}</td>
-                        <td class="p-4 text-xs text-gray-500">${s.class || '-'} ${s.section || ''}</td>
+                    <tr class="hover:bg-white transition-colors border-b border-slate-50 group">
+                        <td class="p-4 pl-8">
+                            <div>
+                                <div class="font-bold text-slate-700 text-sm group-hover:text-red-600 transition-colors">${s.name}</div>
+                                <div class="text-[10px] font-mono text-slate-400 uppercase tracking-widest mt-0.5">Roll: ${s.roll_no || s['ADM NO'] || '-'}</div>
+                            </div>
+                        </td>
                         <td class="p-4 text-center">
-                            <span class="px-2 py-1 rounded bg-red-100 text-red-600 text-[10px] font-bold uppercase tracking-wider shadow-sm">Absent</span>
+                            <span class="inline-flex items-center px-2 py-1 rounded text-[10px] font-bold bg-slate-100 text-slate-500 border border-slate-200">
+                                Cls ${s.class || '-'} • ${s.section || '-'}
+                            </span>
+                        </td>
+                        <td class="p-4 text-center pr-8">
+                            <span class="px-3 py-1 rounded-lg bg-red-50 text-red-600 border border-red-100 text-[10px] font-extrabold uppercase tracking-wider shadow-sm">
+                                Absent
+                            </span>
                         </td>
                     </tr>
                 `).join('');
@@ -7100,12 +7264,22 @@
         const penEmpty = document.getElementById('td-no-pending');
         if (penTable) {
             penTable.innerHTML = pendingList.map(s => `
-                    <tr class="hover:bg-orange-50/50 transition-colors border-b border-gray-50 group">
-                        <td class="p-4 font-mono text-xs text-gray-500">${s.roll_no || s['ADM NO'] || '-'}</td>
-                        <td class="p-4 font-bold text-gray-700 group-hover:text-orange-700">${s.name}</td>
-                        <td class="p-4 text-xs text-gray-500">${s.class || '-'} ${s.section || ''}</td>
+                     <tr class="hover:bg-white transition-colors border-b border-slate-50 group">
+                        <td class="p-4 pl-8">
+                            <div>
+                                <div class="font-bold text-slate-700 text-sm group-hover:text-orange-600 transition-colors">${s.name}</div>
+                                <div class="text-[10px] font-mono text-slate-400 uppercase tracking-widest mt-0.5">Roll: ${s.roll_no || s['ADM NO'] || '-'}</div>
+                            </div>
+                        </td>
                         <td class="p-4 text-center">
-                            <span class="px-2 py-1 rounded bg-orange-100 text-orange-600 text-[10px] font-bold uppercase tracking-wider shadow-sm">Pending</span>
+                            <span class="inline-flex items-center px-2 py-1 rounded text-[10px] font-bold bg-slate-100 text-slate-500 border border-slate-200">
+                                Cls ${s.class || '-'} • ${s.section || '-'}
+                            </span>
+                        </td>
+                        <td class="p-4 text-center pr-8">
+                            <span class="px-3 py-1 rounded-lg bg-orange-50 text-orange-600 border border-orange-100 text-[10px] font-extrabold uppercase tracking-wider shadow-sm">
+                                Pending
+                            </span>
                         </td>
                     </tr>
                 `).join('');
@@ -7115,6 +7289,13 @@
             }
         }
     }
+
+
+
+
+
+
+
 </script>
 </body>
 
