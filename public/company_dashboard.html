@@ -3713,6 +3713,11 @@
         }
 
         function renderTdStudents(data) {
+            // DEBUG: Log the first few students to inspect structure
+            if (data && data.length > 0) {
+                console.log("DEBUG: First 3 Students:", data.slice(0, 3));
+            }
+
             document.getElementById('td-list-students').innerHTML = data.map(s => {
                 // Determine Status Badge & Row Style
                 let rowClass = 'hover:bg-gray-50 transition-colors border-b border-gray-50';
@@ -3722,11 +3727,16 @@
 
                 // Check Attendance
                 // Include is_absent check from backend AND NESTED measurements
+                // Check Attendance
+                // Include is_absent check from backend AND NESTED measurements
+                // Added extended fallback checks: attendance, isAbsent (camelCase)
                 const isAbsent = (m && (m.is_absent === true || m.is_absent === 'true')) ||
                     s.is_absent === true || s.is_absent === 1 || String(s.is_absent) === 'true' ||
                     s.is_present === false || s.is_present === 0 || String(s.is_present).toLowerCase() === 'false' ||
                     s.status === 'Absent' || s.order_status === 'Absent' ||
-                    s['Absent/Present'] === 'Absent';
+                    s['Absent/Present'] === 'Absent' ||
+                    String(s.attendance).toLowerCase() === 'absent' ||
+                    s.isAbsent === true;
 
 
                 // Exclude meta keys from "Taken" check
