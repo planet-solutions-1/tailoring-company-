@@ -2328,7 +2328,11 @@
             // Extract Measurements
             const extracted = {};
             measureCols.forEach(m => {
-                if (row[m]) extracted[m] = row[m];
+                // FIXED: Allow 0/00 values (previously if(row[m]) excluded 0)
+                const val = row[m];
+                if (val !== undefined && val !== null && val !== '') {
+                    extracted[m] = val;
+                }
             });
 
             // Extract Quantities (Qty_ItemName)
@@ -2337,11 +2341,15 @@
                 if (k.startsWith("Qty_")) qtys[k] = row[k];
             });
 
+            // FIXED: Robust Absent Check (Trim whitespace, ignore case)
+            const absRaw = String(row['Absent/Present'] || '').trim().toLowerCase();
+            const isAbsent = absRaw === 'absent';
+
             const payload = {
                 student_id: studentId,
                 data: extracted,
                 remarks: row['Remarks'] || "",
-                is_absent: (row['Absent/Present'] === 'Absent'),
+                is_absent: isAbsent,
                 item_quantities: qtys
             };
 
