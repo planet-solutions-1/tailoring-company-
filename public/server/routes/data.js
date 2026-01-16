@@ -785,6 +785,7 @@ router.get('/all_students', authenticateToken, requireRole('company'), (req, res
             o.priority as order_priority,
             o.priority as order_priority,
             m.data as measurements,
+            m.is_absent,
             m.item_quantities,
             p.name as pattern_name,
             p.consumption as pattern_consumption,
