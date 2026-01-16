@@ -762,11 +762,119 @@
         }
 
         // --- DATA SYNC LOGIC ---
+        async function syncToCloud() {
+            // 1. Validation
+            const filledRows = data.filter(r => r["Student Name"] && String(r["Student Name"]).trim() !== "");
+            if (filledRows.length === 0) return alert("No student data to sync.");
+            if (!confirm(`Sync ${filledRows.length} students to cloud database?`)) return;
 
+            const btn = document.getElementById('btnSyncCloud');
+            const originalText = btn ? btn.innerText : "Sync Cloud";
+            if (btn) btn.innerText = "Syncing...";
 
+            // 2. Determine School ID
+            const urlParams = new URLSearchParams(window.location.search);
+            const schoolId = urlParams.get('schoolId') || sessionStorage.getItem('schoolId') || localStorage.getItem('schoolId');
 
+            if (!schoolId) {
+                if (btn) btn.innerText = originalText;
+                return alert("System Error: School ID missing. Please re-login.");
+            }
 
+            const token = sessionStorage.getItem('token');
+            if (!token) {
+                if (btn) btn.innerText = originalText;
+                return alert("Session expired. Please login.");
+            }
 
+            let success = 0;
+            let errors = 0;
+            let created = 0;
+            let updated = 0;
+
+            try {
+                // 3. Iterate and Sync
+                for (const row of filledRows) {
+                    try {
+                        // A. Upsert Student
+                        // Clean input
+                        const cleanVal = (k) => String(row[k] || "").trim();
+
+                        const studentPayload = {
+                            school_id: schoolId,
+                            admission_no: cleanVal("Admission No"),
+                            roll_no: cleanVal("Roll No"),
+                            name: cleanVal("Student Name"),
+                            class: cleanVal("Class"),
+                            section: cleanVal("Section"),
+                            house: cleanVal("House"),
+                            gender: cleanVal("Gender"),
+                            id: row.db_id || null
+                        };
+
+                        const resS = await fetch('/api/data/student', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                            body: JSON.stringify(studentPayload)
+                        });
+
+                        if (!resS.ok) throw new Error(`Student Save Failed: ${resS.status}`);
+                        const studentJson = await resS.json();
+                        const studentId = studentJson.id;
+
+                        // Save DB ID back to row to prevent duplicates on next sync
+                        if (!row.db_id) created++; else updated++;
+                        row.db_id = studentId;
+
+                        // B. Save Measurements
+                        const measureData = { ...row };
+                        delete measureData.db_id; // Don't save metadata in the JSON blob
+
+                        // Calculated Quantities
+                        const itemQuantities = {};
+                        allItems.forEach(item => {
+                            const qtyKey = `Qty_${item.name}`;
+                            if (row[qtyKey]) itemQuantities[item.name] = row[qtyKey];
+                        });
+
+                        // Absent Flag - Standardize check
+                        const att = (row["Absent/Present"] || "").toString().toLowerCase();
+                        const isAbsent = att === "absent" || att === "leave" || att === "od";
+
+                        const measurePayload = {
+                            student_id: studentId,
+                            data: measureData,
+                            remarks: "",
+                            is_absent: isAbsent,
+                            item_quantities: itemQuantities
+                        };
+
+                        const resM = await fetch('/api/data/measurements', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                            body: JSON.stringify(measurePayload)
+                        });
+
+                        if (resM.ok) success++;
+                        else throw new Error("Measurement Save Failed");
+
+                    } catch (err) {
+                        console.error("Sync Error for row", row["S.No"], err);
+                        errors++;
+                    }
+                }
+
+                // 4. Save back to LocalStorage (to persist db_ids)
+                localStorage.setItem('planetEditorData', JSON.stringify(data));
+
+                alert(`Sync Complete!\nSuccessfully Synced: ${success}\n(Created: ${created}, Updated: ${updated})\nFailed: ${errors}`);
+
+            } catch (e) {
+                alert("Critical Sync Error: " + e.message);
+            } finally {
+                if (btn) btn.innerText = originalText;
+            }
+        }
         function populateFilters() {
             const classes = [...new Set(data.map(r => r.Class).filter(v => v != null && v !== ""))].sort();
             const sections = [...new Set(data.map(r => r.Section).filter(v => v != null && v !== ""))].sort();
