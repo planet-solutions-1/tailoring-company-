@@ -3737,6 +3737,7 @@
                     (s.order_status && String(s.order_status).trim().toLowerCase() === 'absent') ||
                     (s['Absent/Present'] && String(s['Absent/Present']).trim().toLowerCase() === 'absent') ||
                     (s.attendance && String(s.attendance).trim().toLowerCase() === 'absent') ||
+                    (m && m.remarks && String(m.remarks).trim().toLowerCase() === 'absent') || // Check remarks inside measurements
                     s.isAbsent === true;
 
 
@@ -3747,7 +3748,9 @@
                     const v = m[k];
                     if (!v) return false;
                     const str = String(v).trim();
-                    return str !== '' && str !== '-' && str !== '0' && str !== '00' && str !== '0.0' && str !== '[object Object]';
+                    // Allow "0", "00" as VALID measurements if the user says "Taken"
+                    // Removed checks for '0', '00', '0.0' so they count as TAKEN.
+                    return str !== '' && str !== '-' && str !== '[object Object]';
                 });
 
                 // Visual Indicators for Row (Optional: Keep subtle tint for Absent)
