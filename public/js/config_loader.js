@@ -89,10 +89,18 @@ class ConfigLoader {
                         const config = JSON.parse(data.address);
                         if (config.marker === CONFIG_SCHOOL_ADDRESS_MARKER) {
                             console.log("ConfigLoader: Loaded custom configuration via shared endpoint.");
-                            return config.data; // { items: [...] }
+                            // FIX: Ensure config.data is valid, otherwise return config or defaults
+                            if (config.data && Array.isArray(config.data.items)) {
+                                return config.data;
+                            } else if (config.items && Array.isArray(config.items)) {
+                                // Backward compatibility if data wrapper is missing
+                                return config;
+                            } else {
+                                console.warn("ConfigLoader: Invalid config structure (missing items).");
+                            }
                         }
                     } catch (e) {
-                        console.warn("ConfigLoader: Failed to parse system config.", e);
+                        // FALLTHROUGH
                     }
                 }
             } else {
@@ -105,8 +113,11 @@ class ConfigLoader {
                         const schools = await r2.json();
                         const configSchool = schools.find(s => s.name === CONFIG_SCHOOL_NAME);
                         if (configSchool && configSchool.address) {
-                            const config = JSON.parse(configSchool.address);
-                            return config.data;
+
+                            // FIX: Same validation for fallback
+                            if (config && config.data) return config.data;
+                            if (config && config.items) return config;
+                            console.warn("ConfigLoader: Fallback config invalid.");
                         }
                     }
                 }
