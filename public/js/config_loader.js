@@ -64,35 +64,50 @@ class ConfigLoader {
 
             // PRE-CHECK: Skip request for non-admin roles to avoid 403 Console Errors
             const userRole = sessionStorage.getItem('role');
-            // If role exists and is NOT company/super_admin, return defaults immediately
-            if (userRole && !['company', 'super_admin'].includes(userRole)) {
-                console.log("ConfigLoader: Skipping system config for non-admin role (using defaults).");
+            // If role exists and is NOT company/super_admin/school, return defaults
+            // We allow 'school' so they can see dynamic patterns
+            if (userRole && !['company', 'super_admin', 'school', 'manager'].includes(userRole)) {
+                console.log("ConfigLoader: Skipping system config for unauthorized role (using defaults).");
                 return { items: DEFAULT_ITEMS };
             }
 
-            // Unified Endpoint: Use /api/data/schools (Same as Dashboard) instead of /api/schools
-            const r = await fetch(`${normalizedBase}/api/data/schools`, {
+            // Unified Endpoint: Use /api/data/system_config for shared access
+            // This is safer and faster than scanning all schools
+            const r = await fetch(`${normalizedBase}/api/data/system_config`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 
             if (r.status === 403 || r.status === 401) {
-                console.warn("ConfigLoader: Access denied to system config (using defaults).");
+                console.warn("ConfigLoader: Access denied (using defaults).");
                 return { items: DEFAULT_ITEMS };
             }
 
             if (r.ok) {
-                const schools = await r.json();
-                const configSchool = schools.find(s => s.name === CONFIG_SCHOOL_NAME);
-
-                if (configSchool && configSchool.address) {
+                const data = await r.json();
+                if (data && data.address) {
                     try {
-                        const config = JSON.parse(configSchool.address);
+                        const config = JSON.parse(data.address);
                         if (config.marker === CONFIG_SCHOOL_ADDRESS_MARKER) {
-                            console.log("ConfigLoader: Loaded custom configuration.");
+                            console.log("ConfigLoader: Loaded custom configuration via shared endpoint.");
                             return config.data; // { items: [...] }
                         }
                     } catch (e) {
-                        console.warn("ConfigLoader: Found config school but failed to parse.", e);
+                        console.warn("ConfigLoader: Failed to parse system config.", e);
+                    }
+                }
+            } else {
+                // Fallback to Scan (for backwards compatibility or Company Admin view)
+                // Or just assume if system_config failed, we use defaults.
+                console.log("ConfigLoader: System config endpoint failed, checking fallback list (Company Only).");
+                if (['company', 'super_admin'].includes(userRole)) {
+                    const r2 = await fetch(`${normalizedBase}/api/data/schools`, { headers: { 'Authorization': `Bearer ${token}` } });
+                    if (r2.ok) {
+                        const schools = await r2.json();
+                        const configSchool = schools.find(s => s.name === CONFIG_SCHOOL_NAME);
+                        if (configSchool && configSchool.address) {
+                            const config = JSON.parse(configSchool.address);
+                            return config.data;
+                        }
                     }
                 }
             }

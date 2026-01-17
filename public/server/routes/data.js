@@ -44,6 +44,26 @@ router.get('/settings', authenticateToken, async (req, res) => {
     } catch (e) { res.status(500).json({ error: e.message }); }
 });
 
+// GET /api/data/system_config - Shared Config for All Roles
+router.get('/system_config', authenticateToken, async (req, res) => {
+    try {
+        const sql = "SELECT address FROM schools WHERE name = 'SYSTEM_CONFIG'";
+        let row;
+        if (db.execute) {
+            const [rows] = await db.execute(sql);
+            row = rows[0];
+        } else {
+            row = await new Promise(r => db.get(sql, [], (e, row) => r(row)));
+        }
+
+        if (row && row.address) {
+            res.json({ address: row.address });
+        } else {
+            res.status(404).json({ error: "System config not found" });
+        }
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
 router.post('/settings', authenticateToken, requireRole('company'), async (req, res) => {
     const { key, value } = req.body;
     if (!key) return res.status(400).json({ error: "Key is required" });
