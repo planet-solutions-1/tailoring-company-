@@ -347,7 +347,7 @@ app.get('/', (req, res) => {
 });
 
 // Explicit Dashboard Routes (Fallback for Static Issues)
-app.get('/company_dashboard.html', (req, res) => res.sendFile(path.join(__dirname, '../company_dashboard.html')));
+app.get('/company_dashboard.html', (req, res) => res.sendFile(path.join(__dirname, '../dashboard_fixed.html')));
 app.get('/school_dashboard.html', (req, res) => res.sendFile(path.join(__dirname, '../school_dashboard.html')));
 app.get('/packing_dashboard.html', (req, res) => res.sendFile(path.join(__dirname, '../packing_dashboard.html')));
 
