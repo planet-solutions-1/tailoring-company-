@@ -676,7 +676,23 @@
             // Load Dynamic Config
             try {
                 const token = sessionStorage.getItem('token');
-                const config = await ConfigLoader.load('/api', token); // Use relative /api since we are on same domain
+                // DEBUG: Force alert
+                const config = await ConfigLoader.load('/api', token);
+
+                // Show raw config length to user
+                if (!config || !config.items) {
+                    alert("DEBUG ERROR: Config is NULL or has NO items.\nDid you click SAVE in Dress Manager?");
+                } else if (config.items.length === 0) {
+                    alert("DEBUG WARNING: Config loaded but items list is EMPTY [].\nDid you click SAVE in Dress Manager?");
+                } else {
+                    // Check if it is the default list
+                    if (config.items[0].name === "BOYS - FORMAL SHIRT") {
+                        alert("DEBUG: Loaded DEFAULT items (Fallback).\nValues: " + config.items.length + "\nReason: Custom config fetch failed or returned defaults.");
+                    } else {
+                        alert(`DEBUG SUCCESS: Loaded ${config.items.length} CUSTOM items!\nFirst: ${config.items[0].name}\nCheck Filter Dropdown Now.`);
+                    }
+                }
+
                 if (config && Array.isArray(config.items) && config.items.length > 0) {
                     boysItems = config.items.filter(i => i.type === 'Male');
                     girlsItems = config.items.filter(i => i.type === 'Female');
