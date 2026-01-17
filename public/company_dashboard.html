@@ -2477,11 +2477,17 @@
     <!-- DRESS MANAGER VIEW -->
     <div id="view-settings" class="hidden fade-in w-full space-y-8 px-8 pb-8">
         <div class="clay-card p-8">
-            <h3 class="text-xl font-bold text-gray-700 mb-6 flex items-center gap-2">
-                <span class="text-purple-500">●</span> Dress Types & Formulas
+            <h3 class="text-xl font-bold text-gray-700 mb-6 flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                    <span class="text-purple-500">●</span> Dress Types & Formulas
+                </div>
+                <button onclick="restoreDefaults()"
+                    class="clay-btn bg-blue-50 text-blue-600 px-4 py-2 text-[10px] uppercase shadow-sm hover:bg-blue-100">
+                    ↺ Restore Defaults
+                </button>
             </h3>
-            <p class="text-sm text-gray-400 mb-6">Manage global dress definitions and calculation formulas. These
-                settings will override defaults in all apps.</p>
+            <p class="text-sm text-gray-400 mb-6">Manage global dress definitions. If lists are empty, click Restore
+                Defaults.</p>
 
             <!-- Add New Item Form -->
             <div class="bg-gray-50/50 p-6 rounded-2xl mb-8 border border-gray-100">
