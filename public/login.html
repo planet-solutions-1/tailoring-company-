@@ -110,6 +110,13 @@
                     sessionStorage.setItem('schoolName', safeUser.school_name || '');
 
                     // Redirect logic
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const redirectUrl = urlParams.get('redirect');
+                    if (redirectUrl) {
+                        window.location.href = redirectUrl;
+                        return;
+                    }
+
                     switch (data.role) {
                         case 'company':
                             window.location.href = 'dashboard_fixed.html';
