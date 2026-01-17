@@ -367,6 +367,9 @@ router.post('/fix_db', authenticateToken, requireRole('company'), async (req, re
             try { await db.execute("ALTER TABLE users ADD COLUMN is_active BOOLEAN DEFAULT 1"); } catch (e) { }
             try { await db.execute("ALTER TABLE schools ADD COLUMN lock_message TEXT"); } catch (e) { }
             try { await db.execute("ALTER TABLE schools ADD COLUMN is_locked BOOLEAN DEFAULT 0"); } catch (e) { }
+            try { await db.execute("ALTER TABLE schools ADD COLUMN address TEXT"); } catch (e) { }
+            try { await db.execute("ALTER TABLE schools ADD COLUMN phone VARCHAR(20)"); } catch (e) { }
+            try { await db.execute("ALTER TABLE schools ADD COLUMN email VARCHAR(100)"); } catch (e) { }
         } else if (db.run) {
             // SQLite
             db.run("ALTER TABLE schools ADD COLUMN priority TEXT DEFAULT 'Normal'", () => { });
@@ -374,6 +377,9 @@ router.post('/fix_db', authenticateToken, requireRole('company'), async (req, re
             db.run("ALTER TABLE users ADD COLUMN is_active BOOLEAN DEFAULT 1", () => { });
             db.run("ALTER TABLE schools ADD COLUMN lock_message TEXT", () => { });
             db.run("ALTER TABLE schools ADD COLUMN is_locked BOOLEAN DEFAULT 0", () => { });
+            db.run("ALTER TABLE schools ADD COLUMN address TEXT", () => { });
+            db.run("ALTER TABLE schools ADD COLUMN phone TEXT", () => { });
+            db.run("ALTER TABLE schools ADD COLUMN email TEXT", () => { });
             db.run(`CREATE TABLE IF NOT EXISTS complaints (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 school_id INTEGER NOT NULL,
