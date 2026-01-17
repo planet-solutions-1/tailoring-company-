@@ -1,0 +1,137 @@
+<!-- 6. INCOMPLETE DATA GRID (Level 3 - New Professional UI) -->
+<div id="td-view-incomplete" class="hidden space-y-6 animate-in slide-in-from-bottom-4 duration-500">
+    <!-- Header -->
+    <div class="flex items-center gap-4">
+        <button onclick="closeLevel3()"
+            class="group p-2 hover:bg-white rounded-full transition-all text-slate-400 hover:text-blue-600 hover:shadow-lg hover:shadow-blue-500/20 active:scale-95 border border-transparent hover:border-slate-100">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M10 19l-7-7m0 0l7-7m-7 7h18">
+                </path>
+            </svg>
+        </button>
+        <div>
+            <h3 class="text-2xl font-black text-slate-800 tracking-tight">Incomplete Records</h3>
+            <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Action Required Items</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 h-[calc(100vh-200px)] max-h-[700px]">
+        <!-- ABSENT STUDENTS CARD -->
+        <div
+            class="flex flex-col bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
+            <!-- Header -->
+            <div class="px-8 py-6 bg-red-50/50 border-b border-red-100 flex items-center justify-between">
+                <div class="flex items-center gap-5">
+                    <div
+                        class="w-12 h-12 rounded-2xl bg-white text-red-500 flex items-center justify-center shadow-sm border border-red-50">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 7a4 4 0 11-8 0 4 4 0 018 0zM9 14a6 6 0 00-6 6v1h12v-1a6 6 0 00-6-6zM21 12h-6">
+                            </path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h4 class="text-lg font-black text-slate-800">Absent Students</h4>
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+                            <p class="text-xs font-bold text-red-500 uppercase tracking-widest">Critical Attention</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex flex-col items-end">
+                    <span class="text-2xl font-black text-slate-800" id="td-inc-absent-count">0</span>
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Students</span>
+                </div>
+            </div>
+
+            <!-- List -->
+            <div class="flex-1 overflow-y-auto custom-scrollbar bg-slate-50/30 relative">
+                <table class="w-full text-left border-collapse">
+                    <thead class="sticky top-0 bg-white/80 backdrop-blur-md z-10 shadow-sm">
+                        <tr class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">
+                            <th class="p-5 pl-8">Student Details</th>
+                            <th class="p-5 text-center">Class / Section</th>
+                            <th class="p-5 text-center pr-8">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="td-list-absent" class="divide-y divide-slate-100">
+                        <!-- JS Injected -->
+                    </tbody>
+                </table>
+
+                <!-- Empty State -->
+                <div id="td-no-absent"
+                    class="hidden absolute inset-0 flex flex-col items-center justify-center text-slate-300 pb-10 pointer-events-none">
+                    <div
+                        class="w-20 h-20 rounded-full bg-emerald-50 text-emerald-200 flex items-center justify-center mb-4">
+                        <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <p class="font-black text-emerald-600/50">Great Job!</p>
+                    <p class="text-xs font-bold uppercase tracking-wider mt-1 opacity-70">No Absent Students</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- PENDING MEASUREMENTS CARD -->
+        <div
+            class="flex flex-col bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden">
+            <!-- Header -->
+            <div class="px-8 py-6 bg-orange-50/50 border-b border-orange-100 flex items-center justify-between">
+                <div class="flex items-center gap-5">
+                    <div
+                        class="w-12 h-12 rounded-2xl bg-white text-orange-500 flex items-center justify-center shadow-sm border border-orange-50">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10">
+                            </path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h4 class="text-lg font-black text-slate-800">Measurements Pending</h4>
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-orange-500"></span>
+                            <p class="text-xs font-bold text-orange-500 uppercase tracking-widest">Incomplete Data</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex flex-col items-end">
+                    <span class="text-2xl font-black text-slate-800" id="td-inc-pending-count">0</span>
+                    <span class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Students</span>
+                </div>
+            </div>
+
+            <!-- List -->
+            <div class="flex-1 overflow-y-auto custom-scrollbar bg-slate-50/30 relative">
+                <table class="w-full text-left border-collapse">
+                    <thead class="sticky top-0 bg-white/80 backdrop-blur-md z-10 shadow-sm">
+                        <tr class="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest">
+                            <th class="p-5 pl-8">Student Details</th>
+                            <th class="p-5 text-center">Class / Section</th>
+                            <th class="p-5 text-center pr-8">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="td-list-pending" class="divide-y divide-slate-100">
+                        <!-- JS Injected -->
+                    </tbody>
+                </table>
+
+                <!-- Empty State -->
+                <div id="td-no-pending"
+                    class="hidden absolute inset-0 flex flex-col items-center justify-center text-slate-300 pb-10 pointer-events-none">
+                    <div
+                        class="w-20 h-20 rounded-full bg-emerald-50 text-emerald-200 flex items-center justify-center mb-4">
+                        <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <p class="font-black text-emerald-600/50">All Clear!</p>
+                    <p class="text-xs font-bold uppercase tracking-wider mt-1 opacity-70">Measurements Complete</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
