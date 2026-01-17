@@ -6621,8 +6621,10 @@
         async function saveDressConfig() {
             if (!confirm("Save changes? This will propagate to ALL dashboards.")) return;
             try {
-                await ConfigLoader.save(API_BASE, token, dressConfig.items);
-                alert("Configuration Saved!");
+                // FORCE REFRESH LOCAL
+                const r = await ConfigLoader.save(API_BASE, token, dressConfig.items);
+                alert("Configuration Saved! The page will now reload to apply changes.");
+                location.reload();
             } catch (e) {
                 alert("Failed to save: " + e.message);
                 console.error(e);

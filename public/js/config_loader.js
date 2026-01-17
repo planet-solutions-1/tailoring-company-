@@ -73,7 +73,7 @@ class ConfigLoader {
 
             // Unified Endpoint: Use /api/data/system_config for shared access
             // This is safer and faster than scanning all schools
-            const r = await fetch(`${normalizedBase}/api/data/system_config`, {
+            const r = await fetch(`${normalizedBase}/api/data/system_config?t=${Date.now()}`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
 
