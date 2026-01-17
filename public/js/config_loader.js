@@ -35,6 +35,8 @@ const DEFAULT_ITEMS = [
 ];
 
 class ConfigLoader {
+    static get defaults() { return JSON.parse(JSON.stringify(DEFAULT_ITEMS)); } // Return clone to prevent mutation
+
     static async load(apiBase, token) {
         if (!apiBase || !token) {
             console.warn("ConfigLoader: Missing API Base or Token, using defaults.");
