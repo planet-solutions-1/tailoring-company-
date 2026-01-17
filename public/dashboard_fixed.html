@@ -2495,12 +2495,12 @@
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                     <div class="md:col-span-1">
                         <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Type Name</label>
-                        <input type="text" id="set-item-name" placeholder="BOYS - SUPER SHIRT"
+                        <input type="text" id="set-item-name-v3" placeholder="BOYS - SUPER SHIRT"
                             class="clay-input py-2 text-xs">
                     </div>
                     <div>
                         <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Gender</label>
-                        <select id="set-item-gender" class="clay-input py-2 text-xs">
+                        <select id="set-item-gender-v3" class="clay-input py-2 text-xs">
                             <option value="Male">Male</option>
                             <option value="Female">Female</option>
                         </select>
@@ -2508,12 +2508,13 @@
                     <div class="md:col-span-2">
                         <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Required Columns (Comma
                             Sep)</label>
-                        <input type="text" id="set-item-cols" placeholder="U1, U2, L1" class="clay-input py-2 text-xs">
+                        <input type="text" id="set-item-cols-v3" placeholder="U1, U2, L1"
+                            class="clay-input py-2 text-xs">
                     </div>
                     <div class="md:col-span-4 mt-2">
                         <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Formula
                             (Optional)</label>
-                        <input type="text" id="set-item-formula" placeholder="e.g. U1 + 2"
+                        <input type="text" id="set-item-formula-v3" placeholder="e.g. U1 + 2"
                             class="clay-input py-2 text-xs font-mono">
                         <p class="text-[10px] text-gray-400 mt-1">Use column keys (U1, U2, L1...). Result will be
                             displayed as 'Size' in Planet Editor.</p>
@@ -6618,10 +6619,10 @@
         }
 
         function addDressItem() {
-            const name = document.getElementById('set-item-name').value.trim();
-            const type = document.getElementById('set-item-gender').value; // Changed from mismatch
-            const colsStr = document.getElementById('set-item-cols').value.trim();
-            const formula = document.getElementById('set-item-formula').value.trim();
+            const name = document.getElementById('set-item-name-v3').value.trim();
+            const type = document.getElementById('set-item-gender-v3').value;
+            const colsStr = document.getElementById('set-item-cols-v3').value.trim();
+            const formula = document.getElementById('set-item-formula-v3').value.trim();
 
             if (!name) return alert("Name is required");
             if (!colsStr) return alert("At least one column is required");
@@ -6637,9 +6638,9 @@
 
             renderSettingsTable();
             // Clear form
-            document.getElementById('set-item-name').value = '';
-            document.getElementById('set-item-cols').value = '';
-            document.getElementById('set-item-formula').value = '';
+            document.getElementById('set-item-name-v3').value = '';
+            document.getElementById('set-item-cols-v3').value = '';
+            document.getElementById('set-item-formula-v3').value = '';
         }
 
         function deleteDressItem(index) {
