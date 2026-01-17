@@ -66,7 +66,7 @@ class ConfigLoader {
             const userRole = sessionStorage.getItem('role');
             // If role exists and is NOT company/super_admin/school, return defaults
             // We allow 'school' so they can see dynamic patterns
-            if (userRole && !['company', 'super_admin', 'school', 'manager'].includes(userRole)) {
+            if (userRole && !['company', 'super_admin', 'school', 'manager', 'tailor'].includes(userRole)) {
                 console.log("ConfigLoader: Skipping system config for unauthorized role (using defaults).");
                 return { items: DEFAULT_ITEMS };
             }
