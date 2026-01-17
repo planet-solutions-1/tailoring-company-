@@ -377,6 +377,64 @@ router.delete('/schools/:id', authenticateToken, requireRole('company'), async (
     }
 });
 
+// GET /api/data/fix/seed_config - Force Creation of System Config (For Production Repair)
+router.get('/fix/seed_config', (req, res) => {
+    const CONFIG_SCHOOL_NAME = "SYSTEM_CONFIG";
+    const CONFIG_SCHOOL = "SYSTEM_CONFIG_V1";
+
+    const CUSTOM_CONFIG = {
+        items: [
+            { name: "DEBUG_TEST_ITEM_SHIRT", cols: ["U1", "U2"], type: "Male" },
+            { name: "DEBUG_TEST_ITEM_PANT", cols: ["L1", "L2"], type: "Male" }
+        ],
+        formulas: {}
+    };
+    const payload = JSON.stringify({ marker: CONFIG_SCHOOL, data: CUSTOM_CONFIG });
+
+    // 1. Check if exists
+    const checkSql = "SELECT * FROM schools WHERE name = ?";
+
+    // Helper for async DB
+    const runQuery = (sql, params) => {
+        return new Promise((resolve, reject) => {
+            if (db.execute) db.execute(sql, params).then(([r]) => resolve(r)).catch(reject);
+            else db.get(sql, params, (err, r) => err ? reject(err) : resolve(r));
+        });
+    }
+
+    const execQuery = (sql, params) => {
+        return new Promise((resolve, reject) => {
+            if (db.execute) db.execute(sql, params).then(resolve).catch(reject);
+            else db.run(sql, params, function (err) { err ? reject(err) : resolve(this) });
+        });
+    }
+
+    runQuery(checkSql, [CONFIG_SCHOOL_NAME]).then(async (row) => {
+        // SQLite returns row, MySQL returns [rows] but we destructured [r] above... wait.
+        // My runQuery helper for db.execute returns `r` which is `rows`.
+        // `db.get` returns `row`.
+        // Logic needs to handle both.
+
+        let existing = row;
+        if (Array.isArray(row)) existing = row.length > 0 ? row[0] : null;
+
+        if (existing) {
+            const updateSql = "UPDATE schools SET address = ? WHERE id = ?";
+            await execQuery(updateSql, [payload, existing.id]);
+            res.json({ message: "Updated existing SYSTEM_CONFIG", id: existing.id });
+        } else {
+            // Create
+            const hash = "$2b$10$dummyhashfixedforproductionrepair";
+            const insertSql = "INSERT INTO schools (name, username, password_hash, address, phone, email) VALUES (?, ?, ?, ?, ?, ?)";
+            await execQuery(insertSql, [CONFIG_SCHOOL_NAME, "system_config", hash, payload, "0000000000", "repair@local"]);
+            res.json({ message: "Created new SYSTEM_CONFIG", status: "Seeded" });
+        }
+    }).catch(e => {
+        console.error("Seed Error", e);
+        res.status(500).json({ error: e.message });
+    });
+});
+
 // POST /api/data/fix_db - Manual Schema Migration (Renamed from /migrate)
 router.post('/fix_db', authenticateToken, requireRole('company'), async (req, res) => {
     try {

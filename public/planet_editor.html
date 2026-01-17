@@ -676,22 +676,7 @@
             // Load Dynamic Config
             try {
                 const token = sessionStorage.getItem('token');
-                // DEBUG: Force alert
                 const config = await ConfigLoader.load('/api', token);
-
-                // Show raw config length to user
-                if (!config || !config.items) {
-                    alert("DEBUG ERROR: Config is NULL or has NO items.\nDid you click SAVE in Dress Manager?");
-                } else if (config.items.length === 0) {
-                    alert("DEBUG WARNING: Config loaded but items list is EMPTY [].\nDid you click SAVE in Dress Manager?");
-                } else {
-                    // Check if it is the default list
-                    if (config.items[0].name === "BOYS - FORMAL SHIRT") {
-                        alert("DEBUG: Loaded DEFAULT items (Fallback).\nValues: " + config.items.length + "\nReason: Custom config fetch failed or returned defaults.");
-                    } else {
-                        alert(`DEBUG SUCCESS: Loaded ${config.items.length} CUSTOM items!\nFirst: ${config.items[0].name}\nCheck Filter Dropdown Now.`);
-                    }
-                }
 
                 if (config && Array.isArray(config.items) && config.items.length > 0) {
                     boysItems = config.items.filter(i => i.type === 'Male');
@@ -700,10 +685,7 @@
                     console.log("Loaded Dynamic Items:", allItems.length);
                 } else {
                     console.warn("Using Default/Empty Items (Config Load Failed or Empty)");
-                    // If needed, we could set defaults here if ConfigLoader returns empty 
-                    // (ConfigLoader already defaults to Hardcoded in practice? Yes, if load fails it returns defaults)
-                    // ConfigLoader.load returns { items: DEFAULT_ITEMS } on error.
-                    // So we should be safe.
+                    // Defaults logic handled by ConfigLoader or fallback
                 }
             } catch (e) {
                 console.error("Critical Config Load Error", e);
