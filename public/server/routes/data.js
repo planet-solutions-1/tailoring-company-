@@ -195,6 +195,9 @@ router.put('/schools/:id', authenticateToken, requireRole('company'), (req, res)
     if (status !== undefined) { fields.push("status = ?"); params.push(status); }
     if (start_date !== undefined) { fields.push("start_date = ?"); params.push(start_date || null); }
     if (deadline !== undefined) { fields.push("deadline = ?"); params.push(deadline || null); }
+    if (req.body.address !== undefined) { fields.push("address = ?"); params.push(req.body.address || null); }
+    if (req.body.phone !== undefined) { fields.push("phone = ?"); params.push(req.body.phone || null); }
+    if (req.body.email !== undefined) { fields.push("email = ?"); params.push(req.body.email || null); }
 
     if (fields.length === 0) return res.json({ message: "No fields to update." });
 
@@ -270,8 +273,8 @@ router.post('/schools', authenticateToken, requireRole('company'), async (req, r
         if (db.execute) {
             // MySQL
             const [schoolRes] = await db.execute(
-                "INSERT INTO schools (name, username, password_hash, start_date, deadline) VALUES (?, ?, ?, ?, ?)",
-                [name, username, hash, req.body.start_date || null, req.body.deadline || null]
+                "INSERT INTO schools (name, username, password_hash, start_date, deadline, address, phone, email) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                [name, username, hash, req.body.start_date || null, req.body.deadline || null, req.body.address || null, req.body.phone || null, req.body.email || null]
             );
             const schoolId = schoolRes.insertId;
 
@@ -281,17 +284,18 @@ router.post('/schools', authenticateToken, requireRole('company'), async (req, r
             res.json({ message: "School and Admin User created successfully", id: schoolId });
         } else {
             // SQLite
-            db.run("INSERT INTO schools (name, username, password_hash) VALUES (?, ?, ?)", [name, username, hash], function (err) {
-                if (err) return res.status(500).json({ error: err.message });
-                const schoolId = this.lastID;
+            db.run("INSERT INTO schools (name, username, password_hash, address, phone, email) VALUES (?, ?, ?, ?, ?, ?)",
+                [name, username, hash, req.body.address || null, req.body.phone || null, req.body.email || null], function (err) {
+                    if (err) return res.status(500).json({ error: err.message });
+                    const schoolId = this.lastID;
 
-                // 2. Create School Admin User automatically (SQLite)
-                db.run("INSERT INTO users (username, password_hash, role, school_id) VALUES (?, ?, 'school', ?)", [username, hash, schoolId], (err) => {
-                    if (err) console.error("Auto-User Creation Failed", err);
+                    // 2. Create School Admin User automatically (SQLite)
+                    db.run("INSERT INTO users (username, password_hash, role, school_id) VALUES (?, ?, 'school', ?)", [username, hash, schoolId], (err) => {
+                        if (err) console.error("Auto-User Creation Failed", err);
+                    });
+
+                    res.json({ message: "School created successfully", id: schoolId });
                 });
-
-                res.json({ message: "School created successfully", id: schoolId });
-            });
         }
 
     } catch (e) { res.status(500).json({ error: e.message }); }

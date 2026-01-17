@@ -154,7 +154,8 @@ class ConfigLoader {
                     address: payloadString,
                     phone: "0000000000",
                     email: "config@system.local",
-                    password: "system_config_locked"
+                    password: "system_config_locked",
+                    username: "system_config"
                 };
 
                 const r2 = await fetch(`${normalizedBase}/api/data/schools`, {
