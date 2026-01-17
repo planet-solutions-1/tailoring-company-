@@ -683,9 +683,22 @@
                     girlsItems = config.items.filter(i => i.type === 'Female');
                     allItems = config.items;
                     console.log("Loaded Dynamic Items:", allItems.length);
+
+                    // VISUAL DEBUG: Update Version Badge
+                    const vBadge = document.querySelector('.bg-gray-100.text-gray-600.text-xs');
+                    if (vBadge) {
+                        vBadge.textContent = `v3.1 • Custom Params (${allItems.length})`;
+                        vBadge.classList.remove('bg-gray-100', 'text-gray-600');
+                        vBadge.classList.add('bg-green-100', 'text-green-700', 'font-bold');
+                    }
                 } else {
                     console.warn("Using Default/Empty Items (Config Load Failed or Empty)");
-                    // Defaults logic handled by ConfigLoader or fallback
+                    const vBadge = document.querySelector('.bg-gray-100.text-gray-600.text-xs');
+                    if (vBadge) {
+                        vBadge.textContent = "v3.1 • DEFAULT PARAMS (Fallback)";
+                        vBadge.classList.remove('bg-gray-100', 'text-gray-600');
+                        vBadge.classList.add('bg-red-100', 'text-red-700', 'font-bold');
+                    }
                 }
             } catch (e) {
                 console.error("Critical Config Load Error", e);
