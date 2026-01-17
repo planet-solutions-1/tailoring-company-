@@ -750,40 +750,8 @@
             </div>
 
             <script>
-                // PATCH: Ensure switchTab handles 'dress-manager'
-                // This runs immediately to patch the function
-                (function () {
-                    const originalSwitchTab = window.switchTab;
-                    const tabs = ['overview', 'users', 'access', 'schools', 'reports', 'complaints', 'data', 'dress-manager', 'settings'];
+                // Patch removed: Integrated into main switchTab
 
-                    window.switchTab = function (tab) {
-                        // 1. Handle Navigation State
-                        tabs.forEach(t => {
-                            const nav = document.getElementById('nav-' + t);
-                            if (nav) {
-                                if (t === tab) nav.classList.add('text-blue-600', 'bg-blue-50'); // Active Styles (approx)
-                                else nav.classList.remove('text-blue-600', 'bg-blue-50');
-                            }
-                        });
-
-                        // 2. Handle View State
-                        if (tab === 'dress-manager') {
-                            // Hide others
-                            tabs.forEach(t => {
-                                if (t !== 'dress-manager') document.getElementById('view-' + t)?.classList.add('hidden');
-                            });
-                            // Show settings
-                            document.getElementById('view-dress-manager')?.classList.remove('hidden');
-
-                            // Trigger Load
-                            if (typeof fetchSettings === 'function') fetchSettings();
-                        } else {
-                            // Standard behavior for others
-                            document.getElementById('view-dress-manager')?.classList.add('hidden');
-                            if (originalSwitchTab) originalSwitchTab(tab);
-                        }
-                    }
-                })();
             </script>
 
             <!-- 5. SCHOOLS -->
@@ -2793,7 +2761,8 @@
                 'access': 'view-access',
                 'complaints': 'view-complaints',
                 'reports': 'view-reports',
-                'settings': 'view-settings'
+                'settings': 'view-settings',
+                'dress-manager': 'view-dress-manager'
             };
 
             // Allow calling with either short ID or full ID (fallback)
@@ -2811,6 +2780,7 @@
                 'view-complaints',
                 'view-reports',
                 'view-settings',
+                'view-dress-manager',
                 'view-school-details' // Ensure this is hidden when switching main tabs
             ];
 
@@ -2827,6 +2797,27 @@
                 console.warn(`View ID '${viewId}' not found in HTML.`);
             }
 
+            // AUTO-FETCH LOGIC
+            if (viewId === 'view-dress-manager') {
+                if (typeof fetchSettings === 'function') fetchSettings();
+            }
+
+            // NAVIGATION STATE (Highlight Active Tab)
+            const navIds = ['nav-overview', 'nav-schools', 'nav-data', 'nav-users', 'nav-access', 'nav-complaints', 'nav-reports', 'nav-settings', 'nav-dress-manager'];
+            navIds.forEach(nid => {
+                const el = document.getElementById(nid);
+                if (!el) return;
+                // Simple active state check: does clickedId match partial?
+                // e.g. clickedId='overview' -> nav-overview
+                // clickedId='dress-manager' -> nav-dress-manager
+                if (nid === 'nav-' + clickedId) {
+                    el.classList.add('text-blue-600', 'bg-blue-50');
+                } else {
+                    el.classList.remove('text-blue-600', 'bg-blue-50');
+                }
+            });
+
+
             const titles = {
                 'view-overview': 'Overview',
                 'view-schools': 'Schools',
@@ -2836,6 +2827,7 @@
                 'view-complaints': 'Complaints',
                 'view-reports': 'Reports',
                 'view-settings': 'Settings',
+                'view-dress-manager': 'Dress Manager',
                 'view-school-details': 'School Details'
             };
 
@@ -2848,6 +2840,7 @@
                 'view-complaints': 'Track and resolve school complaints and issues',
                 'view-reports': 'Download data and view system activity logs',
                 'view-settings': 'Configure system preferences and notifications',
+                'view-dress-manager': 'Manage Pattern Items (Boys/Girls) and Formulas',
                 'view-school-details': 'Manage locked status and data access'
             };
 
