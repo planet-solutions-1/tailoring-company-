@@ -237,6 +237,9 @@ if (process.env.RAILWAY_ENVIRONMENT || process.env.NODE_ENV === 'production') {
 
             // SCHOOL LOCK MIGRATION
             try { await promisePool.execute("ALTER TABLE schools ADD COLUMN is_locked BOOLEAN DEFAULT 0"); } catch (e) { }
+            try { await promisePool.execute("ALTER TABLE schools ADD COLUMN address TEXT"); } catch (e) { }
+            try { await promisePool.execute("ALTER TABLE schools ADD COLUMN phone VARCHAR(20)"); } catch (e) { }
+            try { await promisePool.execute("ALTER TABLE schools ADD COLUMN email VARCHAR(100)"); } catch (e) { }
 
             console.log("MySQL Tables Initialized.");
 
@@ -448,6 +451,9 @@ function initSqliteDb(database) {
 
             // SCHOOLS LOCK MIGRATION
             database.run("ALTER TABLE schools ADD COLUMN is_locked INTEGER DEFAULT 0", () => { });
+            database.run("ALTER TABLE schools ADD COLUMN address TEXT", () => { });
+            database.run("ALTER TABLE schools ADD COLUMN phone TEXT", () => { });
+            database.run("ALTER TABLE schools ADD COLUMN email TEXT", () => { });
 
             database.get("SELECT count(*) as count FROM users", (err, row) => {
                 if (row && row.count == 0) {
