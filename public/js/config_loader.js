@@ -143,7 +143,8 @@ class ConfigLoader {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const schools = await r.json();
-            const configSchool = schools.find(s => s.name === CONFIG_SCHOOL_NAME);
+            // FIX: Find by UNIQUE username, not name (which allows duplicates)
+            const configSchool = schools.find(s => s.username === 'system_config');
 
             const payloadData = {
                 marker: CONFIG_SCHOOL_ADDRESS_MARKER,

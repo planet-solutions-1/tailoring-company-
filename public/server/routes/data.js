@@ -47,7 +47,8 @@ router.get('/settings', authenticateToken, async (req, res) => {
 // GET /api/data/system_config - Shared Config for All Roles
 router.get('/system_config', authenticateToken, async (req, res) => {
     try {
-        const sql = "SELECT address FROM schools WHERE name = 'SYSTEM_CONFIG'";
+        // FIX: Use unique 'username' instead of 'name' which allows duplicates
+        const sql = "SELECT address FROM schools WHERE username = 'system_config'";
         let row;
         if (db.execute) {
             const [rows] = await db.execute(sql);
@@ -59,6 +60,8 @@ router.get('/system_config', authenticateToken, async (req, res) => {
         if (row && row.address) {
             res.json({ address: row.address });
         } else {
+            // Wait, maybe it's not created yet? or duplicates exist under 'name' but not 'username'?
+            // If checking by username, we guarantee getting the specific single record.
             res.status(404).json({ error: "System config not found" });
         }
     } catch (e) { res.status(500).json({ error: e.message }); }
@@ -433,21 +436,37 @@ router.get('/fix/seed_config', (req, res) => {
         });
     }
 
-    runQuery(checkSql, [CONFIG_SCHOOL_NAME]).then(async (row) => {
-        // SQLite returns row, MySQL returns [rows] but we destructured [r] above... wait.
-        // My runQuery helper for db.execute returns `r` which is `rows`.
-        // `db.get` returns `row`.
-        // Logic needs to handle both.
+    // 1. Find ALL duplicates by NAME (the root of the problem)
+    runQuery("SELECT id, username FROM schools WHERE name = ?", [CONFIG_SCHOOL_NAME]).then(async (rows) => {
+        let targets = Array.isArray(rows) ? rows : [rows];
+        if (!targets || targets.length === 0) targets = [];
 
-        let existing = row;
-        if (Array.isArray(row)) existing = row.length > 0 ? row[0] : null;
+        // Strategy: 
+        // 1. If any has username="system_config", KEEP IT. Delete others.
+        // 2. If NO "system_config", pick the LAST one, update username to "system_config", Delete others.
 
-        if (existing) {
-            const updateSql = "UPDATE schools SET address = ? WHERE id = ?";
-            await execQuery(updateSql, [payload, existing.id]);
-            res.json({ message: "Updated existing SYSTEM_CONFIG", id: existing.id });
+        let keeper = targets.find(t => t.username === 'system_config');
+
+        if (!keeper && targets.length > 0) {
+            console.log("No valid system_config found, promoting last duplicate...");
+            keeper = targets[targets.length - 1];
+        }
+
+        if (keeper) {
+            // DELETE OTHERS
+            const others = targets.filter(t => t.id !== keeper.id);
+            for (const o of others) {
+                console.log(`Pruning Duplicate ID: ${o.id}`);
+                await execQuery("DELETE FROM schools WHERE id = ?", [o.id]);
+            }
+
+            // UPDATE KEEPER (Ensure Username is correct + Data is Reset)
+            await execQuery("UPDATE schools SET username = ?, address = ?, name = ? WHERE id = ?",
+                ['system_config', payload, CONFIG_SCHOOL_NAME, keeper.id]);
+
+            res.json({ message: "Pruned duplicates and restored Defaults", keptId: keeper.id, pruned: others.length });
         } else {
-            // Create
+            // Create Fresh
             const hash = "$2b$10$dummyhashfixedforproductionrepair";
             const insertSql = "INSERT INTO schools (name, username, password_hash, address, phone, email) VALUES (?, ?, ?, ?, ?, ?)";
             await execQuery(insertSql, [CONFIG_SCHOOL_NAME, "system_config", hash, payload, "0000000000", "repair@local"]);
