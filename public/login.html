@@ -103,8 +103,11 @@
                     sessionStorage.setItem('token', data.accessToken);
                     sessionStorage.setItem('role', data.role);
                     sessionStorage.setItem('schoolId', data.schoolId || '');
-                    sessionStorage.setItem('username', data.user.username);
-                    sessionStorage.setItem('schoolName', data.user.school_name || '');
+
+                    // Fix: data.user might be missing in V2 response, usage logic is robust
+                    const safeUser = data.user || { username: username, school_name: '' };
+                    sessionStorage.setItem('username', safeUser.username);
+                    sessionStorage.setItem('schoolName', safeUser.school_name || '');
 
                     // Redirect logic
                     switch (data.role) {
