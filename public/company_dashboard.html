@@ -6575,10 +6575,10 @@
         }
 
         function addDressItem() {
-            const name = document.getElementById('set-item-name').value.trim();
-            const type = document.getElementById('set-item-gender').value;
-            const colsStr = document.getElementById('set-item-cols').value.trim();
-            const formula = document.getElementById('set-item-formula').value.trim();
+            const name = document.getElementById('new-item-name').value.trim();
+            const type = document.getElementById('new-item-type').value;
+            const colsStr = document.getElementById('new-item-cols').value.trim();
+            const formula = document.getElementById('new-item-formula').value.trim();
 
             if (!name) return alert("Name is required");
             if (!colsStr) return alert("At least one column is required");
@@ -6594,9 +6594,9 @@
 
             renderSettingsTable();
             // Clear form
-            document.getElementById('set-item-name').value = '';
-            document.getElementById('set-item-cols').value = '';
-            document.getElementById('set-item-formula').value = '';
+            document.getElementById('new-item-name').value = '';
+            document.getElementById('new-item-cols').value = '';
+            document.getElementById('new-item-formula').value = '';
         }
 
         function deleteDressItem(index) {
