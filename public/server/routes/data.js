@@ -384,8 +384,32 @@ router.get('/fix/seed_config', (req, res) => {
 
     const CUSTOM_CONFIG = {
         items: [
-            { name: "DEBUG_TEST_ITEM_SHIRT", cols: ["U1", "U2"], type: "Male" },
-            { name: "DEBUG_TEST_ITEM_PANT", cols: ["L1", "L2"], type: "Male" }
+            // BOYS
+            { name: "BOYS - FORMAL SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Male" },
+            { name: "BOYS - TRACK T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Male" },
+            { name: "BOYS - UNIFORM T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Male" },
+            { name: "BOYS - JERKIN", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Male" },
+            { name: "BOYS - PULLOVER", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Male" },
+            { name: "BOYS - FORMAL PANT", cols: ["L1", "L2"], type: "Male" },
+            { name: "BOYS - TRACK PANT", cols: ["L1", "L2"], type: "Male" },
+            { name: "BOYS - FORMAL SHORTS", cols: ["L3", "L2"], type: "Male" },
+            { name: "BOYS - TRACK SHORTS", cols: ["L3", "L2"], type: "Male" },
+            { name: "BOYS - PANT SPECIAL CASE", cols: ["L1", "L2", "L6", "L7"], type: "Male" },
+            // GIRLS
+            { name: "GIRLS - FORMAL SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Female" },
+            { name: "GIRLS - TRACK T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Female" },
+            { name: "GIRLS - UNIFORM T-SHIRT", cols: ["U1", "U2", "U3", "U4", "U6"], type: "Female" },
+            { name: "GIRLS - JERKIN", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Female" },
+            { name: "GIRLS - FULL SLEEVE SHIRT", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Female" },
+            { name: "GIRLS - PULLOVER", cols: ["U1", "U2", "U3", "U4", "U5"], type: "Female" },
+            { name: "GIRLS - KURTHA SHIRT", cols: ["U7", "U2", "U3", "U4", "U6"], type: "Female" },
+            { name: "GIRLS - SPECIAL FROCKS", cols: ["U7", "U2", "U3", "U4", "U6"], type: "Female" },
+            { name: "GIRLS - FORMAL PANT", cols: ["L1", "L2"], type: "Female" },
+            { name: "GIRLS - TRACK PANT", cols: ["L1", "L2"], type: "Female" },
+            { name: "GIRLS - TRACK SHORTS", cols: ["L3", "L2"], type: "Female" },
+            { name: "GIRLS - PINOFORE", cols: ["L4", "L2"], type: "Female" },
+            { name: "GIRLS - SKIRT", cols: ["L5", "L2"], type: "Female" },
+            { name: "GIRLS - PANT SPECIAL CASE", cols: ["L1", "L2", "L6", "L7"], type: "Female" }
         ],
         formulas: {}
     };
