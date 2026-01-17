@@ -297,7 +297,7 @@
             <div>
                 <h1 class="text-2xl font-serif text-[#2D3748] tracking-tight">Planet Editor <span
                         class="text-xs font-sans text-[#CBD5E0] font-normal"
-                        style="font-family: 'Inter', sans-serif;">v2.1</span></h1>
+                        style="font-family: 'Inter', sans-serif;">v3.2</span></h1>
                 <p class="text-xs text-[#7F8C8D] tracking-wide">RAPID DATA ENTRY SYSTEM</p>
             </div>
         </div>
@@ -1065,11 +1065,42 @@
             const itemType = item.type.toUpperCase();
 
             // Strict Gender Check: If item is Male, Row MUST be Male
-            // Exception: If gender is not set yet, we usually want to hide? 
-            // Existing logic:
             if (itemType === "MALE" && gender !== "MALE") return "";
             if (itemType === "FEMALE" && gender !== "FEMALE") return "";
 
+            // --- FORMULA ENGINE ---
+            // If formula exists and is not "Optional", try to calculate
+            if (item.formula && item.formula.trim().toLowerCase() !== 'optional' && item.formula.trim() !== '') {
+                try {
+                    let expression = item.formula.toUpperCase();
+
+                    // 1. Replace Variables (U1-U8, L1-L8) with values
+                    expression = expression.replace(/\b([UL][0-9])\b/g, (match) => {
+                        let val = row[match];
+                        // Clean value: remove non-numeric chars (allow dots)
+                        if (val === undefined || val === null || val === "") val = "0";
+                        val = String(val).replace(/[^0-9.]/g, '');
+                        return val || "0";
+                    });
+
+                    // 2. Security Check: Allow only numbers, operators, spacing
+                    if (/^[0-9.+\\-*/() ]+$/.test(expression)) {
+                        // 3. Evaluate
+                        // eslint-disable-next-line no-new-func
+                        const result = new Function('return ' + expression)();
+
+                        if (typeof result === 'number' && isFinite(result)) {
+                            // Round to 1 decimal place to keep it clean, or 2?
+                            return Math.round(result * 100) / 100;
+                        }
+                    }
+                } catch (e) {
+                    console.error("Formula Calc Error", item.name, e);
+                    // Fallback to column logic if formula fails
+                }
+            }
+
+            // --- FALLBACK / DEFAULT LOGIC (Join Columns) ---
             const parts = item.cols.map(col => {
                 const val = row[col];
                 if (col === "Quantity" || col.toLowerCase() === "qty") {
