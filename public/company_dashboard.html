@@ -6562,7 +6562,8 @@
         async function fetchSettings() {
             // Load from ConfigLoader
             const loaded = await ConfigLoader.load(API_BASE, token);
-            dressConfig.items = loaded || [];
+            // ConfigLoader now returns { items: [...] } always if valid
+            dressConfig.items = loaded.items || loaded || [];
             if (!Array.isArray(dressConfig.items)) dressConfig.items = []; // Safety
             renderSettingsTable();
         }

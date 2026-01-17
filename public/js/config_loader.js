@@ -90,17 +90,27 @@ class ConfigLoader {
                         if (config.marker === CONFIG_SCHOOL_ADDRESS_MARKER) {
                             console.log("ConfigLoader: Loaded custom configuration via shared endpoint.");
                             // FIX: Ensure config.data is valid, otherwise return config or defaults
-                            if (config.data && Array.isArray(config.data.items)) {
-                                return config.data;
+                            let finalItems = [];
+
+                            if (config.data) {
+                                if (Array.isArray(config.data)) {
+                                    finalItems = config.data;
+                                } else if (Array.isArray(config.data.items)) {
+                                    finalItems = config.data.items;
+                                }
                             } else if (config.items && Array.isArray(config.items)) {
-                                // Backward compatibility if data wrapper is missing
-                                return config;
+                                finalItems = config.items;
+                            }
+
+                            if (finalItems.length > 0) {
+                                return { items: finalItems };
                             } else {
-                                console.warn("ConfigLoader: Invalid config structure (missing items).");
+                                console.warn("ConfigLoader: Structure valid but items empty/missing. Using defaults.");
+                                return { items: DEFAULT_ITEMS };
                             }
                         }
                     } catch (e) {
-                        // FALLTHROUGH
+                        console.warn("ConfigLoader: Parse failed, using defaults.", e);
                     }
                 }
             } else {
