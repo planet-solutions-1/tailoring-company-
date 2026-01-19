@@ -3949,11 +3949,11 @@
                         : `< span class="text-slate-300 text-xs" > -</span > `;
 
                     const schoolDisplay = l.school_name || l.school_id
-                        ? `< span class="font-medium text-slate-600" > ${l.school_name || 'ID: ' + l.school_id}</span > `
-                        : `< span class="text-slate-300" > -</span > `;
+                        ? `<span class="font-medium text-slate-600">${l.school_name || 'ID: ' + l.school_id}</span>`
+                        : `<span class="text-slate-300">-</span>`;
 
                     return `
-                    < tr class="hover:bg-slate-50 transition-colors border-b border-slate-50" >
+                    <tr class="hover:bg-slate-50 transition-colors border-b border-slate-50">
                         <td class="p-4 text-xs font-medium text-slate-500 font-mono">${new Date(l.created_at).toLocaleString()}</td>
                         <td class="p-4">
                             <div class="flex items-center gap-2">
@@ -3971,7 +3971,7 @@
                             </span>
                         </td>
                         <td class="p-4 text-sm text-slate-500 break-all max-w-xs truncate" title="${l.details}">${l.details}</td>
-                    </tr >
+                    </tr>
                     `}).join('');
             }
         }
@@ -3980,7 +3980,7 @@
             document.getElementById('td-list-measurements').innerHTML = data.map(s => {
                 const m = getMeasurementsSafe(s);
                 return `
-                    < tr class="hover:bg-blue-50/30 transition-colors border-b border-gray-50" >
+                    <tr class="hover:bg-blue-50/30 transition-colors border-b border-gray-50">
                         <td class="p-3 bg-white sticky left-0 border-r border-gray-100 shadow-[4px_0_8px_-4px_rgba(0,0,0,0.05)]">
                             <div class="font-bold text-gray-700 text-xs">${s.name}</div>
                             <div class="text-[9px] text-gray-400 font-mono">${s.roll_no || '-'}</div>
@@ -3993,7 +3993,7 @@
                              </button>
                          </td>
                          <td class="p-3 text-xs italic text-gray-400 truncate max-w-[150px]" title="${m.remarks || ''}">${m.remarks || '-'}</td>
-                     </tr >
+                     </tr>
                     `;
             }).join('');
         }
@@ -4033,18 +4033,18 @@
                 const totalForSchool = relevantPatterns.length;
                 const exampleNames = relevantPatterns.slice(0, 3).map(p => p.name).join(', ');
                 container.innerHTML = `
-                    < div class="col-span-full text-center py-12 text-gray-300 italic" >
-                        No patterns found for ${gender}.< br >
+                    <div class="col-span-full text-center py-12 text-gray-300 italic">
+                        No patterns found for ${gender}.<br>
                             <span class="text-xs text-gray-400 font-mono mt-2 block">
                                 (Found ${totalForSchool} total. Examples: ${exampleNames || 'None'})
                             </span>
-                    </div > `;
+                    </div>`;
                 return;
             }
 
             // Export Buttons Header
             const header = `
-                    < div class="col-span-full w-full mb-8 animate-in slide-in-from-top-4 duration-500 ease-out" style = "grid-column: 1 / -1;" >
+                    <div class="col-span-full w-full mb-8 animate-in slide-in-from-top-4 duration-500 ease-out" style="grid-column: 1 / -1;">
                         <div class="relative overflow-hidden bg-white/80 backdrop-blur-xl rounded-2xl border border-white/40 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-1.5 flex flex-col md:flex-row items-center justify-between gap-4 transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]">
 
                             <!-- Label Section -->
@@ -4102,11 +4102,11 @@
 
                             </div>
                         </div>
-            </div > `;
+            </div>`;
 
             // Table View
             const table = `
-                    < div class="col-span-full overflow-x-auto rounded-xl shadow-sm border border-gray-100" >
+                    <div class="col-span-full overflow-x-auto rounded-xl shadow-sm border border-gray-100">
                         <table class="w-full text-left border-collapse">
                             <thead>
                                 <tr class="bg-gray-50 text-xs text-gray-500 uppercase tracking-wider">
@@ -4143,7 +4143,7 @@
             }).join('')}
                             </tbody>
                         </table>
-                </div >
+                </div>
                     `;
 
             container.innerHTML = header + table;
@@ -4279,35 +4279,35 @@
                         const valStr = uCols.map(c => {
                             const k = c.toLowerCase();
                             const v = m[k] || m[c] || '-'; // Try lower and upper case keys
-                            return `< span class="mr-1.5" > <strong class="opacity-60">${c}:</strong>${v}</span > `;
+                            return `<span class="mr-1.5"><strong class="opacity-60">${c}:</strong>${v}</span>`;
                         }).join('');
-                        uContent = `< span class="font-mono text-[10px] text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded border border-orange-100 w-fit whitespace-nowrap block mb-1" >
+                        uContent = `<span class="font-mono text-[10px] text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded border border-orange-100 w-fit whitespace-nowrap block mb-1">
                     ${valStr}
-                                    </span > `;
+                                    </span>`;
                     }
 
                     if (lCols.length > 0) {
                         const valStr = lCols.map(c => {
                             const k = c.toLowerCase();
                             const v = m[k] || m[c] || '-';
-                            return `< span class="mr-1.5" > <strong class="opacity-60">${c}:</strong>${v}</span > `;
+                            return `<span class="mr-1.5"><strong class="opacity-60">${c}:</strong>${v}</span>`;
                         }).join('');
-                        lContent = `< span class="font-mono text-[10px] text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 w-fit whitespace-nowrap block" >
+                        lContent = `<span class="font-mono text-[10px] text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 w-fit whitespace-nowrap block">
                     ${valStr}
-                                    </span > `;
+                                    </span>`;
                     }
 
                 } else {
                     // FALLBACK: Standard behavior (Upper/Lower Grouped)
-                    uContent = `< span class="font-mono text-[10px] text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded border border-orange-100 w-fit whitespace-nowrap block mb-1" >
+                    uContent = `<span class="font-mono text-[10px] text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded border border-orange-100 w-fit whitespace-nowrap block mb-1">
                     <span class="font-bold opacity-50 mr-1">UPPER:</span>${m.u1 || '-'} -${m.u2 || '-'}...
-                                </span > `;
-                    lContent = `< span class= "font-mono text-[10px] text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 w-fit whitespace-nowrap block" >
+                                </span>`;
+                    lContent = `<span class="font-mono text-[10px] text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded border border-indigo-100 w-fit whitespace-nowrap block">
             <span class="font-bold opacity-50 mr-1">LOWER:</span>${m.l1 || '-'} - ${m.l2 || '-'}...
-                                </span > `;
+                                </span>`;
                 }
 
-                const measStr = `< div class= "flex flex-col" > ${uContent}${lContent}</div > `;
+                const measStr = `<div class="flex flex-col">${uContent}${lContent}</div>`;
                 // -------------------------------
 
                 // QTY Calculation (Default to 1)
@@ -4329,7 +4329,7 @@
                 }
 
                 return `
-            < tr class= "hover:bg-slate-50 transition-colors border-b border-slate-50 group" >
+            <tr class="hover:bg-slate-50 transition-colors border-b border-slate-50 group">
                 <td class="p-5 pl-8">
                     <div class="flex items-center gap-4">
                         <div class="w-10 h-10 rounded-full ${avatarColor} flex items-center justify-center text-xs font-extra-bold tracking-wider shadow-sm border border-white ring-1 ring-slate-100 shrink-0">
