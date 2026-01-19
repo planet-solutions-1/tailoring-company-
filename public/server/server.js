@@ -339,7 +339,10 @@ app.use(express.static(path.join(__dirname, '../')));
 
 // Basic Route
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '../login.html')); // Adjusted relative path to climb out of public/server
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+    res.sendFile(path.join(__dirname, '../login.html'));
 });
 
 // Explicit Dashboard Routes (Fallback for Static Issues)
