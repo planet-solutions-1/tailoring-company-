@@ -273,38 +273,24 @@ app.post('/api/sync', authenticateToken, async (req, res) => {
                                         // SQLite syntax above works for modern SQLite (3.24+). For Node/MySQL compat (which db.js uses):
                                         // "INSERT ... ON DUPLICATE KEY UPDATE"
                                         // But this abstrction is tricky. Let's do simple Check-Then-Update/Insert 
-                                    });
-                                    // Safer approach for our abstraction:
-                                    db.get("SELECT id FROM orders WHERE student_id = ?", [studentId], (errO, rowO) => {
-                                        if (rowO) db.run("UPDATE orders SET status = 'Measurement Completed' WHERE student_id = ?", [studentId]);
-                                        else db.run("INSERT INTO orders (student_id, status) VALUES (?, 'Measurement Completed')", [studentId]);
-                                    });
-                                }
-                            }
-                        }
-
-                        resolve();
-                    };
-
-                    if (row) {
-                        // Update
-                        db.run("UPDATE students SET roll_no=?, name=?, class=?, section=?, house=?, gender=?, is_active=1 WHERE id=?",
-                            [roll, name, cls, sec, house, gender, row.id],
-                            (err) => {
-                                if (err) reject(err);
-                                else afterStudent(row.id);
-                            }
-                        );
-                    } else {
-                        // Insert
-                        db.run("INSERT INTO students (school_id, admission_no, roll_no, name, class, section, house, gender) VALUES (?,?,?,?,?,?,?,?)",
-                            [schoolId, adm, roll, name, cls, sec, house, gender],
-                            function (err) {
-                                if (err) reject(err);
-                                else afterStudent(this.lastID);
-                            }
-                        );
-                    }
+                                        // Update
+                                        db.run("UPDATE students SET roll_no=?, name=?, class=?, section=?, house=?, gender=?, is_active=1 WHERE id=?",
+                                            [roll, name, cls, sec, house, gender, row.id],
+                                            (err) => {
+                                                if (err) reject(err);
+                                                else afterStudent(row.id);
+                                            }
+                                        );
+                                    } else {
+                                        // Insert
+                                        db.run("INSERT INTO students (school_id, admission_no, roll_no, name, class, section, house, gender) VALUES (?,?,?,?,?,?,?,?)",
+                                            [schoolId, adm, roll, name, cls, sec, house, gender],
+                                            function (err) {
+                                                if (err) reject(err);
+                                                else afterStudent(this.lastID);
+                                            }
+                                        );
+                                    }
                 });
             });
             successCount++;
@@ -388,10 +374,16 @@ app.listen(PORT, () => {
         }
     }, 24 * 60 * 60 * 1000); // 24 Hours
 });
-/ /  
- F o r c e  
- D e p l o y  
- T r i g g e r :  
- % D A T E %  
- % T I M E %  
+/ / 
+ 
+ F o r c e 
+ 
+ D e p l o y 
+ 
+ T r i g g e r : 
+ 
+ % D A T E % 
+ 
+ % T I M E % 
+ 
  
