@@ -7094,7 +7094,15 @@
         if (typeof m === 'string') {
             try { m = JSON.parse(m); } catch (e) { m = {}; }
         }
-        return m || {};
+        m = m || {};
+
+        // Normalize Keys to Lowercase for Consistent Access
+        const normalized = {};
+        for (const key in m) {
+            normalized[key] = m[key]; // Keep original
+            normalized[key.toLowerCase()] = m[key]; // Add lowercase version
+        }
+        return normalized;
     }
 
     // --- GLOBAL HELPERS FOR INCOMPLETE VIEW ---
