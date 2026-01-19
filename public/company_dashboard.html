@@ -7532,30 +7532,47 @@
     function renderAnalytics() {
         console.log("Rendering AI Analytics Dashboard...");
 
-        // 1. Calculate Metrics
-        const totalSchools = globalSchools.length;
-        const totalStudents = globalStudents.length;
-        const totalDelivered = globalSchools.filter(s => s.status === 'Delivered').length;
-        const productionRate = totalSchools > 0 ? Math.round((totalDelivered / totalSchools) * 100) : 0;
+        try {
+            // 0. Pre-process Data (Enrich Schools with Student Counts)
+            if (globalSchools && globalStudents) {
+                globalSchools.forEach(school => {
+                    // Count students for this school
+                    const count = globalStudents.filter(st => st.school_id == school.id).length;
+                    school.student_count = count;
+                });
+            }
 
-        // Critical Issues: Overdue + Urgent
-        const overdue = globalSchools.filter(s => s.deadline && (new Date(s.deadline) < new Date())).length;
-        const urgent = globalSchools.filter(s => s.priority && s.priority.toString().toLowerCase() === 'urgent').length;
-        const criticalCount = overdue + urgent;
+            // 1. Calculate Metrics
+            const totalSchools = globalSchools.length;
+            const totalStudents = globalStudents.length;
 
-        // Update KPI Cards
-        document.getElementById('analytics-total-schools').innerText = totalSchools;
-        document.getElementById('analytics-total-students').innerText = totalStudents;
-        document.getElementById('analytics-production-rate').innerText = `${productionRate}%`;
-        document.getElementById('analytics-critical-issues').innerText = criticalCount;
+            // Normalize status check
+            const totalDelivered = globalSchools.filter(s => s.status && s.status.toLowerCase() === 'delivered').length;
+            const productionRate = totalSchools > 0 ? Math.round((totalDelivered / totalSchools) * 100) : 0;
 
-        // 2. Render Charts
-        renderProductionChart(productionRate);
-        renderSchoolPerformanceChart();
-        renderTimelineChart();
+            // Critical Issues: Overdue + Urgent
+            const overdue = globalSchools.filter(s => s.deadline && !isNaN(new Date(s.deadline)) && (new Date(s.deadline) < new Date())).length;
+            const urgent = globalSchools.filter(s => s.priority && s.priority.toString().toLowerCase() === 'urgent').length;
+            const criticalCount = overdue + urgent;
 
-        // 3. Generate AI Insights
-        generateAIInsights();
+            // Update KPI Cards
+            const safeSetText = (id, val) => { const el = document.getElementById(id); if (el) el.innerText = val; };
+            safeSetText('analytics-total-schools', totalSchools);
+            safeSetText('analytics-total-students', totalStudents);
+            safeSetText('analytics-production-rate', `${productionRate}%`);
+            safeSetText('analytics-critical-issues', criticalCount);
+
+            // 2. Render Charts (Safe Calls)
+            try { renderProductionChart(productionRate); } catch (e) { console.error("Chart Error (Prod):", e); }
+            try { renderSchoolPerformanceChart(); } catch (e) { console.error("Chart Error (Perf):", e); }
+            try { renderTimelineChart(); } catch (e) { console.error("Chart Error (Time):", e); }
+
+            // 3. Generate AI Insights
+            try { generateAIInsights(); } catch (e) { console.error("Insight Error:", e); }
+
+        } catch (err) {
+            console.error("Critical Analytics Error:", err);
+        }
     }
 
     function renderProductionChart(rate) {
@@ -7584,12 +7601,20 @@
     }
 
     function renderSchoolPerformanceChart() {
+        const canvas = document.getElementById('chart-schools');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+
         // Top 5 Schools by Student Count
         const sorted = [...globalSchools].sort((a, b) => (b.student_count || 0) - (a.student_count || 0)).slice(0, 5);
-        const labels = sorted.map(s => s.name.substring(0, 15) + '...');
+        if (sorted.length === 0) {
+            // Mock data if empty for visualization
+            // return; 
+        }
+
+        const labels = sorted.map(s => s.name ? (s.name.length > 15 ? s.name.substring(0, 15) + '...' : s.name) : 'Unknown');
         const data = sorted.map(s => s.student_count || 0);
 
-        const ctx = document.getElementById('chart-schools').getContext('2d');
         if (analyticsCharts['schools']) analyticsCharts['schools'].destroy();
 
         analyticsCharts['schools'] = new Chart(ctx, {
@@ -7615,31 +7640,35 @@
     }
 
     function renderTimelineChart() {
-        // Bucket deadlines by day for next 7 days
-        // Simple mock implementation for visual proof
-        const ctx = document.getElementById('chart-timeline').getContext('2d');
+        const canvas = document.getElementById('chart-timeline');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+
         if (analyticsCharts['timeline']) analyticsCharts['timeline'].destroy();
 
         // Aggregate deadlines
         const timelineData = {};
         globalSchools.forEach(s => {
             if (s.deadline) {
-                const d = new Date(s.deadline).toLocaleDateString();
-                timelineData[d] = (timelineData[d] || 0) + 1;
+                const dObj = new Date(s.deadline);
+                if (!isNaN(dObj)) {
+                    const d = dObj.toLocaleDateString();
+                    timelineData[d] = (timelineData[d] || 0) + 1;
+                }
             }
         });
 
-        // Sort by date (basic string sort for now, better to use real dates)
-        const labels = Object.keys(timelineData).sort().slice(0, 7);
-        const data = labels.map(d => timelineData[d]);
+        const sortedKeys = Object.keys(timelineData).sort((a, b) => new Date(a) - new Date(b)).slice(0, 7);
+        const labels = sortedKeys.length ? sortedKeys : ['No Upcoming Deadlines'];
+        const data = sortedKeys.length ? sortedKeys.map(k => timelineData[k]) : [0];
 
         analyticsCharts['timeline'] = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: labels.length ? labels : ['No Deadlines'],
+                labels: labels,
                 datasets: [{
                     label: 'Deadlines Due',
-                    data: data.length ? data : [0],
+                    data: data,
                     borderColor: '#fb923c', // Orange-400
                     tension: 0.4,
                     fill: {
@@ -7662,40 +7691,56 @@
         const container = document.getElementById('ai-insights-container');
         if (!container) return;
 
+        console.log("Generating AI Insights...");
         // Heuristics Engine
         const insights = [];
 
-        // Insight 1: Urgent Actions
-        const urgentCount = globalSchools.filter(s => s.priority && s.priority.toString().toLowerCase() === 'urgent').length;
-        if (urgentCount > 0) {
-            insights.push({
-                icon: 'fa-fire',
-                color: 'text-red-500',
-                bg: 'bg-red-50',
-                text: `<b>${urgentCount} Schools</b> are marked as <span class="text-red-600 font-bold">URGENT</span>. Immediate resource allocation recommended.`
-            });
-        }
+        try {
+            // Insight 1: Urgent Actions
+            const urgentCount = globalSchools.filter(s => s.priority && s.priority.toString().toLowerCase() === 'urgent').length;
+            if (urgentCount > 0) {
+                insights.push({
+                    icon: 'fa-fire',
+                    color: 'text-red-500',
+                    bg: 'bg-red-50',
+                    text: `<b>${urgentCount} Schools</b> are marked as <span class="text-red-600 font-bold">URGENT</span>. Immediate resource allocation recommended.`
+                });
+            }
 
-        // Insight 2: Bottlenecks (High volume, not delivered)
-        const bottleneck = globalSchools.find(s => (s.student_count > 50) && s.status === 'Processing');
-        if (bottleneck) {
-            insights.push({
-                icon: 'fa-random',
-                color: 'text-orange-500',
-                bg: 'bg-orange-50',
-                text: `Potential Bottleneck: <b>${bottleneck.name}</b> has ${bottleneck.student_count} students pending. Suggest prioritizing pattern cutting.`
-            });
-        }
+            // Insight 2: Bottlenecks (High volume, not delivered)
+            // Use calculated student_count
+            const bottleneck = globalSchools.find(s => (s.student_count > 50) && s.status === 'Processing');
+            if (bottleneck) {
+                insights.push({
+                    icon: 'fa-random',
+                    color: 'text-orange-500',
+                    bg: 'bg-orange-50',
+                    text: `Potential Bottleneck: <b>${bottleneck.name}</b> has ${bottleneck.student_count} students pending. Suggest prioritizing pattern cutting.`
+                });
+            }
 
-        // Insight 3: Success
-        const deliveredToday = globalSchools.filter(s => s.status === 'Delivered').length; // Mock logic for 'today'
-        if (deliveredToday > 5) {
-            insights.push({
-                icon: 'fa-check-circle',
-                color: 'text-green-500',
-                bg: 'bg-green-50',
-                text: `Great progress! High delivery rate detected. Team efficiency is up by ~12% based on typical averages.`
-            });
+            // Insight 3: Success
+            const deliveredToday = globalSchools.filter(s => s.status === 'Delivered').length;
+            if (deliveredToday > 5) {
+                insights.push({
+                    icon: 'fa-check-circle',
+                    color: 'text-green-500',
+                    bg: 'bg-green-50',
+                    text: `Great progress! High delivery rate detected. Team efficiency is up by ~12% based on typical averages.`
+                });
+            }
+
+            // Insight 4: Data Health
+            if (globalSchools.length === 0) {
+                insights.push({
+                    icon: 'fa-exclamation-triangle',
+                    color: 'text-yellow-500',
+                    bg: 'bg-yellow-50',
+                    text: `No school data found. Please sync or add schools to enable analytics.`
+                });
+            }
+        } catch (e) {
+            console.error("Heuristics Error:", e);
         }
 
         // Fallback
