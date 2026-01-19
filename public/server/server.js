@@ -301,14 +301,15 @@ app.post('/api/sync', authenticateToken, async (req, res) => {
                         );
                     }
                 });
-                successCount++;
-            } catch (e) {
-                console.error("Sync Row Error:", e.message);
-            }
+            });
+            successCount++;
+        } catch (e) {
+            console.error("Sync Row Error:", e.message);
         }
+    }
 
     res.json({ success: true, count: successCount, message: `Synced ${successCount} students.` });
-    });
+});
 
 
 // Serving Helper Routes
