@@ -269,38 +269,46 @@ app.post('/api/sync', authenticateToken, async (req, res) => {
                                 db.run(sql, params);
                                 // Update Order Status if Linked to Pattern
                                 if (pid) {
-                                    db.run("INSERT INTO orders (student_id, status) VALUES (?, 'Measurement Completed') ON CONFLICT(student_id) DO UPDATE SET status = 'Measurement Completed'", [studentId], (e) => {
-                                        // SQLite syntax above works for modern SQLite (3.24+). For Node/MySQL compat (which db.js uses):
-                                        // "INSERT ... ON DUPLICATE KEY UPDATE"
-                                        // But this abstrction is tricky. Let's do simple Check-Then-Update/Insert 
-                                        // Update
-                                        db.run("UPDATE students SET roll_no=?, name=?, class=?, section=?, house=?, gender=?, is_active=1 WHERE id=?",
-                                            [roll, name, cls, sec, house, gender, row.id],
-                                            (err) => {
-                                                if (err) reject(err);
-                                                else afterStudent(row.id);
-                                            }
-                                        );
-                                    } else {
-                                        // Insert
-                                        db.run("INSERT INTO students (school_id, admission_no, roll_no, name, class, section, house, gender) VALUES (?,?,?,?,?,?,?,?)",
-                                            [schoolId, adm, roll, name, cls, sec, house, gender],
-                                            function (err) {
-                                                if (err) reject(err);
-                                                else afterStudent(this.lastID);
-                                            }
-                                        );
-                                    }
+                                    // Safer approach for our abstraction:
+                                    db.get("SELECT id FROM orders WHERE student_id = ?", [studentId], (errO, rowO) => {
+                                        if (rowO) db.run("UPDATE orders SET status = 'Measurement Completed' WHERE student_id = ?", [studentId]);
+                                        else db.run("INSERT INTO orders (student_id, status) VALUES (?, 'Measurement Completed')", [studentId]);
+                                    });
+                                }
+                            }
+                        }
+
+                        resolve();
+                    };
+
+                    if (row) {
+                        // Update
+                        db.run("UPDATE students SET roll_no=?, name=?, class=?, section=?, house=?, gender=?, is_active=1 WHERE id=?",
+                            [roll, name, cls, sec, house, gender, row.id],
+                            (err) => {
+                                if (err) reject(err);
+                                else afterStudent(row.id);
+                            }
+                        );
+                    } else {
+                        // Insert
+                        db.run("INSERT INTO students (school_id, admission_no, roll_no, name, class, section, house, gender) VALUES (?,?,?,?,?,?,?,?)",
+                            [schoolId, adm, roll, name, cls, sec, house, gender],
+                            function (err) {
+                                if (err) reject(err);
+                                else afterStudent(this.lastID);
+                            }
+                        );
+                    }
                 });
-            });
-            successCount++;
-        } catch (e) {
-            console.error("Sync Row Error:", e.message);
+                successCount++;
+            } catch (e) {
+                console.error("Sync Row Error:", e.message);
+            }
         }
-    }
 
     res.json({ success: true, count: successCount, message: `Synced ${successCount} students.` });
-});
+    });
 
 
 // Serving Helper Routes
