@@ -561,7 +561,8 @@ router.put('/users/:id/toggle', authenticateToken, requireRole('company'), (req,
 // PUT /api/data/users/:id/reset-password - Admin Force Reset
 router.put('/users/:id/reset-password', authenticateToken, requireRole('company'), async (req, res) => {
     const { id } = req.params;
-    const { new_password } = req.body;
+    let { new_password } = req.body;
+    if (new_password) new_password = new_password.trim();
 
     if (!new_password || new_password.length < 4) {
         return res.status(400).json({ error: "Password must be at least 4 chars" });

@@ -27,7 +27,9 @@ function createUser(username, password, role, schoolId = null) {
 
 // POST /api/auth/login
 router.post('/login', async (req, res) => {
-    const { username, password } = req.body;
+    let { username, password } = req.body;
+    if (username) username = username.trim();
+    if (password) password = password.trim();
     try {
         const user = await getUserByUsername(username);
         if (!user) return res.status(400).json({ error: "User not found" });
@@ -73,7 +75,9 @@ router.post('/register', async (req, res) => {
 
     // Default open registration is usually NOT desired for production, but kept if legacy depends on it.
     // However, for creating 'admin' role, we MUST require Super Admin token.
-    const { username, password, role, schoolId } = req.body;
+    let { username, password, role, schoolId } = req.body;
+    if (username) username = username.trim();
+    if (password) password = password.trim();
 
     if (role === 'admin') {
         if (!token) return res.status(401).json({ error: "Unauthorized" });
@@ -99,7 +103,9 @@ router.post('/update-credentials', async (req, res) => {
     const token = authHeader && authHeader.split(' ')[1];
     if (!token) return res.sendStatus(401);
 
-    const { username, password } = req.body;
+    let { username, password } = req.body;
+    if (username) username = username.trim();
+    if (password) password = password.trim();
 
     try {
         const decoded = jwt.verify(token, 'hardcoded_secret_key_fixed');
