@@ -6619,10 +6619,16 @@
         }
 
         function addDressItem() {
-            const name = document.getElementById('set-item-name-v3').value.trim();
-            const type = document.getElementById('set-item-gender-v3').value;
-            const colsStr = document.getElementById('set-item-cols-v3').value.trim();
-            const formula = document.getElementById('set-item-formula-v3').value.trim();
+            // Support both "Dress Manager" (new-*) and "Settings" (set-*) forms
+            const nameEl = document.getElementById('new-item-name') || document.getElementById('set-item-name-v3');
+            const typeEl = document.getElementById('new-item-type') || document.getElementById('set-item-gender-v3');
+            const colsEl = document.getElementById('new-item-cols') || document.getElementById('set-item-cols-v3');
+            const formEl = document.getElementById('new-item-formula') || document.getElementById('set-item-formula-v3');
+
+            const name = nameEl ? nameEl.value.trim() : "";
+            const type = typeEl ? typeEl.value : "Male";
+            const colsStr = colsEl ? colsEl.value.trim() : "";
+            const formula = formEl ? formEl.value.trim() : "";
 
             if (!name) return alert("Name is required");
             if (!colsStr) return alert("At least one column is required");
@@ -6637,10 +6643,18 @@
             });
 
             renderSettingsTable();
-            // Clear form
-            document.getElementById('set-item-name-v3').value = '';
-            document.getElementById('set-item-cols-v3').value = '';
-            document.getElementById('set-item-formula-v3').value = '';
+
+            // Clear BOTH forms to be safe
+            if (document.getElementById('new-item-name')) {
+                document.getElementById('new-item-name').value = '';
+                document.getElementById('new-item-cols').value = '';
+                document.getElementById('new-item-formula').value = '';
+            }
+            if (document.getElementById('set-item-name-v3')) {
+                document.getElementById('set-item-name-v3').value = '';
+                document.getElementById('set-item-cols-v3').value = '';
+                document.getElementById('set-item-formula-v3').value = '';
+            }
         }
 
         function deleteDressItem(index) {
