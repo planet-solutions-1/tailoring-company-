@@ -1220,6 +1220,16 @@
                         <p class="text-gray-500 font-medium mt-1">AI-powered analysis and visual metrics.</p>
                     </div>
                     <div class="flex gap-3">
+                        <button onclick="exportAnalyticsPDF()"
+                            class="clay-btn text-sm !py-2 !px-4 text-red-500 hover:text-red-600"
+                            title="Download PDF Report">
+                            <i class="fas fa-file-pdf mr-2"></i> PDF
+                        </button>
+                        <button onclick="exportAnalyticsExcel()"
+                            class="clay-btn text-sm !py-2 !px-4 text-green-500 hover:text-green-600"
+                            title="Download Excel Data">
+                            <i class="fas fa-file-excel mr-2"></i> Excel
+                        </button>
                         <button onclick="renderAnalytics()"
                             class="clay-btn text-sm !py-2 !px-4 text-blue-500 hover:text-blue-600">
                             <i class="fas fa-sync-alt mr-2"></i> Refresh Analysis
@@ -7925,6 +7935,106 @@
 
 
 
+
+    function exportAnalyticsPDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        const pageWidth = doc.internal.pageSize.getWidth();
+
+        // 1. Title & Header
+        doc.setFillColor(242, 252, 240); // Clay green bg
+        doc.rect(0, 0, pageWidth, 40, 'F');
+        doc.setFontSize(22);
+        doc.setTextColor(74, 85, 104);
+        doc.text("Planet Solutions Analytics Report", 14, 20);
+        doc.setFontSize(10);
+        doc.setTextColor(100, 116, 139);
+        doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 30);
+
+        // 2. High Level KPIs
+        let y = 55;
+        doc.setFontSize(14);
+        doc.setTextColor(74, 85, 104);
+        doc.text("Executive Summary", 14, y);
+        y += 10;
+
+        const kpis = [
+            `Total Schools: ${document.getElementById('analytics-total-schools').innerText}`,
+            `Active Students: ${document.getElementById('analytics-total-students').innerText}`,
+            `Production Rate: ${document.getElementById('analytics-production-rate').innerText}`,
+            `Critical Issues: ${document.getElementById('analytics-critical-issues').innerText}`
+        ];
+        doc.setFontSize(11);
+        kpis.forEach((k, i) => {
+            doc.text(`• ${k}`, 14, y + (i * 7));
+        });
+        y += 40;
+
+        // 3. AI Insights
+        doc.setFontSize(14);
+        doc.text("AI Assistant Insights", 14, y);
+        y += 10;
+        doc.setFontSize(10);
+        const insightsContainer = document.getElementById('ai-insights-container');
+        const insights = insightsContainer ? insightsContainer.innerText.split('\n').filter(l => l.trim().length > 0) : ['No insights available.'];
+        const splitInsights = doc.splitTextToSize(insights.join('\n'), pageWidth - 28);
+        doc.text(splitInsights, 14, y);
+        y += (splitInsights.length * 5) + 20;
+
+        // 4. Charts Snapshot (Requires Canvas toDataURL)
+        const addChartToDoc = (chartId, title) => {
+            const canvas = document.getElementById(chartId);
+            if (canvas) {
+                if (y > 250) { doc.addPage(); y = 20; }
+                doc.setFontSize(12);
+                doc.text(title, 14, y);
+                y += 5;
+                const imgData = canvas.toDataURL('image/png');
+                doc.addImage(imgData, 'PNG', 14, y, 180, 90);
+                y += 100;
+            }
+        };
+
+        addChartToDoc('chart-production', 'Production Status');
+        addChartToDoc('chart-schools', 'Top Active Schools');
+        addChartToDoc('chart-priority-matrix', 'Priority Matrix');
+
+        doc.save(`Planet_Analytics_${new Date().toISOString().slice(0, 10)}.pdf`);
+    }
+
+    function exportAnalyticsExcel() {
+        // Prepare Data
+        const kpiData = [
+            ["Metric", "Value"],
+            ["Total Schools", document.getElementById('analytics-total-schools').innerText],
+            ["Active Students", document.getElementById('analytics-total-students').innerText],
+            ["Production Rate", document.getElementById('analytics-production-rate').innerText],
+            ["Critical Issues", document.getElementById('analytics-critical-issues').innerText],
+            ["Generated At", new Date().toLocaleString()]
+        ];
+
+        const schoolData = globalSchools.map(s => ({
+            ID: s.id,
+            Name: s.name,
+            Students: s.student_count || 0,
+            Location: s.district,
+            Status: s.status,
+            Priority: s.priority || 'Normal',
+            Deadline: s.deadline || 'N/A'
+        }));
+
+        // Create Workbook
+        const wb = XLSX.utils.book_new();
+
+        const wsKPI = XLSX.utils.aoa_to_sheet(kpiData);
+        XLSX.utils.book_append_sheet(wb, wsKPI, "Summary");
+
+        const wsSchools = XLSX.utils.json_to_sheet(schoolData);
+        XLSX.utils.book_append_sheet(wb, wsSchools, "School Details");
+
+        // Save
+        XLSX.writeFile(wb, `Planet_Analytics_Data_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    }
 </script>
 </body>
 
