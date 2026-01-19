@@ -78,6 +78,7 @@ router.post('/register', async (req, res) => {
     let { username, password, role, schoolId } = req.body;
     if (username) username = username.trim();
     if (password) password = password.trim();
+    if (role) role = role.trim();
 
     if (role === 'admin') {
         if (!token) return res.status(401).json({ error: "Unauthorized" });
