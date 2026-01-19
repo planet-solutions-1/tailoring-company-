@@ -2771,10 +2771,7 @@
             } catch (e) { console.error("fetchStats Error:", e); }
         }
 
-        // Define missing renderUrgentDeadlines function referenced in init
-        window.renderUrgentDeadlines = function () {
-            if (typeof fetchRecentIssues === 'function') fetchRecentIssues();
-        };
+
 
         async function init() {
             // LOAD CONFIGURATION FIRST
@@ -3122,7 +3119,7 @@
 
             // Filter schools: Has deadline OR is Urgent
             const urgent = globalSchools
-                .filter(s => s.deadline || s.priority === 'Urgent')
+                .filter(s => s.deadline || (s.priority && s.priority.toString().toLowerCase() === 'urgent'))
                 .map(s => {
                     let diff = Infinity;
                     let days = Infinity;
@@ -3135,15 +3132,16 @@
                     // Artificial priority for sorting: 
                     // Overdue (<0) > Urgent No Deadline (0) > Future Deadline
                     let sortValue = diff;
-                    if (!s.deadline && s.priority === 'Urgent') {
+                    const isUrgent = s.priority && s.priority.toString().toLowerCase() === 'urgent';
+                    if (!s.deadline && isUrgent) {
                         sortValue = -1; // Treat as "Due Now" for sorting, but not overdue red
                     }
 
-                    return { ...s, diff, days, sortValue };
+                    return { ...s, diff, days, sortValue, isUrgent };
                 })
                 .filter(s => {
                     // Keep if Urgent OR (Has deadline AND is recent/future)
-                    if (s.priority === 'Urgent') return true;
+                    if (s.isUrgent) return true;
                     return s.diff > -86400000 * 30; // 30 days past due max
                 })
                 .sort((a, b) => a.sortValue - b.sortValue) // Most urgent first
@@ -3157,7 +3155,7 @@
             grid.innerHTML = urgent.map(s => {
                 const hasDeadline = !!s.deadline;
                 const isOverdue = hasDeadline && s.diff < 0;
-                const isUrgentNoDate = !hasDeadline && s.priority === 'Urgent';
+                const isUrgentNoDate = !hasDeadline && s.isUrgent;
 
                 // Determine Styling
                 let statusColor = 'bg-green-50 text-green-600 border-green-200';
