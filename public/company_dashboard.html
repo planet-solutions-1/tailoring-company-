@@ -1319,6 +1319,19 @@
                             <canvas id="chart-timeline"></canvas>
                         </div>
                     </div>
+
+                    <!-- Priority Matrix (Bubble Chart) -->
+                    <div class="clay-card p-6 lg:col-span-2">
+                        <h4 class="font-bold text-gray-700 mb-4 flex items-center gap-2">
+                            <span class="w-2 h-6 bg-rose-400 rounded-full"></span>
+                            Priority Matrix (Urgency vs. Volume)
+                        </h4>
+                        <p class="text-xs text-gray-400 mb-4">Top-Right Quadrant = High Priority & High Volume
+                            (Critical)</p>
+                        <div class="h-80">
+                            <canvas id="chart-priority-matrix"></canvas>
+                        </div>
+                    </div>
                 </div>
             </div>
             <!-- 7. COMPLAINTS -->
@@ -7566,6 +7579,7 @@
             try { renderProductionChart(productionRate); } catch (e) { console.error("Chart Error (Prod):", e); }
             try { renderSchoolPerformanceChart(); } catch (e) { console.error("Chart Error (Perf):", e); }
             try { renderTimelineChart(); } catch (e) { console.error("Chart Error (Time):", e); }
+            try { renderPriorityMatrix(); } catch (e) { console.error("Chart Error (Matrix):", e); }
 
             // 3. Generate AI Insights
             try { generateAIInsights(); } catch (e) { console.error("Insight Error:", e); }
@@ -7682,6 +7696,75 @@
                 maintainAspectRatio: false,
                 scales: {
                     y: { beginAtZero: true }
+                }
+            }
+        });
+    }
+
+    function renderPriorityMatrix() {
+        const canvas = document.getElementById('chart-priority-matrix');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+
+        if (analyticsCharts['matrix']) analyticsCharts['matrix'].destroy();
+
+        // Map Schools to Bubbles
+        const data = globalSchools.map(s => {
+            let priorityScore = 0;
+            const p = s.priority ? s.priority.toString().toLowerCase() : '';
+            if (p.includes('urgent')) priorityScore = 10;
+            else if (p.includes('high')) priorityScore = 7;
+            else if (p.includes('medium')) priorityScore = 5;
+            else if (p.includes('normal')) priorityScore = 2;
+            else priorityScore = 1; // Default low
+
+            // Jitter to avoid Overlap
+            const jitter = (Math.random() - 0.5) * 0.5;
+
+            return {
+                x: (s.student_count || 0),
+                y: priorityScore + jitter,
+                r: Math.max(5, Math.min(25, (s.student_count || 0) / 20)), // Radius scaled by size, clamped
+                school: s.name
+            };
+        });
+
+        analyticsCharts['matrix'] = new Chart(ctx, {
+            type: 'bubble',
+            data: {
+                datasets: [{
+                    label: 'Schools',
+                    data: data,
+                    backgroundColor: data.map(d => d.y > 6 ? 'rgba(244, 63, 94, 0.6)' : 'rgba(96, 165, 250, 0.6)'), // Red if high priority, else Blue
+                    borderColor: data.map(d => d.y > 6 ? 'rgba(244, 63, 94, 1)' : 'rgba(96, 165, 250, 1)'),
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        min: 0,
+                        max: 12,
+                        title: { display: true, text: 'Urgency / Priority Score' },
+                        grid: { color: '#f3f4f6' }
+                    },
+                    x: {
+                        title: { display: true, text: 'Student Count (Volume)' },
+                        grid: { color: '#f3f4f6' }
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                const p = context.raw;
+                                return `${p.school}: ${p.x} Students (Priority Rate: ${Math.round(p.y)})`;
+                            }
+                        }
+                    }
                 }
             }
         });
