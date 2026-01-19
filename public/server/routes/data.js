@@ -348,7 +348,7 @@ router.delete('/schools/:id', authenticateToken, requireRole('company'), async (
             await db.execute("DELETE FROM measurements WHERE student_id IN (SELECT id FROM students WHERE school_id = ?)", [id]);
             await db.execute("DELETE FROM orders WHERE student_id IN (SELECT id FROM students WHERE school_id = ?)", [id]);
             await db.execute("DELETE FROM patterns WHERE school_id = ?", [id]);
-            await db.execute("DELETE FROM users WHERE school_id = ?", [id]);
+            await db.execute("DELETE FROM users WHERE school_id = ? AND role != 'company'", [id]);
             await db.execute("DELETE FROM complaints WHERE school_id = ?", [id]);
             await db.execute("DELETE FROM access_codes WHERE school_id = ?", [id]);
             await db.execute("DELETE FROM students WHERE school_id = ?", [id]);
@@ -367,7 +367,7 @@ router.delete('/schools/:id', authenticateToken, requireRole('company'), async (
             db.run("DELETE FROM orders WHERE student_id IN (SELECT id FROM students WHERE school_id = ?)", [id]);
             db.run("DELETE FROM students WHERE school_id = ?", [id]);
             db.run("DELETE FROM patterns WHERE school_id = ?", [id]);
-            db.run("DELETE FROM users WHERE school_id = ?", [id]);
+            db.run("DELETE FROM users WHERE school_id = ? AND role != 'company'", [id]);
             db.run("DELETE FROM complaints WHERE school_id = ?", [id]);
             db.run("DELETE FROM access_codes WHERE school_id = ?", [id]);
 

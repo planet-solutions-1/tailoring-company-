@@ -25,9 +25,66 @@ function createUser(username, password, role, schoolId = null) {
     });
 }
 
-// POST /api/auth/register (Ideally protected, public for setup)
+// POST /api/auth/login
+router.post('/login', async (req, res) => {
+    const { username, password } = req.body;
+    try {
+        const user = await getUserByUsername(username);
+        if (!user) return res.status(400).json({ error: "User not found" });
+
+        if (await bcrypt.compare(password, user.password_hash)) {
+            // Fetch School Name if applicable
+            let schoolName = null;
+            if (user.school_id) {
+                try {
+                    const schoolRow = await new Promise((resolve) => {
+                        db.get("SELECT name FROM schools WHERE id = ?", [user.school_id], (err, row) => resolve(row));
+                    });
+                    if (schoolRow) schoolName = schoolRow.name;
+                } catch (e) { }
+            }
+
+            const accessToken = jwt.sign(
+                { id: user.id, username: user.username, role: user.role, schoolId: user.school_id },
+                'hardcoded_secret_key_fixed',
+                { expiresIn: '12h' }
+            );
+            res.json({
+                accessToken,
+                role: user.role,
+                schoolId: user.school_id,
+                user: {
+                    username: user.username,
+                    schoolName: schoolName || ''
+                }
+            });
+        } else {
+            res.status(401).json({ error: "Invalid password" });
+        }
+    } catch (e) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// POST /api/auth/register (Protected: Super Admin Only for Admin creation)
 router.post('/register', async (req, res) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+
+    // Default open registration is usually NOT desired for production, but kept if legacy depends on it.
+    // However, for creating 'admin' role, we MUST require Super Admin token.
     const { username, password, role, schoolId } = req.body;
+
+    if (role === 'admin') {
+        if (!token) return res.status(401).json({ error: "Unauthorized" });
+        try {
+            const decoded = jwt.verify(token, 'hardcoded_secret_key_fixed');
+            if (decoded.role !== 'company') return res.status(403).json({ error: "Only Super Admin can create Admins" });
+        } catch (e) {
+            return res.status(403).json({ error: "Invalid Token" });
+        }
+    }
+
     try {
         await createUser(username, password, role, schoolId);
         res.status(201).json({ message: "User created" });
@@ -36,43 +93,32 @@ router.post('/register', async (req, res) => {
     }
 });
 
-// AUTH V2 DEBUG MODE
+// POST /api/auth/update-credentials (Super Admin Only)
+router.post('/update-credentials', async (req, res) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    if (!token) return res.sendStatus(401);
 
-
-router.post('/login', async (req, res) => {
     const { username, password } = req.body;
 
     try {
-        const user = await getUserByUsername(username);
-        if (!user) return res.status(400).json({ error: "User not found" });
+        const decoded = jwt.verify(token, 'hardcoded_secret_key_fixed');
+        if (decoded.role !== 'company') return res.status(403).json({ error: "Action Restricted to Super Admin" });
 
-        if (user.is_active === 0 || user.is_active === false) {
-            return res.status(403).json({ error: "Account is disabled. Contact Admin." });
-        }
+        const hash = await bcrypt.hash(password, 10);
 
-        if (await bcrypt.compare(password, user.password_hash)) {
-            const secret = 'hardcoded_secret_key_fixed';
-            console.log("DEBUG: Secret Type:", typeof secret);
-            console.log("DEBUG: Secret Value:", secret);
-            console.log("DEBUG: User ID:", user.id);
+        // Prevent changing username to one that exists (unless it's self) -- simplistic check
+        // Ideally we check if new username exists first. 
+        // Here we just update.
 
-            if (!secret) throw new Error("CRITICAL: Secret is missing!");
-
-            try {
-                const accessToken = jwt.sign(
-                    { id: user.id, username: user.username, role: user.role, schoolId: user.school_id },
-                    secret,
-                    { expiresIn: '12h' }
-                );
-                console.log("DEBUG: Token generated successfully");
-                res.json({ accessToken, role: user.role, schoolId: user.school_id });
-            } catch (jwtError) {
-                console.error("DEBUG: JWT SIGN ERROR:", jwtError);
-                throw jwtError;
+        db.run("UPDATE users SET username = ?, password_hash = ? WHERE id = ?",
+            [username, hash, decoded.id],
+            function (err) {
+                if (err) return res.status(500).json({ error: "Update failed. Username may be taken." });
+                res.json({ message: "Credentials updated" });
             }
-        } else {
-            res.status(401).json({ error: "Invalid password" });
-        }
+        );
+
     } catch (e) {
         res.status(500).json({ error: e.message });
     }
@@ -85,7 +131,7 @@ router.post('/access-code', (req, res) => {
         if (err) return res.status(500).json({ error: "Db error" });
         if (!row) return res.status(401).json({ error: "Invalid Access Code" });
 
-        // Check expiry (Simplistic)
+        // Check expiry
         const now = new Date();
         const expires = new Date(row.expires_at);
         if (now > expires) {
@@ -101,6 +147,7 @@ router.post('/access-code', (req, res) => {
         res.json({ accessToken, role: type, schoolId: row.school_id });
     });
 });
+
 
 // POST /api/auth/generate-code (Company Admin Only)
 router.post('/generate-code', (req, res) => {
