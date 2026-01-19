@@ -3120,49 +3120,108 @@
             const grid = document.getElementById('urgent-deadlines-grid');
             if (!grid || !globalSchools) return;
 
-            // Filter schools with deadlines
+            // Filter schools: Has deadline OR is Urgent
             const urgent = globalSchools
-                .filter(s => s.deadline)
-                .map(s => ({
-                    ...s,
-                    diff: new Date(s.deadline) - new Date(),
-                    days: Math.floor((new Date(s.deadline) - new Date()) / (1000 * 60 * 60 * 24))
-                }))
-                .filter(s => s.diff > -86400000 * 30) // Only show recent overdue or future
-                .sort((a, b) => a.diff - b.diff) // Most urgent first
+                .filter(s => s.deadline || s.priority === 'Urgent')
+                .map(s => {
+                    let diff = Infinity;
+                    let days = Infinity;
+
+                    if (s.deadline) {
+                        diff = new Date(s.deadline) - new Date();
+                        days = Math.floor(diff / (1000 * 60 * 60 * 24));
+                    }
+
+                    // Artificial priority for sorting: 
+                    // Overdue (<0) > Urgent No Deadline (0) > Future Deadline
+                    let sortValue = diff;
+                    if (!s.deadline && s.priority === 'Urgent') {
+                        sortValue = -1; // Treat as "Due Now" for sorting, but not overdue red
+                    }
+
+                    return { ...s, diff, days, sortValue };
+                })
+                .filter(s => {
+                    // Keep if Urgent OR (Has deadline AND is recent/future)
+                    if (s.priority === 'Urgent') return true;
+                    return s.diff > -86400000 * 30; // 30 days past due max
+                })
+                .sort((a, b) => a.sortValue - b.sortValue) // Most urgent first
                 .slice(0, 3); // Top 3
 
             if (urgent.length === 0) {
-                grid.innerHTML = `<div class="col-span-full clay-card p-6 flex items-center justify-center text-gray-400 italic">No upcoming deadlines found. Set a deadline in School Management.</div>`;
+                grid.innerHTML = `<div class="col-span-full clay-card p-6 flex items-center justify-center text-gray-400 italic">No upcoming deadlines found.</div>`;
                 return;
             }
 
             grid.innerHTML = urgent.map(s => {
-                const isOverdue = s.diff < 0;
-                const statusColor = isOverdue ? 'bg-red-50 text-red-600 border-red-200' : (s.days <= 7 ? 'bg-orange-50 text-orange-600 border-orange-200' : 'bg-green-50 text-green-600 border-green-200');
+                const hasDeadline = !!s.deadline;
+                const isOverdue = hasDeadline && s.diff < 0;
+                const isUrgentNoDate = !hasDeadline && s.priority === 'Urgent';
+
+                // Determine Styling
+                let statusColor = 'bg-green-50 text-green-600 border-green-200';
+                let borderColor = 'border-white';
+                let shadowColor = '';
+
+                if (isOverdue) {
+                    statusColor = 'bg-red-50 text-red-600 border-red-200';
+                    borderColor = 'border-red-300';
+                    shadowColor = 'shadow-red-100';
+                } else if (isUrgentNoDate || (hasDeadline && s.days <= 7)) {
+                    statusColor = 'bg-orange-50 text-orange-600 border-orange-200';
+                    borderColor = 'border-orange-200';
+                }
+
+                // Determine Text Display
+                let timeText = 'NO DATE';
+                let timeClass = 'text-gray-700';
+                let barColor = 'bg-emerald-400';
+                let barWidth = '100%';
+
+                if (isOverdue) {
+                    timeText = 'OVERDUE';
+                    timeClass = 'text-red-500';
+                    barColor = 'bg-red-500';
+                    barWidth = '100%';
+                } else if (isUrgentNoDate) {
+                    timeText = 'PRIORITY';
+                    timeClass = 'text-orange-500';
+                    barColor = 'bg-orange-400 animate-pulse';
+                    barWidth = '100%';
+                } else {
+                    timeText = `${s.days} Days`;
+                    if (s.days <= 7) {
+                        barColor = 'bg-orange-400';
+                        timeClass = 'text-orange-600';
+                    }
+                    barWidth = `${Math.max(5, Math.min(100, 100 - (s.days * 2)))}%`;
+                }
 
                 return `
-                <div class="clay-card p-5 border ${isOverdue ? 'border-red-300 shadow-red-100' : 'border-white'} relative overflow-hidden group">
+                <div class="clay-card p-5 border ${borderColor} ${shadowColor} relative overflow-hidden group">
                     <div class="flex justify-between items-start mb-2">
-                        <div class="font-bold text-gray-700 text-lg truncate">${s.name}</div>
+                        <div class="font-bold text-gray-700 text-lg truncate w-10/12" title="${s.name}">${s.name}</div>
                         ${s.priority === 'Urgent' ? '<span class="animate-pulse text-lg" title="Urgent">🔥</span>' : ''}
                     </div>
                     <div class="flex items-center justify-between mt-2">
                         <div class="flex flex-col">
-                            <span class="text-[10px] uppercase font-bold text-gray-400">Time Remaining</span>
-                            <span class="text-xl font-black ${isOverdue ? 'text-red-500' : 'text-gray-700'}">
-                                ${isOverdue ? 'OVERDUE' : s.days + ' Days'}
+                            <span class="text-[10px] uppercase font-bold text-gray-400">Status</span>
+                            <span class="text-xl font-black ${timeClass}">
+                                ${timeText}
                             </span>
                         </div>
                          <div class="flex flex-col text-right">
                             <span class="text-[10px] uppercase font-bold text-gray-400">Deadline</span>
-                            <span class="text-sm font-bold text-gray-600">${new Date(s.deadline).toLocaleDateString()}</span>
+                            <span class="text-sm font-bold text-gray-600">
+                                ${hasDeadline ? new Date(s.deadline).toLocaleDateString() : 'ASAP'}
+                            </span>
                         </div>
                     </div>
                     
                      <!-- Progress Bar Visual -->
                      <div class="w-full h-1.5 bg-gray-100 rounded-full mt-4 overflow-hidden">
-                        <div class="h-full ${isOverdue ? 'bg-red-500' : (s.days <= 7 ? 'bg-orange-400' : 'bg-emerald-400')}" style="width: ${Math.max(5, Math.min(100, 100 - (s.days * 2)))}%"></div>
+                        <div class="h-full ${barColor}" style="width: ${barWidth}"></div>
                      </div>
                 </div>
                 `;
