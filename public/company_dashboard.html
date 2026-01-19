@@ -665,10 +665,31 @@
                             <p class="text-xs text-gray-400 font-bold uppercase mt-1">Manage dynamic items and auto-calc
                                 formulas</p>
                         </div>
-                        <button onclick="saveDressConfig()"
-                            class="clay-btn clay-primary px-6 py-2 text-sm font-bold shadow-md hover:shadow-lg transition-transform active:scale-95">
-                            Save Changes
-                        </button>
+                        <div class="flex items-center gap-3">
+                            <!-- EXPORT BUTTONS -->
+                            <button onclick="downloadDressConfigExcel()"
+                                class="clay-btn bg-emerald-50 text-emerald-600 border border-emerald-100 hover:bg-emerald-100 px-4 py-2 text-xs font-bold shadow-sm hover:shadow-md transition-transform active:scale-95 flex items-center gap-2 rounded-lg">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                                </svg>
+                                Excel
+                            </button>
+                            <button onclick="downloadDressConfigPDF()"
+                                class="clay-btn bg-rose-50 text-rose-600 border border-rose-100 hover:bg-rose-100 px-4 py-2 text-xs font-bold shadow-sm hover:shadow-md transition-transform active:scale-95 flex items-center gap-2 rounded-lg">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z">
+                                    </path>
+                                </svg>
+                                PDF
+                            </button>
+                            <div class="w-px h-6 bg-gray-200 mx-1"></div>
+                            <button onclick="saveDressConfig()"
+                                class="clay-btn clay-primary px-6 py-2 text-sm font-bold shadow-md hover:shadow-lg transition-transform active:scale-95 rounded-lg">
+                                Save Changes
+                            </button>
+                        </div>
                     </div>
 
                     <!-- DB REPAIR (Visible if needed) -->
@@ -6673,6 +6694,58 @@
             } catch (e) {
                 alert("Failed to save: " + e.message);
                 console.error(e);
+            }
+        }
+
+        // --- DRESS CONFIG EXPORT FUNCTIONS ---
+        function downloadDressConfigExcel() {
+            try {
+                const data = dressConfig.items.map(item => ({
+                    "Item Name": item.name,
+                    "Type": item.type,
+                    "Required Columns": item.cols.join(", "),
+                    "Formula": item.formula || "-"
+                }));
+                const ws = XLSX.utils.json_to_sheet(data);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Dress Configuration");
+                XLSX.writeFile(wb, "Dress_Configuration.xlsx");
+            } catch (e) {
+                console.error(e);
+                alert("Error generating Excel: " + e.message);
+            }
+        }
+
+        function downloadDressConfigPDF() {
+            try {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+
+                doc.setFontSize(16);
+                doc.text("Dress Configuration", 14, 15);
+                doc.setFontSize(10);
+                doc.text(`Generated: ${new Date().toLocaleString()}`, 14, 22);
+
+                const headers = [['Item Name', 'Type', 'Required Columns', 'Formula']];
+                const rows = dressConfig.items.map(i => [
+                    i.name,
+                    i.type,
+                    i.cols.join(", "),
+                    i.formula || "-"
+                ]);
+
+                doc.autoTable({
+                    head: headers,
+                    body: rows,
+                    startY: 30,
+                    styles: { fontSize: 10 },
+                    headStyles: { fillColor: [66, 133, 244] } // Google Blue
+                });
+
+                doc.save("Dress_Configuration.pdf");
+            } catch (e) {
+                console.error(e);
+                alert("Error generating PDF: " + e.message);
             }
         }
 
