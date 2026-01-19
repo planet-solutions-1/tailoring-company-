@@ -117,7 +117,8 @@
                         return;
                     }
 
-                    switch (data.role) {
+                    const role = (data.role || '').toLowerCase();
+                    switch (role) {
                         case 'company':
                             window.location.href = 'company_dashboard.html';
                             break;
@@ -134,7 +135,7 @@
                             window.location.href = 'packing_dashboard.html';
                             break;
                         default:
-                            errorText.textContent = "Unknown user role.";
+                            errorText.textContent = `Unknown user role: ${data.role}`;
                             errorDiv.classList.remove('hidden');
                     }
                 } else {
