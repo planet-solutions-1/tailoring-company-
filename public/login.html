@@ -22,6 +22,26 @@
             border: 1px solid rgba(255, 255, 255, 0.5);
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
         }
+
+        /* Spinner */
+        .loader {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #3498db;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
     </style>
 </head>
 
@@ -41,9 +61,9 @@
 
     <!-- Login Card -->
     <div class="glass-panel w-full max-w-md rounded-2xl p-8 md:p-10 shadow-xl transition-all hover:shadow-2xl">
-        <h2 class="text-xl font-medium text-gray-700 mb-6">Sign In (v7)</h2>
+        <h2 class="text-xl font-medium text-gray-700 mb-6">Sign In</h2>
 
-        <form onsubmit="handleLogin(event)" class="space-y-5">
+        <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-5">
             <div>
                 <label class="block text-xs font-bold text-gray-400 uppercase tracking-wide mb-1.5">Username</label>
                 <input type="text" id="username" required
@@ -58,9 +78,10 @@
                     placeholder="••••••••">
             </div>
 
-            <button type="submit"
-                class="w-full bg-[#2C3E50] hover:bg-[#1A252F] text-white font-medium py-3.5 rounded-lg shadow-md hover:shadow-lg transform active:scale-[0.98] transition-all duration-200 mt-2">
-                Access Dashboard
+            <button type="submit" id="loginBtn"
+                class="w-full bg-[#2C3E50] hover:bg-[#1A252F] text-white font-medium py-3.5 rounded-lg shadow-md hover:shadow-lg transform active:scale-[0.98] transition-all duration-200 mt-2 flex justify-center items-center gap-2">
+                <span>Access Dashboard</span>
+                <div id="btnLoader" class="loader hidden border-t-white border-2"></div>
             </button>
         </form>
 
@@ -76,18 +97,39 @@
     </div>
 
     <p class="mt-8 text-center text-gray-400 text-xs">
-        &copy; 2025 Planet Solutions. Secure System.
+        &copy; <span id="year">2026</span> Planet Solutions. Secure System.
     </p>
 
     <script>
+        document.getElementById('year').textContent = new Date().getFullYear();
+
         async function handleLogin(e) {
             e.preventDefault();
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
+            const usernameInput = document.getElementById('username');
+            const passwordInput = document.getElementById('password');
+            const loginBtn = document.getElementById('loginBtn');
+            const btnLoader = document.getElementById('btnLoader');
+            const btnText = loginBtn.querySelector('span');
             const errorDiv = document.getElementById('errorMessage');
             const errorText = document.getElementById('errorText');
 
+            const username = usernameInput.value;
+            const password = passwordInput.value;
+
+            // Simple Client Side Validation
+            if (!username.trim() || !password.trim()) {
+                errorText.textContent = "Please enter both username and password.";
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+
+            // Reset State
             errorDiv.classList.add('hidden');
+            loginBtn.disabled = true;
+            btnText.textContent = "Verifying...";
+            btnLoader.classList.remove('hidden');
+            usernameInput.disabled = true;
+            passwordInput.disabled = true;
 
             try {
                 const res = await fetch('/api/auth/login', {
@@ -104,12 +146,12 @@
                     sessionStorage.setItem('role', data.role);
                     sessionStorage.setItem('schoolId', data.schoolId || '');
 
-                    // Fix: data.user might be missing in V2 response, usage logic is robust
+                    // Safe User Object Parsing
                     const safeUser = data.user || { username: username, school_name: '' };
                     sessionStorage.setItem('username', safeUser.username);
                     sessionStorage.setItem('schoolName', safeUser.school_name || '');
 
-                    // Redirect logic
+                    // Redirect Flow
                     const urlParams = new URLSearchParams(window.location.search);
                     const redirectUrl = urlParams.get('redirect');
                     if (redirectUrl) {
@@ -117,6 +159,7 @@
                         return;
                     }
 
+                    // Robust Role Handling (Trimming is key)
                     const role = (data.role || '').trim().toLowerCase();
                     switch (role) {
                         case 'company':
@@ -135,23 +178,27 @@
                             window.location.href = 'packing_dashboard.html';
                             break;
                         default:
-                            errorText.textContent = `Unknown user role: ${data.role}`;
-                            errorDiv.classList.remove('hidden');
+                            throw new Error(`Unknown user role: ${data.role}`);
                     }
                 } else {
                     throw new Error(data.error || "Login Failed");
                 }
 
             } catch (err) {
+                console.error("Login Error:", err);
                 errorText.textContent = err.message;
                 errorDiv.classList.remove('hidden');
+
+                // Re-enable UI
+                loginBtn.disabled = false;
+                btnText.textContent = "Access Dashboard";
+                btnLoader.classList.add('hidden');
+                usernameInput.disabled = false;
+                passwordInput.disabled = false;
             }
         }
     </script>
     <script src="js/logger.js"></script>
-    <script>
-        // Public Logger is available as Logger.logPublic
-    </script>
 </body>
 
 </html>

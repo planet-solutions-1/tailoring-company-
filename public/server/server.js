@@ -13,7 +13,6 @@ const { authenticateToken } = require('./middleware/auth');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-console.log("--- Server Startup v6 CHECK ---");
 
 // Fix: Increase Body Limit (Fixing 413 Error for Large Syncs)
 app.use(express.json({ limit: '50mb' }));
