@@ -305,7 +305,21 @@
         }
 
         async function loadDressTypeOptions() {
-            // Populate Dropdowns dynamically if needed... for now hardcoded basic
+            const res = await fetchAuth(`${API}/config-list`);
+            let types = [];
+            if (res.ok) types = await res.json();
+
+            if (types.length === 0) types = ["Shirt", "Pant", "Suit"]; // Fallback
+
+            const optionsHtml = types.map(t => `<option value="${t}">${t}</option>`).join('');
+
+            // Populate Wizard Dropdown
+            const wizSelect = document.getElementById('wiz-type');
+            if (wizSelect) wizSelect.innerHTML = optionsHtml;
+
+            // Populate Config Dropdown
+            const confSelect = document.getElementById('config-dress-type');
+            if (confSelect) confSelect.innerHTML = optionsHtml;
         }
 
         // --- BATCHES ---

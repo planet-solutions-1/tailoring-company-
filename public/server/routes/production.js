@@ -60,9 +60,22 @@ router.post('/config', authenticateToken, requireRole('company'), (req, res) => 
 
 // Helper route to get all used dress types (for dropdown)
 router.get('/config-list', authenticateToken, (req, res) => {
-    db.all("SELECT DISTINCT dress_type FROM production_config ORDER BY dress_type ASC", [], (err, rows) => {
-        if (err) return res.status(500).json([]);
-        res.json(rows.map(r => r.dress_type));
+    // Union existing config types with actual used types in patterns
+    const sql = `
+        SELECT DISTINCT dress_type FROM production_config
+        UNION
+        SELECT DISTINCT dress_type FROM patterns
+        ORDER BY dress_type ASC
+    `;
+
+    db.all(sql, [], (err, rows) => {
+        if (err) {
+            console.error(err);
+            // Fallback: just hardcoded if DB fails, or empty
+            return res.json(["Shirt", "Pant", "Suit", "Safari", "Kurta"]);
+        }
+        const types = rows.map(r => r.dress_type).filter(t => t); // Filter nulls
+        res.json(types.length > 0 ? types : ["Shirt", "Pant", "Suit", "Safari", "Kurta"]);
     });
 });
 
