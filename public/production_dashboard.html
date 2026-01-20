@@ -745,9 +745,6 @@
             const type = document.getElementById('wiz-type').value;
 
             // Combine Data
-            // We need to construct the final `required_stages` array.
-            // It will contain BOTH Group objects (P) and Task objects (S).
-
             const finalStages = [];
 
             // Add Groups (P)
@@ -758,13 +755,12 @@
             // Add Tasks (S) with Target/Assign data from DOM
             const taskInputs = document.querySelectorAll('.step2-id');
             taskInputs.forEach(input => {
-                const row = input.closest('.flex'); // The task row
+                const row = input.closest('.flex');
                 const id = input.value;
                 const parentId = row.querySelector('.step2-parent').value;
                 const target = parseInt(row.querySelector('.step2-target').value) || 0;
                 const assigned = row.querySelector('.step2-assign').value;
 
-                // Find original Name
                 const original = WIZARD_DATA.tasks.find(t => t.id === id);
 
                 finalStages.push({
@@ -777,72 +773,134 @@
                 });
             });
 
-            const res = await fetchAuth(`${API}/groups`, {
+            // DECIDE: Create or Edit?
+            let url = `${API}/groups`;
+            if (WIZARD_MODE === 'edit') {
+                url = `${API}/groups/${CURRENT_EDIT_ID}/edit`;
+            }
+
+            const payload = {
+                group_name: name,
+                dress_type: type,
+                required_stages: finalStages,
+                details: 'Hierarchy Created',
+                status: (CURRENT_BATCH && CURRENT_BATCH.status) || 'Active'
+            };
+
+            const res = await fetchAuth(url, {
                 method: 'POST',
-                body: JSON.stringify({
-                    group_name: name,
-                    dress_type: type,
-                    required_stages: finalStages,
-                    details: 'Hierarchy Created'
-                })
+                body: JSON.stringify(payload)
             });
 
             if (res.ok) {
                 closeWizard();
                 loadBatches();
+                if (WIZARD_MODE === 'edit') {
+                    // Quick Alert & Reload Detail
+                    // alert("Batch Updated!"); 
+                    // To refresh detail we need to re-fetch or just close detail?
+                    // Let's close detail to force re-open or reload ALL_GROUPS
+                    const allRes = await fetchAuth(`${API}/groups`);
+                    if (allRes.ok) ALL_GROUPS = await allRes.json();
+
+                    // Re-bind CURRENT_BATCH
+                    if (CURRENT_EDIT_ID) openDetail(CURRENT_EDIT_ID);
+                }
             } else {
-                alert("Creation Failed");
+                alert("Operation Failed");
             }
         }
 
-        // --- EDIT BATCH ---
-        async function editBatch() {
+        let WIZARD_MODE = 'create'; // 'create' | 'edit'
+        let CURRENT_EDIT_ID = null;
+
+        // --- FULL EDIT (RE-WIZARD) ---
+        async function editBatchFull() {
             if (!CURRENT_BATCH) return;
 
-            document.getElementById('edit-modal').classList.remove('hidden');
-            document.getElementById('edit-name').value = CURRENT_BATCH.group_name;
-            document.getElementById('edit-status').value = CURRENT_BATCH.status || 'Active';
+            WIZARD_MODE = 'edit';
+            CURRENT_EDIT_ID = CURRENT_BATCH.id;
 
-            // Populate dress types if empty?
-            const typeSel = document.getElementById('edit-type');
-            if (typeSel.options.length === 0) {
-                const res = await fetchAuth(`${API}/config-list`);
-                let types = res.ok ? await res.json() : ["Shirt", "Pant"];
-                typeSel.innerHTML = types.map(t => `<option value="${t}">${t}</option>`).join('');
-            }
-            typeSel.value = CURRENT_BATCH.dress_type;
-        }
+            openWizard(); // Opens and resets to create, so we override immediately
 
-        async function saveBatchEdit() {
-            if (!CURRENT_BATCH) return;
+            // Override UI for Edit
+            document.getElementById('btn-create').textContent = "Save Changes";
+            document.querySelector('#wizard-modal h3').textContent = `Editing Batch #${CURRENT_EDIT_ID}`;
 
-            const btn = event.target;
-            btn.textContent = "Saving...";
+            // Hydrate Inputs
+            document.getElementById('wiz-name').value = CURRENT_BATCH.group_name;
+            document.getElementById('wiz-type').value = CURRENT_BATCH.dress_type;
 
-            const name = document.getElementById('edit-name').value;
-            const type = document.getElementById('edit-type').value;
-            const status = document.getElementById('edit-status').value;
+            // Re-construct WIZARD_DATA from required_stages
+            WIZARD_DATA = { groups: [], tasks: [] };
+            const req = CURRENT_BATCH.required_stages || [];
 
-            const res = await fetchAuth(`${API}/groups/${CURRENT_BATCH.id}/edit`, {
-                method: 'POST',
-                body: JSON.stringify({ group_name: name, dress_type: type, status: status })
+            req.forEach(item => {
+                if (item.type === 'group' || (item.id && item.id.startsWith('P-'))) {
+                    // Ensure it has 'tasks' array if missing
+                    if (!item.tasks) item.tasks = [];
+                    WIZARD_DATA.groups.push(item);
+                } else {
+                    WIZARD_DATA.tasks.push(item);
+                }
             });
 
-            if (res.ok) {
-                document.getElementById('edit-modal').classList.add('hidden');
-                loadBatches(); // Refresh Grid
+            // Update Counts (Visual Only, logic uses WIZARD_DATA)
+            const countG = document.getElementById('count-groups');
+            if (countG) countG.value = WIZARD_DATA.groups.length;
 
-                // Update Local Detail View
-                CURRENT_BATCH.group_name = name;
-                CURRENT_BATCH.dress_type = type;
-                CURRENT_BATCH.status = status;
+            // Render Step 1
+            await hydrateWizardUI();
+        }
 
-                document.getElementById('detail-name').textContent = name;
-                document.getElementById('detail-type').textContent = type;
-            } else {
-                alert("Update failed");
-            }
-            btn.textContent = "Save Changes";
+        async function hydrateWizardUI() {
+            const sPool = document.getElementById('wiz-pool');
+            const pCanvas = document.getElementById('wiz-canvas');
+
+            // 1. Render Groups (Right) from DATA
+            pCanvas.innerHTML = '';
+
+            // Sort groups by ID to be nice?
+            WIZARD_DATA.groups.forEach(g => {
+                pCanvas.innerHTML += `
+                        <div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden group">
+                           <div class="p-3 bg-purple-50 border-b border-purple-100 flex items-center justify-between">
+                                <div class="flex items-center gap-2 w-full">
+                                    <span class="text-[10px] font-mono bg-purple-200 text-purple-700 px-1 rounded">${g.id}</span>
+                                    <input type="text" value="${g.name}" class="text-sm font-bold bg-transparent w-full focus:outline-none wiz-name-p text-purple-900">
+                                </div>
+                                <div class="text-xs text-purple-300 group-hover:text-purple-500 transition">Drop Tasks Here</div>
+                           </div>
+                           <div class="wiz-drop-zone p-3 min-h-[60px] bg-slate-50 space-y-2 transition-colors" 
+                                data-group="${g.id}"
+                                ondragover="allowDrop(event)" ondragleave="leaveDrop(event)" ondrop="drop(event)">
+                                <!-- Filled below -->
+                           </div>
+                        </div>
+                    `;
+            });
+
+            // 2. Put Tasks into their Groups OR Source
+            sPool.innerHTML = ''; // Clear source
+
+            WIZARD_DATA.tasks.forEach(t => {
+                const cardHtml = `
+                    <div id="drag-${t.id}" class="wiz-task-item flex items-center gap-2 p-2 bg-white rounded border border-gray-200 shadow-sm hover:border-pink-300" 
+                             draggable="true" ondragstart="drag(event)" ondragend="dragEnd(event)">
+                            <span class="text-[10px] font-mono bg-pink-100 text-pink-600 px-1 rounded">${t.id}</span>
+                            <input type="text" value="${t.name}" class="text-sm border-none bg-transparent w-full focus:outline-none wiz-name-s">
+                    </div>
+                 `;
+
+                // Find Parent Zone
+                const zone = document.querySelector(`.wiz-drop-zone[data-group="${t.parentId}"]`);
+                if (zone) {
+                    zone.innerHTML += cardHtml;
+                } else {
+                    // Orphaned? Put in source
+                    sPool.innerHTML += cardHtml;
+                }
+            });
         }
 
         // --- DETAIL VIEW ---
