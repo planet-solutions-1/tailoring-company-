@@ -135,7 +135,7 @@ router.get('/debug_full', async (req, res) => {
 
 // GET /api/data/stats - High level metrics
 // GET /api/data/stats - High level metrics
-router.get('/stats', authenticateToken, requireRole('company'), async (req, res) => {
+router.get('/stats', authenticateToken, requireRole('admin'), async (req, res) => {
     const getCount = (sql) => new Promise((resolve, reject) => {
         if (db.execute) {
             // MySQL
@@ -172,7 +172,8 @@ router.get('/stats', authenticateToken, requireRole('company'), async (req, res)
 router.get('/schools/:id', authenticateToken, (req, res) => {
     const id = req.params.id;
     // Allow Company or the School itself
-    if (req.user.role !== 'company' && req.user.schoolId != id) {
+    // Allow Company, Admin, or the School itself
+    if (req.user.role !== 'company' && req.user.role !== 'admin' && req.user.schoolId != id) {
         return res.status(403).json({ error: "Unauthorized" });
     }
 
@@ -194,7 +195,7 @@ router.get('/schools/:id', authenticateToken, (req, res) => {
 
 // GET /api/data/schools - List all schools
 // GET /api/data/schools - List all schools
-router.get('/schools', authenticateToken, requireRole('company'), (req, res) => {
+router.get('/schools', authenticateToken, requireRole('admin'), (req, res) => {
     if (db.execute) {
         db.execute("SELECT * FROM schools").then(([rows]) => res.json(rows)).catch(err => res.status(500).json({ error: err.message }));
     } else {
@@ -606,7 +607,7 @@ router.put('/schools/:id/lock', authenticateToken, requireRole('company'), async
 
 // GET /api/data/logs - Activity Logs
 // GET /api/data/logs - Activity Logs with Filters
-router.get('/logs', authenticateToken, requireRole('company'), (req, res) => {
+router.get('/logs', authenticateToken, requireRole('admin'), (req, res) => {
     const { school_id, user_id, role, start_date, end_date, limit } = req.query;
 
     let sql = "SELECT * FROM activity_logs WHERE 1=1";
@@ -905,7 +906,7 @@ router.post('/packing', authenticateToken, (req, res) => {
 // === v5.0 NEW ROUTES ===
 
 // GET /api/data/all_students - Global View (Company Only)
-router.get('/all_students', authenticateToken, requireRole('company'), (req, res) => {
+router.get('/all_students', authenticateToken, requireRole('admin'), (req, res) => {
     const query = `
         SELECT 
             st.*,
@@ -950,7 +951,7 @@ router.get('/all_students', authenticateToken, requireRole('company'), (req, res
 });
 
 // GET /api/data/patterns/all - All Patterns (Company)
-router.get('/patterns/all', authenticateToken, requireRole('company'), (req, res) => {
+router.get('/patterns/all', authenticateToken, requireRole('admin'), (req, res) => {
     const query = `
         SELECT p.*, s.name as school_name 
         FROM patterns p
@@ -1144,7 +1145,7 @@ router.put('/access_codes/:id/toggle', authenticateToken, requireRole('company')
 // === COMPLAINTS ROUTES ===
 
 // GET /api/data/complaints - List All (Company)
-router.get('/complaints', authenticateToken, requireRole('company'), (req, res) => {
+router.get('/complaints', authenticateToken, requireRole('admin'), (req, res) => {
     const query = `
         SELECT c.*, s.name as school_name 
         FROM complaints c
