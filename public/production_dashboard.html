@@ -235,18 +235,36 @@
                 <!-- STEP 1: DRAG & DROP BUILDER -->
                 <div id="wiz-step-1" class="h-full flex flex-col">
 
-                    <div class="mb-6 p-4 bg-white rounded-xl shadow-sm border border-gray-100 flex gap-4 items-end">
-                        <div class="flex-1">
-                            <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Work Name</label>
-                            <input type="text" id="wiz-name" class="clay-input w-full p-2"
+                    <div
+                        class="mb-6 p-6 bg-white rounded-xl shadow-sm border border-gray-100 grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
+                        <div class="md:col-span-1">
+                            <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Work Name</label>
+                            <input type="text" id="wiz-name" class="clay-input w-full p-2.5"
                                 placeholder="e.g. Winter Jackets Lot A">
                         </div>
-                        <div class="flex-1">
-                            <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Dress Type</label>
-                            <select id="wiz-type" class="clay-input w-full p-2" onchange="loadWizardConfig()"></select>
+                        <div class="md:col-span-1">
+                            <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Dress Type</label>
+                            <select id="wiz-type" class="clay-input w-full p-2.5"
+                                onchange="loadWizardConfig()"></select>
                         </div>
-                        <div class="text-xs text-gray-400 pb-2">
-                            Drag tasks from the <b>Left</b> into Groups on the <b>Right</b>.
+                        <div class="md:col-span-1">
+                            <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Tasks Count</label>
+                            <select id="count-tasks" class="clay-input w-full p-2.5" onchange="loadWizardConfig()">
+                                <option value="5">5 Tasks</option>
+                                <option value="10" selected>10 Tasks</option>
+                                <option value="15">15 Tasks</option>
+                                <option value="20">20 Tasks</option>
+                            </select>
+                        </div>
+                        <div class="md:col-span-1">
+                            <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Phases Count</label>
+                            <select id="count-groups" class="clay-input w-full p-2.5" onchange="loadWizardConfig()">
+                                <option value="3">3 Phases</option>
+                                <option value="5" selected>5 Phases</option>
+                                <option value="10">10 Phases</option>
+                                <option value="15">15 Phases</option>
+                                <option value="20">20 Phases</option>
+                            </select>
                         </div>
                     </div>
 
@@ -515,6 +533,9 @@
 
         async function loadWizardConfig() {
             const type = document.getElementById('wiz-type').value;
+            const taskLimit = parseInt(document.getElementById('count-tasks').value) || 10;
+            const groupLimit = parseInt(document.getElementById('count-groups').value) || 5;
+
             const sPool = document.getElementById('wiz-pool');
             const pCanvas = document.getElementById('wiz-canvas');
 
@@ -525,13 +546,14 @@
                 const res = await fetchAuth(`${API}/config/${type}`);
                 const conf = res.ok ? await res.json() : {};
 
-                // 1. Render Source Tasks (Left)
+                // 1. Render Source Tasks (Left) - Limited
                 sPool.innerHTML = '';
                 const sLabels = conf.s_labels || Array(20).fill('');
-                sLabels.forEach((lbl, i) => {
+
+                // Show up to LIMIT, ignore actual labels length if small
+                for (let i = 0; i < taskLimit; i++) {
                     const id = `S-${i}`;
-                    // Only show if label exists? Or assume generic? 
-                    // Let's show all generic ones but prioritize labeled
+                    const lbl = sLabels[i] || '';
                     const name = lbl || `Task ${i + 1}`;
 
                     sPool.innerHTML += `
@@ -541,23 +563,16 @@
                             <input type="text" value="${name}" class="text-sm border-none bg-transparent w-full focus:outline-none wiz-name-s">
                         </div>
                     `;
-                });
+                }
 
-                // 2. Render Target Groups (Right)
+                // 2. Render Target Groups (Right) - Limited
                 pCanvas.innerHTML = '';
                 const pLabels = conf.p_labels || Array(20).fill('');
-                pLabels.forEach((lbl, i) => {
-                    const id = `P-${i}`;
-                    const name = lbl || `Production Group ${i + 1}`;
-                    const isVisible = !!lbl; // Only show labeled groups by default? Or all?
-                    // Let's show all P groups but collapsed or compact? 
-                    // Or let's make them checkable? 
-                    // DRAG BUILDER: P Groups are containers.
-                    // We render a Card for every P group.
 
-                    // To avoid clutter, only render P Groups that HAVE Labels OR first 5?
-                    // Let's render first 10 for now.
-                    if (i > 9 && !lbl) return;
+                for (let i = 0; i < groupLimit; i++) {
+                    const id = `P-${i}`;
+                    const lbl = pLabels[i] || '';
+                    const name = lbl || `Production Group ${i + 1}`;
 
                     pCanvas.innerHTML += `
                         <div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden group">
@@ -575,7 +590,7 @@
                            </div>
                         </div>
                     `;
-                });
+                }
 
             } catch (e) { console.error(e); }
         }
