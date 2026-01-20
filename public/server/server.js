@@ -316,11 +316,13 @@ app.post('/api/sync', authenticateToken, async (req, res) => {
 const authRoutes = require('./routes/auth_v2');
 const dataRoutes = require('./routes/data');
 const publicRoutes = require('./routes/public');
+const productionRoutes = require('./routes/production');
 
-console.log("Mounting /api/auth, /api/data, and /api/public routes...");
+console.log("Mounting /api/auth, /api/data, /api/public, and /api/production routes...");
 app.use('/api/auth', authRoutes);
 app.use('/api/data', dataRoutes);
 app.use('/api/public', publicRoutes);
+app.use('/api/production', productionRoutes);
 
 // UPLOAD ENDPOINT
 app.post('/api/data/upload', upload.array('images', 5), (req, res) => {

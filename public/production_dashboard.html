@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Production Dashboard - Planet Solutions</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: #F8FAFC;
+        }
+
+        /* Claymorphism Utilities */
+        .clay-card {
+            background: #FFFFFF;
+            border-radius: 24px;
+            box-shadow:
+                8px 8px 16px #D1D9E6,
+                -8px -8px 16px #FFFFFF;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+        }
+
+        .clay-btn {
+            background: #F0F4F8;
+            border-radius: 12px;
+            box-shadow:
+                6px 6px 12px #D1D9E6,
+                -6px -6px 12px #FFFFFF;
+            transition: all 0.2s ease;
+            color: #475569;
+            font-weight: 500;
+        }
+
+        .clay-btn:hover {
+            transform: translateY(-2px);
+            box-shadow:
+                8px 8px 16px #D1D9E6,
+                -8px -8px 16px #FFFFFF;
+            color: #2563EB;
+        }
+
+        .clay-btn:active {
+            box-shadow: inset 4px 4px 8px #D1D9E6, inset -4px -4px 8px #FFFFFF;
+            transform: translateY(0);
+        }
+
+        .clay-btn-primary {
+            background: #2C3E50;
+            color: white;
+            box-shadow: 6px 6px 12px rgba(44, 62, 80, 0.3), -6px -6px 12px rgba(255, 255, 255, 0.8);
+        }
+
+        .clay-btn-primary:hover {
+            background: #34495E;
+            color: white;
+        }
+
+        .clay-input {
+            background: #F0F4F8;
+            border-radius: 12px;
+            box-shadow: inset 4px 4px 8px #D1D9E6, inset -4px -4px 8px #FFFFFF;
+            border: none;
+            outline: none;
+            transition: box-shadow 0.2s;
+        }
+
+        .clay-input:focus {
+            box-shadow: inset 6px 6px 12px #D1D9E6, inset -6px -6px 12px #FFFFFF;
+        }
+
+        /* Access Control Hiding */
+        .admin-only {
+            display: none;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen text-slate-800">
+
+    <!-- Navbar -->
+    <nav class="clay-card m-4 p-4 flex justify-between items-center relative z-20">
+        <div class="flex items-center gap-4">
+            <div class="w-10 h-10 bg-slate-800 rounded-xl flex items-center justify-center text-white shadow-lg">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path>
+                </svg>
+            </div>
+            <div>
+                <h1 class="font-bold text-xl tracking-tight text-slate-800">Production<span
+                        class="text-blue-600">Track</span></h1>
+                <p class="text-xs text-slate-500 font-medium tracking-wide">Manufacturing Control</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-4">
+            <div class="text-right hidden md:block">
+                <p id="user-name" class="font-semibold text-sm">User</p>
+                <p id="user-role" class="text-xs text-slate-500 uppercase">Role</p>
+            </div>
+            <button onclick="logout()" class="clay-btn p-2 rounded-xl text-red-500 hover:text-red-600">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <polyline points="16 17 21 12 16 7"></polyline>
+                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Content -->
+    <main class="max-w-7xl mx-auto p-4 grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- Sidebar Navigation -->
+        <aside class="col-span-1 lg:col-span-3 space-y-4">
+            <!-- Navigation Menu -->
+            <div class="clay-card p-6 min-h-[50vh]">
+                <h3 class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-4">Menu</h3>
+                <div class="space-y-2">
+                    <button onclick="switchTab('active')" id="nav-active"
+                        class="clay-btn w-full p-3 text-left flex items-center gap-3 clay-btn-primary">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z">
+                            </path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Run Production
+                    </button>
+                    <button onclick="switchTab('config')" id="nav-config"
+                        class="admin-only clay-btn w-full p-3 text-left flex items-center gap-3">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z">
+                            </path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                        Configuration
+                    </button>
+                    <button onclick="logout()"
+                        class="md:hidden clay-btn w-full p-3 text-left flex items-center gap-3 text-red-500">
+                        Sign Out
+                    </button>
+                </div>
+            </div>
+
+            <div class="clay-card p-6 bg-blue-50 border-blue-100">
+                <h3 class="text-blue-800 font-bold text-sm mb-2">Quick Stats</h3>
+                <div class="flex justify-between items-end">
+                    <div>
+                        <p class="text-xs text-blue-600">Active Batches</p>
+                        <p id="stat-active" class="text-2xl font-bold text-blue-900">0</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main View Area -->
+        <section class="col-span-1 lg:col-span-9 space-y-6">
+
+            <!-- Active Production View -->
+            <div id="view-active" class="animate-fade-in">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-slate-700">Active Production Batches</h2>
+                    <button onclick="openCreateModal()"
+                        class="clay-btn clay-btn-primary px-6 py-3 rounded-xl flex items-center gap-2">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4">
+                            </path>
+                        </svg>
+                        New Batch
+                    </button>
+                </div>
+
+                <!-- Grid of Active Batches -->
+                <div id="batches-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Cards will be injected here -->
+                    <div class="text-center col-span-full py-12 text-gray-400">Loading batches...</div>
+                </div>
+            </div>
+
+            <!-- Configuration View (Admin Only) -->
+            <div id="view-config" class="hidden animate-fade-in">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+                    <h2 class="text-2xl font-bold text-slate-700">Production Configuration</h2>
+                    <div class="flex items-center gap-2 relative">
+                        <select id="config-dress-type" onchange="loadConfig()"
+                            class="clay-input px-4 py-2 min-w-[200px]">
+                            <!-- Options like Shirt, Pant loaded dynamically or hardcoded for now until we link real dress types -->
+                            <option value="Shirt">Shirt</option>
+                            <option value="Pant">Pant</option>
+                            <option value="Suit">Suit</option>
+                            <option value="Safari">Safari</option>
+                            <option value="Kurta">Kurta</option>
+                        </select>
+                        <button onclick="saveConfig()" class="clay-btn clay-btn-primary px-6 py-2">Save
+                            Defaults</button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- S-Labels -->
+                    <div class="clay-card p-6">
+                        <h3 class="font-bold text-lg mb-4 text-purple-600">Production Stages (S1-S20)</h3>
+                        <p class="text-xs text-gray-500 mb-4">Define standard stages for this dress type. Leave blank to
+                            disable.</p>
+                        <div id="s-labels-grid" class="grid grid-cols-1 gap-2 max-h-[500px] overflow-y-auto pr-2">
+                            <!-- Inputs generated via JS -->
+                        </div>
+                    </div>
+
+                    <!-- P-Labels -->
+                    <div class="clay-card p-6">
+                        <h3 class="font-bold text-lg mb-4 text-pink-600">Processes (P1-P20)</h3>
+                        <p class="text-xs text-gray-500 mb-4">Define standard processes. These are auxiliary tracking
+                            steps.</p>
+                        <div id="p-labels-grid" class="grid grid-cols-1 gap-2 max-h-[500px] overflow-y-auto pr-2">
+                            <!-- Inputs generated via JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detail View (Inside Production) -->
+            <div id="view-detail" class="hidden animate-fade-in">
+                <button onclick="switchTab('active')"
+                    class="mb-4 text-sm text-blue-500 font-medium hover:underline flex items-center gap-1">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7">
+                        </path>
+                    </svg>
+                    Back to Batches
+                </button>
+
+                <div class="clay-card p-8 mb-6 relative overflow-hidden">
+                    <div class="relative z-10 flex justify-between items-start">
+                        <div>
+                            <h2 id="detail-name" class="text-3xl font-bold text-slate-800 mb-1">Batch #123</h2>
+                            <p id="detail-type" class="text-lg text-slate-500 font-medium">Shirt - Men's Regular</p>
+                        </div>
+                        <div class="text-right">
+                            <h1 id="detail-percent" class="text-5xl font-bold text-blue-600">0%</h1>
+                            <p class="text-xs text-gray-400 uppercase tracking-widest mt-1">Completion</p>
+                        </div>
+                    </div>
+                    <!-- Progress Bar -->
+                    <div class="w-full bg-gray-100 h-4 rounded-full mt-6 overflow-hidden">
+                        <div id="detail-progress-bar" class="h-full bg-blue-500 transition-all duration-500"
+                            style="width: 0%"></div>
+                    </div>
+                </div>
+
+                <div class="clay-card p-8">
+                    <h3 class="text-lg font-bold mb-6 flex items-center gap-2">
+                        <span class="w-2 h-6 bg-green-500 rounded-full"></span>
+                        Production Workflow
+                    </h3>
+                    <div id="workflow-steps" class="space-y-4">
+                        <!-- Dynamic Steps -->
+                    </div>
+                </div>
+            </div>
+
+        </section>
+    </main>
+
+    <!-- Modal: Create Batch -->
+    <div id="create-modal"
+        class="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="clay-card w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+            <div class="p-6 border-b border-gray-100 flex justify-between items-center">
+                <h3 class="text-xl font-bold text-slate-800">New Production Batch</h3>
+                <button onclick="closeCreateModal()" class="text-gray-400 hover:text-red-500">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                        </path>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="p-6 overflow-y-auto flex-1">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Batch Name / ID</label>
+                        <input type="text" id="new-batch-name" class="clay-input w-full p-3"
+                            placeholder="e.g. Summer Order #404">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Dress Type</label>
+                        <select id="new-batch-type" onchange="loadNewBatchConfig()" class="clay-input w-full p-3">
+                            <option value="Shirt">Shirt</option>
+                            <option value="Pant">Pant</option>
+                            <option value="Suit">Suit</option>
+                            <option value="Safari">Safari</option>
+                            <option value="Kurta">Kurta</option>
+                        </select>
+                    </div>
+                    <div class="col-span-full">
+                        <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Details / Notes</label>
+                        <input type="text" id="new-batch-details" class="clay-input w-full p-3"
+                            placeholder="Optional notes about this batch...">
+                    </div>
+                </div>
+
+                <div class="border-t border-gray-100 pt-6">
+                    <h4 class="text-sm font-bold text-blue-600 mb-4 uppercase tracking-wide">Select Required Stages</h4>
+                    <p class="text-xs text-gray-500 mb-4">Only selected stages will count towards the 100% completion.
+                    </p>
+
+                    <div id="new-batch-stages" class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <!-- Checkboxes generated here -->
+                        <p class="text-sm text-gray-400 col-span-full">Loading stages...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-6 border-t border-gray-100 flex justify-end gap-4 bg-gray-50">
+                <button onclick="closeCreateModal()" class="clay-btn px-6 py-3">Cancel</button>
+                <button onclick="createBatch()"
+                    class="clay-btn clay-btn-primary px-8 py-3 bg-green-600 hover:bg-green-700">Create Batch</button>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        const API_BASE = '/api';
+        const PRODUCTION_API = '/api/production';
+        let CURRENT_USER = { role: '', schoolId: '' };
+        let CURRENT_CONFIG = null; // Stores labels for current dress type
+        let CURRENT_BATCH = null;
+        let ALL_GROUPS = [];
+
+        // === INIT ===
+        async function init() {
+            const token = sessionStorage.getItem('token');
+            if (!token) return window.location.href = 'login.html';
+
+            const role = sessionStorage.getItem('role');
+            CURRENT_USER.role = role;
+
+            document.getElementById('user-name').textContent = sessionStorage.getItem('username') || 'User';
+            document.getElementById('user-role').textContent = role;
+
+            if (role === 'company' || role === 'admin') {
+                document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('admin-only')); // Actually display:block usually
+                document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block'); // Or flex, handled by class toggle logic better
+            }
+
+            // Load initial view
+            loadBatches();
+            loadConfig(); // Preload config for default dress type
+        }
+
+        function switchTab(tabId) {
+            ['active', 'config', 'detail'].forEach(t => {
+                document.getElementById(`view-${t}`).classList.add('hidden');
+            });
+            document.getElementById(`view-${tabId}`).classList.remove('hidden');
+
+            document.querySelectorAll('aside button').forEach(b => b.classList.remove('clay-btn-primary'));
+            const navBtn = document.getElementById(`nav-${tabId}`);
+            if (navBtn) navBtn.classList.add('clay-btn-primary');
+
+            if (tabId === 'active') loadBatches();
+        }
+
+        function logout() {
+            sessionStorage.clear();
+            window.location.href = 'login.html';
+        }
+
+        // === API CALLS ===
+        async function fetchAuth(url, options = {}) {
+            const token = sessionStorage.getItem('token');
+            const headers = { ...options.headers, 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
+            const res = await fetch(url, { ...options, headers });
+            if (res.status === 401 || res.status === 403) {
+                // alert("Session expired"); logout();
+            }
+            return res;
+        }
+
+        // === BATCHES ===
+        async function loadBatches() {
+            const container = document.getElementById('batches-grid');
+            // container.innerHTML = '<p>Loading...</p>';
+
+            const res = await fetchAuth(`${PRODUCTION_API}/groups`);
+            if (!res.ok) return;
+            const groups = await res.json();
+            ALL_GROUPS = groups;
+
+            document.getElementById('stat-active').textContent = groups.length;
+
+            container.innerHTML = '';
+            if (groups.length === 0) {
+                container.innerHTML = '<div class="col-span-full text-center py-10 text-gray-400">No active production batches. Create one to start.</div>';
+                return;
+            }
+
+            groups.forEach(g => {
+                // Calculate Progress
+                const totalReq = g.required_stages.length;
+                const totalDone = g.completed_stages.length; // These are indices, assuming validation ensures uniqueness
+                // Intersection check to be safe: how many completed stages are actually in required set?
+                // Actually completed_stages should only contain valid ones.
+
+                // Let's refine calculation:
+                let validDone = 0;
+                g.completed_stages.forEach(idx => {
+                    if (g.required_stages.includes(parseInt(idx))) validDone++;
+                });
+
+                const percent = totalReq > 0 ? Math.round((validDone / totalReq) * 100) : 0;
+
+                const card = document.createElement('div');
+                card.className = 'clay-card p-6 hover:scale-[1.02] transition-transform cursor-pointer relative overflow-hidden group';
+                card.onclick = () => openBatchDetail(g.id);
+
+                // Progress Bar Background
+                card.innerHTML = `
+                    <div class="absolute bottom-0 left-0 h-1 bg-blue-500 transition-all duration-1000" style="width: ${percent}%"></div>
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <span class="text-xs font-bold text-blue-500 bg-blue-50 px-2 py-1 rounded mb-2 inline-block">${g.dress_type}</span>
+                            <h3 class="font-bold text-lg text-slate-800">${g.group_name}</h3>
+                        </div>
+                        <div class="text-right">
+                            <span class="text-2xl font-bold text-slate-700">${percent}%</span>
+                        </div>
+                    </div>
+                    <p class="text-sm text-gray-500 line-clamp-2 mb-4">${g.details || 'No details provided.'}</p>
+                    <div class="flex justify-between items-center text-xs text-gray-400">
+                        <span>${new Date(g.created_at).toLocaleDateString()}</span>
+                        <span class="group-hover:text-blue-500 font-medium">Inside Production &rarr;</span>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        async function createBatch() {
+            const name = document.getElementById('new-batch-name').value;
+            const type = document.getElementById('new-batch-type').value;
+            const details = document.getElementById('new-batch-details').value;
+
+            // Get Checked Stages
+            const checkboxes = document.querySelectorAll('.stage-checkbox:checked');
+            const required_stages = Array.from(checkboxes).map(cb => parseInt(cb.value));
+
+            if (!name) return alert("Batch Name is required");
+            if (required_stages.length === 0) return alert("Select at least one stage");
+
+            const res = await fetchAuth(`${PRODUCTION_API}/groups`, {
+                method: 'POST',
+                body: JSON.stringify({ group_name: name, dress_type: type, required_stages, details })
+            });
+
+            if (res.ok) {
+                closeCreateModal();
+                loadBatches();
+            } else {
+                alert("Failed to create batch");
+            }
+        }
+
+        // === CONFIG ===
+        async function loadConfig() {
+            const type = document.getElementById('config-dress-type').value;
+            const res = await fetchAuth(`${PRODUCTION_API}/config/${type}`);
+            if (!res.ok) return;
+            const data = await res.json();
+
+            // Render Inputs
+            const sGrid = document.getElementById('s-labels-grid');
+            const pGrid = document.getElementById('p-labels-grid');
+
+            sGrid.innerHTML = '';
+            pGrid.innerHTML = '';
+
+            data.s_labels.forEach((val, i) => {
+                sGrid.innerHTML += `<div class="flex items-center gap-2"><span class="w-8 text-xs font-bold text-gray-400">S${i + 1}</span><input type="text" id="s-${i}" value="${val}" class="clay-input w-full p-2 text-sm"></div>`;
+            });
+
+            data.p_labels.forEach((val, i) => {
+                pGrid.innerHTML += `<div class="flex items-center gap-2"><span class="w-8 text-xs font-bold text-gray-400">P${i + 1}</span><input type="text" id="p-${i}" value="${val}" class="clay-input w-full p-2 text-sm"></div>`;
+            });
+        }
+
+        async function saveConfig() {
+            const type = document.getElementById('config-dress-type').value;
+            const s_labels = [];
+            const p_labels = [];
+
+            for (let i = 0; i < 20; i++) s_labels.push(document.getElementById(`s-${i}`).value);
+            for (let i = 0; i < 20; i++) p_labels.push(document.getElementById(`p-${i}`).value);
+
+            const res = await fetchAuth(`${PRODUCTION_API}/config`, {
+                method: 'POST',
+                body: JSON.stringify({ dress_type: type, s_labels, p_labels })
+            });
+
+            if (res.ok) alert("Configuration Saved!");
+            else alert("Error saving configuration");
+        }
+
+        // === MODAL HELPERS ===
+        function openCreateModal() {
+            document.getElementById('create-modal').classList.remove('hidden');
+            loadNewBatchConfig();
+        }
+        function closeCreateModal() {
+            document.getElementById('create-modal').classList.add('hidden');
+        }
+
+        async function loadNewBatchConfig() {
+            const type = document.getElementById('new-batch-type').value;
+            const container = document.getElementById('new-batch-stages');
+            container.innerHTML = '<span class="text-gray-400 text-xs">Loading stages...</span>';
+
+            const res = await fetchAuth(`${PRODUCTION_API}/config/${type}`);
+            if (!res.ok) return;
+            const conf = await res.json();
+
+            container.innerHTML = '';
+            conf.s_labels.forEach((label, i) => {
+                if (!label || label.trim() === '') return; // Skip empty labels
+                container.innerHTML += `
+                    <label class="flex items-center gap-2 p-2 rounded-lg hover:bg-white border border-transparent hover:border-gray-200 cursor-pointer transition-colors">
+                        <input type="checkbox" value="${i}" class="stage-checkbox w-4 h-4 text-blue-600 rounded focus:ring-blue-500" checked>
+                        <span class="text-sm text-gray-700">${label}</span>
+                    </label>
+                `;
+            });
+        }
+
+        // === DETAIL VIEW LOGIC ===
+        async function openBatchDetail(id) {
+            const g = ALL_GROUPS.find(x => x.id === id);
+            if (!g) return;
+
+            CURRENT_BATCH = g;
+            switchTab('detail');
+
+            document.getElementById('detail-name').textContent = g.group_name;
+            document.getElementById('detail-type').textContent = `${g.dress_type} #${g.id}`;
+
+            // Get Config to show Label Names
+            const res = await fetchAuth(`${PRODUCTION_API}/config/${g.dress_type}`);
+            const conf = await res.json(); // s_labels
+
+            renderWorkflow(g, conf.s_labels);
+        }
+
+        function renderWorkflow(group, labels) {
+            const container = document.getElementById('workflow-steps');
+            container.innerHTML = '';
+
+            let completedCount = 0;
+            const total = group.required_stages.length;
+
+            group.required_stages.forEach(idx => {
+                const label = labels[idx] || `Stage ${idx + 1}`;
+                const isDone = group.completed_stages.includes(parseInt(idx)) || group.completed_stages.includes(String(idx)); // Handle string/int types
+
+                if (isDone) completedCount++;
+
+                const div = document.createElement('div');
+                div.className = `clay-card p-4 flex items-center justify-between border-l-4 ${isDone ? 'border-green-500 bg-green-50/50' : 'border-gray-300'}`;
+
+                div.innerHTML = `
+                    <div class="flex items-center gap-4">
+                        <button onclick="toggleStage(${group.id}, ${idx})" class="w-8 h-8 rounded-full flex items-center justify-center transition-all ${isDone ? 'bg-green-500 text-white shadow-lg shadow-green-200' : 'bg-white border-2 border-gray-200 text-transparent hover:border-blue-400'}">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                        </button>
+                        <div>
+                            <h4 class="font-bold text-slate-700 ${isDone ? 'line-through text-slate-400' : ''}">${label}</h4>
+                            <p class="text-xs text-slate-400">Step ID: S${idx + 1}</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                         <span class="text-xs font-bold uppercase tracking-wider ${isDone ? 'text-green-600' : 'text-gray-400'}">${isDone ? 'Completed' : 'Pending'}</span>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+
+            // Update Header Stats
+            const percent = total > 0 ? Math.round((completedCount / total) * 100) : 0;
+            document.getElementById('detail-percent').textContent = `${percent}%`;
+            document.getElementById('detail-progress-bar').style.width = `${percent}%`;
+        }
+
+        async function toggleStage(groupId, stageIdx) {
+            // Optimistic Update
+            const g = CURRENT_BATCH;
+            const idxStr = String(stageIdx); // Ensure consistency
+            const idxInt = parseInt(stageIdx);
+
+            let newCompleted = [...g.completed_stages];
+
+            // Check existence (handle multiple types just in case)
+            const exists = newCompleted.some(x => x == stageIdx);
+
+            if (exists) {
+                newCompleted = newCompleted.filter(x => x != stageIdx);
+            } else {
+                newCompleted.push(stageIdx);
+            }
+
+            g.completed_stages = newCompleted;
+
+            // Re-render immediately
+            // We need labels again... store them? Or re-fetch?
+            // Let's just quick-fetch or store globally. 
+            // For now, re-open triggers re-fetch.
+            // Better: Re-call openBatchDetail logic but without fetch if possible.
+            // Actually, openBatchDetail does fetch.
+
+            // Send API update
+            const res = await fetchAuth(`${PRODUCTION_API}/groups/${groupId}/update`, {
+                method: 'POST',
+                body: JSON.stringify({ completed_stages: newCompleted })
+            });
+
+            if (res.ok) {
+                // Refresh View
+                openBatchDetail(groupId);
+                // Also update global list
+            }
+        }
+
+        window.onload = init;
+    </script>
+</body>
+
+</html>

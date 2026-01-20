@@ -80,7 +80,7 @@ router.post('/register', async (req, res) => {
     if (password) password = password.trim();
     if (role) role = role.trim();
 
-    if (role === 'admin') {
+    if (role === 'admin' || role === 'production_manager') {
         if (!token) return res.status(401).json({ error: "Unauthorized" });
         try {
             const decoded = jwt.verify(token, 'hardcoded_secret_key_fixed');
