@@ -61,21 +61,22 @@ router.post('/config', authenticateToken, requireRole('company'), (req, res) => 
 // Helper route to get all used dress types (for dropdown)
 router.get('/config-list', authenticateToken, (req, res) => {
     // Union existing config types with actual used types in patterns
+    // Correcting column name: patterns table uses 'name', not 'dress_type'
     const sql = `
         SELECT DISTINCT dress_type FROM production_config
         UNION
-        SELECT DISTINCT dress_type FROM patterns
+        SELECT DISTINCT name as dress_type FROM patterns
         ORDER BY dress_type ASC
     `;
 
     db.all(sql, [], (err, rows) => {
         if (err) {
-            console.error(err);
-            // Fallback: just hardcoded if DB fails, or empty
-            return res.json(["Shirt", "Pant", "Suit", "Safari", "Kurta"]);
+            console.error("Config List Error:", err.message);
+            // Fallback: just hardcoded if DB fails
+            return res.json(["Shirt", "Pant", "Suit"]);
         }
-        const types = rows.map(r => r.dress_type).filter(t => t); // Filter nulls
-        res.json(types.length > 0 ? types : ["Shirt", "Pant", "Suit", "Safari", "Kurta"]);
+        const types = rows.map(r => r.dress_type).filter(t => t && t.trim() !== ''); // Filter nulls/empty
+        res.json(types.length > 0 ? types : ["Shirt", "Pant", "Suit"]);
     });
 });
 
