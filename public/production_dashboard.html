@@ -232,44 +232,50 @@
             <!-- Content (Scrollable) -->
             <div class="flex-1 overflow-y-auto p-8 bg-slate-50 relative">
 
-                <!-- STEP 1: SELECTION -->
-                <div id="wiz-step-1" class="space-y-8">
-                    <!-- Basic Info -->
-                    <div class="p-6 bg-white rounded-xl shadow-sm border border-gray-100">
-                        <h4 class="text-lg font-semibold mb-4 text-slate-700">Batch Details</h4>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div>
-                                <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Work Name /
-                                    ID</label>
-                                <input type="text" id="wiz-name" class="clay-input w-full p-3"
-                                    placeholder="e.g. Winter Jackets Lot A">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Dress Type</label>
-                                <select id="wiz-type" class="clay-input w-full p-3"
-                                    onchange="loadWizardConfig()"></select>
-                            </div>
+                <!-- STEP 1: DRAG & DROP BUILDER -->
+                <div id="wiz-step-1" class="h-full flex flex-col">
+
+                    <div class="mb-6 p-4 bg-white rounded-xl shadow-sm border border-gray-100 flex gap-4 items-end">
+                        <div class="flex-1">
+                            <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Work Name</label>
+                            <input type="text" id="wiz-name" class="clay-input w-full p-2"
+                                placeholder="e.g. Winter Jackets Lot A">
+                        </div>
+                        <div class="flex-1">
+                            <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Dress Type</label>
+                            <select id="wiz-type" class="clay-input w-full p-2" onchange="loadWizardConfig()"></select>
+                        </div>
+                        <div class="text-xs text-gray-400 pb-2">
+                            Drag tasks from the <b>Left</b> into Groups on the <b>Right</b>.
                         </div>
                     </div>
 
-                    <!-- Config Selection -->
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                        <!-- Left: Production Groups (P) -->
-                        <div class="clay-card p-4">
-                            <h4 class="text-lg font-bold text-purple-600 mb-4 flex items-center gap-2">
-                                <span class="bg-purple-100 p-1 rounded text-sm">P</span> Production Groups
-                            </h4>
-                            <p class="text-xs text-slate-400 mb-3">Select the Main Steps (e.g. Cutting, Sewing).</p>
-                            <div id="wiz-list-p" class="space-y-2 max-h-[400px] overflow-y-auto pr-2"></div>
+                    <div class="flex-1 flex gap-6 min-h-0">
+                        <!-- LEFT: TASK POOL -->
+                        <div
+                            class="w-1/3 flex flex-col bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                            <div class="p-4 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
+                                <h4 class="font-bold text-slate-700">Available Tasks</h4>
+                                <span
+                                    class="text-xs bg-pink-100 text-pink-600 px-2 py-0.5 rounded-full font-bold">Source</span>
+                            </div>
+                            <div id="wiz-pool" class="flex-1 overflow-y-auto p-4 space-y-2 bg-slate-50/50"
+                                ondragover="allowDrop(event)" ondrop="drop(event)" ondragleave="leaveDrop(event)">
+                                <!-- S Items here -->
+                            </div>
                         </div>
 
-                        <!-- Right: Tasks (S) -->
-                        <div class="clay-card p-4">
-                            <h4 class="text-lg font-bold text-pink-600 mb-4 flex items-center gap-2">
-                                <span class="bg-pink-100 p-1 rounded text-sm">S</span> Details Tasks
-                            </h4>
-                            <p class="text-xs text-slate-400 mb-3">Select Sub-Tasks and assign to a Group.</p>
-                            <div id="wiz-list-s" class="space-y-2 max-h-[400px] overflow-y-auto pr-2"></div>
+                        <!-- RIGHT: GROUPS BUILDER -->
+                        <div
+                            class="w-2/3 flex flex-col bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                            <div class="p-4 bg-gray-50 border-b border-gray-100 flex justify-between items-center">
+                                <h4 class="font-bold text-slate-700">Production Phases</h4>
+                                <span
+                                    class="text-xs bg-purple-100 text-purple-600 px-2 py-0.5 rounded-full font-bold">Target</span>
+                            </div>
+                            <div id="wiz-canvas" class="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50/50">
+                                <!-- P Groups here -->
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -312,6 +318,30 @@
             </div>
         </div>
     </div>
+
+    <!-- Drag Styles -->
+    <style>
+        .drag-source {
+            opacity: 0.5;
+            border: 2px dashed #cbd5e1;
+        }
+
+        .drag-over {
+            background-color: #f0f9ff;
+            border-color: #3b82f6;
+        }
+
+        .wiz-task-item {
+            cursor: grab;
+            transition: transform 0.1s, box-shadow 0.1s;
+        }
+
+        .wiz-task-item:active {
+            cursor: grabbing;
+            transform: scale(1.02);
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+        }
+    </style>
 
     <script>
         const API = '/api/production';
@@ -453,89 +483,101 @@
             document.getElementById('wiz-step-num').textContent = step;
         }
 
-        // GLOBAL Vars to hold active inputs
-        let ACTIVE_P_LIST = [];
+        // --- DRAG AND DROP HANDLERS ---
+        function allowDrop(ev) { ev.preventDefault(); ev.currentTarget.classList.add('drag-over'); }
+        function leaveDrop(ev) { ev.currentTarget.classList.remove('drag-over'); }
+
+        function drag(ev) {
+            ev.dataTransfer.setData("text", ev.target.id);
+            ev.target.classList.add('drag-source');
+        }
+        function dragEnd(ev) { ev.target.classList.remove('drag-source'); }
+
+        function drop(ev) {
+            ev.preventDefault();
+            ev.currentTarget.classList.remove('drag-over');
+
+            // Find the closest DROP ZONE (wiz-pool for Unassigned, or .wiz-drop-zone for Groups)
+            // But we bound ondrop to the container, so ev.currentTarget is safe.
+            let container = ev.currentTarget;
+
+            // However, we might drop ON another element -> bubble to container
+            if (!container.id && !container.classList.contains('wiz-drop-zone')) return;
+
+            const data = ev.dataTransfer.getData("text");
+            const draggedEl = document.getElementById(data);
+
+            if (draggedEl && container) {
+                container.appendChild(draggedEl);
+            }
+        }
+
 
         async function loadWizardConfig() {
             const type = document.getElementById('wiz-type').value;
-            const pList = document.getElementById('wiz-list-p');
-            const sList = document.getElementById('wiz-list-s');
+            const sPool = document.getElementById('wiz-pool');
+            const pCanvas = document.getElementById('wiz-canvas');
 
-            sList.innerHTML = '<div class="text-gray-400 text-sm">Loading...</div>';
-            pList.innerHTML = '<div class="text-gray-400 text-sm">Loading...</div>';
+            sPool.innerHTML = '<div class="text-gray-400 text-sm">Loading...</div>';
+            pCanvas.innerHTML = '<div class="text-gray-400 text-sm">Loading...</div>';
 
             try {
                 const res = await fetchAuth(`${API}/config/${type}`);
                 const conf = res.ok ? await res.json() : {};
 
-                // Render P Groups (Left)
-                pList.innerHTML = '';
-                const pLabels = conf.p_labels || Array(20).fill('');
-                pLabels.forEach((lbl, i) => {
-                    const id = `P-${i}`;
-                    pList.innerHTML += `
-                        <div class="flex items-center gap-2 mb-2 p-2 rounded hover:bg-purple-50 transition border border-transparent hover:border-purple-200">
-                            <input type="checkbox" class="wiz-check-p w-4 h-4 text-purple-600 rounded" data-id="${id}" ${lbl ? 'checked' : ''} onchange="updateParentDropdowns()">
-                            <span class="text-xs font-mono text-purple-400 w-6">${id}</span>
-                            <input type="text" value="${lbl || ''}" class="clay-input p-1.5 text-sm w-full wiz-name-p" placeholder="Group Name" onkeyup="updateParentDropdowns()">
-                        </div>
-                    `;
-                });
-
-                // Render S Tasks (Right)
-                sList.innerHTML = '';
+                // 1. Render Source Tasks (Left)
+                sPool.innerHTML = '';
                 const sLabels = conf.s_labels || Array(20).fill('');
                 sLabels.forEach((lbl, i) => {
                     const id = `S-${i}`;
-                    sList.innerHTML += `
-                        <div class="flex flex-col gap-2 mb-2 p-2 rounded hover:bg-pink-50 transition border border-transparent hover:border-pink-200 bg-white shadow-sm">
-                            <div class="flex items-center gap-2">
-                                <input type="checkbox" class="wiz-check-s w-4 h-4 text-pink-600 rounded" data-id="${id}" ${lbl ? 'checked' : ''}>
-                                <span class="text-xs font-mono text-pink-400 w-6">${id}</span>
-                                <input type="text" value="${lbl || ''}" class="clay-input p-1.5 text-sm w-full wiz-name-s" placeholder="Task Name">
-                            </div>
-                            <div class="pl-8">
-                                <select class="clay-input w-full p-1 text-xs wiz-parent-s bg-slate-50">
-                                    <option value="">-- No Parent Group --</option>
-                                    <!-- Populated dynamically -->
-                                </select>
-                            </div>
+                    // Only show if label exists? Or assume generic? 
+                    // Let's show all generic ones but prioritize labeled
+                    const name = lbl || `Task ${i + 1}`;
+
+                    sPool.innerHTML += `
+                        <div id="drag-${id}" class="wiz-task-item flex items-center gap-2 p-2 bg-white rounded border border-gray-200 shadow-sm hover:border-pink-300" 
+                             draggable="true" ondragstart="drag(event)" ondragend="dragEnd(event)">
+                            <span class="text-[10px] font-mono bg-pink-100 text-pink-600 px-1 rounded">${id}</span>
+                            <input type="text" value="${name}" class="text-sm border-none bg-transparent w-full focus:outline-none wiz-name-s">
                         </div>
                     `;
                 });
 
-                // Initial Populate
-                updateParentDropdowns();
+                // 2. Render Target Groups (Right)
+                pCanvas.innerHTML = '';
+                const pLabels = conf.p_labels || Array(20).fill('');
+                pLabels.forEach((lbl, i) => {
+                    const id = `P-${i}`;
+                    const name = lbl || `Production Group ${i + 1}`;
+                    const isVisible = !!lbl; // Only show labeled groups by default? Or all?
+                    // Let's show all P groups but collapsed or compact? 
+                    // Or let's make them checkable? 
+                    // DRAG BUILDER: P Groups are containers.
+                    // We render a Card for every P group.
+
+                    // To avoid clutter, only render P Groups that HAVE Labels OR first 5?
+                    // Let's render first 10 for now.
+                    if (i > 9 && !lbl) return;
+
+                    pCanvas.innerHTML += `
+                        <div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden group">
+                           <div class="p-3 bg-purple-50 border-b border-purple-100 flex items-center justify-between">
+                                <div class="flex items-center gap-2 w-full">
+                                    <span class="text-[10px] font-mono bg-purple-200 text-purple-700 px-1 rounded">${id}</span>
+                                    <input type="text" value="${name}" class="text-sm font-bold bg-transparent w-full focus:outline-none wiz-name-p text-purple-900">
+                                </div>
+                                <div class="text-xs text-purple-300 group-hover:text-purple-500 transition">Drop Tasks Here</div>
+                           </div>
+                           <div class="wiz-drop-zone p-3 min-h-[60px] bg-slate-50 space-y-2 transition-colors" 
+                                data-group="${id}"
+                                ondragover="allowDrop(event)" ondragleave="leaveDrop(event)" ondrop="drop(event)">
+                                <!-- Dropped items go here -->
+                           </div>
+                        </div>
+                    `;
+                });
 
             } catch (e) { console.error(e); }
-        }
-
-        // Updates the "Parent" dropdowns in S-column based on selected P-items
-        function updateParentDropdowns() {
-            // Gathed active P inputs
-            const pChecks = document.querySelectorAll('.wiz-check-p:checked');
-            let options = '<option value="">-- Unassigned --</option>';
-
-            pChecks.forEach(chk => {
-                const row = chk.closest('div');
-                const name = row.querySelector('.wiz-name-p').value;
-                const id = chk.dataset.id;
-                const label = name ? `${name} (${id})` : id;
-                options += `<option value="${id}">${label}</option>`;
-            });
-
-            // Update all S dropdowns
-            document.querySelectorAll('.wiz-parent-s').forEach(sel => {
-                const curVal = sel.value;
-                sel.innerHTML = options;
-                // Try restore value if it still exists
-                if (curVal && sel.querySelector(`option[value="${curVal}"]`)) {
-                    sel.value = curVal;
-                } else if (pChecks.length > 0) {
-                    // Auto-select first parent if unassigned? Optional. 
-                    // Let's keep Unassigned to force user choice or default.
-                }
-            });
         }
 
         function validateStep1() {
@@ -544,37 +586,50 @@
 
             WIZARD_DATA = { groups: [], tasks: [] };
 
-            // 1. Groups (P)
-            document.querySelectorAll('.wiz-check-p:checked').forEach(chk => {
-                const row = chk.closest('div');
-                WIZARD_DATA.groups.push({
-                    id: chk.dataset.id,
-                    name: row.querySelector('.wiz-name-p').value || chk.dataset.id,
-                    type: 'group'
-                });
-            });
+            // 1. Iterate over P Groups (Right Column) to find active ones
+            const groupCards = document.querySelectorAll('.wiz-drop-zone');
 
-            // 2. Tasks (S)
-            const sChecks = document.querySelectorAll('.wiz-check-s:checked');
-            if (sChecks.length === 0) { alert("Please select at least one Detail Task (S)."); return false; }
+            groupCards.forEach(zone => {
+                const groupId = zone.dataset.group;
+                const container = zone.closest('.bg-white'); // The card container
+                const groupNameInput = container.querySelector('.wiz-name-p');
 
-            let missingParent = false;
-            sChecks.forEach(chk => {
-                const container = chk.closest('div').parentElement;
-                const parentId = container.querySelector('.wiz-parent-s').value;
+                // Get tasks inside this group
+                const taskEls = zone.querySelectorAll('.wiz-task-item');
 
-                if (!parentId && WIZARD_DATA.groups.length > 0) {
-                    // Warning or Force? Let's warn but allow (it will be orphan)
+                if (taskEls.length > 0) {
+                    // Start Group
+                    WIZARD_DATA.groups.push({
+                        id: groupId,
+                        name: groupNameInput.value,
+                        type: 'group'
+                    });
+
+                    // Add Tasks
+                    taskEls.forEach(el => {
+                        const originalId = el.id.replace('drag-', '');
+                        const nameVal = el.querySelector('.wiz-name-s').value;
+
+                        WIZARD_DATA.tasks.push({
+                            id: originalId,
+                            name: nameVal,
+                            parentId: groupId, // Mapped!
+                            type: 'task',
+                            target: 100
+                        });
+                    });
                 }
-
-                WIZARD_DATA.tasks.push({
-                    id: chk.dataset.id,
-                    name: container.querySelector('.wiz-name-s').value || chk.dataset.id,
-                    parentId: parentId || null,
-                    type: 'task',
-                    target: 100 // default
-                });
             });
+
+            // Also check 'Unassigned' tasks? (Left Column)
+            // If user leaves tasks in the pool, do we ignore them or add as unassigned?
+            // Usually in a builder, left items are 'unused'. 
+            // Let's IGNORE tasks left in the source pool.
+
+            if (WIZARD_DATA.groups.length === 0) {
+                alert("Please drag at least one Task into a Production Group.");
+                return false;
+            }
 
             return true;
         }
@@ -583,28 +638,20 @@
             const container = document.getElementById('wiz-assign-container');
             container.innerHTML = '';
 
-            // 1. Group Tasks by Parent
-            // Groups from WIZARD_DATA.groups
-            // Plus an "Unassigned" bucket
-            const groupedTasks = {};
-            WIZARD_DATA.groups.forEach(g => groupedTasks[g.id] = { ...g, children: [] });
-            groupedTasks['unassigned'] = { id: 'unassigned', name: 'Other Tasks', children: [] };
+            // Group Tasks by Parent (already structured in WIZARD_DATA, but let's re-group for iterate)
+            const grouped = {};
+            WIZARD_DATA.groups.forEach(g => grouped[g.id] = { ...g, tasks: [] });
 
             WIZARD_DATA.tasks.forEach(t => {
-                if (t.parentId && groupedTasks[t.parentId]) {
-                    groupedTasks[t.parentId].children.push(t);
-                } else {
-                    groupedTasks['unassigned'].children.push(t);
-                }
+                if (grouped[t.parentId]) grouped[t.parentId].tasks.push(t);
             });
 
-            // 2. Render Groups
-            Object.values(groupedTasks).forEach(g => {
-                if (g.id === 'unassigned' && g.children.length === 0) return; // Skip empty unassigned
+            WIZARD_DATA.groups.forEach(g => {
+                if (g.tasks.length === 0) return;
 
-                let taskRows = '';
-                g.children.forEach(t => {
-                    taskRows += `
+                let rows = '';
+                g.tasks.forEach(t => {
+                    rows += `
                     <div class="flex flex-col md:flex-row gap-3 p-3 bg-white border border-gray-100 rounded ml-4 border-l-4 border-l-pink-200">
                         <div class="w-full md:w-1/3 flex items-center gap-2">
                              <span class="text-xs font-mono text-gray-400">${t.id}</span>
@@ -617,24 +664,22 @@
                              <input type="text" class="clay-input p-1.5 w-full text-sm step2-assign" placeholder="User/Group">
                         </div>
                         <input type="hidden" class="step2-id" value="${t.id}">
-                        <input type="hidden" class="step2-parent" value="${g.id === 'unassigned' ? '' : g.id}">
+                        <input type="hidden" class="step2-parent" value="${g.id}">
                     </div>
                    `;
                 });
 
-                if (g.children.length > 0) { // Only render group if it has children
-                    container.innerHTML += `
+                container.innerHTML += `
                     <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
-                        <h5 class="font-bold ${g.id === 'unassigned' ? 'text-orange-700' : 'text-purple-700'} mb-2 flex items-center gap-2">
-                            ${g.id !== 'unassigned' ? `<span class="bg-purple-200 text-purple-800 text-[10px] px-1 rounded">${g.id}</span>` : ''}
+                        <h5 class="font-bold text-purple-700 mb-2 flex items-center gap-2">
+                            <span class="bg-purple-200 text-purple-800 text-[10px] px-1 rounded">${g.id}</span>
                             ${g.name}
                         </h5>
                         <div class="space-y-2">
-                            ${taskRows}
+                            ${rows}
                         </div>
                     </div>
-                   `;
-                }
+                `;
             });
         }
 
