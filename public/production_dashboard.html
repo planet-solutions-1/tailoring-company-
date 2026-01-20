@@ -653,7 +653,7 @@
                 if (grouped[t.parentId]) grouped[t.parentId].tasks.push(t);
             });
 
-            WIZARD_DATA.groups.forEach(g => {
+            Object.values(grouped).forEach(g => {
                 if (g.tasks.length === 0) return;
 
                 let rows = '';
