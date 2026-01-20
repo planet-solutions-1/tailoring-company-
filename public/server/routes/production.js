@@ -211,4 +211,26 @@ router.post('/groups/:id/complete', authenticateToken, (req, res) => {
     });
 });
 
+// === 4. EDIT UPDATE ===
+
+router.post('/groups/:id/edit', authenticateToken, (req, res) => {
+    if (req.user.role !== 'company' && req.user.role !== 'production_manager') {
+        return res.status(403).json({ error: "Unauthorized" });
+    }
+
+    const groupId = req.params.id;
+    const { group_name, dress_type, status } = req.body;
+
+    if (!group_name) return res.status(400).json({ error: "Name is required" });
+
+    const sql = `UPDATE production_groups 
+                 SET group_name = ?, dress_type = ?, status = ?, updated_at = CURRENT_TIMESTAMP 
+                 WHERE id = ?`;
+
+    db.run(sql, [group_name, dress_type, status, groupId], (err) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ success: true, message: "Batch Updated" });
+    });
+});
+
 module.exports = router;
