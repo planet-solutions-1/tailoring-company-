@@ -267,51 +267,56 @@
                             </h4>
                             <div id="wiz-list-p" class="space-y-2"></div>
                         </div>
-                    </div>
-                </div>
-
-                <!-- STEP 2: ASSIGNMENT -->
-                <div id="wiz-step-2" class="hidden space-y-6">
-                    <div class="bg-blue-50 border border-blue-100 p-4 rounded-lg mb-6 flex items-center gap-3">
-                        <div class="bg-blue-100 text-blue-600 p-2 rounded-full">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                            </svg>
-                        </div>
-                        <div>
-                            <h4 class="font-bold text-blue-800 text-sm">Assign Targets & Users</h4>
-                            <p class="text-xs text-blue-600">Only the stages you selected are shown below.</p>
-                        </div>
-                    </div>
-
-                    <div id="wiz-assign-container" class="space-y-3">
-                        <!-- Filled via JS -->
+                        <span class="bg-pink-100 p-1 rounded text-sm">S</span> Details Tasks
+                        </h4>
+                        <p class="text-xs text-slate-400 mb-3">Select Sub-Tasks and assign to a Group.</p>
+                        <div id="wiz-list-s" class="space-y-2 max-h-[400px] overflow-y-auto pr-2"></div>
                     </div>
                 </div>
             </div>
 
-            <div class="p-6 border-t border-gray-100 bg-white flex justify-between items-center">
-                <button onclick="closeWizard()"
-                    class="text-slate-500 hover:text-slate-800 font-medium px-4">Cancel</button>
+            <!-- STEP 2: ASSIGNMENT (Grouped) -->
+            <div id="wiz-step-2" class="hidden space-y-6">
+                <div class="bg-blue-50 border border-blue-100 p-4 rounded-lg mb-6 flex items-center gap-3">
+                    <div class="bg-blue-100 text-blue-600 p-2 rounded-full">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2">
+                            </path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-blue-800 text-sm">Assign Targets & Users</h4>
+                        <p class="text-xs text-blue-600">Tasks are grouped by their Production Step.</p>
+                    </div>
+                </div>
 
-                <div class="flex gap-3">
-                    <button id="btn-back" onclick="goToStep(1)" class="hidden clay-btn px-6 py-3">Back</button>
-                    <button id="btn-next" onclick="goToStep(2)" class="clay-btn clay-btn-primary px-8 py-3">Next: Assign
-                        & Target</button>
-                    <button id="btn-create" onclick="createBatchFinal()"
-                        class="hidden clay-btn clay-btn-primary px-8 py-3 bg-green-600 hover:bg-green-700 shadow-green-200">Create
-                        Work</button>
+                <div id="wiz-assign-container" class="space-y-6">
+                    <!-- Filled via JS -->
                 </div>
             </div>
         </div>
+
+        <div class="p-6 border-t border-gray-100 bg-white flex justify-between items-center">
+            <button onclick="closeWizard()" class="text-slate-500 hover:text-slate-800 font-medium px-4">Cancel</button>
+
+            <div class="flex gap-3">
+                <button id="btn-back" onclick="goToStep(1)" class="hidden clay-btn px-6 py-3">Back</button>
+                <button id="btn-next" onclick="goToStep(2)" class="clay-btn clay-btn-primary px-8 py-3">Next: Assign &
+                    Target</button>
+                <button id="btn-create" onclick="createBatchFinal()"
+                    class="hidden clay-btn clay-btn-primary px-8 py-3 bg-green-600 hover:bg-green-700 shadow-green-200">Create
+                    Work</button>
+            </div>
+        </div>
+    </div>
     </div>
 
     <script>
         const API = '/api/production';
         let ALL_GROUPS = [];
         let CURRENT_BATCH = null;
-        let WIZARD_DATA = { s: [], p: [] }; // Stores temp selection
+        let WIZARD_DATA = { groups: [], tasks: [] };
 
         // --- INIT ---
         window.onload = async () => {
@@ -341,7 +346,6 @@
             return res;
         }
 
-        // --- DRESS TYPES (Updated to strip duplicates/patterns on backend, just generic list here) ---
         async function loadDressTypeOptions() {
             const res = await fetchAuth(`${API}/config-list`);
             let types = [];
@@ -356,7 +360,7 @@
             });
         }
 
-        // --- BATCHES ---
+        // --- BATCHES (Dashboard Grid) ---
         async function loadBatches() {
             const res = await fetchAuth(`${API}/groups`);
             if (!res.ok) return;
@@ -365,11 +369,24 @@
             const grid = document.getElementById('batches-grid');
             grid.innerHTML = '';
             ALL_GROUPS.forEach(g => {
-                // Calculate Pct
+                // Calculate Pct based on TASKS (Child items)
                 let totalTgt = 0;
                 let totalCur = 0;
 
                 if (Array.isArray(g.required_stages)) {
+                    g.required_stages.forEach(s => {
+                        // Only count TASKS (S) for progress, assuming P are headers
+                        if (s.type === 'task' || s.id.startsWith('S')) {
+                            const tgt = parseInt(s.target) || 0;
+                            const cur = parseInt(g.completed_stages[s.id]) || 0;
+                            totalTgt += tgt;
+                            totalCur += Math.min(cur, tgt);
+                        }
+                    });
+                }
+
+                // Fallback for old data without type
+                if (totalTgt === 0 && Array.isArray(g.required_stages)) {
                     g.required_stages.forEach(s => {
                         const tgt = parseInt(s.target) || 0;
                         const cur = parseInt(g.completed_stages[s.id]) || 0;
@@ -407,16 +424,14 @@
         function openWizard() {
             document.getElementById('wizard-modal').classList.remove('hidden');
             goToStep(1);
-            loadWizardConfig();
+            loadWizardConfig(); // Initial Load
         }
         function closeWizard() { document.getElementById('wizard-modal').classList.add('hidden'); }
 
         function goToStep(step) {
-            // Hide all
             document.getElementById('wiz-step-1').classList.add('hidden');
             document.getElementById('wiz-step-2').classList.add('hidden');
 
-            // Buttons
             const btnBack = document.getElementById('btn-back');
             const btnNext = document.getElementById('btn-next');
             const btnCreate = document.getElementById('btn-create');
@@ -427,9 +442,7 @@
                 btnNext.classList.remove('hidden');
                 btnCreate.classList.add('hidden');
             } else {
-                // Validate Step 1 before moving
                 if (!validateStep1()) return goToStep(1);
-
                 renderStep2();
                 document.getElementById('wiz-step-2').classList.remove('hidden');
                 btnBack.classList.remove('hidden');
@@ -439,63 +452,126 @@
             document.getElementById('wiz-step-num').textContent = step;
         }
 
+        // GLOBAL Vars to hold active inputs
+        let ACTIVE_P_LIST = [];
+
         async function loadWizardConfig() {
             const type = document.getElementById('wiz-type').value;
-            const sList = document.getElementById('wiz-list-s');
             const pList = document.getElementById('wiz-list-p');
+            const sList = document.getElementById('wiz-list-s');
 
             sList.innerHTML = '<div class="text-gray-400 text-sm">Loading...</div>';
             pList.innerHTML = '<div class="text-gray-400 text-sm">Loading...</div>';
 
             try {
                 const res = await fetchAuth(`${API}/config/${type}`);
-                if (!res.ok) return; // Silent fail
-                const conf = await res.json();
+                const conf = res.ok ? await res.json() : {};
 
-                function renderRows(container, labels, prefix, colorClass) {
-                    container.innerHTML = '';
-                    if (!labels) return;
-                    labels.forEach((lbl, i) => {
-                        // Show all 20, enable if label exists
-                        const id = `${prefix}-${i}`;
-                        const isEnabled = !!lbl;
+                // Render P Groups (Left)
+                pList.innerHTML = '';
+                const pLabels = conf.p_labels || Array(20).fill('');
+                pLabels.forEach((lbl, i) => {
+                    const id = `P-${i}`;
+                    pList.innerHTML += `
+                        <div class="flex items-center gap-2 mb-2 p-2 rounded hover:bg-purple-50 transition border border-transparent hover:border-purple-200">
+                            <input type="checkbox" class="wiz-check-p w-4 h-4 text-purple-600 rounded" data-id="${id}" ${lbl ? 'checked' : ''} onchange="updateParentDropdowns()">
+                            <span class="text-xs font-mono text-purple-400 w-6">${id}</span>
+                            <input type="text" value="${lbl || ''}" class="clay-input p-1.5 text-sm w-full wiz-name-p" placeholder="Group Name" onkeyup="updateParentDropdowns()">
+                        </div>
+                    `;
+                });
 
-                        container.innerHTML += `
-                            <div class="flex items-center gap-3 bg-white p-2 rounded border border-gray-100 hover:border-blue-300 transition-colors">
-                                <input type="checkbox" class="w-5 h-5 rounded ${colorClass} focus:ring-0 wiz-check" 
-                                    data-id="${id}" ${isEnabled ? 'checked' : ''}>
-                                <span class="text-xs font-bold text-gray-400 w-6">${prefix}${i + 1}</span>
-                                <input type="text" value="${lbl || ''}" class="clay-input p-1.5 text-sm w-full wiz-name-input" placeholder="Stage Name">
+                // Render S Tasks (Right)
+                sList.innerHTML = '';
+                const sLabels = conf.s_labels || Array(20).fill('');
+                sLabels.forEach((lbl, i) => {
+                    const id = `S-${i}`;
+                    sList.innerHTML += `
+                        <div class="flex flex-col gap-2 mb-2 p-2 rounded hover:bg-pink-50 transition border border-transparent hover:border-pink-200 bg-white shadow-sm">
+                            <div class="flex items-center gap-2">
+                                <input type="checkbox" class="wiz-check-s w-4 h-4 text-pink-600 rounded" data-id="${id}" ${lbl ? 'checked' : ''}>
+                                <span class="text-xs font-mono text-pink-400 w-6">${id}</span>
+                                <input type="text" value="${lbl || ''}" class="clay-input p-1.5 text-sm w-full wiz-name-s" placeholder="Task Name">
                             </div>
-                        `;
-                    });
-                }
+                            <div class="pl-8">
+                                <select class="clay-input w-full p-1 text-xs wiz-parent-s bg-slate-50">
+                                    <option value="">-- No Parent Group --</option>
+                                    <!-- Populated dynamically -->
+                                </select>
+                            </div>
+                        </div>
+                    `;
+                });
 
-                renderRows(sList, conf.s_labels || Array(20).fill(''), 'S', 'text-purple-600');
-                renderRows(pList, conf.p_labels || Array(20).fill(''), 'P', 'text-pink-600');
+                // Initial Populate
+                updateParentDropdowns();
 
             } catch (e) { console.error(e); }
+        }
+
+        // Updates the "Parent" dropdowns in S-column based on selected P-items
+        function updateParentDropdowns() {
+            // Gathed active P inputs
+            const pChecks = document.querySelectorAll('.wiz-check-p:checked');
+            let options = '<option value="">-- Unassigned --</option>';
+
+            pChecks.forEach(chk => {
+                const row = chk.closest('div');
+                const name = row.querySelector('.wiz-name-p').value;
+                const id = chk.dataset.id;
+                const label = name ? `${name} (${id})` : id;
+                options += `<option value="${id}">${label}</option>`;
+            });
+
+            // Update all S dropdowns
+            document.querySelectorAll('.wiz-parent-s').forEach(sel => {
+                const curVal = sel.value;
+                sel.innerHTML = options;
+                // Try restore value if it still exists
+                if (curVal && sel.querySelector(`option[value="${curVal}"]`)) {
+                    sel.value = curVal;
+                } else if (pChecks.length > 0) {
+                    // Auto-select first parent if unassigned? Optional. 
+                    // Let's keep Unassigned to force user choice or default.
+                }
+            });
         }
 
         function validateStep1() {
             const name = document.getElementById('wiz-name').value;
             if (!name) { alert("Please enter a Work Name"); return false; }
 
-            // Collect Selected
-            WIZARD_DATA = { items: [] };
+            WIZARD_DATA = { groups: [], tasks: [] };
 
-            const checks = document.querySelectorAll('.wiz-check:checked');
-            if (checks.length === 0) { alert("Please select at least one stage or process."); return false; }
-
-            checks.forEach(chk => {
+            // 1. Groups (P)
+            document.querySelectorAll('.wiz-check-p:checked').forEach(chk => {
                 const row = chk.closest('div');
-                const nameInput = row.querySelector('.wiz-name-input').value;
-                const id = chk.dataset.id; // e.g., S-0
+                WIZARD_DATA.groups.push({
+                    id: chk.dataset.id,
+                    name: row.querySelector('.wiz-name-p').value || chk.dataset.id,
+                    type: 'group'
+                });
+            });
 
-                WIZARD_DATA.items.push({
-                    id: id,
-                    name: nameInput || id, // Fallback to ID if empty
-                    defaultTarget: 100 // Default
+            // 2. Tasks (S)
+            const sChecks = document.querySelectorAll('.wiz-check-s:checked');
+            if (sChecks.length === 0) { alert("Please select at least one Detail Task (S)."); return false; }
+
+            let missingParent = false;
+            sChecks.forEach(chk => {
+                const container = chk.closest('div').parentElement;
+                const parentId = container.querySelector('.wiz-parent-s').value;
+
+                if (!parentId && WIZARD_DATA.groups.length > 0) {
+                    // Warning or Force? Let's warn but allow (it will be orphan)
+                }
+
+                WIZARD_DATA.tasks.push({
+                    id: chk.dataset.id,
+                    name: container.querySelector('.wiz-name-s').value || chk.dataset.id,
+                    parentId: parentId || null,
+                    type: 'task',
+                    target: 100 // default
                 });
             });
 
@@ -506,31 +582,58 @@
             const container = document.getElementById('wiz-assign-container');
             container.innerHTML = '';
 
-            WIZARD_DATA.items.forEach(item => {
-                const isProcess = item.id.startsWith('P');
-                const badgeColor = isProcess ? 'bg-pink-100 text-pink-700' : 'bg-purple-100 text-purple-700';
+            // 1. Group Tasks by Parent
+            // Groups from WIZARD_DATA.groups
+            // Plus an "Unassigned" bucket
+            const groupedTasks = {};
+            WIZARD_DATA.groups.forEach(g => groupedTasks[g.id] = { ...g, children: [] });
+            groupedTasks['unassigned'] = { id: 'unassigned', name: 'Other Tasks', children: [] };
 
-                container.innerHTML += `
-                    <div class="flex flex-col md:flex-row gap-4 p-4 bg-white border border-gray-200 rounded-lg shadow-sm items-center transition hover:border-blue-400">
-                        <div class="flex items-center gap-3 w-full md:w-1/3">
-                            <span class="${badgeColor} px-2 py-1 rounded text-xs font-bold w-10 text-center">${item.id}</span>
-                            <span class="font-bold text-slate-700 text-sm truncate" title="${item.name}">${item.name}</span>
-                        </div>
-                        
-                        <div class="w-full md:w-1/3">
-                            <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Target Qty</label>
-                            <input type="number" class="clay-input w-full p-2 text-sm step2-target" value="100">
-                        </div>
+            WIZARD_DATA.tasks.forEach(t => {
+                if (t.parentId && groupedTasks[t.parentId]) {
+                    groupedTasks[t.parentId].children.push(t);
+                } else {
+                    groupedTasks['unassigned'].children.push(t);
+                }
+            });
 
-                        <div class="w-full md:w-1/3">
-                            <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Assign To</label>
-                            <input type="text" class="clay-input w-full p-2 text-sm step2-assign" placeholder="Group / User">
+            // 2. Render Groups
+            Object.values(groupedTasks).forEach(g => {
+                if (g.id === 'unassigned' && g.children.length === 0) return; // Skip empty unassigned
+
+                let taskRows = '';
+                g.children.forEach(t => {
+                    taskRows += `
+                    <div class="flex flex-col md:flex-row gap-3 p-3 bg-white border border-gray-100 rounded ml-4 border-l-4 border-l-pink-200">
+                        <div class="w-full md:w-1/3 flex items-center gap-2">
+                             <span class="text-xs font-mono text-gray-400">${t.id}</span>
+                             <span class="text-sm font-medium text-slate-700 truncate" title="${t.name}">${t.name}</span>
                         </div>
-                        
-                        <input type="hidden" class="step2-id" value="${item.id}">
-                        <input type="hidden" class="step2-name" value="${item.name}">
+                        <div class="w-full md:w-1/3">
+                             <input type="number" class="clay-input p-1.5 w-full text-sm step2-target" value="100" placeholder="Qty">
+                        </div>
+                        <div class="w-full md:w-1/3">
+                             <input type="text" class="clay-input p-1.5 w-full text-sm step2-assign" placeholder="User/Group">
+                        </div>
+                        <input type="hidden" class="step2-id" value="${t.id}">
+                        <input type="hidden" class="step2-parent" value="${g.id === 'unassigned' ? '' : g.id}">
                     </div>
-                `;
+                   `;
+                });
+
+                if (g.children.length > 0) { // Only render group if it has children
+                    container.innerHTML += `
+                    <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                        <h5 class="font-bold ${g.id === 'unassigned' ? 'text-orange-700' : 'text-purple-700'} mb-2 flex items-center gap-2">
+                            ${g.id !== 'unassigned' ? `<span class="bg-purple-200 text-purple-800 text-[10px] px-1 rounded">${g.id}</span>` : ''}
+                            ${g.name}
+                        </h5>
+                        <div class="space-y-2">
+                            ${taskRows}
+                        </div>
+                    </div>
+                   `;
+                }
             });
         }
 
@@ -538,16 +641,36 @@
             const name = document.getElementById('wiz-name').value;
             const type = document.getElementById('wiz-type').value;
 
-            // Gather Step 2 Data
-            const rows = document.querySelectorAll('#wiz-assign-container > div');
-            const required_stages = [];
+            // Combine Data
+            // We need to construct the final `required_stages` array.
+            // It will contain BOTH Group objects (P) and Task objects (S).
 
-            rows.forEach(r => {
-                required_stages.push({
-                    id: r.querySelector('.step2-id').value,
-                    name: r.querySelector('.step2-name').value,
-                    target: parseInt(r.querySelector('.step2-target').value) || 0,
-                    assigned: r.querySelector('.step2-assign').value
+            const finalStages = [];
+
+            // Add Groups (P)
+            WIZARD_DATA.groups.forEach(g => {
+                finalStages.push(g);
+            });
+
+            // Add Tasks (S) with Target/Assign data from DOM
+            const taskInputs = document.querySelectorAll('.step2-id');
+            taskInputs.forEach(input => {
+                const row = input.closest('.flex'); // The task row
+                const id = input.value;
+                const parentId = row.querySelector('.step2-parent').value;
+                const target = parseInt(row.querySelector('.step2-target').value) || 0;
+                const assigned = row.querySelector('.step2-assign').value;
+
+                // Find original Name
+                const original = WIZARD_DATA.tasks.find(t => t.id === id);
+
+                finalStages.push({
+                    id: id,
+                    name: original ? original.name : id,
+                    type: 'task',
+                    parentId: parentId,
+                    target: target,
+                    assigned: assigned
                 });
             });
 
@@ -556,17 +679,14 @@
                 body: JSON.stringify({
                     group_name: name,
                     dress_type: type,
-                    required_stages: required_stages,
-                    details: 'Via Production Wizard'
+                    required_stages: finalStages,
+                    details: 'Hierarchy Created'
                 })
             });
 
             if (res.ok) {
                 closeWizard();
                 loadBatches();
-
-                // Optional: Save renamed config back to server?
-                // Not implemented here to avoid overwriting global config accidentally.
             } else {
                 alert("Creation Failed");
             }
@@ -589,55 +709,117 @@
             const tbody = document.getElementById('detail-table');
             tbody.innerHTML = '';
 
-            let totalTgt = 0;
-            let totalCur = 0;
+            let totalWorkTgt = 0;
+            let totalWorkCur = 0;
 
-            g.required_stages.forEach(s => {
-                const current = g.completed_stages[s.id] || 0;
-                const tgt = s.target || 0;
-                totalTgt += tgt;
-                totalCur += current;
+            // 1. Separate Groups vs Tasks
+            const groups = g.required_stages.filter(s => s.type === 'group' || s.id.startsWith('P'));
+            const tasks = g.required_stages.filter(s => s.type === 'task' || s.id.startsWith('S'));
 
-                const pct = tgt > 0 ? Math.round((current / tgt) * 100) : 0;
-                const statusColor = pct >= 100 ? 'text-green-600 bg-green-50' : (pct > 0 ? 'text-blue-600 bg-blue-50' : 'text-gray-400 bg-gray-50');
+            // 2. Map Tasks to Groups
+            const tree = {};
+            groups.forEach(grp => tree[grp.id] = { ...grp, children: [] });
+            tree['unassigned'] = { id: 'unassigned', name: 'Other Tasks', children: [] };
 
-                // Determine display ID (S-1 -> S2, P-0 -> P1 for human readability if preferred, but keeping ID is safer)
+            tasks.forEach(t => {
+                if (t.parentId && tree[t.parentId]) {
+                    tree[t.parentId].children.push(t);
+                } else {
+                    tree['unassigned'].children.push(t);
+                }
+            });
 
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td class="p-3 text-gray-400 font-mono text-xs">${s.id}</td>
-                    <td class="p-3 font-medium text-slate-700">${s.name}</td>
-                    <td class="p-3 text-sm text-gray-500">${s.assigned || '-'}</td>
-                    <td class="p-3 text-center"><span class="${statusColor} px-2 py-1 rounded text-xs font-bold">${pct}%</span></td>
-                    <td class="p-3 w-64">
-                        <div class="flex flex-col gap-2">
-                            <div class="flex items-center gap-2">
-                                <input type="number" 
-                                    id="num-${s.id}"
-                                    value="${current}" 
-                                    onchange="updateStageProgress('${s.id}', this.value)"
-                                    class="clay-input p-1 w-20 text-center text-sm font-bold shadow-sm" min="0" max="${tgt}">
-                                <span class="text-gray-400 text-xs font-bold">/ ${tgt}</span>
-                            </div>
-                            <!-- SLIDER -->
-                            <input type="range" 
-                                value="${current}" 
-                                min="0" max="${tgt}" 
-                                oninput="syncSlider('${s.id}', this.value)"
-                                onchange="updateStageProgress('${s.id}', this.value)"
-                                class="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+            // 3. Render Recursive
+            // Render known groups first
+            const renderGroup = (grp) => {
+                if (grp.children.length === 0 && grp.id !== 'unassigned') return; // Skip empty assigned groups
+
+                // Group Aggregate Stats
+                let gTgt = 0;
+                let gCur = 0;
+                grp.children.forEach(c => {
+                    const ctgt = parseInt(c.target) || 0;
+                    const ccur = g.completed_stages[c.id] || 0;
+                    gTgt += ctgt;
+                    gCur += Math.min(ccur, ctgt);
+                });
+                const gPct = gTgt > 0 ? Math.round((gCur / gTgt) * 100) : 0;
+
+                // Add to Global Work
+                totalWorkTgt += gTgt;
+                totalWorkCur += gCur;
+
+                // Group Header Row
+                const headTr = document.createElement('tr');
+                headTr.className = "bg-slate-50 border-b border-slate-100";
+                headTr.innerHTML = `
+                    <td colspan="5" class="p-3">
+                        <div class="flex justify-between items-center">
+                            <span class="font-bold text-slate-600 flex items-center gap-2">
+                                ${grp.id !== 'unassigned' ? `<span class="text-xs bg-slate-200 px-1 rounded font-mono">${grp.id}</span>` : ''}
+                                ${grp.name}
+                            </span>
+                            <span class="text-xs font-bold ${gPct >= 100 ? 'text-green-600' : 'text-blue-600'}">${gPct}% Completed</span>
+                        </div>
+                        <div class="w-full h-1 bg-slate-200 mt-1 rounded overflow-hidden">
+                             <div class="h-full ${gPct >= 100 ? 'bg-green-500' : 'bg-blue-400'}" style="width: ${gPct}%"></div>
                         </div>
                     </td>
                 `;
-                tbody.appendChild(tr);
-            });
+                tbody.appendChild(headTr);
 
-            const totalPct = totalTgt > 0 ? Math.round((totalCur / totalTgt) * 100) : 0;
+                // Child Rows
+                grp.children.forEach(s => {
+                    const current = g.completed_stages[s.id] || 0;
+                    const tgt = s.target || 0;
+                    const pct = tgt > 0 ? Math.round((current / tgt) * 100) : 0;
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td class="p-3 pl-8 text-gray-400 font-mono text-xs border-l-4 border-l-transparent hover:border-l-blue-400 transition">
+                            <svg class="w-3 h-3 inline mr-1 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                            ${s.id}
+                        </td>
+                        <td class="p-3 font-medium text-slate-700 text-sm">${s.name}</td>
+                        <td class="p-3 text-sm text-gray-500">${s.assigned || '-'}</td>
+                        <td class="p-3 text-center"><span class="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs font-bold">${pct}%</span></td>
+                        <td class="p-3 w-64">
+                            <div class="flex flex-col gap-2">
+                                <div class="flex items-center gap-2">
+                                    <input type="number" 
+                                        id="num-${s.id}"
+                                        value="${current}" 
+                                        onchange="updateStageProgress('${s.id}', this.value)"
+                                        class="clay-input p-1 w-20 text-center text-sm font-bold shadow-sm" min="0" max="${tgt}">
+                                    <span class="text-gray-400 text-xs font-bold">/ ${tgt}</span>
+                                </div>
+                                <input type="range" 
+                                    value="${current}" 
+                                    min="0" max="${tgt}" 
+                                    oninput="syncSlider('${s.id}', this.value)"
+                                    onchange="updateStageProgress('${s.id}', this.value)"
+                                    class="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
+                            </div>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            };
+
+            Object.values(tree).forEach(grp => renderGroup(grp));
+
+            // Support legacy flat lists (no groups)
+            if (groups.length === 0 && tasks.length === 0 && g.required_stages.length > 0) {
+                // Fallback for old data
+                tree['unassigned'].children = g.required_stages;
+                renderGroup(tree['unassigned']);
+            }
+
+            const totalPct = totalWorkTgt > 0 ? Math.round((totalWorkCur / totalWorkTgt) * 100) : 0;
             document.getElementById('detail-percent').textContent = `${totalPct}%`;
             document.getElementById('detail-bar').style.width = `${totalPct}%`;
         }
 
-        // Helper to update Number input when Slider moves (without API call yet)
         function syncSlider(id, val) {
             document.getElementById(`num-${id}`).value = val;
         }
@@ -646,17 +828,13 @@
             const g = CURRENT_BATCH;
             const val = parseInt(newVal) || 0;
 
-            // Update Local
             g.completed_stages[stageId] = val;
 
-            // Sync UI inputs if updated from one source
             const numInput = document.getElementById(`num-${stageId}`);
             if (numInput) numInput.value = val;
 
-            // Re-calc Totals
-            renderDetailTable(); // Full re-render to update Top Bar
+            renderDetailTable();
 
-            // Send API
             await fetchAuth(`${API}/groups/${g.id}/update`, {
                 method: 'POST',
                 body: JSON.stringify({ completed_stages: g.completed_stages })
