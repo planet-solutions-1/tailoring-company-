@@ -215,9 +215,12 @@
     <!-- CREATE WIZARD MODAL -->
     <div id="wizard-modal"
         class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="clay-card w-full max-w-5xl h-[90vh] flex flex-col overflow-hidden animate-fade-in-up">
+        <div class="clay-card w-full max-w-6xl h-[90vh] flex flex-col overflow-hidden animate-fade-in-up">
             <div class="p-6 border-b border-gray-100 flex justify-between items-center bg-white sticky top-0">
-                <h3 class="text-xl font-bold text-slate-800">New Production Work</h3>
+                <div>
+                    <h3 class="text-xl font-bold text-slate-800">New Production Work</h3>
+                    <p class="text-xs text-gray-500 font-medium mt-1">Step <span id="wiz-step-num">1</span> of 2</p>
+                </div>
                 <button onclick="closeWizard()" class="text-gray-400 hover:text-red-500"><svg class="w-6 h-6"
                         fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
@@ -225,47 +228,81 @@
                     </svg></button>
             </div>
 
-            <div class="flex-1 overflow-y-auto p-8 bg-slate-50">
+            <div class="flex-1 overflow-y-auto p-8 bg-slate-50 relative">
 
-                <!-- Step 1: Basic Info -->
-                <div class="mb-8 p-6 bg-white rounded-xl shadow-sm border border-gray-100">
-                    <h4 class="text-lg font-semibold mb-4 text-blue-600">1. Batch Details</h4>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Work Name / ID</label>
-                            <input type="text" id="wiz-name" class="clay-input w-full p-3"
-                                placeholder="e.g. Winter Jackets Lot A">
+                <!-- STEP 1: SELECTION -->
+                <div id="wiz-step-1" class="space-y-8">
+                    <!-- Basic Info -->
+                    <div class="p-6 bg-white rounded-xl shadow-sm border border-gray-100">
+                        <h4 class="text-lg font-semibold mb-4 text-slate-700">Batch Details</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Work Name /
+                                    ID</label>
+                                <input type="text" id="wiz-name" class="clay-input w-full p-3"
+                                    placeholder="e.g. Winter Jackets Lot A">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Dress Type</label>
+                                <select id="wiz-type" class="clay-input w-full p-3"
+                                    onchange="loadWizardConfig()"></select>
+                            </div>
                         </div>
+                    </div>
+
+                    <!-- Config Selection -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <!-- Stages S1-S20 -->
                         <div>
-                            <label class="block text-xs font-bold text-gray-500 uppercase mb-2">Dress Type</label>
-                            <select id="wiz-type" class="clay-input w-full p-3" onchange="loadWizardConfig()">
-                                <option value="Shirt">Shirt</option>
-                                <option value="Pant">Pant</option>
-                                <option value="Suit">Suit</option>
-                            </select>
+                            <h4 class="text-lg font-bold text-purple-600 mb-4 flex items-center gap-2">
+                                <span class="bg-purple-100 p-1 rounded">S</span> Stages
+                            </h4>
+                            <div id="wiz-list-s" class="space-y-2"></div>
+                        </div>
+
+                        <!-- Processes P1-P20 -->
+                        <div>
+                            <h4 class="text-lg font-bold text-pink-600 mb-4 flex items-center gap-2">
+                                <span class="bg-pink-100 p-1 rounded">P</span> Processes
+                            </h4>
+                            <div id="wiz-list-p" class="space-y-2"></div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Step 2: Workflow Config -->
-                <div class="mb-8">
-                    <h4 class="text-lg font-semibold mb-4 text-purple-600 flex justify-between items-center">
-                        2. Configure Workflow Stages
-                        <span class="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded font-normal">Select & Edit
-                            Targets</span>
-                    </h4>
+                <!-- STEP 2: ASSIGNMENT -->
+                <div id="wiz-step-2" class="hidden space-y-6">
+                    <div class="bg-blue-50 border border-blue-100 p-4 rounded-lg mb-6 flex items-center gap-3">
+                        <div class="bg-blue-100 text-blue-600 p-2 rounded-full">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <div>
+                            <h4 class="font-bold text-blue-800 text-sm">Assign Targets & Users</h4>
+                            <p class="text-xs text-blue-600">Only the stages you selected are shown below.</p>
+                        </div>
+                    </div>
 
-                    <div id="wiz-stages-container" class="space-y-3">
-                        <!-- Dynamic Rows -->
+                    <div id="wiz-assign-container" class="space-y-3">
+                        <!-- Filled via JS -->
                     </div>
                 </div>
             </div>
 
-            <div class="p-6 border-t border-gray-100 bg-white flex justify-end gap-3">
-                <button onclick="closeWizard()" class="clay-btn px-6 py-3">Cancel</button>
-                <button onclick="createBatchFromWizard()"
-                    class="clay-btn clay-btn-primary px-8 py-3 bg-green-600 hover:bg-green-700 font-bold shadow-green-200">Create
-                    Production Work</button>
+            <div class="p-6 border-t border-gray-100 bg-white flex justify-between items-center">
+                <button onclick="closeWizard()"
+                    class="text-slate-500 hover:text-slate-800 font-medium px-4">Cancel</button>
+
+                <div class="flex gap-3">
+                    <button id="btn-back" onclick="goToStep(1)" class="hidden clay-btn px-6 py-3">Back</button>
+                    <button id="btn-next" onclick="goToStep(2)" class="clay-btn clay-btn-primary px-8 py-3">Next: Assign
+                        & Target</button>
+                    <button id="btn-create" onclick="createBatchFinal()"
+                        class="hidden clay-btn clay-btn-primary px-8 py-3 bg-green-600 hover:bg-green-700 shadow-green-200">Create
+                        Work</button>
+                </div>
             </div>
         </div>
     </div>
@@ -274,7 +311,7 @@
         const API = '/api/production';
         let ALL_GROUPS = [];
         let CURRENT_BATCH = null;
-        let CURRENT_CONF = null;
+        let WIZARD_DATA = { s: [], p: [] }; // Stores temp selection
 
         // --- INIT ---
         window.onload = async () => {
@@ -304,22 +341,19 @@
             return res;
         }
 
+        // --- DRESS TYPES (Updated to strip duplicates/patterns on backend, just generic list here) ---
         async function loadDressTypeOptions() {
             const res = await fetchAuth(`${API}/config-list`);
             let types = [];
             if (res.ok) types = await res.json();
-
-            if (types.length === 0) types = ["Shirt", "Pant", "Suit"]; // Fallback
+            if (types.length === 0) types = ["Shirt", "Pant", "Suit"];
 
             const optionsHtml = types.map(t => `<option value="${t}">${t}</option>`).join('');
 
-            // Populate Wizard Dropdown
-            const wizSelect = document.getElementById('wiz-type');
-            if (wizSelect) wizSelect.innerHTML = optionsHtml;
-
-            // Populate Config Dropdown
-            const confSelect = document.getElementById('config-dress-type');
-            if (confSelect) confSelect.innerHTML = optionsHtml;
+            ['wiz-type', 'config-dress-type'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.innerHTML = optionsHtml;
+            });
         }
 
         // --- BATCHES ---
@@ -335,13 +369,12 @@
                 let totalTgt = 0;
                 let totalCur = 0;
 
-                // g.required_stages is Array of Objects now
                 if (Array.isArray(g.required_stages)) {
                     g.required_stages.forEach(s => {
                         const tgt = parseInt(s.target) || 0;
                         const cur = parseInt(g.completed_stages[s.id]) || 0;
                         totalTgt += tgt;
-                        totalCur += Math.min(cur, tgt); // Cap at target for % visualization
+                        totalCur += Math.min(cur, tgt);
                     });
                 }
 
@@ -370,88 +403,153 @@
             });
         }
 
-        // --- WIZARD ---
+        // --- WIZARD LOGIC ---
         function openWizard() {
             document.getElementById('wizard-modal').classList.remove('hidden');
-            loadWizardConfig(); // Load defaults for initial type
+            goToStep(1);
+            loadWizardConfig();
         }
         function closeWizard() { document.getElementById('wizard-modal').classList.add('hidden'); }
 
+        function goToStep(step) {
+            // Hide all
+            document.getElementById('wiz-step-1').classList.add('hidden');
+            document.getElementById('wiz-step-2').classList.add('hidden');
+
+            // Buttons
+            const btnBack = document.getElementById('btn-back');
+            const btnNext = document.getElementById('btn-next');
+            const btnCreate = document.getElementById('btn-create');
+
+            if (step === 1) {
+                document.getElementById('wiz-step-1').classList.remove('hidden');
+                btnBack.classList.add('hidden');
+                btnNext.classList.remove('hidden');
+                btnCreate.classList.add('hidden');
+            } else {
+                // Validate Step 1 before moving
+                if (!validateStep1()) return goToStep(1);
+
+                renderStep2();
+                document.getElementById('wiz-step-2').classList.remove('hidden');
+                btnBack.classList.remove('hidden');
+                btnNext.classList.add('hidden');
+                btnCreate.classList.remove('hidden');
+            }
+            document.getElementById('wiz-step-num').textContent = step;
+        }
+
         async function loadWizardConfig() {
             const type = document.getElementById('wiz-type').value;
-            const container = document.getElementById('wiz-stages-container');
-            container.innerHTML = '<div class="text-center p-4 text-gray-500">Loading configuration...</div>';
+            const sList = document.getElementById('wiz-list-s');
+            const pList = document.getElementById('wiz-list-p');
+
+            sList.innerHTML = '<div class="text-gray-400 text-sm">Loading...</div>';
+            pList.innerHTML = '<div class="text-gray-400 text-sm">Loading...</div>';
 
             try {
                 const res = await fetchAuth(`${API}/config/${type}`);
-                if (!res.ok) throw new Error("Failed to load config");
+                if (!res.ok) return; // Silent fail
+                const conf = await res.json();
 
-                const conf = await res.json(); // s_labels, p_labels
-                container.innerHTML = '';
+                function renderRows(container, labels, prefix, colorClass) {
+                    container.innerHTML = '';
+                    if (!labels) return;
+                    labels.forEach((lbl, i) => {
+                        // Show all 20, enable if label exists
+                        const id = `${prefix}-${i}`;
+                        const isEnabled = !!lbl;
 
-                // Safety Check
-                if (!conf || !conf.s_labels) {
-                    container.innerHTML = '<div class="text-red-500 p-4">Error: Configuration missing. Please save default config first.</div>';
-                    return;
+                        container.innerHTML += `
+                            <div class="flex items-center gap-3 bg-white p-2 rounded border border-gray-100 hover:border-blue-300 transition-colors">
+                                <input type="checkbox" class="w-5 h-5 rounded ${colorClass} focus:ring-0 wiz-check" 
+                                    data-id="${id}" ${isEnabled ? 'checked' : ''}>
+                                <span class="text-xs font-bold text-gray-400 w-6">${prefix}${i + 1}</span>
+                                <input type="text" value="${lbl || ''}" class="clay-input p-1.5 text-sm w-full wiz-name-input" placeholder="Stage Name">
+                            </div>
+                        `;
+                    });
                 }
 
-                // Build Rows for S1-S20
-                conf.s_labels.forEach((label, i) => {
-                    if (!label) return;
-                    const id = `s-${i}`; // ID System
-                    const isChecked = true; // Default checked? Maybe
+                renderRows(sList, conf.s_labels || Array(20).fill(''), 'S', 'text-purple-600');
+                renderRows(pList, conf.p_labels || Array(20).fill(''), 'P', 'text-pink-600');
 
-                    const row = document.createElement('div');
-                    row.className = 'flex flex-col md:flex-row gap-3 p-4 bg-white border border-gray-100 rounded-lg shadow-sm items-center';
-                    row.innerHTML = `
-                    <div class="flex items-center gap-3 w-full md:w-1/4">
-                        <input type="checkbox" class="w-5 h-5 text-blue-600 rounded focus:ring-blue-500 stage-enable" checked>
-                        <span class="text-xs font-bold text-gray-400 w-8">S${i + 1}</span>
-                        <input type="text" value="${label}" class="clay-input w-full p-2 text-sm font-medium stage-name" placeholder="Stage Name">
-                    </div>
-                    
-                    <div class="flex items-center gap-2 w-full md:w-1/4">
-                        <label class="text-xs text-gray-400 font-bold uppercase">Target</label>
-                        <input type="number" value="100" class="clay-input w-full p-2 text-sm stage-target">
-                    </div>
-
-                     <div class="flex items-center gap-2 w-full md:w-1/4">
-                        <label class="text-xs text-gray-400 font-bold uppercase">Assign</label>
-                        <input type="text" class="clay-input w-full p-2 text-sm stage-assign" placeholder="Group/User">
-                    </div>
-                    
-                    <input type="hidden" class="stage-id" value="${id}">
-                `;
-                    container.appendChild(row);
-                });
-            } catch (e) {
-                container.innerHTML = `<div class="text-red-500 p-4">Error loading wizard: ${e.message}</div>`;
-                console.error(e);
-            }
+            } catch (e) { console.error(e); }
         }
 
-        async function createBatchFromWizard() {
+        function validateStep1() {
+            const name = document.getElementById('wiz-name').value;
+            if (!name) { alert("Please enter a Work Name"); return false; }
+
+            // Collect Selected
+            WIZARD_DATA = { items: [] };
+
+            const checks = document.querySelectorAll('.wiz-check:checked');
+            if (checks.length === 0) { alert("Please select at least one stage or process."); return false; }
+
+            checks.forEach(chk => {
+                const row = chk.closest('div');
+                const nameInput = row.querySelector('.wiz-name-input').value;
+                const id = chk.dataset.id; // e.g., S-0
+
+                WIZARD_DATA.items.push({
+                    id: id,
+                    name: nameInput || id, // Fallback to ID if empty
+                    defaultTarget: 100 // Default
+                });
+            });
+
+            return true;
+        }
+
+        function renderStep2() {
+            const container = document.getElementById('wiz-assign-container');
+            container.innerHTML = '';
+
+            WIZARD_DATA.items.forEach(item => {
+                const isProcess = item.id.startsWith('P');
+                const badgeColor = isProcess ? 'bg-pink-100 text-pink-700' : 'bg-purple-100 text-purple-700';
+
+                container.innerHTML += `
+                    <div class="flex flex-col md:flex-row gap-4 p-4 bg-white border border-gray-200 rounded-lg shadow-sm items-center transition hover:border-blue-400">
+                        <div class="flex items-center gap-3 w-full md:w-1/3">
+                            <span class="${badgeColor} px-2 py-1 rounded text-xs font-bold w-10 text-center">${item.id}</span>
+                            <span class="font-bold text-slate-700 text-sm truncate" title="${item.name}">${item.name}</span>
+                        </div>
+                        
+                        <div class="w-full md:w-1/3">
+                            <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Target Qty</label>
+                            <input type="number" class="clay-input w-full p-2 text-sm step2-target" value="100">
+                        </div>
+
+                        <div class="w-full md:w-1/3">
+                            <label class="text-[10px] font-bold text-gray-400 uppercase block mb-1">Assign To</label>
+                            <input type="text" class="clay-input w-full p-2 text-sm step2-assign" placeholder="Group / User">
+                        </div>
+                        
+                        <input type="hidden" class="step2-id" value="${item.id}">
+                        <input type="hidden" class="step2-name" value="${item.name}">
+                    </div>
+                `;
+            });
+        }
+
+        async function createBatchFinal() {
             const name = document.getElementById('wiz-name').value;
             const type = document.getElementById('wiz-type').value;
 
-            if (!name) return alert("Batch Name Required");
-
-            const rows = document.querySelectorAll('#wiz-stages-container > div');
+            // Gather Step 2 Data
+            const rows = document.querySelectorAll('#wiz-assign-container > div');
             const required_stages = [];
 
             rows.forEach(r => {
-                const enabled = r.querySelector('.stage-enable').checked;
-                if (enabled) {
-                    required_stages.push({
-                        id: r.querySelector('.stage-id').value,
-                        name: r.querySelector('.stage-name').value,
-                        target: parseInt(r.querySelector('.stage-target').value) || 0,
-                        assigned: r.querySelector('.stage-assign').value
-                    });
-                }
+                required_stages.push({
+                    id: r.querySelector('.step2-id').value,
+                    name: r.querySelector('.step2-name').value,
+                    target: parseInt(r.querySelector('.step2-target').value) || 0,
+                    assigned: r.querySelector('.step2-assign').value
+                });
             });
-
-            if (required_stages.length === 0) return alert("Enable at least one stage.");
 
             const res = await fetchAuth(`${API}/groups`, {
                 method: 'POST',
@@ -459,13 +557,16 @@
                     group_name: name,
                     dress_type: type,
                     required_stages: required_stages,
-                    details: 'Created via Production Wizard'
+                    details: 'Via Production Wizard'
                 })
             });
 
             if (res.ok) {
                 closeWizard();
                 loadBatches();
+
+                // Optional: Save renamed config back to server?
+                // Not implemented here to avoid overwriting global config accidentally.
             } else {
                 alert("Creation Failed");
             }
@@ -500,22 +601,31 @@
                 const pct = tgt > 0 ? Math.round((current / tgt) * 100) : 0;
                 const statusColor = pct >= 100 ? 'text-green-600 bg-green-50' : (pct > 0 ? 'text-blue-600 bg-blue-50' : 'text-gray-400 bg-gray-50');
 
+                // Determine display ID (S-1 -> S2, P-0 -> P1 for human readability if preferred, but keeping ID is safer)
+
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td class="p-3 text-gray-400 font-mono text-xs">${s.id}</td>
                     <td class="p-3 font-medium text-slate-700">${s.name}</td>
                     <td class="p-3 text-sm text-gray-500">${s.assigned || '-'}</td>
                     <td class="p-3 text-center"><span class="${statusColor} px-2 py-1 rounded text-xs font-bold">${pct}%</span></td>
-                    <td class="p-3">
-                        <div class="flex items-center gap-2">
-                            <input type="number" 
+                    <td class="p-3 w-64">
+                        <div class="flex flex-col gap-2">
+                            <div class="flex items-center gap-2">
+                                <input type="number" 
+                                    id="num-${s.id}"
+                                    value="${current}" 
+                                    onchange="updateStageProgress('${s.id}', this.value)"
+                                    class="clay-input p-1 w-20 text-center text-sm font-bold shadow-sm" min="0" max="${tgt}">
+                                <span class="text-gray-400 text-xs font-bold">/ ${tgt}</span>
+                            </div>
+                            <!-- SLIDER -->
+                            <input type="range" 
                                 value="${current}" 
+                                min="0" max="${tgt}" 
+                                oninput="syncSlider('${s.id}', this.value)"
                                 onchange="updateStageProgress('${s.id}', this.value)"
-                                class="clay-input p-1 w-20 text-center text-sm font-bold" min="0" max="${tgt}">
-                            <span class="text-gray-400 text-xs">/ ${tgt}</span>
-                        </div>
-                         <div class="w-full bg-gray-100 h-1.5 rounded-full mt-1 overflow-hidden">
-                            <div class="bg-blue-500 h-full rounded-full" style="width: ${Math.min(pct, 100)}%"></div>
+                                class="w-full h-1 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-blue-600">
                         </div>
                     </td>
                 `;
@@ -527,6 +637,11 @@
             document.getElementById('detail-bar').style.width = `${totalPct}%`;
         }
 
+        // Helper to update Number input when Slider moves (without API call yet)
+        function syncSlider(id, val) {
+            document.getElementById(`num-${id}`).value = val;
+        }
+
         async function updateStageProgress(stageId, newVal) {
             const g = CURRENT_BATCH;
             const val = parseInt(newVal) || 0;
@@ -534,8 +649,12 @@
             // Update Local
             g.completed_stages[stageId] = val;
 
-            // Re-calc UI immediately for responsiveness
-            renderDetailTable();
+            // Sync UI inputs if updated from one source
+            const numInput = document.getElementById(`num-${stageId}`);
+            if (numInput) numInput.value = val;
+
+            // Re-calc Totals
+            renderDetailTable(); // Full re-render to update Top Bar
 
             // Send API
             await fetchAuth(`${API}/groups/${g.id}/update`, {
