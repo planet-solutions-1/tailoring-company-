@@ -856,11 +856,21 @@
         async function hydrateWizardUI() {
             const sPool = document.getElementById('wiz-pool');
             const pCanvas = document.getElementById('wiz-canvas');
+            const type = document.getElementById('wiz-type').value;
+            const taskLimit = parseInt(document.getElementById('count-tasks').value) || 20;
+
+            // 0. Fetch Config for Labels
+            let conf = {};
+            try {
+                const res = await fetchAuth(`${API}/config/${type}`);
+                if (res.ok) conf = await res.json();
+            } catch (e) { console.error(e); }
+
+            const sLabels = conf.s_labels || Array(20).fill('');
 
             // 1. Render Groups (Right) from DATA
             pCanvas.innerHTML = '';
 
-            // Sort groups by ID to be nice?
             WIZARD_DATA.groups.forEach(g => {
                 pCanvas.innerHTML += `
                         <div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden group">
@@ -880,10 +890,13 @@
                     `;
             });
 
-            // 2. Put Tasks into their Groups OR Source
-            sPool.innerHTML = ''; // Clear source
+            // 2. Render SAVED Tasks into their zones (or pool if no parent)
+            const existingIds = new Set();
+            sPool.innerHTML = '';
 
             WIZARD_DATA.tasks.forEach(t => {
+                existingIds.add(t.id);
+
                 const cardHtml = `
                     <div id="drag-${t.id}" class="wiz-task-item flex items-center gap-2 p-2 bg-white rounded border border-gray-200 shadow-sm hover:border-pink-300" 
                              draggable="true" ondragstart="drag(event)" ondragend="dragEnd(event)">
@@ -892,15 +905,30 @@
                     </div>
                  `;
 
-                // Find Parent Zone
                 const zone = document.querySelector(`.wiz-drop-zone[data-group="${t.parentId}"]`);
                 if (zone) {
                     zone.innerHTML += cardHtml;
                 } else {
-                    // Orphaned? Put in source
                     sPool.innerHTML += cardHtml;
                 }
             });
+
+            // 3. Render UNUSED Tasks into Pool
+            for (let i = 0; i < taskLimit; i++) {
+                const id = `S-${i}`;
+                if (existingIds.has(id)) continue;
+
+                const lbl = sLabels[i] || '';
+                const name = lbl || `Task ${i + 1}`;
+
+                sPool.innerHTML += `
+                    <div id="drag-${id}" class="wiz-task-item flex items-center gap-2 p-2 bg-white rounded border border-gray-200 shadow-sm hover:border-pink-300" 
+                             draggable="true" ondragstart="drag(event)" ondragend="dragEnd(event)">
+                            <span class="text-[10px] font-mono bg-pink-100 text-pink-600 px-1 rounded">${id}</span>
+                            <input type="text" value="${name}" class="text-sm border-none bg-transparent w-full focus:outline-none wiz-name-s">
+                    </div>
+                 `;
+            }
         }
 
         // --- DETAIL VIEW ---
