@@ -90,6 +90,36 @@ if (process.env.RAILWAY_ENVIRONMENT || process.env.NODE_ENV === 'production') {
     // Init MySQL Schema
     const initMysql = async () => {
         try {
+            // === AUTO-MIGRATE PRODUCTION TABLES ===
+            console.log("Auto-Migrating Production Tables...");
+            await promisePool.execute(`CREATE TABLE IF NOT EXISTS production_config (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                dress_type VARCHAR(255) UNIQUE,
+                s_labels TEXT,
+                p_labels TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )`);
+            await promisePool.execute(`CREATE TABLE IF NOT EXISTS production_groups (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                group_name VARCHAR(255),
+                dress_type VARCHAR(255),
+                required_stages TEXT,
+                details TEXT,
+                status VARCHAR(50) DEFAULT 'Active',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )`);
+            await promisePool.execute(`CREATE TABLE IF NOT EXISTS production_progress (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                group_id INT UNIQUE,
+                current_stage INT DEFAULT 0,
+                completed_stages TEXT,
+                notes TEXT,
+                last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (group_id) REFERENCES production_groups(id) ON DELETE CASCADE
+            )`);
+            console.log("Production Tables Verified.");
+
             const queries = [
                 `CREATE TABLE IF NOT EXISTS schools (
                     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -415,6 +445,33 @@ function initSqliteDb(database) {
              filters TEXT,
              created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
              FOREIGN KEY (school_id) REFERENCES schools(id) ON DELETE CASCADE
+        );
+        -- PRODUCTION AUTO-MIGRATE
+        CREATE TABLE IF NOT EXISTS production_config (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            dress_type TEXT UNIQUE,
+            s_labels TEXT,
+            p_labels TEXT,
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+        CREATE TABLE IF NOT EXISTS production_groups (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            group_name TEXT,
+            dress_type TEXT,
+            required_stages TEXT,
+            details TEXT,
+            status TEXT DEFAULT 'Active',
+            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        );
+        CREATE TABLE IF NOT EXISTS production_progress (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            group_id INTEGER UNIQUE,
+            current_stage INTEGER DEFAULT 0,
+            completed_stages TEXT,
+            notes TEXT,
+            last_updated DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(group_id) REFERENCES production_groups(id) ON DELETE CASCADE
         );
     `;
     database.exec(schema, (err) => {

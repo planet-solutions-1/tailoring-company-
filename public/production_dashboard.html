@@ -380,22 +380,30 @@
         async function loadWizardConfig() {
             const type = document.getElementById('wiz-type').value;
             const container = document.getElementById('wiz-stages-container');
-            container.innerHTML = 'Loading...';
+            container.innerHTML = '<div class="text-center p-4 text-gray-500">Loading configuration...</div>';
 
-            const res = await fetchAuth(`${API}/config/${type}`);
-            const conf = await res.json(); // s_labels, p_labels
+            try {
+                const res = await fetchAuth(`${API}/config/${type}`);
+                if (!res.ok) throw new Error("Failed to load config");
 
-            container.innerHTML = '';
+                const conf = await res.json(); // s_labels, p_labels
+                container.innerHTML = '';
 
-            // Build Rows for S1-S20
-            conf.s_labels.forEach((label, i) => {
-                if (!label) return;
-                const id = `s-${i}`; // ID System
-                const isChecked = true; // Default checked? Maybe
+                // Safety Check
+                if (!conf || !conf.s_labels) {
+                    container.innerHTML = '<div class="text-red-500 p-4">Error: Configuration missing. Please save default config first.</div>';
+                    return;
+                }
 
-                const row = document.createElement('div');
-                row.className = 'flex flex-col md:flex-row gap-3 p-4 bg-white border border-gray-100 rounded-lg shadow-sm items-center';
-                row.innerHTML = `
+                // Build Rows for S1-S20
+                conf.s_labels.forEach((label, i) => {
+                    if (!label) return;
+                    const id = `s-${i}`; // ID System
+                    const isChecked = true; // Default checked? Maybe
+
+                    const row = document.createElement('div');
+                    row.className = 'flex flex-col md:flex-row gap-3 p-4 bg-white border border-gray-100 rounded-lg shadow-sm items-center';
+                    row.innerHTML = `
                     <div class="flex items-center gap-3 w-full md:w-1/4">
                         <input type="checkbox" class="w-5 h-5 text-blue-600 rounded focus:ring-blue-500 stage-enable" checked>
                         <span class="text-xs font-bold text-gray-400 w-8">S${i + 1}</span>
@@ -414,8 +422,12 @@
                     
                     <input type="hidden" class="stage-id" value="${id}">
                 `;
-                container.appendChild(row);
-            });
+                    container.appendChild(row);
+                });
+            } catch (e) {
+                container.innerHTML = `<div class="text-red-500 p-4">Error loading wizard: ${e.message}</div>`;
+                console.error(e);
+            }
         }
 
         async function createBatchFromWizard() {
