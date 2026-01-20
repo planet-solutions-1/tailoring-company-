@@ -507,6 +507,12 @@
 
         // --- WIZARD LOGIC ---
         function openWizard() {
+            // Reset to Create Mode
+            WIZARD_MODE = 'create';
+            CURRENT_EDIT_ID = null;
+            document.getElementById('btn-create').textContent = "Create Work";
+            document.querySelector('#wizard-modal h3').textContent = "New Production Work";
+
             document.getElementById('wizard-modal').classList.remove('hidden');
             goToStep(1);
             loadWizardConfig(); // Initial Load

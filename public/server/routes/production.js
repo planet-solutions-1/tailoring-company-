@@ -219,15 +219,16 @@ router.post('/groups/:id/edit', authenticateToken, (req, res) => {
     }
 
     const groupId = req.params.id;
-    const { group_name, dress_type, status } = req.body;
+    const { group_name, dress_type, status, required_stages } = req.body;
 
     if (!group_name) return res.status(400).json({ error: "Name is required" });
 
+    // If required_stages is provided, update it too. detailed logic
     const sql = `UPDATE production_groups 
-                 SET group_name = ?, dress_type = ?, status = ?, updated_at = CURRENT_TIMESTAMP 
+                 SET group_name = ?, dress_type = ?, status = ?, required_stages = ?, updated_at = CURRENT_TIMESTAMP 
                  WHERE id = ?`;
 
-    db.run(sql, [group_name, dress_type, status, groupId], (err) => {
+    db.run(sql, [group_name, dress_type, status, JSON.stringify(required_stages || []), groupId], (err) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ success: true, message: "Batch Updated" });
     });
