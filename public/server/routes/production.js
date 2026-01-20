@@ -73,14 +73,7 @@ const DEFAULT_ITEMS = [
 // Helper route to get all used dress types (for dropdown)
 router.get('/config-list', authenticateToken, (req, res) => {
     const queries = [
-        // 1. Get Distinct Pattern Names from Patterns Table
-        new Promise((resolve) => {
-            db.all("SELECT DISTINCT name FROM patterns", [], (err, rows) => {
-                if (err || !rows) resolve([]);
-                else resolve(rows.map(r => r.name));
-            });
-        }),
-        // 2. Get System Config from Schools Table
+        // 1. Get System Config from Schools Table
         new Promise((resolve) => {
             db.get("SELECT address FROM schools WHERE name = 'SYSTEM_CONFIG'", [], (err, row) => {
                 if (err || !row || !row.address) resolve([]);
@@ -101,7 +94,7 @@ router.get('/config-list', authenticateToken, (req, res) => {
                 }
             });
         }),
-        // 3. Get Production Config (Legacy support)
+        // 2. Get Production Config (Legacy support)
         new Promise((resolve) => {
             db.all("SELECT DISTINCT dress_type FROM production_config", [], (err, rows) => {
                 if (err || !rows) resolve([]);
@@ -111,12 +104,11 @@ router.get('/config-list', authenticateToken, (req, res) => {
     ];
 
     Promise.all(queries).then(results => {
-        const [patternNames, configNames, prodConfigNames] = results;
+        const [configNames, prodConfigNames] = results;
 
         // Merge all sources + Defaults
         const allTypes = new Set([
             ...DEFAULT_ITEMS,
-            ...patternNames,
             ...configNames,
             ...prodConfigNames
         ]);
