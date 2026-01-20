@@ -58,33 +58,78 @@ router.post('/config', authenticateToken, requireRole('company'), (req, res) => 
     });
 });
 
-// DEBUG ROUTE: Inspect Patterns Data
-router.get('/debug-patterns', (req, res) => {
-    db.all("SELECT * FROM patterns LIMIT 5", [], (err, rows) => {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json(rows);
-    });
-});
+// Default Items (Fallback matches ConfigLoader.js)
+const DEFAULT_ITEMS = [
+    "BOYS - FORMAL SHIRT", "BOYS - TRACK T-SHIRT", "BOYS - UNIFORM T-SHIRT",
+    "BOYS - JERKIN", "BOYS - PULLOVER", "BOYS - FORMAL PANT", "BOYS - TRACK PANT",
+    "BOYS - FORMAL SHORTS", "BOYS - TRACK SHORTS", "BOYS - PANT SPECIAL CASE",
+    "GIRLS - FORMAL SHIRT", "GIRLS - TRACK T-SHIRT", "GIRLS - UNIFORM T-SHIRT",
+    "GIRLS - JERKIN", "GIRLS - FULL SLEEVE SHIRT", "GIRLS - PULLOVER",
+    "GIRLS - KURTHA SHIRT", "GIRLS - SPECIAL FROCKS", "GIRLS - FORMAL PANT",
+    "GIRLS - TRACK PANT", "GIRLS - TRACK SHORTS", "GIRLS - PINOFORE",
+    "GIRLS - SKIRT", "GIRLS - PANT SPECIAL CASE"
+];
 
 // Helper route to get all used dress types (for dropdown)
 router.get('/config-list', authenticateToken, (req, res) => {
-    // Union existing config types with actual used types in patterns
-    // Correcting column name: patterns table uses 'name', not 'dress_type'
-    const sql = `
-        SELECT DISTINCT dress_type FROM production_config
-        UNION
-        SELECT DISTINCT name as dress_type FROM patterns
-        ORDER BY dress_type ASC
-    `;
+    const queries = [
+        // 1. Get Distinct Pattern Names from Patterns Table
+        new Promise((resolve) => {
+            db.all("SELECT DISTINCT name FROM patterns", [], (err, rows) => {
+                if (err || !rows) resolve([]);
+                else resolve(rows.map(r => r.name));
+            });
+        }),
+        // 2. Get System Config from Schools Table
+        new Promise((resolve) => {
+            db.get("SELECT address FROM schools WHERE name = 'SYSTEM_CONFIG'", [], (err, row) => {
+                if (err || !row || !row.address) resolve([]);
+                else {
+                    try {
+                        const config = JSON.parse(row.address);
+                        // Extract item names from config object
+                        let items = [];
+                        if (config.data && Array.isArray(config.data)) items = config.data;
+                        else if (config.items && Array.isArray(config.items)) items = config.items;
+                        else if (Array.isArray(config)) items = config; // Direct array
 
-    db.all(sql, [], (err, rows) => {
-        if (err) {
-            console.error("Config List Error:", err.message);
-            // Fallback: just hardcoded if DB fails
-            return res.json(["Shirt", "Pant", "Suit"]);
-        }
-        const types = rows.map(r => r.dress_type).filter(t => t && t.trim() !== ''); // Filter nulls/empty
-        res.json(types.length > 0 ? types : ["Shirt", "Pant", "Suit"]);
+                        resolve(items.map(i => i.name || i));
+                    } catch (e) {
+                        console.error("Config Parse Error", e);
+                        resolve([]);
+                    }
+                }
+            });
+        }),
+        // 3. Get Production Config (Legacy support)
+        new Promise((resolve) => {
+            db.all("SELECT DISTINCT dress_type FROM production_config", [], (err, rows) => {
+                if (err || !rows) resolve([]);
+                else resolve(rows.map(r => r.dress_type));
+            });
+        })
+    ];
+
+    Promise.all(queries).then(results => {
+        const [patternNames, configNames, prodConfigNames] = results;
+
+        // Merge all sources + Defaults
+        const allTypes = new Set([
+            ...DEFAULT_ITEMS,
+            ...patternNames,
+            ...configNames,
+            ...prodConfigNames
+        ]);
+
+        // Filter empty/null and sort
+        const sortedTypes = Array.from(allTypes)
+            .filter(t => t && typeof t === 'string' && t.trim() !== '')
+            .sort();
+
+        res.json(sortedTypes);
+    }).catch(err => {
+        console.error("Config List Full Error:", err);
+        res.json(DEFAULT_ITEMS); // Absolute fallback
     });
 });
 
