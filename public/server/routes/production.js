@@ -58,6 +58,14 @@ router.post('/config', authenticateToken, requireRole('company'), (req, res) => 
     });
 });
 
+// DEBUG ROUTE: Inspect Patterns Data
+router.get('/debug-patterns', (req, res) => {
+    db.all("SELECT * FROM patterns LIMIT 5", [], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(rows);
+    });
+});
+
 // Helper route to get all used dress types (for dropdown)
 router.get('/config-list', authenticateToken, (req, res) => {
     // Union existing config types with actual used types in patterns
