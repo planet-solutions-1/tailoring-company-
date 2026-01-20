@@ -249,22 +249,13 @@
                         </div>
                         <div class="md:col-span-1">
                             <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Tasks Count</label>
-                            <select id="count-tasks" class="clay-input w-full p-2.5" onchange="loadWizardConfig()">
-                                <option value="5">5 Tasks</option>
-                                <option value="10" selected>10 Tasks</option>
-                                <option value="15">15 Tasks</option>
-                                <option value="20">20 Tasks</option>
-                            </select>
+                            <input type="number" id="count-tasks" class="clay-input w-full p-2.5" min="1" max="20"
+                                value="10" onchange="loadWizardConfig()" oninput="loadWizardConfig()">
                         </div>
                         <div class="md:col-span-1">
                             <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Phases Count</label>
-                            <select id="count-groups" class="clay-input w-full p-2.5" onchange="loadWizardConfig()">
-                                <option value="3">3 Phases</option>
-                                <option value="5" selected>5 Phases</option>
-                                <option value="10">10 Phases</option>
-                                <option value="15">15 Phases</option>
-                                <option value="20">20 Phases</option>
-                            </select>
+                            <input type="number" id="count-groups" class="clay-input w-full p-2.5" min="1" max="20"
+                                value="5" onchange="loadWizardConfig()" oninput="loadWizardConfig()">
                         </div>
                     </div>
 
