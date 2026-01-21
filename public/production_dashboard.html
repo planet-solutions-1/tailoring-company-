@@ -1391,6 +1391,48 @@
             });
         }
 
+        // --- REWARDS & DELAYS ---
+        async function giveReward() {
+            if (!CURRENT_BATCH) return;
+            if (!confirm(`Award 10 Points to "${CURRENT_BATCH.group_name}" for fast/good performance?`)) return;
+
+            try {
+                const res = await fetchAuth(`${API}/groups/${CURRENT_BATCH.id}/reward`, { method: 'POST', body: JSON.stringify({ points: 10 }) });
+                if (res.ok) {
+                    alert("Awarded!");
+                    loadBatches(); // Reload to see gold border
+                    switchTab('active');
+                } else {
+                    alert("Failed to award points");
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        async function reportDelay() {
+            if (!CURRENT_BATCH) return;
+            const reason = prompt("Enter the reason for the production delay:", "Machine Breakdown");
+            if (!reason) return;
+
+            try {
+                const res = await fetchAuth(`${API}/groups/${CURRENT_BATCH.id}/delay`, {
+                    method: 'POST',
+                    body: JSON.stringify({ reason: reason })
+                });
+
+                if (res.ok) {
+                    alert("Delay Logged.");
+                    loadBatches(); // Reload to see red border
+                    switchTab('active');
+                } else {
+                    alert("Failed to log delay");
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
         async function deleteBatch() {
             if (!CURRENT_BATCH) return;
             if (!confirm(`Are you sure you want to PERMANENTLY delete Batch #${CURRENT_BATCH.id} ("${CURRENT_BATCH.group_name}")?\n\nThis action cannot be undone.`)) {
