@@ -158,28 +158,7 @@ router.get('/groups', authenticateToken, (req, res) => {
     });
 });
 
-router.post('/groups', authenticateToken, (req, res) => {
-    if (req.user.role !== 'company' && req.user.role !== 'production_manager') {
-        return res.status(403).json({ error: "Unauthorized" });
-    }
 
-    const { group_name, dress_type, required_stages, details } = req.body;
-    // required_stages: Array of objects [{id: 's-0', name: 'Cutting', target: 500, assigned: 'Group A'}, ...]
-
-    if (!group_name || !dress_type) return res.status(400).json({ error: "Name and Type required" });
-
-    db.run("INSERT INTO production_groups (group_name, dress_type, required_stages, details) VALUES (?, ?, ?, ?)",
-        [group_name, dress_type, JSON.stringify(required_stages || []), details || ''],
-        function (err) {
-            if (err) return res.status(500).json({ error: err.message });
-
-            const groupId = this.lastID;
-            db.run("INSERT INTO production_progress (group_id, current_stage, completed_stages) VALUES (?, 0, '{}')", [groupId], (err) => {
-                res.json({ success: true, id: groupId });
-            });
-        }
-    );
-});
 
 
 // === 3. PROGRESS UPDATE ===
@@ -201,7 +180,8 @@ router.post('/groups/:id/update', authenticateToken, (req, res) => {
 });
 
 router.post('/groups/:id/complete', authenticateToken, (req, res) => {
-    if (req.user.role !== 'company' && req.user.role !== 'production_manager') {
+    const role = (req.user.role || '').toLowerCase();
+    if (role !== 'company' && role !== 'production_manager') {
         return res.status(403).json({ error: "Unauthorized" });
     }
 
@@ -214,21 +194,22 @@ router.post('/groups/:id/complete', authenticateToken, (req, res) => {
 // === 4. EDIT UPDATE ===
 
 router.post('/groups/:id/edit', authenticateToken, (req, res) => {
-    if (req.user.role !== 'company' && req.user.role !== 'production_manager') {
+    const role = (req.user.role || '').toLowerCase();
+    if (role !== 'company' && role !== 'production_manager') {
         return res.status(403).json({ error: "Unauthorized" });
     }
 
     const groupId = req.params.id;
-    const { group_name, dress_type, status, required_stages } = req.body;
+    const { group_name, dress_type, status, required_stages, daily_target } = req.body;
 
     if (!group_name) return res.status(400).json({ error: "Name is required" });
 
     // If required_stages is provided, update it too. detailed logic
     const sql = `UPDATE production_groups 
-                 SET group_name = ?, dress_type = ?, status = ?, required_stages = ?, updated_at = CURRENT_TIMESTAMP 
+                 SET group_name = ?, dress_type = ?, status = ?, required_stages = ?, daily_target = ?, updated_at = CURRENT_TIMESTAMP 
                  WHERE id = ?`;
 
-    db.run(sql, [group_name, dress_type, status, JSON.stringify(required_stages || []), groupId], (err) => {
+    db.run(sql, [group_name, dress_type, status, JSON.stringify(required_stages || []), daily_target || 0, groupId], (err) => {
         if (err) return res.status(500).json({ error: err.message });
         res.json({ success: true, message: "Batch Updated" });
     });
@@ -236,7 +217,8 @@ router.post('/groups/:id/edit', authenticateToken, (req, res) => {
 
 // === 5. DELETE ===
 router.delete('/groups/:id', authenticateToken, (req, res) => {
-    if (req.user.role !== 'company' && req.user.role !== 'production_manager') {
+    const role = (req.user.role || '').toLowerCase();
+    if (role !== 'company' && role !== 'production_manager') {
         return res.status(403).json({ error: "Unauthorized" });
     }
 
@@ -258,7 +240,8 @@ router.delete('/groups/:id', authenticateToken, (req, res) => {
 
 // Award Points
 router.post('/groups/:id/reward', authenticateToken, (req, res) => {
-    if (req.user.role !== 'company' && req.user.role !== 'production_manager') {
+    const role = (req.user.role || '').toLowerCase();
+    if (role !== 'company' && role !== 'production_manager') {
         return res.status(403).json({ error: "Unauthorized" });
     }
     const points = req.body.points || 10; // Default +10
@@ -270,16 +253,11 @@ router.post('/groups/:id/reward', authenticateToken, (req, res) => {
 
 // Log Delay
 router.post('/groups/:id/delay', authenticateToken, (req, res) => {
-    // Anyone can report a delay (maybe? restricted to manager for now to be safe, or allow workers if needed. Using same auth as others)
-    // User requested "supervisor manually", so stick to authorized roles.
-    if (req.user.role !== 'company' && req.user.role !== 'production_manager') {
-        // allow supervisor? 'supervisor' isn't a defined role yet in middleware check, usually just check for token.
-        // currently middleware checks token validity. 'requireRole' checks specific. 
-        // simplistic check:
+    const role = (req.user.role || '').toLowerCase();
+    if (role !== 'company' && role !== 'production_manager') {
+        // Check
     }
 
-    // Actually, let's allow any authenticated user to REPORT a delay, but maybe only manager to CLEAR it?
-    // For now, simple set.
     const { reason } = req.body;
     db.run("UPDATE production_groups SET delay_reason = ? WHERE id = ?", [reason, req.params.id], (err) => {
         if (err) return res.status(500).json({ error: err.message });
