@@ -123,6 +123,7 @@
 </head>
 
 <body class="min-h-screen text-slate-800">
+    <div id="toast-container"></div>
 
     <nav class="clay-card m-4 p-4 flex justify-between items-center bg-white/80 backdrop-blur sticky top-4 z-40">
         <div class="flex items-center gap-3">
@@ -243,14 +244,14 @@
                                     Edit
                                 </button>
 
-                                <button onclick="giveReward()"
-                                    class="text-xs bg-yellow-50 hover:bg-yellow-100 text-yellow-700 px-3 py-1.5 rounded-lg flex items-center gap-1 transition font-bold border border-yellow-200 ml-2 admin-only">
-                                    <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                                <button onclick="openEndorseModal()"
+                                    class="text-xs bg-gradient-to-r from-yellow-400 to-orange-500 hover:scale-105 text-white shadow-lg shadow-yellow-500/30 px-4 py-1.5 rounded-lg flex items-center gap-1 transition font-bold ml-2 admin-only ring-2 ring-white">
+                                    <svg class="w-3.5 h-3.5 animate-pulse" fill="currentColor" viewBox="0 0 20 20">
                                         <path fill-rule="evenodd"
-                                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z"
+                                            d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"
                                             clip-rule="evenodd" />
                                     </svg>
-                                    Reward
+                                    Endorse
                                 </button>
 
                                 <button onclick="reportDelay()"
@@ -370,7 +371,7 @@
                 <div id="wiz-step-1" class="flex flex-col min-h-0">
 
                     <div
-                        class="mb-6 p-6 bg-white rounded-xl shadow-sm border border-gray-100 grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
+                        class="mb-6 p-6 bg-white rounded-xl shadow-sm border border-gray-100 grid grid-cols-1 md:grid-cols-5 gap-6 items-end">
                         <div class="md:col-span-1">
                             <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Work Name <span
                                     class="text-blue-500 text-[9px]">v2.2</span></label>
@@ -381,6 +382,11 @@
                             <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Dress Type</label>
                             <select id="wiz-type" class="clay-input w-full p-2.5"
                                 onchange="loadWizardConfig()"></select>
+                        </div>
+                        <div class="md:col-span-1">
+                            <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Daily Target</label>
+                            <input type="number" id="wiz-target" class="clay-input w-full p-2.5" min="1"
+                                placeholder="e.g. 500">
                         </div>
                         <div class="md:col-span-1">
                             <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Tasks Count</label>
@@ -564,16 +570,17 @@
 
         function renderDashboard() {
             const grid = document.getElementById('batches-grid');
-            const hudContainer = document.getElementById('hud-container'); // We will add this container in HTML
+            const hudContainer = document.getElementById('hud-container');
 
-            // 1. Calculate Stats
+            // 1. Calculate Stats & Global Data
             let totalVolume = 0;
             let totalProgressSum = 0;
             let activeCount = ALL_GROUPS.length;
+            let leaderboard = [];
 
             // 2. Filter & Map Data
             const filtered = ALL_GROUPS.filter(g => {
-                // Calculate Pct for this group first (needed for filter)
+                // Calculate Pct for this group
                 let t = 0, c = 0;
                 if (Array.isArray(g.required_stages)) {
                     g.required_stages.forEach(s => {
@@ -586,14 +593,24 @@
                     });
                 }
                 const pct = t > 0 ? (c / t) * 100 : 0;
-                g._pct = pct; // Cache it
+
+                // Systematic Metrics
+                const dailyTarget = g.daily_target || 0;
+                const dailyProgressPct = dailyTarget > 0 ? (c / dailyTarget) * 100 : 0; // Simplified: Total vs Daily Target
+
+                g._pct = pct;
                 g._vol = t;
+                g._dailyPct = dailyProgressPct;
+                g._completedItems = c;
+
+                // Push to Leaderboard Candidate List (if active)
+                if (pct < 100) leaderboard.push(g);
 
                 // Accumulate Globals
                 totalVolume += t;
                 totalProgressSum += pct;
 
-                // Filtering
+                // Filtering Matches
                 const matchesText = g.group_name.toLowerCase().includes(FILTER_QUERY.toLowerCase()) ||
                     g.dress_type.toLowerCase().includes(FILTER_QUERY.toLowerCase());
 
@@ -606,55 +623,74 @@
                 return matchesText && matchesStatus;
             });
 
+            // Sort Leaderboard: High Points > High Daily Progress
+            leaderboard.sort((a, b) => (b.points || 0) - (a.points || 0) || b._dailyPct - a._dailyPct);
+            const top3 = leaderboard.slice(0, 3);
+
             const globalAvg = activeCount > 0 ? Math.round(totalProgressSum / activeCount) : 0;
 
-            // 3. Render HUD
+            // 3. Render HUD (4 Cols)
             if (hudContainer) {
                 hudContainer.innerHTML = `
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                        
+                        <!-- Col 1: Active Batches -->
                         <div class="clay-card p-6 bg-gradient-to-br from-blue-600 to-indigo-700 text-white relative overflow-hidden group">
-                            <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition transform duration-500">
+                            <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition">
                                 <svg class="w-24 h-24" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/></svg>
                             </div>
                             <div class="relative z-10">
                                 <p class="text-blue-100 text-xs font-bold uppercase tracking-widest mb-1">Active Batches</p>
-                                <h3 class="text-4xl font-extrabold tracking-tight">${activeCount}</h3>
-                                <div class="mt-4 flex items-center gap-2 text-sm text-blue-200">
-                                    <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span> System Online
-                                </div>
+                                <h3 class="text-3xl font-extrabold tracking-tight">${activeCount}</h3>
+                                <div class="mt-2 text-xs text-blue-200">System Online</div>
                             </div>
                         </div>
 
-                        <div class="clay-card p-6 border-l-4 border-purple-500 relative overflow-hidden group hover:shadow-purple-500/20 transition">
-                            <div class="flex justify-between items-start">
+                        <!-- Col 2: Leaderboard (NEW) -->
+                        <div class="clay-card p-4 border-l-4 border-yellow-400 bg-white relative overflow-hidden">
+                            <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">🏆 Top Performers</h4>
+                            <div class="space-y-2">
+                                ${top3.map((g, i) => `
+                                    <div class="flex justify-between items-center text-sm">
+                                        <div class="flex items-center gap-2">
+                                            <span class="font-bold ${i === 0 ? 'text-yellow-500' : 'text-slate-400'}">#${i + 1}</span>
+                                            <span class="font-medium text-slate-700 truncate max-w-[100px]">${g.group_name}</span>
+                                        </div>
+                                        <div class="flex items-center gap-1">
+                                            <span class="text-xs font-bold text-yellow-600">${g.points || 0} pts</span>
+                                        </div>
+                                    </div>
+                                `).join('') || '<div class="text-xs text-gray-400 italic">No active data yet</div>'}
+                            </div>
+                        </div>
+
+                        <!-- Col 3: Volume -->
+                        <div class="clay-card p-6 border-l-4 border-purple-500 relative overflow-hidden group">
+                             <div class="flex justify-between items-start">
                                 <div>
                                     <p class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Total Volume</p>
-                                    <h3 class="text-4xl font-extrabold text-slate-800 tracking-tight">${totalVolume.toLocaleString()}</h3>
+                                    <h3 class="text-3xl font-extrabold text-slate-800">${totalVolume.toLocaleString()}</h3>
                                 </div>
-                                <div class="p-3 bg-purple-50 rounded-lg text-purple-600 group-hover:bg-purple-600 group-hover:text-white transition">
+                                <div class="p-2 bg-purple-50 rounded-lg text-purple-600">
                                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
                                 </div>
                             </div>
-                            <p class="text-xs text-slate-400 mt-4">Items in production pipeline</p>
                         </div>
 
-                        <div class="clay-card p-6 border-l-4 border-teal-500 relative overflow-hidden group hover:shadow-teal-500/20 transition">
-                            <div class="flex justify-between items-start">
+                        <!-- Col 4: Efficiency -->
+                        <div class="clay-card p-6 border-l-4 border-teal-500 relative overflow-hidden group">
+                             <div class="flex justify-between items-start">
                                 <div>
                                     <p class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Efficiency</p>
-                                    <h3 class="text-4xl font-extrabold text-slate-800 tracking-tight">${globalAvg}%</h3>
+                                    <h3 class="text-3xl font-extrabold text-slate-800">${globalAvg}%</h3>
                                 </div>
-                                <div class="w-16 h-16 relative">
-                                    <svg class="w-full h-full transform -rotate-90">
-                                        <circle cx="32" cy="32" r="28" stroke="currentColor" stroke-width="6" fill="none" class="text-gray-100" />
-                                        <circle cx="32" cy="32" r="28" stroke="currentColor" stroke-width="6" fill="none" class="text-teal-500" stroke-dasharray="175.9" stroke-dashoffset="${175.9 - (175.9 * globalAvg / 100)}" />
-                                    </svg>
+                                <div class="p-2 bg-teal-50 rounded-lg text-teal-600">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
                                 </div>
                             </div>
-                            <p class="text-xs text-slate-400 mt-1">Average batch completion</p>
                         </div>
                     </div>
-
+                    
                     <!-- CONTROL BAR (Added Delayed Filter) -->
                     <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-8">
                         <div class="relative w-full md:w-96 group">
@@ -694,6 +730,7 @@
                 const points = g.points || 0;
                 const isDelayed = !!g.delay_reason;
                 const isGold = points >= 50;
+                const dailyTarget = g.daily_target || 0;
 
                 // Status Color Logic
                 let barColor = 'bg-blue-500';
@@ -725,8 +762,18 @@
                     bgEffect = 'bg-yellow-50/30';
                 }
 
+                // Badges Logic
+                let statusBadge = '';
+                const completedCount = g._completedItems;
+
+                if (dailyTarget > 0 && completedCount >= dailyTarget) {
+                    statusBadge += `<span class="bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full text-[10px] font-bold border border-orange-200">🔥 On Fire</span>`;
+                } else if (dailyTarget > 0 && completedCount < (dailyTarget * 0.3) && pct < 100) {
+                    statusBadge += `<span class="bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full text-[10px] font-bold">🐢 Lagging</span>`;
+                }
+
                 grid.innerHTML += `
-                    <div class="clay-card p-0 cursor-pointer hover:-translate-y-1 hover:shadow-2xl transition-all duration-300 relative group overflow-hidden bg-white ${cardBorder} ${bgEffect}" onclick="openDetail(${g.id})">
+                    <div class="clay-card p-0 cursor-pointer hover:-translate-y-1 hover:shadow-2xl transition-all duration-300 relative group overflow-hidden bg-white ${cardBorder} ${bgEffect}" onclick="openDetail('${g.id}')">
                         <!-- Top Accent (if not delayed) -->
                         ${!isDelayed ? `<div class="h-2 w-full ${barColor} relative overflow-hidden"><div class="absolute inset-0 bg-white/30 animate-[shimmer_2s_infinite]"></div></div>` : ''}
                         
@@ -738,16 +785,22 @@
                                          ${isGold ? '<span title="Ace Performer" class="text-yellow-500 animate-bounce">🏆</span>' : ''}
                                          ${isDelayed ? '<span title="Production Delayed" class="text-red-500 animate-pulse">⚠️</span>' : ''}
                                     </div>
-                                    <h3 class="text-xl font-bold text-slate-800 leading-tight group-hover:text-blue-600 transition">${g.group_name}</h3>
+                                    <div class="flex items-center gap-2">
+                                        <h3 class="text-xl font-bold text-slate-800 leading-tight group-hover:text-blue-600 transition">${g.group_name}</h3>
+                                        ${statusBadge}
+                                    </div>
                                 </div>
                                 <span class="bg-slate-50 border border-slate-100 text-slate-500 text-[0.65rem] font-bold px-3 py-1 rounded-full uppercase tracking-wider">${g.dress_type}</span>
                             </div>
 
                             ${points > 0 ? `
-                            <div class="mb-3">
+                            <div class="mb-3 flex items-center gap-2">
                                 <span class="inline-flex items-center gap-1 bg-yellow-100 text-yellow-700 text-xs font-bold px-2 py-0.5 rounded border border-yellow-200">
                                     <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg> 
                                     ${points} Pts
+                                </span>
+                                <span class="inline-flex items-center gap-1 bg-purple-100 text-purple-700 text-xs font-bold px-2 py-0.5 rounded border border-purple-200" title="Level ${Math.floor(points / 100) + 1}">
+                                    lvl ${Math.floor(points / 100) + 1}
                                 </span>
                             </div>` : ''}
 
@@ -778,6 +831,10 @@
                                     <div class="${barColor} h-full rounded-full relative shadow-lg ${glowColor}" style="width: ${pct}%">
                                         <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent w-full h-full opacity-0 group-hover:opacity-100 animate-shimmer"></div>
                                     </div>
+                                </div>
+                                <div class="flex justify-between mt-1">
+                                     <div class="text-[10px] text-slate-400 font-bold uppercase">Daily Target: ${dailyTarget > 0 ? dailyTarget : 'N/A'}</div>
+                                     <div class="text-[10px] text-slate-400 font-bold uppercase">Total: ${g._vol}</div>
                                 </div>
                             </div>
                         </div>
@@ -1066,6 +1123,7 @@
                 dress_type: type,
                 required_stages: finalStages,
                 details: 'Hierarchy Created',
+                daily_target: parseInt(document.getElementById('wiz-target').value) || 0,
                 status: (CURRENT_BATCH && CURRENT_BATCH.status) || 'Active'
             };
 
@@ -1122,6 +1180,7 @@
             // 5. Hydrate Inputs
             document.getElementById('wiz-name').value = CURRENT_BATCH.group_name;
             document.getElementById('wiz-type').value = CURRENT_BATCH.dress_type;
+            document.getElementById('wiz-target').value = CURRENT_BATCH.daily_target || '';
 
             // 6. Re-construct WIZARD_DATA from required_stages
             WIZARD_DATA = { groups: [], tasks: [] };
@@ -1370,28 +1429,93 @@
             });
         }
 
-        // --- REWARDS & DELAYS ---
-        async function giveReward() {
+        // --- TOAST SYSTEM ---
+        function showToast(msg, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+
+            // Colors
+            const colors = type === 'success' ? 'bg-green-500' : (type === 'error' ? 'bg-red-500' : 'bg-blue-500');
+            const icon = type === 'success' ?
+                '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>' :
+                '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>';
+
+            toast.className = `toast flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-white font-medium min-w-[300px] backdrop-blur-md ${colors}`;
+            toast.innerHTML = `${icon} <span>${msg}</span>`;
+
+            container.appendChild(toast);
+
+            // Audio (Optional, subtle click)
+            // const audio = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-modern-technology-select-3124.mp3');
+            // audio.volume = 0.2;
+            // audio.play().catch(e => {});
+
+            setTimeout(() => {
+                toast.style.animation = 'fadeOut 0.3s ease-in forwards';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // --- SYSTEMATIC REWARDS ---
+        // --- SYSTEMATIC REWARDS (Endorsements) ---
+        function openEndorseModal() {
             if (!CURRENT_BATCH) return;
-            if (!confirm(`Award 10 Points to "${CURRENT_BATCH.group_name}" for fast/good performance?`)) return;
+            const modal = document.getElementById('endorse-modal');
+            const title = document.getElementById('endorse-batch-name');
+            if (title) title.textContent = CURRENT_BATCH.group_name;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeEndorseModal() {
+            const modal = document.getElementById('endorse-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        async function submitEndorsement(type) {
+            if (!CURRENT_BATCH) return;
+
+            let points = 10;
+            let message = "Endorsed!";
+            let icon = '⚡';
+
+            if (type === 'speed') { points = 20; message = "High Velocity Award!"; icon = '🚀'; }
+            if (type === 'quality') { points = 50; message = "Zero Defects Award!"; icon = '💎'; }
+            if (type === 'teamwork') { points = 15; message = "Team Synergy Award!"; icon = '🤝'; }
 
             try {
-                const res = await fetchAuth(`${API}/groups/${CURRENT_BATCH.id}/reward`, { method: 'POST', body: JSON.stringify({ points: 10 }) });
+                const res = await fetchAuth(`${API}/groups/${CURRENT_BATCH.id}/reward`, {
+                    method: 'POST',
+                    body: JSON.stringify({ points: points })
+                });
+
                 if (res.ok) {
-                    alert("Awarded!");
-                    loadBatches(); // Reload to see gold border
+                    closeEndorseModal();
+                    showToast(`${icon} ${message} (+${points} pts)`);
+
+                    // Confetti Explosion
+                    confetti({
+                        particleCount: 200,
+                        spread: 100,
+                        origin: { y: 0.6 },
+                        colors: ['#FFD700', '#FFA500', '#3B82F6', '#10B981']
+                    });
+
+                    loadBatches(); // Refresh UI logic
                     switchTab('active');
                 } else {
-                    alert("Failed to award points");
+                    showToast("Failed to endorse", 'error');
                 }
             } catch (e) {
                 console.error(e);
+                showToast("Network Error", 'error');
             }
         }
 
         async function reportDelay() {
             if (!CURRENT_BATCH) return;
-            const reason = prompt("Enter the reason for the production delay:", "Machine Breakdown");
+            const reason = prompt("Describe the bottleneck/delay:", "Resource Shortage");
             if (!reason) return;
 
             try {
@@ -1401,11 +1525,11 @@
                 });
 
                 if (res.ok) {
-                    alert("Delay Logged.");
-                    loadBatches(); // Reload to see red border
+                    showToast("🐢 Delay Logged. Team alerted.", 'warning'); // Use warning/error color
+                    loadBatches();
                     switchTab('active');
                 } else {
-                    alert("Failed to log delay");
+                    showToast("Failed to log delay", 'error');
                 }
             } catch (e) {
                 console.error(e);
@@ -1439,6 +1563,81 @@
 
         function logout() { sessionStorage.clear(); window.location = 'login.html'; }
     </script>
+    <!-- ENDORSE MODAL -->
+    <div id="endorse-modal"
+        class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center z-[100] backdrop-blur-sm animate-fade-in">
+        <div
+            class="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm transform transition-all scale-100 relative overflow-hidden">
+            <!-- Decorative BG -->
+            <div class="absolute top-0 left-0 w-full h-24 bg-gradient-to-br from-yellow-400 to-orange-500 opacity-20">
+            </div>
+
+            <div class="relative z-10">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h3 class="text-xl font-black text-slate-800 flex items-center gap-2">
+                            <span>⚡ Endorse Batch</span>
+                        </h3>
+                        <p id="endorse-batch-name" class="text-sm font-bold text-slate-500 truncate max-w-[200px]">Batch
+                            #000</p>
+                    </div>
+                    <button onclick="closeEndorseModal()"
+                        class="text-slate-400 hover:text-slate-600 bg-white rounded-full p-1 shadow-sm">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <div class="space-y-3">
+                    <button onclick="submitEndorsement('speed')"
+                        class="w-full flex items-center justify-between p-4 rounded-xl border-2 border-slate-100 hover:border-blue-500 hover:bg-blue-50 transition group text-left relative overflow-hidden">
+                        <div class="relative z-10">
+                            <div class="font-bold text-slate-700 group-hover:text-blue-700 flex items-center gap-2">🚀
+                                High Velocity</div>
+                            <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Fast Turnaround
+                            </div>
+                        </div>
+                        <div
+                            class="relative z-10 font-black text-blue-600 bg-blue-100 px-3 py-1 rounded-lg text-sm group-hover:bg-blue-600 group-hover:text-white transition">
+                            +20</div>
+                    </button>
+
+                    <button onclick="submitEndorsement('quality')"
+                        class="w-full flex items-center justify-between p-4 rounded-xl border-2 border-slate-100 hover:border-purple-500 hover:bg-purple-50 transition group text-left relative overflow-hidden">
+                        <div class="relative z-10">
+                            <div class="font-bold text-slate-700 group-hover:text-purple-700 flex items-center gap-2">💎
+                                Zero Defects</div>
+                            <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Perfect Quality
+                            </div>
+                        </div>
+                        <div
+                            class="relative z-10 font-black text-purple-600 bg-purple-100 px-3 py-1 rounded-lg text-sm group-hover:bg-purple-600 group-hover:text-white transition">
+                            +50</div>
+                    </button>
+
+                    <button onclick="submitEndorsement('teamwork')"
+                        class="w-full flex items-center justify-between p-4 rounded-xl border-2 border-slate-100 hover:border-green-500 hover:bg-green-50 transition group text-left relative overflow-hidden">
+                        <div class="relative z-10">
+                            <div class="font-bold text-slate-700 group-hover:text-green-700 flex items-center gap-2">🤝
+                                Team Synergy</div>
+                            <div class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Great
+                                Collaboration</div>
+                        </div>
+                        <div
+                            class="relative z-10 font-black text-green-600 bg-green-100 px-3 py-1 rounded-lg text-sm group-hover:bg-green-600 group-hover:text-white transition">
+                            +15</div>
+                    </button>
+                </div>
+
+                <div class="mt-6 pt-4 border-t border-slate-100 text-center">
+                    <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Select an endorsement
+                        category</p>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 
 </html>
