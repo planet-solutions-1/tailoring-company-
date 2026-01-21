@@ -66,7 +66,60 @@
         .admin-only {
             display: none;
         }
+
+        /* Toast Container */
+        #toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .toast {
+            animation: slideIn 0.3s ease-out forwards;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeOut {
+            to {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+        }
+
+        /* Leaderboard Badges */
+        .rank-1 {
+            background: linear-gradient(135deg, #FFF700, #FFAB00);
+            color: #7a4f01;
+            box-shadow: 0 2px 10px rgba(255, 171, 0, 0.3);
+        }
+
+        .rank-2 {
+            background: linear-gradient(135deg, #E2E8F0, #94A3B8);
+            color: #475569;
+        }
+
+        .rank-3 {
+            background: linear-gradient(135deg, #FDBA74, #C2410C);
+            color: #7c2d12;
+        }
     </style>
+    <!-- Confetti Lib -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 </head>
 
 <body class="min-h-screen text-slate-800">
