@@ -122,10 +122,14 @@
 
             <!-- ACTIVE BATCHES GRID -->
             <div id="view-active" class="animate-fade-in">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-bold text-slate-800">Production Overview</h2>
+                <!-- HUD inserted by JS -->
+                <div id="hud-container"></div>
+
+                <div class="flex justify-between items-center mb-6 px-1">
+                    <h2 class="text-lg font-bold text-slate-400 uppercase tracking-widest hidden md:block">Recent
+                        Production</h2>
                     <button onclick="openWizard()"
-                        class="clay-btn clay-btn-primary px-5 py-2.5 flex items-center gap-2 font-medium">
+                        class="clay-btn clay-btn-primary px-5 py-2.5 flex items-center gap-2 font-medium ml-auto shadow-lg shadow-blue-500/30 hover:shadow-blue-600/50 hover:-translate-y-0.5 transition-all">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
@@ -460,53 +464,209 @@
             if (!res.ok) return;
             ALL_GROUPS = await res.json();
 
-            const grid = document.getElementById('batches-grid');
-            grid.innerHTML = '';
-            ALL_GROUPS.forEach(g => {
-                // Calculate Pct based on TASKS (Child items)
-                let totalTgt = 0;
-                let totalCur = 0;
+            // Initial Render
+            renderDashboard();
+        }
 
+        let FILTER_QUERY = '';
+        let FILTER_STATUS = 'all'; // all, in-progress, completed
+
+        function setFilterStatus(status) {
+            FILTER_STATUS = status;
+            document.querySelectorAll('.filter-pill').forEach(el => {
+                if (el.dataset.status === status) {
+                    el.classList.add('bg-blue-600', 'text-white', 'shadow-lg', 'shadow-blue-500/30');
+                    el.classList.remove('bg-white', 'text-slate-600', 'hover:bg-gray-50');
+                } else {
+                    el.classList.remove('bg-blue-600', 'text-white', 'shadow-lg', 'shadow-blue-500/30');
+                    el.classList.add('bg-white', 'text-slate-600', 'hover:bg-gray-50');
+                }
+            });
+            renderDashboard();
+        }
+
+        function renderDashboard() {
+            const grid = document.getElementById('batches-grid');
+            const hudContainer = document.getElementById('hud-container'); // We will add this container in HTML
+
+            // 1. Calculate Stats
+            let totalVolume = 0;
+            let totalProgressSum = 0;
+            let activeCount = ALL_GROUPS.length;
+
+            // 2. Filter & Map Data
+            const filtered = ALL_GROUPS.filter(g => {
+                // Calculate Pct for this group first (needed for filter)
+                let t = 0, c = 0;
                 if (Array.isArray(g.required_stages)) {
                     g.required_stages.forEach(s => {
-                        // Only count TASKS (S) for progress, assuming P are headers
-                        if (s.type === 'task' || s.id.startsWith('S')) {
+                        if (s.type === 'task' || (s.id && s.id.startsWith('S'))) {
                             const tgt = parseInt(s.target) || 0;
                             const cur = parseInt(g.completed_stages[s.id]) || 0;
-                            totalTgt += tgt;
-                            totalCur += Math.min(cur, tgt);
+                            t += tgt;
+                            c += Math.min(cur, tgt);
                         }
                     });
                 }
+                const pct = t > 0 ? (c / t) * 100 : 0;
+                g._pct = pct; // Cache it
+                g._vol = t;
 
-                // Fallback for old data without type
-                if (totalTgt === 0 && Array.isArray(g.required_stages)) {
-                    g.required_stages.forEach(s => {
-                        const tgt = parseInt(s.target) || 0;
-                        const cur = parseInt(g.completed_stages[s.id]) || 0;
-                        totalTgt += tgt;
-                        totalCur += Math.min(cur, tgt);
-                    });
+                // Accumulate Globals
+                totalVolume += t;
+                totalProgressSum += pct;
+
+                // Filtering
+                const matchesText = g.group_name.toLowerCase().includes(FILTER_QUERY.toLowerCase()) ||
+                    g.dress_type.toLowerCase().includes(FILTER_QUERY.toLowerCase());
+
+                let matchesStatus = true;
+                if (FILTER_STATUS === 'completed') matchesStatus = pct >= 100;
+                if (FILTER_STATUS === 'in-progress') matchesStatus = pct < 100 && pct > 0;
+                if (FILTER_STATUS === 'not-started') matchesStatus = pct === 0;
+
+                return matchesText && matchesStatus;
+            });
+
+            const globalAvg = activeCount > 0 ? Math.round(totalProgressSum / activeCount) : 0;
+
+            // 3. Render HUD
+            if (hudContainer) {
+                hudContainer.innerHTML = `
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        <div class="clay-card p-6 bg-gradient-to-br from-blue-600 to-indigo-700 text-white relative overflow-hidden group">
+                            <div class="absolute top-0 right-0 p-4 opacity-10 group-hover:scale-110 transition transform duration-500">
+                                <svg class="w-24 h-24" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/></svg>
+                            </div>
+                            <div class="relative z-10">
+                                <p class="text-blue-100 text-xs font-bold uppercase tracking-widest mb-1">Active Batches</p>
+                                <h3 class="text-4xl font-extrabold tracking-tight">${activeCount}</h3>
+                                <div class="mt-4 flex items-center gap-2 text-sm text-blue-200">
+                                    <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span> System Online
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="clay-card p-6 border-l-4 border-purple-500 relative overflow-hidden group hover:shadow-purple-500/20 transition">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Total Volume</p>
+                                    <h3 class="text-4xl font-extrabold text-slate-800 tracking-tight">${totalVolume.toLocaleString()}</h3>
+                                </div>
+                                <div class="p-3 bg-purple-50 rounded-lg text-purple-600 group-hover:bg-purple-600 group-hover:text-white transition">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                                </div>
+                            </div>
+                            <p class="text-xs text-slate-400 mt-4">Items in production pipeline</p>
+                        </div>
+
+                        <div class="clay-card p-6 border-l-4 border-teal-500 relative overflow-hidden group hover:shadow-teal-500/20 transition">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Efficiency</p>
+                                    <h3 class="text-4xl font-extrabold text-slate-800 tracking-tight">${globalAvg}%</h3>
+                                </div>
+                                <div class="w-16 h-16 relative">
+                                    <svg class="w-full h-full transform -rotate-90">
+                                        <circle cx="32" cy="32" r="28" stroke="currentColor" stroke-width="6" fill="none" class="text-gray-100" />
+                                        <circle cx="32" cy="32" r="28" stroke="currentColor" stroke-width="6" fill="none" class="text-teal-500" stroke-dasharray="175.9" stroke-dashoffset="${175.9 - (175.9 * globalAvg / 100)}" />
+                                    </svg>
+                                </div>
+                            </div>
+                            <p class="text-xs text-slate-400 mt-1">Average batch completion</p>
+                        </div>
+                    </div>
+
+                    <!-- CONTROL BAR -->
+                    <div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-8">
+                        <div class="relative w-full md:w-96 group">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg class="h-5 w-5 text-gray-400 group-focus-within:text-blue-500 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                            </div>
+                            <input type="text" 
+                                placeholder="Search batches..." 
+                                oninput="FILTER_QUERY = this.value; renderDashboard();"
+                                class="pl-10 block w-full clay-input bg-white border-none py-3 shadow-sm group-focus-within:shadow-lg transition-all duration-300">
+                        </div>
+                        <div class="flex gap-2 bg-slate-100 p-1 rounded-xl">
+                            <button onclick="setFilterStatus('all')" data-status="all" class="filter-pill px-4 py-2 rounded-lg text-sm font-bold bg-blue-600 text-white shadow-lg shadow-blue-500/30 transition-all">All</button>
+                            <button onclick="setFilterStatus('in-progress')" data-status="in-progress" class="filter-pill px-4 py-2 rounded-lg text-sm font-bold bg-white text-slate-600 hover:bg-gray-50 transition-all">In Progress</button>
+                            <button onclick="setFilterStatus('completed')" data-status="completed" class="filter-pill px-4 py-2 rounded-lg text-sm font-bold bg-white text-slate-600 hover:bg-gray-50 transition-all">Completed</button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            // 4. Render Grid
+            grid.innerHTML = '';
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `
+                    <div class="col-span-full py-12 text-center text-gray-400">
+                        <svg class="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>    
+                        <p class="text-lg font-medium">No batches found</p>
+                    </div>
+                `;
+                return;
+            }
+
+            filtered.forEach(g => {
+                const pct = Math.round(g._pct);
+
+                // Status Color Logic
+                let barColor = 'bg-blue-500';
+                let glowColor = 'shadow-blue-500/30';
+                let statusText = 'In Progress';
+
+                if (pct >= 100) {
+                    barColor = 'bg-green-500';
+                    glowColor = 'shadow-green-500/30';
+                    statusText = 'Completed';
+                } else if (pct === 0) {
+                    barColor = 'bg-slate-300';
+                    glowColor = 'shadow-none';
+                    statusText = 'Not Started';
                 }
 
-                const pct = totalTgt > 0 ? Math.round((totalCur / totalTgt) * 100) : 0;
-
                 grid.innerHTML += `
-                    <div class="clay-card p-6 cursor-pointer hover:shadow-xl transition relative group overflow-hidden" onclick="openDetail(${g.id})">
-                        <div class="absolute top-0 left-0 w-1 h-full bg-blue-500"></div>
-                        <div class="flex justify-between items-start mb-3 pl-3">
-                            <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">#${g.id}</span>
-                            <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">${g.dress_type}</span>
+                    <div class="clay-card p-0 cursor-pointer hover:-translate-y-1 hover:shadow-2xl transition-all duration-300 relative group overflow-hidden bg-white" onclick="openDetail(${g.id})">
+                        <!-- Top Accent -->
+                        <div class="h-2 w-full ${barColor} relative overflow-hidden">
+                           <div class="absolute inset-0 bg-white/30 animate-[shimmer_2s_infinite]"></div> 
                         </div>
-                        <h3 class="text-lg font-bold text-slate-800 pl-3 mb-2">${g.group_name}</h3>
                         
-                        <div class="pl-3 mt-4">
-                            <div class="flex justify-between text-xs text-gray-500 mb-1">
-                                <span>Progress</span>
-                                <span class="font-bold text-slate-700">${pct}%</span>
+                        <div class="p-6">
+                            <div class="flex justify-between items-start mb-4">
+                                <div class="flex flex-col">
+                                    <span class="text-[0.65rem] font-bold text-slate-400 uppercase tracking-widest mb-1">Batch #${g.id}</span>
+                                    <h3 class="text-xl font-bold text-slate-800 leading-tight group-hover:text-blue-600 transition">${g.group_name}</h3>
+                                </div>
+                                <span class="bg-slate-50 border border-slate-100 text-slate-500 text-[0.65rem] font-bold px-3 py-1 rounded-full uppercase tracking-wider">${g.dress_type}</span>
                             </div>
-                            <div class="w-full bg-gray-100 h-2 rounded-full overflow-hidden">
-                                <div class="bg-blue-500 h-full rounded-full" style="width: ${pct}%"></div>
+                            
+                            <!-- Mini Stats -->
+                            <div class="grid grid-cols-2 gap-4 mb-6">
+                                <div>
+                                    <p class="text-[0.65rem] text-slate-400 font-bold uppercase">Volume</p>
+                                    <p class="text-sm font-bold text-slate-700">${g._vol} items</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-[0.65rem] text-slate-400 font-bold uppercase">Status</p>
+                                    <p class="text-sm font-bold ${pct >= 100 ? 'text-green-600' : 'text-blue-600'}">${statusText}</p>
+                                </div>
+                            </div>
+
+                            <!-- Progress Bar -->
+                            <div class="relative pt-2">
+                                <div class="flex justify-between text-xs mb-1">
+                                    <span class="font-bold text-slate-400">Completion</span>
+                                    <span class="font-bold text-slate-800">${pct}%</span>
+                                </div>
+                                <div class="w-full bg-slate-100 h-2.5 rounded-full overflow-hidden shadow-inner">
+                                    <div class="${barColor} h-full rounded-full relative shadow-lg ${glowColor}" style="width: ${pct}%">
+                                        <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent w-full h-full opacity-0 group-hover:opacity-100 animate-shimmer"></div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
