@@ -1157,49 +1157,51 @@
 
         // --- DETAIL VIEW LOGIC ---
         function openDetail(id) {
-            const g = ALL_GROUPS.find(item => item.id == id);
-            if (!g) return;
+            try {
+                const g = ALL_GROUPS.find(item => item.id == id);
+                if (!g) return;
 
-            CURRENT_BATCH = g;
+                CURRENT_BATCH = g;
 
-            // Populate Header
-            document.getElementById('detail-name').textContent = g.group_name;
-            document.getElementById('detail-type').textContent = g.dress_type;
-            const notes = g.details || g.notes || 'No details specified.';
-            document.getElementById('detail-notes').textContent = notes;
+                // Populate Header
+                document.getElementById('detail-name').textContent = g.group_name;
+                document.getElementById('detail-type').textContent = g.dress_type;
+                const notes = g.details || g.notes || 'No details specified.';
+                document.getElementById('detail-notes').textContent = notes;
 
-            // Calc Percent
-            const pct = Math.round(g._pct || 0);
-            document.getElementById('detail-percent').textContent = pct + "%";
-            document.getElementById('detail-bar').style.width = pct + "%";
+                // Calc Percent
+                const pct = Math.round(g._pct || 0);
+                document.getElementById('detail-percent').textContent = pct + "%";
+                document.getElementById('detail-bar').style.width = pct + "%";
 
-            // Render Stages
-            const tbody = document.getElementById('detail-table');
-            tbody.innerHTML = '';
+                // Render Stages
+                const tbody = document.getElementById('detail-table');
+                tbody.innerHTML = '';
 
-            if (g.required_stages && Array.isArray(g.required_stages)) {
-                g.required_stages.forEach(s => {
-                    // s: { id, name, type, parentId, target, assigned }
-                    const cur = parseInt(g.completed_stages[s.id]) || 0;
-                    const tgt = parseInt(s.target) || 0;
-                    const p = tgt > 0 ? Math.round((cur / tgt) * 100) : 0;
+                if (g.required_stages && Array.isArray(g.required_stages)) {
+                    const completedRef = g.completed_stages || {};
+                    g.required_stages.forEach(s => {
+                        // s: { id, name, type, parentId, target, assigned }
+                        const cur = parseInt(completedRef[s.id]) || 0;
+                        const tgt = parseInt(s.target) || 0;
+                        const p = tgt > 0 ? Math.round((cur / tgt) * 100) : 0;
 
-                    let status = 'Pending';
-                    let statusColor = 'bg-slate-100 text-slate-500';
-                    if (cur >= tgt && tgt > 0) { status = 'Done'; statusColor = 'bg-green-100 text-green-600'; }
-                    else if (cur > 0) { status = 'In Progress'; statusColor = 'bg-blue-100 text-blue-600'; }
+                        let status = 'Pending';
+                        let statusColor = 'bg-slate-100 text-slate-500';
+                        if (cur >= tgt && tgt > 0) { status = 'Done'; statusColor = 'bg-green-100 text-green-600'; }
+                        else if (cur > 0) { status = 'In Progress'; statusColor = 'bg-blue-100 text-blue-600'; }
 
-                    if (s.type === 'group' || (s.id && s.id.startsWith('P'))) {
-                        // Header Row
-                        tbody.innerHTML += `
+                        if (s.type === 'group' || (s.id && s.id.startsWith('P'))) {
+                            // Header Row
+                            tbody.innerHTML += `
                             <tr class="bg-purple-50/50">
                                 <td class="p-3 font-mono text-xs text-purple-600 font-bold">${s.id}</td>
                                 <td class="p-3 font-bold text-slate-700" colspan="4">${s.name}</td>
                             </tr>
                         `;
-                    } else {
-                        // Task Row
-                        tbody.innerHTML += `
+                        } else {
+                            // Task Row
+                            tbody.innerHTML += `
                             <tr class="hover:bg-gray-50 transition group/row">
                                 <td class="p-3 font-mono text-xs text-slate-400">${s.id}</td>
                                 <td class="p-3">
@@ -1225,11 +1227,15 @@
                                 </td>
                             </tr>
                         `;
-                    }
-                });
-            }
+                        }
+                    });
+                }
 
-            switchTab('detail');
+                switchTab('detail');
+            } catch (err) {
+                console.error("Detail View Error:", err);
+                alert("Error opening detail view. Check console.");
+            }
         }
 
         async function updateStageProgress(groupId, stageId, value) {
