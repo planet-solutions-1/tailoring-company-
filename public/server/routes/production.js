@@ -234,4 +234,24 @@ router.post('/groups/:id/edit', authenticateToken, (req, res) => {
     });
 });
 
+// === 5. DELETE ===
+router.delete('/groups/:id', authenticateToken, (req, res) => {
+    if (req.user.role !== 'company' && req.user.role !== 'production_manager') {
+        return res.status(403).json({ error: "Unauthorized" });
+    }
+
+    const groupId = req.params.id;
+
+    // Delete progress first (optional if FK cascade exists, but good for safety)
+    db.run("DELETE FROM production_progress WHERE group_id = ?", [groupId], (err) => {
+        if (err) console.error("Error deleting progress:", err);
+
+        // Delete Group
+        db.run("DELETE FROM production_groups WHERE id = ?", [groupId], (err) => {
+            if (err) return res.status(500).json({ error: err.message });
+            res.json({ success: true, message: "Batch Deleted" });
+        });
+    });
+});
+
 module.exports = router;
