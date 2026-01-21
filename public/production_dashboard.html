@@ -818,26 +818,35 @@
         async function editBatchFull() {
             if (!CURRENT_BATCH) return;
 
+            // 1. Set State
             WIZARD_MODE = 'edit';
             CURRENT_EDIT_ID = CURRENT_BATCH.id;
 
-            openWizard(); // Opens and resets to create, so we override immediately
+            // 2. Show Modal (Manually, DO NOT call openWizard() which resets to Create)
+            document.getElementById('wizard-modal').classList.remove('hidden');
 
-            // Override UI for Edit
+            // 3. Reset Step View
+            document.getElementById('wiz-step-1').classList.remove('hidden');
+            document.getElementById('wiz-step-2').classList.add('hidden');
+            document.getElementById('btn-back').classList.add('hidden');
+            document.getElementById('btn-next').classList.remove('hidden');
+            document.getElementById('btn-create').classList.add('hidden');
+            document.getElementById('wiz-step-num').textContent = "1";
+
+            // 4. Override UI Text
             document.getElementById('btn-create').textContent = "Save Changes";
             document.querySelector('#wizard-modal h3').textContent = `Editing Batch #${CURRENT_EDIT_ID}`;
 
-            // Hydrate Inputs
+            // 5. Hydrate Inputs
             document.getElementById('wiz-name').value = CURRENT_BATCH.group_name;
             document.getElementById('wiz-type').value = CURRENT_BATCH.dress_type;
 
-            // Re-construct WIZARD_DATA from required_stages
+            // 6. Re-construct WIZARD_DATA from required_stages
             WIZARD_DATA = { groups: [], tasks: [] };
             const req = CURRENT_BATCH.required_stages || [];
 
             req.forEach(item => {
                 if (item.type === 'group' || (item.id && item.id.startsWith('P-'))) {
-                    // Ensure it has 'tasks' array if missing
                     if (!item.tasks) item.tasks = [];
                     WIZARD_DATA.groups.push(item);
                 } else {
@@ -845,11 +854,10 @@
                 }
             });
 
-            // Update Counts (Visual Only, logic uses WIZARD_DATA)
+            // 7. Update Counts & Render
             const countG = document.getElementById('count-groups');
             if (countG) countG.value = WIZARD_DATA.groups.length;
 
-            // Render Step 1
             await hydrateWizardUI();
         }
 
