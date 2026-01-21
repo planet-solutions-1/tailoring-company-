@@ -1154,6 +1154,119 @@
         let WIZARD_MODE = 'create'; // 'create' | 'edit'
         let CURRENT_EDIT_ID = null;
 
+
+        // --- DETAIL VIEW LOGIC ---
+        function openDetail(id) {
+            const g = ALL_GROUPS.find(item => item.id == id);
+            if (!g) return;
+
+            CURRENT_BATCH = g;
+
+            // Populate Header
+            document.getElementById('detail-name').textContent = g.group_name;
+            document.getElementById('detail-type').textContent = g.dress_type;
+            const notes = g.details || g.notes || 'No details specified.';
+            document.getElementById('detail-notes').textContent = notes;
+
+            // Calc Percent
+            const pct = Math.round(g._pct || 0);
+            document.getElementById('detail-percent').textContent = pct + "%";
+            document.getElementById('detail-bar').style.width = pct + "%";
+
+            // Render Stages
+            const tbody = document.getElementById('detail-table');
+            tbody.innerHTML = '';
+
+            if (g.required_stages && Array.isArray(g.required_stages)) {
+                g.required_stages.forEach(s => {
+                    // s: { id, name, type, parentId, target, assigned }
+                    const cur = parseInt(g.completed_stages[s.id]) || 0;
+                    const tgt = parseInt(s.target) || 0;
+                    const p = tgt > 0 ? Math.round((cur / tgt) * 100) : 0;
+
+                    let status = 'Pending';
+                    let statusColor = 'bg-slate-100 text-slate-500';
+                    if (cur >= tgt && tgt > 0) { status = 'Done'; statusColor = 'bg-green-100 text-green-600'; }
+                    else if (cur > 0) { status = 'In Progress'; statusColor = 'bg-blue-100 text-blue-600'; }
+
+                    if (s.type === 'group' || (s.id && s.id.startsWith('P'))) {
+                        // Header Row
+                        tbody.innerHTML += `
+                            <tr class="bg-purple-50/50">
+                                <td class="p-3 font-mono text-xs text-purple-600 font-bold">${s.id}</td>
+                                <td class="p-3 font-bold text-slate-700" colspan="4">${s.name}</td>
+                            </tr>
+                        `;
+                    } else {
+                        // Task Row
+                        tbody.innerHTML += `
+                            <tr class="hover:bg-gray-50 transition group/row">
+                                <td class="p-3 font-mono text-xs text-slate-400">${s.id}</td>
+                                <td class="p-3">
+                                    <div class="font-medium text-slate-700">${s.name}</div>
+                                    <div class="text-[10px] text-slate-400">Target: ${tgt}</div>
+                                </td>
+                                <td class="p-3 text-sm text-slate-600">${s.assigned || '-'}</td>
+                                <td class="p-3 text-center">
+                                    <span class="text-[10px] font-bold px-2 py-1 rounded-full ${statusColor}">${status}</span>
+                                </td>
+                                <td class="p-3">
+                                    <div class="flex items-center gap-2">
+                                        <input type="number" 
+                                            class="clay-input text-xs w-20 py-1" 
+                                            value="${cur}" 
+                                            min="0" max="${tgt}"
+                                            onchange="updateStageProgress('${g.id}', '${s.id}', this.value)">
+                                        <span class="text-xs text-slate-400">/ ${tgt}</span>
+                                    </div>
+                                    <div class="w-full bg-gray-100 h-1.5 mt-1 rounded-full overflow-hidden">
+                                        <div class="bg-green-500 h-full transition-all duration-500" style="width: ${p}%"></div>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                    }
+                });
+            }
+
+            switchTab('detail');
+        }
+
+        async function updateStageProgress(groupId, stageId, value) {
+            const val = parseInt(value) || 0;
+            const g = ALL_GROUPS.find(i => i.id == groupId);
+            if (!g) return;
+
+            // Optimistic Update
+            if (!g.completed_stages) g.completed_stages = {};
+            g.completed_stages[stageId] = val;
+
+            // Optional: Re-render dashboard stats if we leave detail view?
+            // For now, just save.
+
+            try {
+                const payload = {
+                    completed_stages: g.completed_stages,
+                    notes: g.notes
+                };
+
+                // Show saving state?
+
+                const res = await fetchAuth(`${API}/groups/${groupId}/update`, {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    // Update UI success visual?
+                    // Re-calc percent locally so bar updates?
+                    // Simpler: just keep it as is.
+                } else {
+                    alert("Failed to save progress");
+                }
+            } catch (e) { console.error(e); }
+        }
+
         // --- FULL EDIT (RE-WIZARD) ---
         async function editBatchFull() {
             if (!CURRENT_BATCH) return;
