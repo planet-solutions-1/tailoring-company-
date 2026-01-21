@@ -130,7 +130,7 @@ router.get('/config-list', authenticateToken, (req, res) => {
 
 router.get('/groups', authenticateToken, (req, res) => {
     const sql = `
-        SELECT g.*, p.current_stage, p.completed_stages, p.notes
+        SELECT g.*, g.daily_target, p.current_stage, p.completed_stages, p.notes
         FROM production_groups g
         LEFT JOIN production_progress p ON g.id = p.group_id
         WHERE g.status = 'Active'
