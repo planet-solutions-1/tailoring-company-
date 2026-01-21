@@ -163,6 +163,41 @@ router.get('/groups', authenticateToken, (req, res) => {
 
 // === 3. PROGRESS UPDATE ===
 
+// Create New Batch
+router.post('/groups', authenticateToken, (req, res) => {
+    const role = (req.user.role || '').toLowerCase();
+    if (role !== 'company' && role !== 'production_manager') {
+        return res.status(403).json({ error: "Unauthorized" });
+    }
+
+    const { group_name, dress_type, required_stages, daily_target } = req.body;
+
+    if (!group_name || !dress_type) {
+        return res.status(400).json({ error: "Name and Type are required" });
+    }
+
+    const target = parseInt(daily_target) || 0;
+    const stagesJson = JSON.stringify(required_stages || []);
+
+    db.run(`INSERT INTO production_groups (group_name, dress_type, status, required_stages, daily_target) 
+            VALUES (?, ?, 'Active', ?, ?)`,
+        [group_name, dress_type, stagesJson, target],
+        function (err) {
+            if (err) return res.status(500).json({ error: err.message });
+
+            const newId = this.lastID;
+
+            // Initialize Progress
+            db.run("INSERT INTO production_progress (group_id, current_stage, completed_stages) VALUES (?, ?, ?)",
+                [newId, 'Start', '{}'],
+                (err) => {
+                    if (err) console.error("Progress Init Error:", err);
+                    res.json({ success: true, id: newId, message: "Work Created" });
+                }
+            );
+        });
+});
+
 router.post('/groups/:id/update', authenticateToken, (req, res) => {
     const groupId = req.params.id;
     const { completed_stages, notes } = req.body;
