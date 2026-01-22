@@ -345,7 +345,26 @@ router.post('/groups/:id/log-daily', authenticateToken, async (req, res) => {
         sql += " WHERE id = ?";
         params.push(id);
 
-        await query(sql, params);
+        try {
+            await query(sql, params);
+        } catch (dbErr) {
+            // SELF-HEALING: If column missing, fix and retry
+            if (dbErr.message && dbErr.message.includes("Unknown column")) {
+                console.log("Self-Healing: Adding missing columns...");
+                const fixCols = [
+                    "ALTER TABLE production_groups ADD COLUMN daily_history TEXT",
+                    "ALTER TABLE production_groups ADD COLUMN last_reward_date DATE",
+                    "ALTER TABLE production_groups ADD COLUMN points INT DEFAULT 0",
+                    "ALTER TABLE production_groups ADD COLUMN delay_reason TEXT"
+                ];
+                for (const c of fixCols) { try { await query(c); } catch (e) { } }
+
+                // Retry Update
+                await query(sql, params);
+            } else {
+                throw dbErr;
+            }
+        }
 
         res.json({ success: true, awarded, pointsAdded: pointsToAdd, history });
 

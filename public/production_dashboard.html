@@ -1392,10 +1392,10 @@
                                         ${grp.id !== 'unassigned' ? `<span class="text-xs bg-slate-200 px-1 rounded font-mono">${grp.id}</span>` : ''}
                                         ${grp.name}
                                     </span>
-                                    <span class="text-xs font-bold ${gPct >= 100 ? 'text-green-600' : 'text-blue-600'}">${gPct}% Completed</span>
+                                    <span id="grp-text-${grp.id}" class="text-xs font-bold ${gPct >= 100 ? 'text-green-600' : 'text-blue-600'}">${gPct}% Completed</span>
                                 </div>
                                 <div class="w-full h-1 bg-slate-200 mt-1 rounded overflow-hidden">
-                                     <div class="h-full ${gPct >= 100 ? 'bg-green-500' : 'bg-blue-400'}" style="width: ${gPct}%"></div>
+                                     <div id="grp-bar-${grp.id}" class="h-full ${gPct >= 100 ? 'bg-green-500' : 'bg-blue-400'}" style="width: ${gPct}% transition: width 0.5s ease;"></div>
                                 </div>
                             </td>
                         `;
@@ -1709,45 +1709,71 @@
             g.completed_stages[stageId] = val;
 
             try {
-                const payload = {
-                    completed_stages: g.completed_stages,
-                    notes: g.notes
-                };
-
-                const res = await fetchAuth(`${API}/groups/${groupId}/update`, {
+                // 1. Send Update
+                fetchAuth(`${API}/groups/${groupId}/update`, {
                     method: 'POST',
-                    body: JSON.stringify(payload)
-                });
+                    body: JSON.stringify({ completed_stages: g.completed_stages, notes: g.notes })
+                }); // Fire & Forget-ish (we handle UI optimistically)
 
-                if (res.ok) {
-                    // Check Auto-Complete
+                // 2. LIVE DOM UPDATE (Sub-Group Progress)
+                if (g.required_stages && Array.isArray(g.required_stages)) {
+                    // Find the task config to know parentId
+                    const stageConfig = g.required_stages.find(s => s.id === stageId);
+                    if (stageConfig && stageConfig.parentId) {
+                        const parentId = stageConfig.parentId;
+
+                        // Calc Sub-Group Stats
+                        let gTgt = 0;
+                        let gCur = 0;
+                        g.required_stages.filter(s => s.parentId === parentId).forEach(c => {
+                            const ctgt = parseInt(c.target) || 0;
+                            const ccur = g.completed_stages[c.id] || 0;
+                            gTgt += ctgt;
+                            gCur += Math.min(ccur, ctgt);
+                        });
+
+                        const gPct = gTgt > 0 ? Math.round((gCur / gTgt) * 100) : 0;
+
+                        // Update UI Elements
+                        const bar = document.getElementById(`grp-bar-${parentId}`);
+                        const txt = document.getElementById(`grp-text-${parentId}`);
+
+                        if (bar) {
+                            bar.style.width = `${gPct}%`;
+                            bar.className = `h-full ${gPct >= 100 ? 'bg-green-500' : 'bg-blue-400'}`;
+                        }
+                        if (txt) {
+                            txt.textContent = `${gPct}% Completed`;
+                            txt.className = `text-xs font-bold ${gPct >= 100 ? 'text-green-600' : 'text-blue-600'}`;
+                        }
+                    }
+
+                    // 3. Global Stats Update
                     let totalTgt = 0;
                     let totalCur = 0;
+                    g.required_stages.forEach(s => {
+                        if (s.type === 'task' || (s.id && s.id.startsWith('S'))) {
+                            totalTgt += parseInt(s.target) || 0;
+                            totalCur += Math.min((parseInt(g.completed_stages[s.id]) || 0), (parseInt(s.target) || 0));
+                        }
+                    });
+                    const totalPct = totalTgt > 0 ? Math.round((totalCur / totalTgt) * 100) : 0;
 
-                    if (g.required_stages) {
-                        g.required_stages.forEach(s => {
-                            if (s.type === 'task' || s.id.startsWith('S')) {
-                                totalTgt += parseInt(s.target) || 0;
-                                totalCur += parseInt(g.completed_stages[s.id]) || 0;
-                            }
-                        });
-                    }
+                    // Update Main Card Stats
+                    const mainPct = document.getElementById('detail-percent');
+                    if (mainPct) mainPct.textContent = `${totalPct}%`;
+                    const mainBar = document.getElementById('detail-progress-bar');
+                    if (mainBar) mainBar.style.width = `${totalPct}%`;
 
-                    // Logic: If totalCur >= totalTgt, set Completed
+                    // Check Auto-Complete
                     if (totalTgt > 0 && totalCur >= totalTgt && g.status !== 'Completed') {
                         updateBatchStatus(g.id, 'Completed');
-                    } else {
-                        // Refresh to show progress bar update? 
-                        // openDetail(g.id); // Optional, might disrupt input focus?
-                        // Better to just update the bar via DOM if possible, but full refresh is safer for sync
-                        // Let's NOT refresh fully to keep focus, unless completed.
                     }
-
-                } else {
-                    alert("Failed to save progress");
                 }
+
             } catch (e) { console.error(e); }
         }
+
 
         // --- FULL EDIT (RE-WIZARD) ---
         async function editBatchFull() {
