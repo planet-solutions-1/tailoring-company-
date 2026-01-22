@@ -225,7 +225,7 @@
     </nav>
 
     <main class="max-w-[1400px] mx-auto p-4 grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <aside class="col-span-1 lg:col-span-2 space-y-4">
+        <aside id="sidebar-panel" class="col-span-1 lg:col-span-2 space-y-4">
             <div class="tech-card p-4 space-y-2">
                 <button onclick="switchTab('active')" id="nav-active"
                     class="tech-btn tech-btn-primary w-full p-3 text-left flex items-center gap-3">
@@ -247,7 +247,7 @@
             </div>
         </aside>
 
-        <section class="col-span-1 lg:col-span-9">
+        <section id="main-content" class="col-span-1 lg:col-span-9">
 
             <!-- ACTIVE BATCHES GRID -->
             <div id="view-active" class="animate-fade-in">
@@ -602,6 +602,21 @@
         function switchTab(id) {
             ['active', 'config', 'detail'].forEach(t => document.getElementById(`view-${t}`).classList.add('hidden'));
             document.getElementById(`view-${id}`).classList.remove('hidden');
+
+            // Sidebar Toggle Logic
+            const sidebar = document.getElementById('sidebar-panel');
+            const main = document.getElementById('main-content');
+
+            if (id === 'detail') {
+                sidebar.classList.add('hidden');
+                main.classList.remove('lg:col-span-9');
+                main.classList.add('lg:col-span-12');
+            } else {
+                sidebar.classList.remove('hidden');
+                main.classList.add('lg:col-span-9');
+                main.classList.remove('lg:col-span-12');
+            }
+
             if (id === 'active') loadBatches();
         }
 
@@ -1432,12 +1447,19 @@
         // --- NEW HELPER FUNCTIONS ---
         async function updateBatchStatus(id, status) {
             try {
-                let payload = { status: status };
+                // If user cancels delay reason, revert UI
+                let delayReason = null;
                 if (status === 'Delayed') {
-                    const reason = prompt("Reason for delay?");
-                    if (!reason) return;
-                    payload.delay_reason = reason;
+                    delayReason = prompt("Reason for delay?");
+                    if (!delayReason) {
+                        // Revert by re-opening detail (re-renders dropdown with old status)
+                        openDetail(id);
+                        return;
+                    }
                 }
+
+                let payload = { status: status };
+                if (delayReason) payload.delay_reason = delayReason;
 
                 const res = await fetchAuth(`${API}/groups/${id}/edit`, {
                     method: 'POST', body: JSON.stringify(payload)
@@ -1445,6 +1467,15 @@
 
                 if (res.ok) {
                     showToast(`Status updated to ${status}`);
+
+                    // Update Local Data
+                    const g = ALL_GROUPS.find(i => i.id == id);
+                    if (g) {
+                        g.status = status;
+                        if (delayReason) g.delay_reason = delayReason;
+                        if (status !== 'Delayed') delete g.delay_reason;
+                    }
+
                     loadBatches();
                     if (CURRENT_BATCH && CURRENT_BATCH.id == id) openDetail(id); // Refresh detail
                 }
@@ -1455,12 +1486,20 @@
             const g = ALL_GROUPS.find(i => i.id == id);
             if (!g) return;
             if (!g.completed_stages) g.completed_stages = {};
-            g.completed_stages['manual_override'] = parseInt(val) || 0;
+
+            const numVal = parseInt(val) || 0;
+            g.completed_stages['manual_override'] = numVal;
 
             await fetchAuth(`${API}/groups/${id}/update`, {
                 method: 'POST',
                 body: JSON.stringify({ completed_stages: g.completed_stages })
             });
+
+            // Auto-Complete Check
+            const target = g.quantity || 100;
+            if (numVal >= target && g.status !== 'Completed') {
+                updateBatchStatus(id, 'Completed');
+            }
         }
 
 
@@ -1473,16 +1512,11 @@
             if (!g.completed_stages) g.completed_stages = {};
             g.completed_stages[stageId] = val;
 
-            // Optional: Re-render dashboard stats if we leave detail view?
-            // For now, just save.
-
             try {
                 const payload = {
                     completed_stages: g.completed_stages,
                     notes: g.notes
                 };
-
-                // Show saving state?
 
                 const res = await fetchAuth(`${API}/groups/${groupId}/update`, {
                     method: 'POST',
@@ -1490,9 +1524,29 @@
                 });
 
                 if (res.ok) {
-                    // Update UI success visual?
-                    // Re-calc percent locally so bar updates?
-                    // Simpler: just keep it as is.
+                    // Check Auto-Complete
+                    let totalTgt = 0;
+                    let totalCur = 0;
+
+                    if (g.required_stages) {
+                        g.required_stages.forEach(s => {
+                            if (s.type === 'task' || s.id.startsWith('S')) {
+                                totalTgt += parseInt(s.target) || 0;
+                                totalCur += parseInt(g.completed_stages[s.id]) || 0;
+                            }
+                        });
+                    }
+
+                    // Logic: If totalCur >= totalTgt, set Completed
+                    if (totalTgt > 0 && totalCur >= totalTgt && g.status !== 'Completed') {
+                        updateBatchStatus(g.id, 'Completed');
+                    } else {
+                        // Refresh to show progress bar update? 
+                        // openDetail(g.id); // Optional, might disrupt input focus?
+                        // Better to just update the bar via DOM if possible, but full refresh is safer for sync
+                        // Let's NOT refresh fully to keep focus, unless completed.
+                    }
+
                 } else {
                     alert("Failed to save progress");
                 }
