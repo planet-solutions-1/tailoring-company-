@@ -1420,7 +1420,7 @@
                                 </td>
                                 <td class="p-3 font-medium text-slate-700 text-sm">${s.name}</td>
                                 <td class="p-3 text-sm text-gray-500">${s.assigned || '-'}</td>
-                                <td class="p-3 text-center"><span class="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs font-bold">${pct}%</span></td>
+                                <td class="p-3 text-center"><span id="stage-status-badge-${s.id}" class="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs font-bold">${pct}%</span></td>
                                 <td class="p-3 w-64">
                                     <div class="flex flex-col gap-2">
                                         <div class="flex items-center gap-2">
@@ -1717,15 +1717,31 @@
 
                 // 2. LIVE DOM UPDATE (Sub-Group Progress)
                 if (g.required_stages && Array.isArray(g.required_stages)) {
-                    // Find the task config to know parentId
+                    // A. Update Individual Stage Badge
                     const stageConfig = g.required_stages.find(s => s.id === stageId);
-                    if (stageConfig && stageConfig.parentId) {
-                        const parentId = stageConfig.parentId;
+                    if (stageConfig) {
+                        const tgt = parseInt(stageConfig.target) || 0;
+                        const pct = tgt > 0 ? Math.round((val / tgt) * 100) : 0;
+                        const badge = document.getElementById(`stage-status-badge-${stageId}`);
+                        if (badge) {
+                            badge.textContent = `${pct}%`;
+                            // Optional: Toggle color
+                            if (pct >= 100) {
+                                badge.classList.remove('bg-gray-100', 'text-gray-600');
+                                badge.classList.add('bg-green-100', 'text-green-600');
+                            } else {
+                                badge.classList.remove('bg-green-100', 'text-green-600');
+                                badge.classList.add('bg-gray-100', 'text-gray-600');
+                            }
+                        }
+
+                        // B. Update Sub-Group Progress
+                        const parentId = stageConfig.parentId || 'unassigned'; // Fallback
 
                         // Calc Sub-Group Stats
                         let gTgt = 0;
                         let gCur = 0;
-                        g.required_stages.filter(s => s.parentId === parentId).forEach(c => {
+                        g.required_stages.filter(s => (s.parentId || 'unassigned') === parentId).forEach(c => {
                             const ctgt = parseInt(c.target) || 0;
                             const ccur = g.completed_stages[c.id] || 0;
                             gTgt += ctgt;
