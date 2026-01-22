@@ -248,6 +248,35 @@ router.post('/groups/:id/edit', authenticateToken, async (req, res) => {
     }
 });
 
+router.post('/groups/:id/complete', authenticateToken, async (req, res) => {
+    try {
+        await query("UPDATE production_groups SET status = 'Completed', updated_at = CURRENT_TIMESTAMP WHERE id = ?", [req.params.id]);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+router.post('/groups/:id/reward', authenticateToken, async (req, res) => {
+    try {
+        const points = parseInt(req.body.points) || 10;
+        await query("UPDATE production_groups SET points = points + ? WHERE id = ?", [points, req.params.id]);
+        res.json({ success: true, message: "Points Awarded" });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+router.post('/groups/:id/delay', authenticateToken, async (req, res) => {
+    try {
+        const { reason } = req.body;
+        await query("UPDATE production_groups SET delay_reason = ? WHERE id = ?", [reason || 'Unknown', req.params.id]);
+        res.json({ success: true, message: "Delay Logged" });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 router.delete('/groups/:id', authenticateToken, async (req, res) => {
     try {
         await query("DELETE FROM production_progress WHERE group_id = ?", [req.params.id]);
