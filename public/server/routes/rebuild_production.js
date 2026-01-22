@@ -294,8 +294,27 @@ router.post('/groups/:id/log-daily', authenticateToken, async (req, res) => {
         const { date, achieved, target, notes } = req.body;
         const id = req.params.id;
 
-        // Get current data
-        const rows = await query("SELECT daily_history, last_reward_date, points FROM production_groups WHERE id = ?", [id]);
+        // Get current data (Self-Healing)
+        let rows;
+        try {
+            rows = await query("SELECT daily_history, last_reward_date, points FROM production_groups WHERE id = ?", [id]);
+        } catch (e) {
+            if (e.message && e.message.includes("Unknown column")) {
+                console.log("Self-Healing (Select): Adding missing columns...");
+                const fixCols = [
+                    "ALTER TABLE production_groups ADD COLUMN daily_history TEXT",
+                    "ALTER TABLE production_groups ADD COLUMN last_reward_date DATE",
+                    "ALTER TABLE production_groups ADD COLUMN points INT DEFAULT 0",
+                    "ALTER TABLE production_groups ADD COLUMN delay_reason TEXT"
+                ];
+                for (const c of fixCols) { try { await query(c); } catch (ex) { } }
+                // Retry
+                rows = await query("SELECT daily_history, last_reward_date, points FROM production_groups WHERE id = ?", [id]);
+            } else {
+                throw e;
+            }
+        }
+
         if (!rows || rows.length === 0) return res.status(404).json({ error: "Batch not found" });
 
         const g = rows[0] || rows; // Handle array/obj
