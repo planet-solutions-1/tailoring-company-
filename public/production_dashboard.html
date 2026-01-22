@@ -934,7 +934,7 @@
                                     </div>
                                 </div>
                                 <div class="flex justify-between mt-1">
-                                     <div class="text-[10px] text-slate-400 font-bold uppercase">Daily Target: ${dailyTarget > 0 ? dailyTarget : 'N/A'}</div>
+                                     <div class="text-[10px] text-slate-400 font-bold uppercase">Daily Target: ${dailyTarget !== null && dailyTarget !== undefined ? dailyTarget : 'N/A'}</div>
                                      <div class="text-[10px] text-slate-400 font-bold uppercase">Total: ${g._vol}</div>
                                 </div>
                             </div>
@@ -1400,7 +1400,8 @@
             // 5. Hydrate Inputs
             document.getElementById('wiz-name').value = CURRENT_BATCH.group_name;
             document.getElementById('wiz-type').value = CURRENT_BATCH.dress_type;
-            document.getElementById('wiz-target').value = CURRENT_BATCH.daily_target || '';
+            const tVal = CURRENT_BATCH.daily_target;
+            document.getElementById('wiz-target').value = (tVal !== undefined && tVal !== null) ? tVal : 0;
 
             // 6. Re-construct WIZARD_DATA from required_stages
             WIZARD_DATA = { groups: [], tasks: [] };
