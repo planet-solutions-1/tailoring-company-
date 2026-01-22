@@ -153,7 +153,9 @@ router.get('/groups', authenticateToken, async (req, res) => {
                 last_updated: p.last_updated || g.created_at,
 
                 // Parse own JSON
-                required_stages: parse(g.required_stages, [])
+                required_stages: parse(g.required_stages, []),
+                daily_history: parse(g.daily_history, []),
+                last_reward_date: g.last_reward_date || null
             };
         });
 
@@ -287,6 +289,69 @@ router.delete('/groups/:id', authenticateToken, async (req, res) => {
     }
 });
 
+router.post('/groups/:id/log-daily', authenticateToken, async (req, res) => {
+    try {
+        const { date, achieved, target, notes } = req.body;
+        const id = req.params.id;
+
+        // Get current data
+        const rows = await query("SELECT daily_history, last_reward_date, points FROM production_groups WHERE id = ?", [id]);
+        if (!rows || rows.length === 0) return res.status(404).json({ error: "Batch not found" });
+
+        const g = rows[0] || rows; // Handle array/obj
+        let history = [];
+        try { history = JSON.parse(g.daily_history || '[]'); } catch (e) { }
+
+        const newEntry = {
+            date: date || new Date().toISOString().split('T')[0],
+            achieved: parseInt(achieved) || 0,
+            target: parseInt(target) || 0,
+            notes: notes || '',
+            timestamp: new Date().toISOString()
+        };
+
+        // Append (or replace if same date? Let's append to keep full log)
+        // User said "history store", usually means log.
+        // But preventing dupes for same day might be nice. Let's just append for now.
+        history.push(newEntry);
+
+        // Gamification Logic
+        let awarded = false;
+        let pointsToAdd = 0;
+        const today = new Date().toISOString().split('T')[0];
+        const lastReward = g.last_reward_date ? new Date(g.last_reward_date).toISOString().split('T')[0] : null;
+
+        // If target met AND not rewarded today
+        if (newEntry.achieved >= newEntry.target && newEntry.target > 0) {
+            if (lastReward !== today) {
+                awarded = true;
+                pointsToAdd = 10; // Fixed reward?
+            }
+        }
+
+        let sql = "UPDATE production_groups SET daily_history = ?";
+        let params = [JSON.stringify(history)];
+
+        if (awarded) {
+            sql += ", points = points + ?, last_reward_date = ?";
+            params.push(pointsToAdd, today);
+        } else {
+            // If manual "Re-Log" but already rewarded, we don't reward again.
+        }
+
+        sql += " WHERE id = ?";
+        params.push(id);
+
+        await query(sql, params);
+
+        res.json({ success: true, awarded, pointsAdded: pointsToAdd, history });
+
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+
 // === 3. FIX ROUTE (User Requested "Rebuild/Fix Issues") ===
 router.post('/admin/fix-schema-force', async (req, res) => {
     try {
@@ -297,7 +362,10 @@ router.post('/admin/fix-schema-force', async (req, res) => {
             "ALTER TABLE production_groups ADD COLUMN quantity INT DEFAULT 0",
             "ALTER TABLE production_groups ADD COLUMN notes TEXT",
             "ALTER TABLE production_groups ADD COLUMN points INT DEFAULT 0",
-            "ALTER TABLE production_groups ADD COLUMN delay_reason TEXT"
+            "ALTER TABLE production_groups ADD COLUMN points INT DEFAULT 0",
+            "ALTER TABLE production_groups ADD COLUMN delay_reason TEXT",
+            "ALTER TABLE production_groups ADD COLUMN daily_history TEXT",
+            "ALTER TABLE production_groups ADD COLUMN last_reward_date DATE"
         ];
 
         let log = [];
