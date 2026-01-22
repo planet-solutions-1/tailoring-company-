@@ -107,7 +107,8 @@ if (process.env.RAILWAY_ENVIRONMENT || process.env.NODE_ENV === 'production') {
                 details TEXT,
                 status VARCHAR(50) DEFAULT 'Active',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                daily_target INT DEFAULT 0
             )`);
             await promisePool.execute(`CREATE TABLE IF NOT EXISTS production_progress (
                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -269,7 +270,11 @@ if (process.env.RAILWAY_ENVIRONMENT || process.env.NODE_ENV === 'production') {
             try { await promisePool.execute("ALTER TABLE schools ADD COLUMN is_locked BOOLEAN DEFAULT 0"); } catch (e) { }
             try { await promisePool.execute("ALTER TABLE schools ADD COLUMN address TEXT"); } catch (e) { }
             try { await promisePool.execute("ALTER TABLE schools ADD COLUMN phone VARCHAR(20)"); } catch (e) { }
+            try { await promisePool.execute("ALTER TABLE schools ADD COLUMN phone VARCHAR(20)"); } catch (e) { }
             try { await promisePool.execute("ALTER TABLE schools ADD COLUMN email VARCHAR(100)"); } catch (e) { }
+
+            // PRODUCTION MIGRATION
+            try { await promisePool.execute("ALTER TABLE production_groups ADD COLUMN daily_target INT DEFAULT 0"); } catch (e) { }
 
             console.log("MySQL Tables Initialized.");
 
@@ -462,7 +467,8 @@ function initSqliteDb(database) {
             details TEXT,
             status TEXT DEFAULT 'Active',
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+            daily_target INTEGER DEFAULT 0
         );
         CREATE TABLE IF NOT EXISTS production_progress (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -510,7 +516,11 @@ function initSqliteDb(database) {
             database.run("ALTER TABLE schools ADD COLUMN is_locked INTEGER DEFAULT 0", () => { });
             database.run("ALTER TABLE schools ADD COLUMN address TEXT", () => { });
             database.run("ALTER TABLE schools ADD COLUMN phone TEXT", () => { });
+            database.run("ALTER TABLE schools ADD COLUMN phone TEXT", () => { });
             database.run("ALTER TABLE schools ADD COLUMN email TEXT", () => { });
+
+            // PRODUCTION MIGRATION
+            database.run("ALTER TABLE production_groups ADD COLUMN daily_target INTEGER DEFAULT 0", () => { });
 
             database.get("SELECT count(*) as count FROM users", (err, row) => {
                 if (row && row.count == 0) {
