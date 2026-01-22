@@ -320,6 +320,7 @@
                                 </button>
 
                                 <div id="detail-status-container" class="ml-2"></div>
+                                <div id="detail-target-container" class="ml-2"></div>
 
                                 <button onclick="openEndorseModal()"
                                     class="text-xs bg-gradient-to-r from-yellow-400 to-orange-500 hover:scale-105 text-white shadow-lg shadow-yellow-500/30 px-4 py-1.5 rounded-lg flex items-center gap-1 transition font-bold ml-2 admin-only ring-2 ring-white">
@@ -1437,6 +1438,20 @@
                     Object.values(tree).forEach(grp => renderGroup(grp));
                 }
 
+                // Daily Target Injection
+                const targetContainer = document.getElementById('detail-target-container');
+                if (targetContainer) {
+                    targetContainer.innerHTML = `
+                        <div class="flex items-center gap-2 bg-slate-100/50 rounded-lg px-2 border border-slate-200">
+                             <span class="text-[10px] uppercase font-bold text-slate-400">Target</span>
+                             <input type="number" 
+                                value="${g.daily_target || 0}" 
+                                onchange="updateDailyTarget('${g.id}', this.value)"
+                                class="w-16 bg-transparent text-sm font-bold text-slate-700 focus:outline-none text-center py-1.5" min="0">
+                        </div>
+                    `;
+                }
+
                 switchTab('detail');
             } catch (err) {
                 console.error("Detail View Error:", err);
@@ -1445,6 +1460,22 @@
         };
 
         // --- NEW HELPER FUNCTIONS ---
+        async function updateDailyTarget(id, val) {
+            try {
+                const target = parseInt(val) || 0;
+                const res = await fetchAuth(`${API}/groups/${id}/edit`, {
+                    method: 'POST', body: JSON.stringify({ daily_target: target })
+                });
+
+                if (res.ok) {
+                    showToast(`Daily Target updated to ${target}`);
+                    const g = ALL_GROUPS.find(i => i.id == id);
+                    if (g) g.daily_target = target;
+                    // Note: No need to reload full batches if we just update local value unless we want leaderboard recalc
+                }
+            } catch (e) { console.error(e); }
+        }
+
         async function updateBatchStatus(id, status) {
             try {
                 // If user cancels delay reason, revert UI
