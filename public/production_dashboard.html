@@ -1257,10 +1257,14 @@
 
 
         // --- DETAIL VIEW LOGIC ---
-        function openDetail(id) {
+        window.openDetail = function (id) {
             try {
+                // Ensure ID comparison is loose (string vs number)
                 const g = ALL_GROUPS.find(item => item.id == id);
-                if (!g) return;
+                if (!g) {
+                    console.error("Batch not found for ID:", id);
+                    return;
+                }
 
                 CURRENT_BATCH = g;
 
@@ -1292,7 +1296,7 @@
                 tbody.innerHTML = '';
 
                 // MANUAL MODE CHECK
-                if (!g.required_stages || Array.isArray(g.required_stages) && g.required_stages.length === 0) {
+                if (!g.required_stages || (Array.isArray(g.required_stages) && g.required_stages.length === 0)) {
                     // Manual Progress Mode
                     const validQty = g.quantity || 100; // Default if 0?
                     const currentManual = (g.completed_stages && g.completed_stages['manual_override']) || 0;
@@ -1320,13 +1324,13 @@
                         </tr>
                     `;
                 }
-                if (g.required_stages && Array.isArray(g.required_stages)) {
-                    // Standard Groups Rendering (Existing Logic)
+                else if (g.required_stages && Array.isArray(g.required_stages)) {
+                    // Standard Groups Rendering
                     const groups = [];
                     const tasks = [];
                     g.required_stages.forEach(item => {
                         if (item.type === 'group' || (item.id && (item.id.startsWith('P') || item.id === 'unassigned'))) {
-                            if (item.id !== 'unassigned') groups.push(item); // Only real groups
+                            if (item.id !== 'unassigned') groups.push(item);
                         } else {
                             tasks.push(item);
                         }
@@ -1354,9 +1358,12 @@
                     const renderGroup = (grp) => {
                         let gTgt = 0;
                         let gCur = 0;
+                        // Correctly use safe access for completed_stages
+                        const stagesRef = g.completed_stages || {};
+
                         grp.children.forEach(c => {
                             const ctgt = parseInt(c.target) || 0;
-                            const ccur = g.completed_stages[c.id] || 0;
+                            const ccur = stagesRef[c.id] || 0;
                             gTgt += ctgt;
                             gCur += Math.min(ccur, ctgt);
                         });
@@ -1383,7 +1390,7 @@
 
                         // Child Rows
                         grp.children.forEach(s => {
-                            const current = g.completed_stages[s.id] || 0;
+                            const current = stagesRef[s.id] || 0;
                             const tgt = s.target || 0;
                             const pct = tgt > 0 ? Math.round((current / tgt) * 100) : 0;
 
@@ -1426,7 +1433,7 @@
                 console.error("Detail View Error:", err);
                 alert("Error opening detail view. Check console.");
             }
-        }
+        };
 
         // --- NEW HELPER FUNCTIONS ---
         async function updateBatchStatus(id, status) {
