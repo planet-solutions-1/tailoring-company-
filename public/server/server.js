@@ -377,7 +377,7 @@ app.post('/api/sync', authenticateToken, async (req, res) => {
 const authRoutes = require('./routes/auth_v2');
 const dataRoutes = require('./routes/data');
 const publicRoutes = require('./routes/public');
-const productionRoutes = require('./routes/production');
+const productionRoutes = require('./routes/rebuild_production');
 
 console.log("Mounting /api/auth, /api/data, /api/public, and /api/production routes...");
 app.use('/api/auth', authRoutes);
