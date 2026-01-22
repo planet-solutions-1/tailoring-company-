@@ -593,44 +593,48 @@
                 document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
             }
 
-            async function repairSystem() {
-                if (!confirm("Attempt to repair database schema? This will auto-fix missing columns.")) return;
-                const res = await fetchAuth(`${API}/admin/fix-schema-force`, { method: 'POST' });
-                const data = await res.json();
-                alert("Repair Result:\n" + (data.log ? data.log.join('\n') : JSON.stringify(data)));
-                window.location.reload();
-            }
+            loadBatches();
+            loadDressTypeOptions();
+        };
 
-            function switchTab(id) {
-                ['active', 'config', 'detail'].forEach(t => document.getElementById(`view-${t}`).classList.add('hidden'));
-                document.getElementById(`view-${id}`).classList.remove('hidden');
-                if (id === 'active') loadBatches();
-            }
+        async function repairSystem() {
+            if (!confirm("Attempt to repair database schema? This will auto-fix missing columns.")) return;
+            const res = await fetchAuth(`${API}/admin/fix-schema-force`, { method: 'POST' });
+            const data = await res.json();
+            alert("Repair Result:\n" + (data.log ? data.log.join('\n') : JSON.stringify(data)));
+            window.location.reload();
+        }
 
-            async function fetchAuth(url, opts = {}) {
-                const token = sessionStorage.getItem('token');
-                const h = { ...opts.headers, 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
-                const res = await fetch(url, { ...opts, headers: h });
-                return res;
-            }
+        function switchTab(id) {
+            ['active', 'config', 'detail'].forEach(t => document.getElementById(`view-${t}`).classList.add('hidden'));
+            document.getElementById(`view-${id}`).classList.remove('hidden');
+            if (id === 'active') loadBatches();
+        }
 
-            async function loadDressTypeOptions() {
-                const res = await fetchAuth(`${API}/config-list`);
-                let types = [];
-                if (res.ok) types = await res.json();
-                if (types.length === 0) types = ["Shirt", "Pant", "Suit"];
+        async function fetchAuth(url, opts = {}) {
+            const token = sessionStorage.getItem('token');
+            const h = { ...opts.headers, 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
+            const res = await fetch(url, { ...opts, headers: h });
+            return res;
+        }
 
-                const optionsHtml = types.map(t => `<option value="${t}">${t}</option>`).join('');
+        async function loadDressTypeOptions() {
+            const res = await fetchAuth(`${API}/config-list`);
+            let types = [];
+            if (res.ok) types = await res.json();
+            if (types.length === 0) types = ["Shirt", "Pant", "Suit"];
 
-                ['wiz-type', 'config-dress-type'].forEach(id => {
-                    const el = document.getElementById(id);
-                    if (el) el.innerHTML = optionsHtml;
-                });
-            }
+            const optionsHtml = types.map(t => `<option value="${t}">${t}</option>`).join('');
 
-            function showRepairButton() {
-                const container = document.getElementById('batches-grid');
-                container.innerHTML = `
+            ['wiz-type', 'config-dress-type'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.innerHTML = optionsHtml;
+            });
+        }
+
+        function showRepairButton() {
+            const container = document.getElementById('batches-grid');
+            container.innerHTML = `
                 <div class="col-span-full py-12 text-center">
                     <div class="inline-block p-4 bg-red-50 rounded-xl border border-red-100 mb-4">
                         <svg class="w-12 h-12 text-red-500 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
@@ -642,93 +646,93 @@
                     </div>
                 </div>
             `;
-            }
+        }
 
-            // --- BATCHES (Dashboard Grid) ---
-            async function loadBatches() {
-                try {
-                    const res = await fetchAuth(`${API}/groups`);
-                    if (!res.ok) throw new Error("Server Error");
-                    ALL_GROUPS = await res.json();
-                    renderDashboard();
-                } catch (e) {
-                    console.error("Load Error", e);
-                    showRepairButton();
-                }
-            }
-
-            let FILTER_QUERY = '';
-            let FILTER_STATUS = 'all'; // all, in-progress, completed
-
-            function setFilterStatus(status) {
-                FILTER_STATUS = status;
+        // --- BATCHES (Dashboard Grid) ---
+        async function loadBatches() {
+            try {
+                const res = await fetchAuth(`${API}/groups`);
+                if (!res.ok) throw new Error("Server Error");
+                ALL_GROUPS = await res.json();
                 renderDashboard();
+            } catch (e) {
+                console.error("Load Error", e);
+                showRepairButton();
             }
+        }
 
-            function renderDashboard() {
-                const grid = document.getElementById('batches-grid');
-                const hudContainer = document.getElementById('hud-container');
+        let FILTER_QUERY = '';
+        let FILTER_STATUS = 'all'; // all, in-progress, completed
 
-                // 1. Calculate Stats & Global Data
-                let totalVolume = 0;
-                let totalProgressSum = 0;
-                let activeCount = ALL_GROUPS.length;
-                let leaderboard = [];
+        function setFilterStatus(status) {
+            FILTER_STATUS = status;
+            renderDashboard();
+        }
 
-                // 2. Filter & Map Data
-                const filtered = ALL_GROUPS.filter(g => {
-                    // Calculate Pct for this group
-                    let t = 0, c = 0;
-                    if (Array.isArray(g.required_stages)) {
-                        g.required_stages.forEach(s => {
-                            if (s.type === 'task' || (s.id && s.id.startsWith('S'))) {
-                                const tgt = parseInt(s.target) || 0;
-                                const cur = parseInt(g.completed_stages[s.id]) || 0;
-                                t += tgt;
-                                c += Math.min(cur, tgt);
-                            }
-                        });
-                    }
-                    const pct = t > 0 ? (c / t) * 100 : 0;
+        function renderDashboard() {
+            const grid = document.getElementById('batches-grid');
+            const hudContainer = document.getElementById('hud-container');
 
-                    // Systematic Metrics
-                    const dailyTarget = g.daily_target || 0;
-                    const dailyProgressPct = dailyTarget > 0 ? (c / dailyTarget) * 100 : 0; // Simplified: Total vs Daily Target
+            // 1. Calculate Stats & Global Data
+            let totalVolume = 0;
+            let totalProgressSum = 0;
+            let activeCount = ALL_GROUPS.length;
+            let leaderboard = [];
 
-                    g._pct = pct;
-                    g._vol = t;
-                    g._dailyPct = dailyProgressPct;
-                    g._completedItems = c;
+            // 2. Filter & Map Data
+            const filtered = ALL_GROUPS.filter(g => {
+                // Calculate Pct for this group
+                let t = 0, c = 0;
+                if (Array.isArray(g.required_stages)) {
+                    g.required_stages.forEach(s => {
+                        if (s.type === 'task' || (s.id && s.id.startsWith('S'))) {
+                            const tgt = parseInt(s.target) || 0;
+                            const cur = parseInt(g.completed_stages[s.id]) || 0;
+                            t += tgt;
+                            c += Math.min(cur, tgt);
+                        }
+                    });
+                }
+                const pct = t > 0 ? (c / t) * 100 : 0;
 
-                    // Push to Leaderboard Candidate List (if active)
-                    if (pct < 100) leaderboard.push(g);
+                // Systematic Metrics
+                const dailyTarget = g.daily_target || 0;
+                const dailyProgressPct = dailyTarget > 0 ? (c / dailyTarget) * 100 : 0; // Simplified: Total vs Daily Target
 
-                    // Accumulate Globals
-                    totalVolume += t;
-                    totalProgressSum += pct;
+                g._pct = pct;
+                g._vol = t;
+                g._dailyPct = dailyProgressPct;
+                g._completedItems = c;
 
-                    // Filtering Matches
-                    const matchesText = g.group_name.toLowerCase().includes(FILTER_QUERY.toLowerCase()) ||
-                        g.dress_type.toLowerCase().includes(FILTER_QUERY.toLowerCase());
+                // Push to Leaderboard Candidate List (if active)
+                if (pct < 100) leaderboard.push(g);
 
-                    let matchesStatus = true;
-                    if (FILTER_STATUS === 'completed') matchesStatus = pct >= 100;
-                    if (FILTER_STATUS === 'in-progress') matchesStatus = pct < 100 && pct > 0;
-                    if (FILTER_STATUS === 'not-started') matchesStatus = pct === 0;
-                    if (FILTER_STATUS === 'delayed') matchesStatus = !!g.delay_reason;
+                // Accumulate Globals
+                totalVolume += t;
+                totalProgressSum += pct;
 
-                    return matchesText && matchesStatus;
-                });
+                // Filtering Matches
+                const matchesText = g.group_name.toLowerCase().includes(FILTER_QUERY.toLowerCase()) ||
+                    g.dress_type.toLowerCase().includes(FILTER_QUERY.toLowerCase());
 
-                // Sort Leaderboard: High Points > High Daily Progress
-                leaderboard.sort((a, b) => (b.points || 0) - (a.points || 0) || b._dailyPct - a._dailyPct);
-                const top3 = leaderboard.slice(0, 3);
+                let matchesStatus = true;
+                if (FILTER_STATUS === 'completed') matchesStatus = pct >= 100;
+                if (FILTER_STATUS === 'in-progress') matchesStatus = pct < 100 && pct > 0;
+                if (FILTER_STATUS === 'not-started') matchesStatus = pct === 0;
+                if (FILTER_STATUS === 'delayed') matchesStatus = !!g.delay_reason;
 
-                const globalAvg = activeCount > 0 ? Math.round(totalProgressSum / activeCount) : 0;
+                return matchesText && matchesStatus;
+            });
 
-                // 3. Render HUD (4 Cols)
-                if (hudContainer) {
-                    hudContainer.innerHTML = `
+            // Sort Leaderboard: High Points > High Daily Progress
+            leaderboard.sort((a, b) => (b.points || 0) - (a.points || 0) || b._dailyPct - a._dailyPct);
+            const top3 = leaderboard.slice(0, 3);
+
+            const globalAvg = activeCount > 0 ? Math.round(totalProgressSum / activeCount) : 0;
+
+            // 3. Render HUD (4 Cols)
+            if (hudContainer) {
+                hudContainer.innerHTML = `
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
                         
                         <!-- Col 1: Active Batches -->
@@ -807,69 +811,69 @@
                         </div>
                     </div>
                 `;
-                }
+            }
 
-                // 4. Render Grid
-                grid.innerHTML = '';
+            // 4. Render Grid
+            grid.innerHTML = '';
 
-                if (filtered.length === 0) {
-                    grid.innerHTML = `
+            if (filtered.length === 0) {
+                grid.innerHTML = `
                     <div class="col-span-full py-12 text-center text-gray-400">
                         <svg class="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>    
                         <p class="text-lg font-medium">No batches found</p>
                     </div>
                 `;
-                    return;
+                return;
+            }
+
+            filtered.forEach(g => {
+                const pct = Math.round(g._pct);
+                const points = g.points || 0;
+                const isDelayed = !!g.delay_reason;
+                const isGold = points >= 50;
+                const dailyTarget = g.daily_target || 0;
+
+                // Status Color Logic
+                let barColor = 'bg-blue-500';
+                let glowColor = 'shadow-blue-500/30';
+                let statusText = 'In Progress';
+                let statusClass = 'text-blue-600';
+                let cardBorder = 'border-transparent';
+                let bgEffect = '';
+
+                if (isDelayed) {
+                    barColor = 'bg-red-500';
+                    glowColor = 'shadow-red-500/30';
+                    statusText = 'Delayed';
+                    statusClass = 'text-red-600';
+                    cardBorder = 'border-l-4 border-red-500 shadow-red-100';
+                } else if (pct >= 100) {
+                    barColor = 'bg-green-500';
+                    glowColor = 'shadow-green-500/30';
+                    statusText = 'Completed';
+                    statusClass = 'text-green-600';
+                } else if (pct === 0) {
+                    barColor = 'bg-slate-300';
+                    glowColor = 'shadow-none';
+                    statusText = 'Not Started';
                 }
 
-                filtered.forEach(g => {
-                    const pct = Math.round(g._pct);
-                    const points = g.points || 0;
-                    const isDelayed = !!g.delay_reason;
-                    const isGold = points >= 50;
-                    const dailyTarget = g.daily_target || 0;
+                if (isGold) {
+                    cardBorder = 'border-2 border-yellow-400 shadow-yellow-100';
+                    bgEffect = 'bg-yellow-50/30';
+                }
 
-                    // Status Color Logic
-                    let barColor = 'bg-blue-500';
-                    let glowColor = 'shadow-blue-500/30';
-                    let statusText = 'In Progress';
-                    let statusClass = 'text-blue-600';
-                    let cardBorder = 'border-transparent';
-                    let bgEffect = '';
+                // Badges Logic
+                let statusBadge = '';
+                const completedCount = g._completedItems;
 
-                    if (isDelayed) {
-                        barColor = 'bg-red-500';
-                        glowColor = 'shadow-red-500/30';
-                        statusText = 'Delayed';
-                        statusClass = 'text-red-600';
-                        cardBorder = 'border-l-4 border-red-500 shadow-red-100';
-                    } else if (pct >= 100) {
-                        barColor = 'bg-green-500';
-                        glowColor = 'shadow-green-500/30';
-                        statusText = 'Completed';
-                        statusClass = 'text-green-600';
-                    } else if (pct === 0) {
-                        barColor = 'bg-slate-300';
-                        glowColor = 'shadow-none';
-                        statusText = 'Not Started';
-                    }
+                if (dailyTarget > 0 && completedCount >= dailyTarget) {
+                    statusBadge += `<span class="bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full text-[10px] font-bold border border-orange-200">🔥 On Fire</span>`;
+                } else if (dailyTarget > 0 && completedCount < (dailyTarget * 0.3) && pct < 100) {
+                    statusBadge += `<span class="bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full text-[10px] font-bold">🐢 Lagging</span>`;
+                }
 
-                    if (isGold) {
-                        cardBorder = 'border-2 border-yellow-400 shadow-yellow-100';
-                        bgEffect = 'bg-yellow-50/30';
-                    }
-
-                    // Badges Logic
-                    let statusBadge = '';
-                    const completedCount = g._completedItems;
-
-                    if (dailyTarget > 0 && completedCount >= dailyTarget) {
-                        statusBadge += `<span class="bg-orange-100 text-orange-600 px-2 py-0.5 rounded-full text-[10px] font-bold border border-orange-200">🔥 On Fire</span>`;
-                    } else if (dailyTarget > 0 && completedCount < (dailyTarget * 0.3) && pct < 100) {
-                        statusBadge += `<span class="bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full text-[10px] font-bold">🐢 Lagging</span>`;
-                    }
-
-                    grid.innerHTML += `
+                grid.innerHTML += `
                     <div class="clay-card p-0 cursor-pointer hover:-translate-y-1 hover:shadow-2xl transition-all duration-300 relative group overflow-hidden bg-white ${cardBorder} ${bgEffect}" onclick="openDetail('${g.id}')">
                         <!-- Top Accent (if not delayed) -->
                         ${!isDelayed ? `<div class="h-2 w-full ${barColor} relative overflow-hidden"><div class="absolute inset-0 bg-white/30 animate-[shimmer_2s_infinite]"></div></div>` : ''}
@@ -937,122 +941,122 @@
                         </div>
                     </div>
                 `;
-                });
+            });
+        }
+
+
+        // --- WIZARD LOGIC ---
+        function openWizard() {
+            // Reset to Create Mode
+            WIZARD_MODE = 'create';
+            CURRENT_EDIT_ID = null;
+            document.getElementById('btn-create').textContent = "Create Work";
+            document.querySelector('#wizard-modal h3').textContent = "New Production Work";
+
+            document.getElementById('wizard-modal').classList.remove('hidden');
+            goToStep(1);
+            loadWizardConfig(); // Initial Load
+        }
+        function closeWizard() { document.getElementById('wizard-modal').classList.add('hidden'); }
+
+        function goToStep(step) {
+            document.getElementById('wiz-step-1').classList.add('hidden');
+            document.getElementById('wiz-step-2').classList.add('hidden');
+
+            const btnBack = document.getElementById('btn-back');
+            const btnNext = document.getElementById('btn-next');
+            const btnCreate = document.getElementById('btn-create');
+
+            if (step === 1) {
+                document.getElementById('wiz-step-1').classList.remove('hidden');
+                btnBack.classList.add('hidden');
+                btnNext.classList.remove('hidden');
+                btnCreate.classList.add('hidden');
+            } else {
+                if (!validateStep1()) return goToStep(1);
+                renderStep2();
+                document.getElementById('wiz-step-2').classList.remove('hidden');
+                btnBack.classList.remove('hidden');
+                btnNext.classList.add('hidden');
+                btnCreate.classList.remove('hidden');
             }
+            document.getElementById('wiz-step-num').textContent = step;
+        }
 
+        // --- DRAG AND DROP HANDLERS ---
+        function allowDrop(ev) { ev.preventDefault(); ev.currentTarget.classList.add('drag-over'); }
+        function leaveDrop(ev) { ev.currentTarget.classList.remove('drag-over'); }
 
-            // --- WIZARD LOGIC ---
-            function openWizard() {
-                // Reset to Create Mode
-                WIZARD_MODE = 'create';
-                CURRENT_EDIT_ID = null;
-                document.getElementById('btn-create').textContent = "Create Work";
-                document.querySelector('#wizard-modal h3').textContent = "New Production Work";
+        function drag(ev) {
+            ev.dataTransfer.setData("text", ev.target.id);
+            ev.target.classList.add('drag-source');
+        }
+        function dragEnd(ev) { ev.target.classList.remove('drag-source'); }
 
-                document.getElementById('wizard-modal').classList.remove('hidden');
-                goToStep(1);
-                loadWizardConfig(); // Initial Load
+        function drop(ev) {
+            ev.preventDefault();
+            ev.currentTarget.classList.remove('drag-over');
+
+            // Find the closest DROP ZONE (wiz-pool for Unassigned, or .wiz-drop-zone for Groups)
+            // But we bound ondrop to the container, so ev.currentTarget is safe.
+            let container = ev.currentTarget;
+
+            // However, we might drop ON another element -> bubble to container
+            if (!container.id && !container.classList.contains('wiz-drop-zone')) return;
+
+            const data = ev.dataTransfer.getData("text");
+            const draggedEl = document.getElementById(data);
+
+            if (draggedEl && container) {
+                container.appendChild(draggedEl);
             }
-            function closeWizard() { document.getElementById('wizard-modal').classList.add('hidden'); }
-
-            function goToStep(step) {
-                document.getElementById('wiz-step-1').classList.add('hidden');
-                document.getElementById('wiz-step-2').classList.add('hidden');
-
-                const btnBack = document.getElementById('btn-back');
-                const btnNext = document.getElementById('btn-next');
-                const btnCreate = document.getElementById('btn-create');
-
-                if (step === 1) {
-                    document.getElementById('wiz-step-1').classList.remove('hidden');
-                    btnBack.classList.add('hidden');
-                    btnNext.classList.remove('hidden');
-                    btnCreate.classList.add('hidden');
-                } else {
-                    if (!validateStep1()) return goToStep(1);
-                    renderStep2();
-                    document.getElementById('wiz-step-2').classList.remove('hidden');
-                    btnBack.classList.remove('hidden');
-                    btnNext.classList.add('hidden');
-                    btnCreate.classList.remove('hidden');
-                }
-                document.getElementById('wiz-step-num').textContent = step;
-            }
-
-            // --- DRAG AND DROP HANDLERS ---
-            function allowDrop(ev) { ev.preventDefault(); ev.currentTarget.classList.add('drag-over'); }
-            function leaveDrop(ev) { ev.currentTarget.classList.remove('drag-over'); }
-
-            function drag(ev) {
-                ev.dataTransfer.setData("text", ev.target.id);
-                ev.target.classList.add('drag-source');
-            }
-            function dragEnd(ev) { ev.target.classList.remove('drag-source'); }
-
-            function drop(ev) {
-                ev.preventDefault();
-                ev.currentTarget.classList.remove('drag-over');
-
-                // Find the closest DROP ZONE (wiz-pool for Unassigned, or .wiz-drop-zone for Groups)
-                // But we bound ondrop to the container, so ev.currentTarget is safe.
-                let container = ev.currentTarget;
-
-                // However, we might drop ON another element -> bubble to container
-                if (!container.id && !container.classList.contains('wiz-drop-zone')) return;
-
-                const data = ev.dataTransfer.getData("text");
-                const draggedEl = document.getElementById(data);
-
-                if (draggedEl && container) {
-                    container.appendChild(draggedEl);
-                }
-            }
+        }
 
 
-            async function loadWizardConfig() {
-                const type = document.getElementById('wiz-type').value;
-                const taskLimit = parseInt(document.getElementById('count-tasks').value) || 10;
-                const groupLimit = parseInt(document.getElementById('count-groups').value) || 5;
+        async function loadWizardConfig() {
+            const type = document.getElementById('wiz-type').value;
+            const taskLimit = parseInt(document.getElementById('count-tasks').value) || 10;
+            const groupLimit = parseInt(document.getElementById('count-groups').value) || 5;
 
-                const sPool = document.getElementById('wiz-pool');
-                const pCanvas = document.getElementById('wiz-canvas');
+            const sPool = document.getElementById('wiz-pool');
+            const pCanvas = document.getElementById('wiz-canvas');
 
-                sPool.innerHTML = '<div class="text-gray-400 text-sm">Loading...</div>';
-                pCanvas.innerHTML = '<div class="text-gray-400 text-sm">Loading...</div>';
+            sPool.innerHTML = '<div class="text-gray-400 text-sm">Loading...</div>';
+            pCanvas.innerHTML = '<div class="text-gray-400 text-sm">Loading...</div>';
 
-                try {
-                    const res = await fetchAuth(`${API}/config/${type}`);
-                    const conf = res.ok ? await res.json() : {};
+            try {
+                const res = await fetchAuth(`${API}/config/${type}`);
+                const conf = res.ok ? await res.json() : {};
 
-                    // 1. Render Source Tasks (Left) - Limited
-                    sPool.innerHTML = '';
-                    const sLabels = conf.s_labels || Array(20).fill('');
+                // 1. Render Source Tasks (Left) - Limited
+                sPool.innerHTML = '';
+                const sLabels = conf.s_labels || Array(20).fill('');
 
-                    // Show up to LIMIT, ignore actual labels length if small
-                    for (let i = 0; i < taskLimit; i++) {
-                        const id = `S-${i}`;
-                        const lbl = sLabels[i] || '';
-                        const name = lbl || `Task ${i + 1}`;
+                // Show up to LIMIT, ignore actual labels length if small
+                for (let i = 0; i < taskLimit; i++) {
+                    const id = `S-${i}`;
+                    const lbl = sLabels[i] || '';
+                    const name = lbl || `Task ${i + 1}`;
 
-                        sPool.innerHTML += `
+                    sPool.innerHTML += `
                         <div id="drag-${id}" class="wiz-task-item flex items-center gap-2 p-2 bg-white rounded border border-gray-200 shadow-sm hover:border-pink-300" 
                              draggable="true" ondragstart="drag(event)" ondragend="dragEnd(event)">
                             <span class="text-[10px] font-mono bg-pink-100 text-pink-600 px-1 rounded">${id}</span>
                             <input type="text" value="${name}" class="text-sm border-none bg-transparent w-full focus:outline-none wiz-name-s">
                         </div>
                     `;
-                    }
+                }
 
-                    // 2. Render Target Groups (Right) - Limited
-                    pCanvas.innerHTML = '';
-                    const pLabels = conf.p_labels || Array(20).fill('');
+                // 2. Render Target Groups (Right) - Limited
+                pCanvas.innerHTML = '';
+                const pLabels = conf.p_labels || Array(20).fill('');
 
-                    for (let i = 0; i < groupLimit; i++) {
-                        const id = `P-${i}`;
-                        const lbl = pLabels[i] || '';
-                        const name = lbl || `Production Group ${i + 1}`;
+                for (let i = 0; i < groupLimit; i++) {
+                    const id = `P-${i}`;
+                    const lbl = pLabels[i] || '';
+                    const name = lbl || `Production Group ${i + 1}`;
 
-                        pCanvas.innerHTML += `
+                    pCanvas.innerHTML += `
                         <div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden group">
                            <div class="p-3 bg-purple-50 border-b border-purple-100 flex items-center justify-between">
                                 <div class="flex items-center gap-2 w-full">
@@ -1068,83 +1072,83 @@
                            </div>
                         </div>
                     `;
-                    }
-
-                } catch (e) { console.error(e); }
-            }
-
-            function validateStep1() {
-                const name = document.getElementById('wiz-name').value;
-                if (!name) { alert("Please enter a Work Name"); return false; }
-
-                WIZARD_DATA = { groups: [], tasks: [] };
-
-                // 1. Iterate over P Groups (Right Column) to find active ones
-                const groupCards = document.querySelectorAll('.wiz-drop-zone');
-
-                groupCards.forEach(zone => {
-                    const groupId = zone.dataset.group;
-                    const container = zone.closest('.bg-white'); // The card container
-                    const groupNameInput = container.querySelector('.wiz-name-p');
-
-                    // Get tasks inside this group
-                    const taskEls = zone.querySelectorAll('.wiz-task-item');
-
-                    if (taskEls.length > 0) {
-                        // Start Group
-                        WIZARD_DATA.groups.push({
-                            id: groupId,
-                            name: groupNameInput.value,
-                            type: 'group'
-                        });
-
-                        // Add Tasks
-                        taskEls.forEach(el => {
-                            const originalId = el.id.replace('drag-', '');
-                            const nameVal = el.querySelector('.wiz-name-s').value;
-
-                            WIZARD_DATA.tasks.push({
-                                id: originalId,
-                                name: nameVal,
-                                parentId: groupId, // Mapped!
-                                type: 'task',
-                                target: 100
-                            });
-                        });
-                    }
-                });
-
-                // Also check 'Unassigned' tasks? (Left Column)
-                // If user leaves tasks in the pool, do we ignore them or add as unassigned?
-                // Usually in a builder, left items are 'unused'. 
-                // Let's IGNORE tasks left in the source pool.
-
-                if (WIZARD_DATA.groups.length === 0) {
-                    alert("Please drag at least one Task into a Production Group.");
-                    return false;
                 }
 
-                return true;
+            } catch (e) { console.error(e); }
+        }
+
+        function validateStep1() {
+            const name = document.getElementById('wiz-name').value;
+            if (!name) { alert("Please enter a Work Name"); return false; }
+
+            WIZARD_DATA = { groups: [], tasks: [] };
+
+            // 1. Iterate over P Groups (Right Column) to find active ones
+            const groupCards = document.querySelectorAll('.wiz-drop-zone');
+
+            groupCards.forEach(zone => {
+                const groupId = zone.dataset.group;
+                const container = zone.closest('.bg-white'); // The card container
+                const groupNameInput = container.querySelector('.wiz-name-p');
+
+                // Get tasks inside this group
+                const taskEls = zone.querySelectorAll('.wiz-task-item');
+
+                if (taskEls.length > 0) {
+                    // Start Group
+                    WIZARD_DATA.groups.push({
+                        id: groupId,
+                        name: groupNameInput.value,
+                        type: 'group'
+                    });
+
+                    // Add Tasks
+                    taskEls.forEach(el => {
+                        const originalId = el.id.replace('drag-', '');
+                        const nameVal = el.querySelector('.wiz-name-s').value;
+
+                        WIZARD_DATA.tasks.push({
+                            id: originalId,
+                            name: nameVal,
+                            parentId: groupId, // Mapped!
+                            type: 'task',
+                            target: 100
+                        });
+                    });
+                }
+            });
+
+            // Also check 'Unassigned' tasks? (Left Column)
+            // If user leaves tasks in the pool, do we ignore them or add as unassigned?
+            // Usually in a builder, left items are 'unused'. 
+            // Let's IGNORE tasks left in the source pool.
+
+            if (WIZARD_DATA.groups.length === 0) {
+                alert("Please drag at least one Task into a Production Group.");
+                return false;
             }
 
-            function renderStep2() {
-                const container = document.getElementById('wiz-assign-container');
-                container.innerHTML = '';
+            return true;
+        }
 
-                // Group Tasks by Parent (already structured in WIZARD_DATA, but let's re-group for iterate)
-                const grouped = {};
-                WIZARD_DATA.groups.forEach(g => grouped[g.id] = { ...g, tasks: [] });
+        function renderStep2() {
+            const container = document.getElementById('wiz-assign-container');
+            container.innerHTML = '';
 
-                WIZARD_DATA.tasks.forEach(t => {
-                    if (grouped[t.parentId]) grouped[t.parentId].tasks.push(t);
-                });
+            // Group Tasks by Parent (already structured in WIZARD_DATA, but let's re-group for iterate)
+            const grouped = {};
+            WIZARD_DATA.groups.forEach(g => grouped[g.id] = { ...g, tasks: [] });
 
-                Object.values(grouped).forEach(g => {
-                    if (g.tasks.length === 0) return;
+            WIZARD_DATA.tasks.forEach(t => {
+                if (grouped[t.parentId]) grouped[t.parentId].tasks.push(t);
+            });
 
-                    let rows = '';
-                    g.tasks.forEach(t => {
-                        rows += `
+            Object.values(grouped).forEach(g => {
+                if (g.tasks.length === 0) return;
+
+                let rows = '';
+                g.tasks.forEach(t => {
+                    rows += `
                     <div class="flex flex-col md:flex-row gap-3 p-3 bg-white border border-gray-100 rounded ml-4 border-l-4 border-l-pink-200">
                         <div class="w-full md:w-1/3 flex items-center gap-2">
                              <span class="text-xs font-mono text-gray-400">${t.id}</span>
@@ -1160,9 +1164,9 @@
                         <input type="hidden" class="step2-parent" value="${g.id}">
                     </div>
                    `;
-                    });
+                });
 
-                    container.innerHTML += `
+                container.innerHTML += `
                     <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
                         <h5 class="font-bold text-purple-700 mb-2 flex items-center gap-2">
                             <span class="bg-purple-200 text-purple-800 text-[10px] px-1 rounded">${g.id}</span>
@@ -1173,132 +1177,132 @@
                         </div>
                     </div>
                 `;
+            });
+        }
+
+        async function createBatchFinal() {
+            const name = document.getElementById('wiz-name').value;
+            const type = document.getElementById('wiz-type').value;
+
+            // Combine Data
+            const finalStages = [];
+
+            // Add Groups (P)
+            WIZARD_DATA.groups.forEach(g => {
+                finalStages.push(g);
+            });
+
+            // Add Tasks (S) with Target/Assign data from DOM
+            const taskInputs = document.querySelectorAll('.step2-id');
+            taskInputs.forEach(input => {
+                const row = input.closest('.flex');
+                const id = input.value;
+                const parentId = row.querySelector('.step2-parent').value;
+                const target = parseInt(row.querySelector('.step2-target').value) || 0;
+                const assigned = row.querySelector('.step2-assign').value;
+
+                const original = WIZARD_DATA.tasks.find(t => t.id === id);
+
+                finalStages.push({
+                    id: id,
+                    name: original ? original.name : id,
+                    type: 'task',
+                    parentId: parentId,
+                    target: target,
+                    assigned: assigned
                 });
+            });
+
+            // DECIDE: Create or Edit?
+            let url = `${API}/groups`;
+            if (WIZARD_MODE === 'edit') {
+                url = `${API}/groups/${CURRENT_EDIT_ID}/edit`;
             }
 
-            async function createBatchFinal() {
-                const name = document.getElementById('wiz-name').value;
-                const type = document.getElementById('wiz-type').value;
+            const payload = {
+                group_name: name,
+                dress_type: type,
+                required_stages: finalStages,
+                details: 'Hierarchy Created',
+                daily_target: parseInt(document.getElementById('wiz-target').value) || 0,
+                status: (CURRENT_BATCH && CURRENT_BATCH.status) || 'Active'
+            };
 
-                // Combine Data
-                const finalStages = [];
+            const res = await fetchAuth(url, {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            });
 
-                // Add Groups (P)
-                WIZARD_DATA.groups.forEach(g => {
-                    finalStages.push(g);
-                });
-
-                // Add Tasks (S) with Target/Assign data from DOM
-                const taskInputs = document.querySelectorAll('.step2-id');
-                taskInputs.forEach(input => {
-                    const row = input.closest('.flex');
-                    const id = input.value;
-                    const parentId = row.querySelector('.step2-parent').value;
-                    const target = parseInt(row.querySelector('.step2-target').value) || 0;
-                    const assigned = row.querySelector('.step2-assign').value;
-
-                    const original = WIZARD_DATA.tasks.find(t => t.id === id);
-
-                    finalStages.push({
-                        id: id,
-                        name: original ? original.name : id,
-                        type: 'task',
-                        parentId: parentId,
-                        target: target,
-                        assigned: assigned
-                    });
-                });
-
-                // DECIDE: Create or Edit?
-                let url = `${API}/groups`;
+            if (res.ok) {
+                closeWizard();
+                loadBatches();
                 if (WIZARD_MODE === 'edit') {
-                    url = `${API}/groups/${CURRENT_EDIT_ID}/edit`;
+                    // Quick Alert & Reload Detail
+                    // alert("Batch Updated!"); 
+                    // To refresh detail we need to re-fetch or just close detail?
+                    // Let's close detail to force re-open or reload ALL_GROUPS
+                    const allRes = await fetchAuth(`${API}/groups`);
+                    if (allRes.ok) ALL_GROUPS = await allRes.json();
+
+                    // Re-bind CURRENT_BATCH
+                    if (CURRENT_EDIT_ID) openDetail(CURRENT_EDIT_ID);
                 }
-
-                const payload = {
-                    group_name: name,
-                    dress_type: type,
-                    required_stages: finalStages,
-                    details: 'Hierarchy Created',
-                    daily_target: parseInt(document.getElementById('wiz-target').value) || 0,
-                    status: (CURRENT_BATCH && CURRENT_BATCH.status) || 'Active'
-                };
-
-                const res = await fetchAuth(url, {
-                    method: 'POST',
-                    body: JSON.stringify(payload)
-                });
-
-                if (res.ok) {
-                    closeWizard();
-                    loadBatches();
-                    if (WIZARD_MODE === 'edit') {
-                        // Quick Alert & Reload Detail
-                        // alert("Batch Updated!"); 
-                        // To refresh detail we need to re-fetch or just close detail?
-                        // Let's close detail to force re-open or reload ALL_GROUPS
-                        const allRes = await fetchAuth(`${API}/groups`);
-                        if (allRes.ok) ALL_GROUPS = await allRes.json();
-
-                        // Re-bind CURRENT_BATCH
-                        if (CURRENT_EDIT_ID) openDetail(CURRENT_EDIT_ID);
-                    }
-                } else {
-                    alert("Operation Failed");
-                }
+            } else {
+                alert("Operation Failed");
             }
+        }
 
-            let WIZARD_MODE = 'create'; // 'create' | 'edit'
-            let CURRENT_EDIT_ID = null;
+        let WIZARD_MODE = 'create'; // 'create' | 'edit'
+        let CURRENT_EDIT_ID = null;
 
 
-            // --- DETAIL VIEW LOGIC ---
-            function openDetail(id) {
-                try {
-                    const g = ALL_GROUPS.find(item => item.id == id);
-                    if (!g) return;
+        // --- DETAIL VIEW LOGIC ---
+        function openDetail(id) {
+            try {
+                const g = ALL_GROUPS.find(item => item.id == id);
+                if (!g) return;
 
-                    CURRENT_BATCH = g;
+                CURRENT_BATCH = g;
 
-                    // Populate Header
-                    document.getElementById('detail-name').textContent = g.group_name;
-                    document.getElementById('detail-type').textContent = g.dress_type;
-                    const notes = g.details || g.notes || 'No details specified.';
-                    document.getElementById('detail-notes').textContent = notes;
+                // Populate Header
+                document.getElementById('detail-name').textContent = g.group_name;
+                document.getElementById('detail-type').textContent = g.dress_type;
+                const notes = g.details || g.notes || 'No details specified.';
+                document.getElementById('detail-notes').textContent = notes;
 
-                    // Calc Percent
-                    const pct = Math.round(g._pct || 0);
-                    document.getElementById('detail-percent').textContent = pct + "%";
-                    document.getElementById('detail-bar').style.width = pct + "%";
+                // Calc Percent
+                const pct = Math.round(g._pct || 0);
+                document.getElementById('detail-percent').textContent = pct + "%";
+                document.getElementById('detail-bar').style.width = pct + "%";
 
-                    // Render Stages
-                    const tbody = document.getElementById('detail-table');
-                    tbody.innerHTML = '';
+                // Render Stages
+                const tbody = document.getElementById('detail-table');
+                tbody.innerHTML = '';
 
-                    if (g.required_stages && Array.isArray(g.required_stages)) {
-                        const completedRef = g.completed_stages || {};
-                        g.required_stages.forEach(s => {
-                            // s: { id, name, type, parentId, target, assigned }
-                            const cur = parseInt(completedRef[s.id]) || 0;
-                            const tgt = parseInt(s.target) || 0;
-                            const p = tgt > 0 ? Math.round((cur / tgt) * 100) : 0;
+                if (g.required_stages && Array.isArray(g.required_stages)) {
+                    const completedRef = g.completed_stages || {};
+                    g.required_stages.forEach(s => {
+                        // s: { id, name, type, parentId, target, assigned }
+                        const cur = parseInt(completedRef[s.id]) || 0;
+                        const tgt = parseInt(s.target) || 0;
+                        const p = tgt > 0 ? Math.round((cur / tgt) * 100) : 0;
 
-                            let status = 'Pending';
-                            let statusColor = 'bg-slate-100 text-slate-500';
-                            if (cur >= tgt && tgt > 0) { status = 'Done'; statusColor = 'bg-green-100 text-green-600'; }
-                            else if (cur > 0) { status = 'In Progress'; statusColor = 'bg-blue-100 text-blue-600'; }
+                        let status = 'Pending';
+                        let statusColor = 'bg-slate-100 text-slate-500';
+                        if (cur >= tgt && tgt > 0) { status = 'Done'; statusColor = 'bg-green-100 text-green-600'; }
+                        else if (cur > 0) { status = 'In Progress'; statusColor = 'bg-blue-100 text-blue-600'; }
 
-                            if (s.type === 'group' || (s.id && s.id.startsWith('P'))) {
-                                // Header Row
-                                tbody.innerHTML += `
+                        if (s.type === 'group' || (s.id && s.id.startsWith('P'))) {
+                            // Header Row
+                            tbody.innerHTML += `
                             <tr class="bg-purple-50/50">
                                 <td class="p-3 font-mono text-xs text-purple-600 font-bold">${s.id}</td>
                                 <td class="p-3 font-bold text-slate-700" colspan="4">${s.name}</td>
                             </tr>
                         `;
-                            } else {
-                                // Task Row
-                                tbody.innerHTML += `
+                        } else {
+                            // Task Row
+                            tbody.innerHTML += `
                             <tr class="hover:bg-gray-50 transition group/row">
                                 <td class="p-3 font-mono text-xs text-slate-400">${s.id}</td>
                                 <td class="p-3">
@@ -1324,120 +1328,120 @@
                                 </td>
                             </tr>
                         `;
-                            }
-                        });
-                    }
-
-                    switchTab('detail');
-                } catch (err) {
-                    console.error("Detail View Error:", err);
-                    alert("Error opening detail view. Check console.");
-                }
-            }
-
-            async function updateStageProgress(groupId, stageId, value) {
-                const val = parseInt(value) || 0;
-                const g = ALL_GROUPS.find(i => i.id == groupId);
-                if (!g) return;
-
-                // Optimistic Update
-                if (!g.completed_stages) g.completed_stages = {};
-                g.completed_stages[stageId] = val;
-
-                // Optional: Re-render dashboard stats if we leave detail view?
-                // For now, just save.
-
-                try {
-                    const payload = {
-                        completed_stages: g.completed_stages,
-                        notes: g.notes
-                    };
-
-                    // Show saving state?
-
-                    const res = await fetchAuth(`${API}/groups/${groupId}/update`, {
-                        method: 'POST',
-                        body: JSON.stringify(payload)
+                        }
                     });
+                }
 
-                    if (res.ok) {
-                        // Update UI success visual?
-                        // Re-calc percent locally so bar updates?
-                        // Simpler: just keep it as is.
-                    } else {
-                        alert("Failed to save progress");
-                    }
-                } catch (e) { console.error(e); }
+                switchTab('detail');
+            } catch (err) {
+                console.error("Detail View Error:", err);
+                alert("Error opening detail view. Check console.");
             }
+        }
 
-            // --- FULL EDIT (RE-WIZARD) ---
-            async function editBatchFull() {
-                if (!CURRENT_BATCH) return;
+        async function updateStageProgress(groupId, stageId, value) {
+            const val = parseInt(value) || 0;
+            const g = ALL_GROUPS.find(i => i.id == groupId);
+            if (!g) return;
 
-                // 1. Set State
-                WIZARD_MODE = 'edit';
-                CURRENT_EDIT_ID = CURRENT_BATCH.id;
+            // Optimistic Update
+            if (!g.completed_stages) g.completed_stages = {};
+            g.completed_stages[stageId] = val;
 
-                // 2. Show Modal (Manually, DO NOT call openWizard() which resets to Create)
-                document.getElementById('wizard-modal').classList.remove('hidden');
+            // Optional: Re-render dashboard stats if we leave detail view?
+            // For now, just save.
 
-                // 3. Reset Step View
-                document.getElementById('wiz-step-1').classList.remove('hidden');
-                document.getElementById('wiz-step-2').classList.add('hidden');
-                document.getElementById('btn-back').classList.add('hidden');
-                document.getElementById('btn-next').classList.remove('hidden');
-                document.getElementById('btn-create').classList.add('hidden');
-                document.getElementById('wiz-step-num').textContent = "1";
+            try {
+                const payload = {
+                    completed_stages: g.completed_stages,
+                    notes: g.notes
+                };
 
-                // 4. Override UI Text
-                document.getElementById('btn-create').textContent = "Save Changes";
-                document.querySelector('#wizard-modal h3').textContent = `Editing Batch #${CURRENT_EDIT_ID}`;
+                // Show saving state?
 
-                // 5. Hydrate Inputs
-                document.getElementById('wiz-name').value = CURRENT_BATCH.group_name;
-                document.getElementById('wiz-type').value = CURRENT_BATCH.dress_type;
-                document.getElementById('wiz-target').value = CURRENT_BATCH.daily_target || '';
-
-                // 6. Re-construct WIZARD_DATA from required_stages
-                WIZARD_DATA = { groups: [], tasks: [] };
-                const req = CURRENT_BATCH.required_stages || [];
-
-                req.forEach(item => {
-                    if (item.type === 'group' || (item.id && item.id.startsWith('P-'))) {
-                        if (!item.tasks) item.tasks = [];
-                        WIZARD_DATA.groups.push(item);
-                    } else {
-                        WIZARD_DATA.tasks.push(item);
-                    }
+                const res = await fetchAuth(`${API}/groups/${groupId}/update`, {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
                 });
 
-                // 7. Update Counts & Render
-                const countG = document.getElementById('count-groups');
-                if (countG) countG.value = WIZARD_DATA.groups.length;
+                if (res.ok) {
+                    // Update UI success visual?
+                    // Re-calc percent locally so bar updates?
+                    // Simpler: just keep it as is.
+                } else {
+                    alert("Failed to save progress");
+                }
+            } catch (e) { console.error(e); }
+        }
 
-                await hydrateWizardUI();
-            }
+        // --- FULL EDIT (RE-WIZARD) ---
+        async function editBatchFull() {
+            if (!CURRENT_BATCH) return;
 
-            async function hydrateWizardUI() {
-                const sPool = document.getElementById('wiz-pool');
-                const pCanvas = document.getElementById('wiz-canvas');
-                const type = document.getElementById('wiz-type').value;
-                const taskLimit = parseInt(document.getElementById('count-tasks').value) || 20;
+            // 1. Set State
+            WIZARD_MODE = 'edit';
+            CURRENT_EDIT_ID = CURRENT_BATCH.id;
 
-                // 0. Fetch Config for Labels
-                let conf = {};
-                try {
-                    const res = await fetchAuth(`${API}/config/${type}`);
-                    if (res.ok) conf = await res.json();
-                } catch (e) { console.error(e); }
+            // 2. Show Modal (Manually, DO NOT call openWizard() which resets to Create)
+            document.getElementById('wizard-modal').classList.remove('hidden');
 
-                const sLabels = conf.s_labels || Array(20).fill('');
+            // 3. Reset Step View
+            document.getElementById('wiz-step-1').classList.remove('hidden');
+            document.getElementById('wiz-step-2').classList.add('hidden');
+            document.getElementById('btn-back').classList.add('hidden');
+            document.getElementById('btn-next').classList.remove('hidden');
+            document.getElementById('btn-create').classList.add('hidden');
+            document.getElementById('wiz-step-num').textContent = "1";
 
-                // 1. Render Groups (Right) from DATA
-                pCanvas.innerHTML = '';
+            // 4. Override UI Text
+            document.getElementById('btn-create').textContent = "Save Changes";
+            document.querySelector('#wizard-modal h3').textContent = `Editing Batch #${CURRENT_EDIT_ID}`;
 
-                WIZARD_DATA.groups.forEach(g => {
-                    pCanvas.innerHTML += `
+            // 5. Hydrate Inputs
+            document.getElementById('wiz-name').value = CURRENT_BATCH.group_name;
+            document.getElementById('wiz-type').value = CURRENT_BATCH.dress_type;
+            document.getElementById('wiz-target').value = CURRENT_BATCH.daily_target || '';
+
+            // 6. Re-construct WIZARD_DATA from required_stages
+            WIZARD_DATA = { groups: [], tasks: [] };
+            const req = CURRENT_BATCH.required_stages || [];
+
+            req.forEach(item => {
+                if (item.type === 'group' || (item.id && item.id.startsWith('P-'))) {
+                    if (!item.tasks) item.tasks = [];
+                    WIZARD_DATA.groups.push(item);
+                } else {
+                    WIZARD_DATA.tasks.push(item);
+                }
+            });
+
+            // 7. Update Counts & Render
+            const countG = document.getElementById('count-groups');
+            if (countG) countG.value = WIZARD_DATA.groups.length;
+
+            await hydrateWizardUI();
+        }
+
+        async function hydrateWizardUI() {
+            const sPool = document.getElementById('wiz-pool');
+            const pCanvas = document.getElementById('wiz-canvas');
+            const type = document.getElementById('wiz-type').value;
+            const taskLimit = parseInt(document.getElementById('count-tasks').value) || 20;
+
+            // 0. Fetch Config for Labels
+            let conf = {};
+            try {
+                const res = await fetchAuth(`${API}/config/${type}`);
+                if (res.ok) conf = await res.json();
+            } catch (e) { console.error(e); }
+
+            const sLabels = conf.s_labels || Array(20).fill('');
+
+            // 1. Render Groups (Right) from DATA
+            pCanvas.innerHTML = '';
+
+            WIZARD_DATA.groups.forEach(g => {
+                pCanvas.innerHTML += `
                         <div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden group">
                            <div class="p-3 bg-purple-50 border-b border-purple-100 flex items-center justify-between">
                                 <div class="flex items-center gap-2 w-full">
@@ -1453,16 +1457,16 @@
                            </div>
                         </div>
                     `;
-                });
+            });
 
-                // 2. Render SAVED Tasks into their zones (or pool if no parent)
-                const existingIds = new Set();
-                sPool.innerHTML = '';
+            // 2. Render SAVED Tasks into their zones (or pool if no parent)
+            const existingIds = new Set();
+            sPool.innerHTML = '';
 
-                WIZARD_DATA.tasks.forEach(t => {
-                    existingIds.add(t.id);
+            WIZARD_DATA.tasks.forEach(t => {
+                existingIds.add(t.id);
 
-                    const cardHtml = `
+                const cardHtml = `
                     <div id="drag-${t.id}" class="wiz-task-item flex items-center gap-2 p-2 bg-white rounded border border-gray-200 shadow-sm hover:border-pink-300" 
                              draggable="true" ondragstart="drag(event)" ondragend="dragEnd(event)">
                             <span class="text-[10px] font-mono bg-pink-100 text-pink-600 px-1 rounded">${t.id}</span>
@@ -1470,93 +1474,93 @@
                     </div>
                  `;
 
-                    const zone = document.querySelector(`.wiz-drop-zone[data-group="${t.parentId}"]`);
-                    if (zone) {
-                        zone.innerHTML += cardHtml;
-                    } else {
-                        sPool.innerHTML += cardHtml;
-                    }
-                });
+                const zone = document.querySelector(`.wiz-drop-zone[data-group="${t.parentId}"]`);
+                if (zone) {
+                    zone.innerHTML += cardHtml;
+                } else {
+                    sPool.innerHTML += cardHtml;
+                }
+            });
 
-                // 3. Render UNUSED Tasks into Pool
-                for (let i = 0; i < taskLimit; i++) {
-                    const id = `S-${i}`;
-                    if (existingIds.has(id)) continue;
+            // 3. Render UNUSED Tasks into Pool
+            for (let i = 0; i < taskLimit; i++) {
+                const id = `S-${i}`;
+                if (existingIds.has(id)) continue;
 
-                    const lbl = sLabels[i] || '';
-                    const name = lbl || `Task ${i + 1}`;
+                const lbl = sLabels[i] || '';
+                const name = lbl || `Task ${i + 1}`;
 
-                    sPool.innerHTML += `
+                sPool.innerHTML += `
                     <div id="drag-${id}" class="wiz-task-item flex items-center gap-2 p-2 bg-white rounded border border-gray-200 shadow-sm hover:border-pink-300" 
                              draggable="true" ondragstart="drag(event)" ondragend="dragEnd(event)">
                             <span class="text-[10px] font-mono bg-pink-100 text-pink-600 px-1 rounded">${id}</span>
                             <input type="text" value="${name}" class="text-sm border-none bg-transparent w-full focus:outline-none wiz-name-s">
                     </div>
                  `;
+            }
+        }
+
+        // --- DETAIL VIEW ---
+        function openDetail(id) {
+            CURRENT_BATCH = ALL_GROUPS.find(g => g.id === id);
+            if (!CURRENT_BATCH) return;
+
+            switchTab('detail');
+            document.getElementById('detail-name').textContent = CURRENT_BATCH.group_name;
+            document.getElementById('detail-type').textContent = CURRENT_BATCH.dress_type;
+
+            renderDetailTable();
+        }
+
+        function renderDetailTable() {
+            const g = CURRENT_BATCH;
+            const tbody = document.getElementById('detail-table');
+            tbody.innerHTML = '';
+
+            let totalWorkTgt = 0;
+            let totalWorkCur = 0;
+
+            // 1. Separate Groups vs Tasks
+            const groups = g.required_stages.filter(s => s.type === 'group' || s.id.startsWith('P'));
+            const tasks = g.required_stages.filter(s => s.type === 'task' || s.id.startsWith('S'));
+
+            // 2. Map Tasks to Groups
+            const tree = {};
+            groups.forEach(grp => tree[grp.id] = { ...grp, children: [] });
+            tree['unassigned'] = { id: 'unassigned', name: 'Other Tasks', children: [] };
+
+            tasks.forEach(t => {
+                if (t.parentId && tree[t.parentId]) {
+                    tree[t.parentId].children.push(t);
+                } else {
+                    tree['unassigned'].children.push(t);
                 }
-            }
+            });
 
-            // --- DETAIL VIEW ---
-            function openDetail(id) {
-                CURRENT_BATCH = ALL_GROUPS.find(g => g.id === id);
-                if (!CURRENT_BATCH) return;
+            // 3. Render Recursive
+            // Render known groups first
+            const renderGroup = (grp) => {
+                if (grp.children.length === 0 && grp.id !== 'unassigned') return; // Skip empty assigned groups
 
-                switchTab('detail');
-                document.getElementById('detail-name').textContent = CURRENT_BATCH.group_name;
-                document.getElementById('detail-type').textContent = CURRENT_BATCH.dress_type;
-
-                renderDetailTable();
-            }
-
-            function renderDetailTable() {
-                const g = CURRENT_BATCH;
-                const tbody = document.getElementById('detail-table');
-                tbody.innerHTML = '';
-
-                let totalWorkTgt = 0;
-                let totalWorkCur = 0;
-
-                // 1. Separate Groups vs Tasks
-                const groups = g.required_stages.filter(s => s.type === 'group' || s.id.startsWith('P'));
-                const tasks = g.required_stages.filter(s => s.type === 'task' || s.id.startsWith('S'));
-
-                // 2. Map Tasks to Groups
-                const tree = {};
-                groups.forEach(grp => tree[grp.id] = { ...grp, children: [] });
-                tree['unassigned'] = { id: 'unassigned', name: 'Other Tasks', children: [] };
-
-                tasks.forEach(t => {
-                    if (t.parentId && tree[t.parentId]) {
-                        tree[t.parentId].children.push(t);
-                    } else {
-                        tree['unassigned'].children.push(t);
-                    }
+                // Group Aggregate Stats
+                let gTgt = 0;
+                let gCur = 0;
+                grp.children.forEach(c => {
+                    const ctgt = parseInt(c.target) || 0;
+                    const ccur = g.completed_stages[c.id] || 0;
+                    gTgt += ctgt;
+                    gCur += Math.min(ccur, ctgt);
                 });
+                const gPct = gTgt > 0 ? Math.round((gCur / gTgt) * 100) : 0;
 
-                // 3. Render Recursive
-                // Render known groups first
-                const renderGroup = (grp) => {
-                    if (grp.children.length === 0 && grp.id !== 'unassigned') return; // Skip empty assigned groups
+                // Add to Global Work
+                totalWorkTgt += gTgt;
+                totalWorkCur += gCur;
 
-                    // Group Aggregate Stats
-                    let gTgt = 0;
-                    let gCur = 0;
-                    grp.children.forEach(c => {
-                        const ctgt = parseInt(c.target) || 0;
-                        const ccur = g.completed_stages[c.id] || 0;
-                        gTgt += ctgt;
-                        gCur += Math.min(ccur, ctgt);
-                    });
-                    const gPct = gTgt > 0 ? Math.round((gCur / gTgt) * 100) : 0;
-
-                    // Add to Global Work
-                    totalWorkTgt += gTgt;
-                    totalWorkCur += gCur;
-
-                    // Group Header Row
-                    const headTr = document.createElement('tr');
-                    headTr.className = "bg-slate-50 border-b border-slate-100";
-                    headTr.innerHTML = `
+                // Group Header Row
+                const headTr = document.createElement('tr');
+                headTr.className = "bg-slate-50 border-b border-slate-100";
+                headTr.innerHTML = `
                     <td colspan="5" class="p-3">
                         <div class="flex justify-between items-center">
                             <span class="font-bold text-slate-600 flex items-center gap-2">
@@ -1570,16 +1574,16 @@
                         </div>
                     </td>
                 `;
-                    tbody.appendChild(headTr);
+                tbody.appendChild(headTr);
 
-                    // Child Rows
-                    grp.children.forEach(s => {
-                        const current = g.completed_stages[s.id] || 0;
-                        const tgt = s.target || 0;
-                        const pct = tgt > 0 ? Math.round((current / tgt) * 100) : 0;
+                // Child Rows
+                grp.children.forEach(s => {
+                    const current = g.completed_stages[s.id] || 0;
+                    const tgt = s.target || 0;
+                    const pct = tgt > 0 ? Math.round((current / tgt) * 100) : 0;
 
-                        const tr = document.createElement('tr');
-                        tr.innerHTML = `
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
                         <td class="p-3 pl-8 text-gray-400 font-mono text-xs border-l-4 border-l-transparent hover:border-l-blue-400 transition">
                             <svg class="w-3 h-3 inline mr-1 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                             ${s.id}
@@ -1606,178 +1610,178 @@
                             </div>
                         </td>
                     `;
-                        tbody.appendChild(tr);
-                    });
-                };
-
-                Object.values(tree).forEach(grp => renderGroup(grp));
-
-                // Support legacy flat lists (no groups)
-                if (groups.length === 0 && tasks.length === 0 && g.required_stages.length > 0) {
-                    // Fallback for old data
-                    tree['unassigned'].children = g.required_stages;
-                    renderGroup(tree['unassigned']);
-                }
-
-                const totalPct = totalWorkTgt > 0 ? Math.round((totalWorkCur / totalWorkTgt) * 100) : 0;
-                document.getElementById('detail-percent').textContent = `${totalPct}%`;
-                document.getElementById('detail-bar').style.width = `${totalPct}%`;
-            }
-
-            function syncSlider(id, val) {
-                document.getElementById(`num-${id}`).value = val;
-            }
-
-            async function updateStageProgress(stageId, newVal) {
-                const g = CURRENT_BATCH;
-                const val = parseInt(newVal) || 0;
-
-                g.completed_stages[stageId] = val;
-
-                const numInput = document.getElementById(`num-${stageId}`);
-                if (numInput) numInput.value = val;
-
-                renderDetailTable();
-
-                await fetchAuth(`${API}/groups/${g.id}/update`, {
-                    method: 'POST',
-                    body: JSON.stringify({ completed_stages: g.completed_stages })
+                    tbody.appendChild(tr);
                 });
+            };
+
+            Object.values(tree).forEach(grp => renderGroup(grp));
+
+            // Support legacy flat lists (no groups)
+            if (groups.length === 0 && tasks.length === 0 && g.required_stages.length > 0) {
+                // Fallback for old data
+                tree['unassigned'].children = g.required_stages;
+                renderGroup(tree['unassigned']);
             }
 
-            // --- TOAST SYSTEM ---
-            function showToast(msg, type = 'success') {
-                const container = document.getElementById('toast-container');
-                const toast = document.createElement('div');
+            const totalPct = totalWorkTgt > 0 ? Math.round((totalWorkCur / totalWorkTgt) * 100) : 0;
+            document.getElementById('detail-percent').textContent = `${totalPct}%`;
+            document.getElementById('detail-bar').style.width = `${totalPct}%`;
+        }
 
-                // Colors
-                const colors = type === 'success' ? 'bg-green-500' : (type === 'error' ? 'bg-red-500' : 'bg-blue-500');
-                const icon = type === 'success' ?
-                    '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>' :
-                    '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>';
+        function syncSlider(id, val) {
+            document.getElementById(`num-${id}`).value = val;
+        }
 
-                toast.className = `toast flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-white font-medium min-w-[300px] backdrop-blur-md ${colors}`;
-                toast.innerHTML = `${icon} <span>${msg}</span>`;
+        async function updateStageProgress(stageId, newVal) {
+            const g = CURRENT_BATCH;
+            const val = parseInt(newVal) || 0;
 
-                container.appendChild(toast);
+            g.completed_stages[stageId] = val;
 
-                // Audio (Optional, subtle click)
-                // const audio = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-modern-technology-select-3124.mp3');
-                // audio.volume = 0.2;
-                // audio.play().catch(e => {});
+            const numInput = document.getElementById(`num-${stageId}`);
+            if (numInput) numInput.value = val;
 
-                setTimeout(() => {
-                    toast.style.animation = 'fadeOut 0.3s ease-in forwards';
-                    setTimeout(() => toast.remove(), 300);
-                }, 3000);
-            }
+            renderDetailTable();
 
-            // --- SYSTEMATIC REWARDS ---
-            // --- SYSTEMATIC REWARDS (Endorsements) ---
-            function openEndorseModal() {
-                if (!CURRENT_BATCH) return;
-                const modal = document.getElementById('endorse-modal');
-                const title = document.getElementById('endorse-batch-name');
-                if (title) title.textContent = CURRENT_BATCH.group_name;
-                modal.classList.remove('hidden');
-                modal.classList.add('flex');
-            }
+            await fetchAuth(`${API}/groups/${g.id}/update`, {
+                method: 'POST',
+                body: JSON.stringify({ completed_stages: g.completed_stages })
+            });
+        }
 
-            function closeEndorseModal() {
-                const modal = document.getElementById('endorse-modal');
-                modal.classList.add('hidden');
-                modal.classList.remove('flex');
-            }
+        // --- TOAST SYSTEM ---
+        function showToast(msg, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
 
-            async function submitEndorsement(type) {
-                if (!CURRENT_BATCH) return;
+            // Colors
+            const colors = type === 'success' ? 'bg-green-500' : (type === 'error' ? 'bg-red-500' : 'bg-blue-500');
+            const icon = type === 'success' ?
+                '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>' :
+                '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>';
 
-                let points = 10;
-                let message = "Endorsed!";
-                let icon = '⚡';
+            toast.className = `toast flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-white font-medium min-w-[300px] backdrop-blur-md ${colors}`;
+            toast.innerHTML = `${icon} <span>${msg}</span>`;
 
-                if (type === 'speed') { points = 20; message = "High Velocity Award!"; icon = '🚀'; }
-                if (type === 'quality') { points = 50; message = "Zero Defects Award!"; icon = '💎'; }
-                if (type === 'teamwork') { points = 15; message = "Team Synergy Award!"; icon = '🤝'; }
+            container.appendChild(toast);
 
-                try {
-                    const res = await fetchAuth(`${API}/groups/${CURRENT_BATCH.id}/reward`, {
-                        method: 'POST',
-                        body: JSON.stringify({ points: points })
+            // Audio (Optional, subtle click)
+            // const audio = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-modern-technology-select-3124.mp3');
+            // audio.volume = 0.2;
+            // audio.play().catch(e => {});
+
+            setTimeout(() => {
+                toast.style.animation = 'fadeOut 0.3s ease-in forwards';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // --- SYSTEMATIC REWARDS ---
+        // --- SYSTEMATIC REWARDS (Endorsements) ---
+        function openEndorseModal() {
+            if (!CURRENT_BATCH) return;
+            const modal = document.getElementById('endorse-modal');
+            const title = document.getElementById('endorse-batch-name');
+            if (title) title.textContent = CURRENT_BATCH.group_name;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeEndorseModal() {
+            const modal = document.getElementById('endorse-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        async function submitEndorsement(type) {
+            if (!CURRENT_BATCH) return;
+
+            let points = 10;
+            let message = "Endorsed!";
+            let icon = '⚡';
+
+            if (type === 'speed') { points = 20; message = "High Velocity Award!"; icon = '🚀'; }
+            if (type === 'quality') { points = 50; message = "Zero Defects Award!"; icon = '💎'; }
+            if (type === 'teamwork') { points = 15; message = "Team Synergy Award!"; icon = '🤝'; }
+
+            try {
+                const res = await fetchAuth(`${API}/groups/${CURRENT_BATCH.id}/reward`, {
+                    method: 'POST',
+                    body: JSON.stringify({ points: points })
+                });
+
+                if (res.ok) {
+                    closeEndorseModal();
+                    showToast(`${icon} ${message} (+${points} pts)`);
+
+                    // Confetti Explosion
+                    confetti({
+                        particleCount: 200,
+                        spread: 100,
+                        origin: { y: 0.6 },
+                        colors: ['#FFD700', '#FFA500', '#3B82F6', '#10B981']
                     });
 
-                    if (res.ok) {
-                        closeEndorseModal();
-                        showToast(`${icon} ${message} (+${points} pts)`);
-
-                        // Confetti Explosion
-                        confetti({
-                            particleCount: 200,
-                            spread: 100,
-                            origin: { y: 0.6 },
-                            colors: ['#FFD700', '#FFA500', '#3B82F6', '#10B981']
-                        });
-
-                        loadBatches(); // Refresh UI logic
-                        switchTab('active');
-                    } else {
-                        showToast("Failed to endorse", 'error');
-                    }
-                } catch (e) {
-                    console.error(e);
-                    showToast("Network Error", 'error');
+                    loadBatches(); // Refresh UI logic
+                    switchTab('active');
+                } else {
+                    showToast("Failed to endorse", 'error');
                 }
+            } catch (e) {
+                console.error(e);
+                showToast("Network Error", 'error');
+            }
+        }
+
+        async function reportDelay() {
+            if (!CURRENT_BATCH) return;
+            const reason = prompt("Describe the bottleneck/delay:", "Resource Shortage");
+            if (!reason) return;
+
+            try {
+                const res = await fetchAuth(`${API}/groups/${CURRENT_BATCH.id}/delay`, {
+                    method: 'POST',
+                    body: JSON.stringify({ reason: reason })
+                });
+
+                if (res.ok) {
+                    showToast("🐢 Delay Logged. Team alerted.", 'warning'); // Use warning/error color
+                    loadBatches();
+                    switchTab('active');
+                } else {
+                    showToast("Failed to log delay", 'error');
+                }
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        async function deleteBatch() {
+            if (!CURRENT_BATCH) return;
+            if (!confirm(`Are you sure you want to PERMANENTLY delete Batch #${CURRENT_BATCH.id} ("${CURRENT_BATCH.group_name}")?\n\nThis action cannot be undone.`)) {
+                return;
             }
 
-            async function reportDelay() {
-                if (!CURRENT_BATCH) return;
-                const reason = prompt("Describe the bottleneck/delay:", "Resource Shortage");
-                if (!reason) return;
+            try {
+                const res = await fetchAuth(`${API}/groups/${CURRENT_BATCH.id}`, {
+                    method: 'DELETE'
+                });
 
-                try {
-                    const res = await fetchAuth(`${API}/groups/${CURRENT_BATCH.id}/delay`, {
-                        method: 'POST',
-                        body: JSON.stringify({ reason: reason })
-                    });
-
-                    if (res.ok) {
-                        showToast("🐢 Delay Logged. Team alerted.", 'warning'); // Use warning/error color
-                        loadBatches();
-                        switchTab('active');
-                    } else {
-                        showToast("Failed to log delay", 'error');
-                    }
-                } catch (e) {
-                    console.error(e);
+                if (res.ok) {
+                    alert("Batch Deleted Successfully");
+                    switchTab('active');
+                    loadBatches();
+                } else {
+                    const err = await res.json();
+                    alert("Delete Failed: " + (err.error || "Unknown Error"));
                 }
+            } catch (e) {
+                console.error(e);
+                alert("Delete Failed: Network Error");
             }
+        }
 
-            async function deleteBatch() {
-                if (!CURRENT_BATCH) return;
-                if (!confirm(`Are you sure you want to PERMANENTLY delete Batch #${CURRENT_BATCH.id} ("${CURRENT_BATCH.group_name}")?\n\nThis action cannot be undone.`)) {
-                    return;
-                }
-
-                try {
-                    const res = await fetchAuth(`${API}/groups/${CURRENT_BATCH.id}`, {
-                        method: 'DELETE'
-                    });
-
-                    if (res.ok) {
-                        alert("Batch Deleted Successfully");
-                        switchTab('active');
-                        loadBatches();
-                    } else {
-                        const err = await res.json();
-                        alert("Delete Failed: " + (err.error || "Unknown Error"));
-                    }
-                } catch (e) {
-                    console.error(e);
-                    alert("Delete Failed: Network Error");
-                }
-            }
-
-            function logout() { sessionStorage.clear(); window.location = 'login.html'; }
+        function logout() { sessionStorage.clear(); window.location = 'login.html'; }
     </script>
     <!-- ENDORSE MODAL -->
     <div id="endorse-modal"
