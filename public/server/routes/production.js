@@ -130,11 +130,13 @@ router.get('/config-list', authenticateToken, (req, res) => {
 
 router.get('/groups', authenticateToken, (req, res) => {
     const sql = `
-        SELECT g.*, g.daily_target, p.current_stage, p.completed_stages, p.notes
-        FROM production_groups g
-        LEFT JOIN production_progress p ON g.id = p.group_id
-        WHERE g.status = 'Active'
-        ORDER BY g.created_at DESC
+      SELECT g.id, g.group_name, g.sku, g.quantity, g.created_at, g.status, g.notes as group_notes, g.points, g.delay_reason, g.daily_target,
+             p.current_stage, p.completed_stages, p.notes as progress_notes, p.updated_at as last_updated
+      FROM production_groups g
+      LEFT JOIN production_progress p ON g.id = p.group_id
+      ORDER BY
+        CASE WHEN g.status = 'active' THEN 1 ELSE 2 END,
+        g.created_at DESC
     `;
 
     db.all(sql, [], (err, rows) => {
