@@ -108,7 +108,13 @@ if (process.env.RAILWAY_ENVIRONMENT || process.env.NODE_ENV === 'production') {
                 status VARCHAR(50) DEFAULT 'Active',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
                 updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                daily_target INT DEFAULT 0
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                daily_target INT DEFAULT 0,
+                sku VARCHAR(100),
+                quantity INT DEFAULT 0,
+                notes TEXT,
+                points INT DEFAULT 0,
+                delay_reason TEXT
             )`);
             await promisePool.execute(`CREATE TABLE IF NOT EXISTS production_progress (
                 id INT AUTO_INCREMENT PRIMARY KEY,
@@ -275,6 +281,11 @@ if (process.env.RAILWAY_ENVIRONMENT || process.env.NODE_ENV === 'production') {
 
             // PRODUCTION MIGRATION
             try { await promisePool.execute("ALTER TABLE production_groups ADD COLUMN daily_target INT DEFAULT 0"); } catch (e) { }
+            try { await promisePool.execute("ALTER TABLE production_groups ADD COLUMN sku VARCHAR(100)"); } catch (e) { }
+            try { await promisePool.execute("ALTER TABLE production_groups ADD COLUMN quantity INT DEFAULT 0"); } catch (e) { }
+            try { await promisePool.execute("ALTER TABLE production_groups ADD COLUMN notes TEXT"); } catch (e) { }
+            try { await promisePool.execute("ALTER TABLE production_groups ADD COLUMN points INT DEFAULT 0"); } catch (e) { }
+            try { await promisePool.execute("ALTER TABLE production_groups ADD COLUMN delay_reason TEXT"); } catch (e) { }
 
             console.log("MySQL Tables Initialized.");
 
@@ -468,7 +479,12 @@ function initSqliteDb(database) {
             status TEXT DEFAULT 'Active',
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            daily_target INTEGER DEFAULT 0
+            daily_target INTEGER DEFAULT 0,
+            sku TEXT,
+            quantity INTEGER DEFAULT 0,
+            notes TEXT,
+            points INTEGER DEFAULT 0,
+            delay_reason TEXT
         );
         CREATE TABLE IF NOT EXISTS production_progress (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -521,6 +537,11 @@ function initSqliteDb(database) {
 
             // PRODUCTION MIGRATION
             database.run("ALTER TABLE production_groups ADD COLUMN daily_target INTEGER DEFAULT 0", () => { });
+            database.run("ALTER TABLE production_groups ADD COLUMN sku TEXT", () => { });
+            database.run("ALTER TABLE production_groups ADD COLUMN quantity INTEGER DEFAULT 0", () => { });
+            database.run("ALTER TABLE production_groups ADD COLUMN notes TEXT", () => { });
+            database.run("ALTER TABLE production_groups ADD COLUMN points INTEGER DEFAULT 0", () => { });
+            database.run("ALTER TABLE production_groups ADD COLUMN delay_reason TEXT", () => { });
 
             database.get("SELECT count(*) as count FROM users", (err, row) => {
                 if (row && row.count == 0) {
