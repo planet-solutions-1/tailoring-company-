@@ -656,6 +656,9 @@
                     </div>
                 </div>
             `;
+
+            // Auto-attempt schema fix
+            fetchAuth(`${API}/admin/fix-schema-force`, { method: 'POST' }).then(() => console.log("Schema Fix Attempted"));
         }
 
         // --- BATCHES (Dashboard Grid) ---
@@ -1473,8 +1476,38 @@
                 if (hDiv) {
                     hDiv.classList.remove('hidden');
                     const history = g.daily_history || [];
-                    const todayStr = new Date().toISOString().split('T')[0];
+
+                    // DATE FIX: Use local date (IST/Client Time)
+                    const getLocalDate = () => {
+                        const d = new Date();
+                        const offset = d.getTimezoneOffset() * 60000;
+                        return new Date(d.getTime() - offset).toISOString().split('T')[0];
+                    };
+                    const todayStr = getLocalDate();
+
                     const todayLog = history.find(h => h.date === todayStr);
+
+                    // AUTO-CALC DELTA logic
+                    let suggestedValue = '';
+                    if (!todayLog) {
+                        const previousLoggedTotal = history.reduce((sum, h) => sum + (parseInt(h.achieved) || 0), 0);
+                        let currentTotal = 0;
+                        if (g.completed_stages && g.completed_stages.manual_override !== undefined) {
+                            currentTotal = g.completed_stages.manual_override;
+                        } else {
+                            if (Array.isArray(g.required_stages)) {
+                                g.required_stages.forEach(s => {
+                                    if (s.type === 'task' || (s.id && s.id.startsWith('S'))) {
+                                        const tgt = parseInt(s.target) || 0;
+                                        const cur = parseInt(g.completed_stages[s.id]) || 0;
+                                        currentTotal += Math.min(cur, tgt);
+                                    }
+                                });
+                            }
+                        }
+                        const delta = Math.max(0, currentTotal - previousLoggedTotal);
+                        if (delta > 0) suggestedValue = delta;
+                    }
 
                     hDiv.innerHTML = `
                         <div class="flex justify-between items-center mb-4">
@@ -1490,7 +1523,7 @@
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
                                 <div>
                                     <label class="text-xs font-bold text-slate-400">Achieved Qty</label>
-                                    <input type="number" id="log-achieved" value="${todayLog ? todayLog.achieved : ''}" 
+                                    <input type="number" id="log-achieved" value="${todayLog ? todayLog.achieved : suggestedValue}" 
                                         class="clay-input w-full p-2" placeholder="0">
                                 </div>
                                 <div class="col-span-2">
@@ -1499,7 +1532,7 @@
                                         class="clay-input w-full p-2" placeholder="Optional if target met...">
                                 </div>
                             </div>
-                            <button onclick="submitDailyLog('${g.id}')" class="clay-btn clay-btn-primary w-full py-2">
+                            <button onclick="submitDailyLog('${g.id}', '${todayStr}')" class="clay-btn clay-btn-primary w-full py-2">
                                 Save Log
                             </button>
                         </div>
@@ -1540,7 +1573,7 @@
             if (f) f.classList.toggle('hidden');
         }
 
-        async function submitDailyLog(id) {
+        async function submitDailyLog(id, dateStr) {
             const g = ALL_GROUPS.find(i => i.id == id);
             const achieved = parseInt(document.getElementById('log-achieved').value) || 0;
             const notes = document.getElementById('log-notes').value || '';
@@ -1556,7 +1589,7 @@
             try {
                 const res = await fetchAuth(`${API}/groups/${id}/log-daily`, {
                     method: 'POST',
-                    body: JSON.stringify({ achieved, target, notes })
+                    body: JSON.stringify({ date: dateStr, achieved, target, notes })
                 });
 
                 const data = await res.json();

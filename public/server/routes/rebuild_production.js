@@ -310,10 +310,13 @@ router.post('/groups/:id/log-daily', authenticateToken, async (req, res) => {
             timestamp: new Date().toISOString()
         };
 
-        // Append (or replace if same date? Let's append to keep full log)
-        // User said "history store", usually means log.
-        // But preventing dupes for same day might be nice. Let's just append for now.
-        history.push(newEntry);
+        // UPSERT LOGIC: Replace if entry exists for this date, otherwise push
+        const existingIndex = history.findIndex(h => h.date === newEntry.date);
+        if (existingIndex >= 0) {
+            history[existingIndex] = newEntry;
+        } else {
+            history.push(newEntry);
+        }
 
         // Gamification Logic
         let awarded = false;
