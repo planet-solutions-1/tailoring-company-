@@ -588,8 +588,16 @@
                 document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'block');
             }
 
-            loadBatches();
+            await loadBatches();
             loadDressTypeOptions();
+
+            // REFRESH PERSISTENCE Check
+            const params = new URLSearchParams(window.location.search);
+            const batchId = params.get('batch');
+            if (batchId) {
+                // Must wait for ALL_GROUPS to be populated (loadBatches is awaited now)
+                openDetail(batchId);
+            }
         };
 
         async function repairSystem() {
@@ -616,6 +624,11 @@
                 sidebar.classList.remove('hidden');
                 main.classList.add('lg:col-span-9');
                 main.classList.remove('lg:col-span-12');
+
+                // Clear URL param if leaving detail
+                const url = new URL(window.location);
+                url.searchParams.delete('batch');
+                window.history.pushState({}, '', url);
             }
 
             if (id === 'active') loadBatches();
@@ -1280,6 +1293,11 @@
                 }
 
                 CURRENT_BATCH = g;
+
+                // URL Persistence
+                const url = new URL(window.location);
+                url.searchParams.set('batch', g.id);
+                window.history.pushState({}, '', url);
 
                 // Populate Header
                 document.getElementById('detail-name').textContent = g.group_name;
