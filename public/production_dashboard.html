@@ -1431,6 +1431,9 @@
                                                 class="clay-input p-1 w-20 text-center text-sm font-bold shadow-sm" min="0" max="${tgt}">
                                             <span class="text-gray-400 text-xs font-bold">/ ${tgt}</span>
                                         </div>
+                                        <div id="warn-${s.id}" class="hidden text-[10px] text-red-500 font-bold bg-red-50 px-1 rounded border border-red-100 flex items-center gap-1">
+                                            <span>▼ Reduced</span>
+                                        </div>
                                         <input type="range" 
                                             id="rng-${s.id}"
                                             value="${current}" 
@@ -1718,6 +1721,23 @@
 
             // 2. LIVE DOM UPDATE (Optimistic UI)
             if (!g.completed_stages) g.completed_stages = {};
+
+            // WARNING CHECK: Is val decreasing from previous?
+            const oldVal = g.completed_stages[stageId] || 0;
+            const warningEl = document.getElementById(`warn-${stageId}`);
+            if (numInput) {
+                // If val < oldVal, show warning
+                if (val < oldVal) {
+                    numInput.classList.add('border-red-500', 'bg-red-50', 'text-red-600');
+                    if (warningEl) warningEl.classList.remove('hidden');
+                } else if (val > oldVal) {
+                    // Reset if increasing
+                    numInput.classList.remove('border-red-500', 'bg-red-50', 'text-red-600');
+                    if (warningEl) warningEl.classList.add('hidden');
+                }
+                // If equal, do nothing
+            }
+
             g.completed_stages[stageId] = val;
 
             if (g.required_stages && Array.isArray(g.required_stages)) {
