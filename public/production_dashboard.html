@@ -1728,12 +1728,22 @@
             if (numInput) {
                 // If val < oldVal, show warning
                 if (val < oldVal) {
-                    numInput.classList.add('border-red-500', 'bg-red-50', 'text-red-600');
-                    if (warningEl) warningEl.classList.remove('hidden');
+                    numInput.style.borderColor = 'red';
+                    numInput.style.color = 'red';
+                    numInput.style.backgroundColor = '#FEF2F2'; // red-50
+                    if (warningEl) {
+                        warningEl.classList.remove('hidden');
+                        warningEl.style.display = 'flex';
+                    }
                 } else if (val > oldVal) {
                     // Reset if increasing
-                    numInput.classList.remove('border-red-500', 'bg-red-50', 'text-red-600');
-                    if (warningEl) warningEl.classList.add('hidden');
+                    numInput.style.borderColor = ''; // Reset
+                    numInput.style.color = '';
+                    numInput.style.backgroundColor = '';
+                    if (warningEl) {
+                        warningEl.classList.add('hidden');
+                        warningEl.style.display = 'none';
+                    }
                 }
                 // If equal, do nothing
             }
