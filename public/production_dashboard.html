@@ -2603,14 +2603,20 @@
 
         function initCharts() {
             try {
-                // Destroy old charts if they exist
-                if (anaCharts.velocity) { anaCharts.velocity.destroy(); anaCharts.velocity = null; }
-                if (anaCharts.radar) { anaCharts.radar.destroy(); anaCharts.radar = null; }
-
-                // Check canvas existence
+                // Check canvases
                 const cVel = document.getElementById('chart-velocity');
                 const cRadar = document.getElementById('chart-radar');
                 if (!cVel || !cRadar) { console.warn("Analytics Canvas Missing"); return; }
+
+                // Destroy existing Chart instances associated with these canvases
+                const oldVel = Chart.getChart(cVel);
+                if (oldVel) oldVel.destroy();
+
+                const oldRadar = Chart.getChart(cRadar);
+                if (oldRadar) oldRadar.destroy();
+
+                anaCharts.velocity = null;
+                anaCharts.radar = null;
 
                 // Setup Theme Colors
                 const cyan = '#06b6d4';
@@ -2640,13 +2646,17 @@
                         plugins: { legend: { display: false } },
                         scales: {
                             x: {
-                                grid: { color: gridColor },
+                                grid: { color: gridColor, drawBorder: false },
                                 ticks: { color: '#94a3b8' }
                             },
                             y: {
                                 beginAtZero: true,
-                                grid: { color: gridColor },
-                                ticks: { color: '#94a3b8', precision: 0 }
+                                grid: { color: gridColor, drawBorder: false },
+                                ticks: {
+                                    color: '#94a3b8',
+                                    // FORCE manual formatting to bypass Intl.NumberFormat crash
+                                    callback: function (value) { return Math.floor(value); }
+                                }
                             }
                         }
                     }
