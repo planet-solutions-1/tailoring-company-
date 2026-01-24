@@ -11,7 +11,9 @@
     <!-- Google Fonts: Inter (Professional SaaS) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Orbitron:wght@400;500;700;900&family=Rajdhani:wght@300;500;700&display=swap"
+        rel="stylesheet">
 
     <style>
         /* --- PROFESSIONAL SAAS DESIGN SYSTEM --- */
@@ -182,6 +184,85 @@
             background-image: radial-gradient(#e2e8f0 1px, transparent 1px);
             background-size: 24px 24px;
         }
+
+        /* --- SCI-FI LIGHT THEME (Analytics) --- */
+        .sci-fi-theme {
+            --sf-bg: #f8fafc;
+            --sf-card: rgba(255, 255, 255, 0.7);
+            --sf-border: #93c5fd;
+            /* Soft Blue */
+            --sf-accent: #06b6d4;
+            /* Cyan-500 */
+            --sf-text: #334155;
+            background: radial-gradient(circle at 60% 0%, #f0f9ff 0%, #e0f2fe 100%);
+            min-height: 100vh;
+        }
+
+        .sci-fi-font {
+            font-family: 'Orbitron', sans-serif;
+            letter-spacing: 1px;
+        }
+
+        .tech-font {
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 600;
+        }
+
+        .sci-fi-card {
+            background: var(--sf-card);
+            backdrop-filter: blur(16px);
+            border: 1px solid white;
+            box-shadow:
+                0 4px 20px -5px rgba(6, 182, 212, 0.15),
+                0 0 0 1px rgba(255, 255, 255, 0.8) inset;
+            border-radius: 1.5rem;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .sci-fi-card:hover {
+            transform: translateY(-4px);
+            box-shadow:
+                0 10px 30px -5px rgba(6, 182, 212, 0.2),
+                0 0 0 1px rgba(6, 182, 212, 0.3) inset;
+        }
+
+        .sci-fi-card::before {
+            /* Accent Line */
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(to bottom, #06b6d4, transparent);
+            opacity: 0.8;
+        }
+
+        .sci-fi-card::after {
+            /* Scanline effect */
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(transparent 50%, rgba(6, 182, 212, 0.02) 50%);
+            background-size: 100% 3px;
+            pointer-events: none;
+        }
+
+        .hologram-text {
+            background: linear-gradient(135deg, #0891b2 0%, #2563eb 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 2px 10px rgba(6, 182, 212, 0.2);
+        }
+
+        .grid-bg {
+            background-image:
+                linear-gradient(rgba(6, 182, 212, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(6, 182, 212, 0.03) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
     </style>
 
     <!-- Confetti Lib -->
@@ -244,6 +325,15 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                     </svg> Defaults</button>
+                <button onclick="switchTab('analytics')" id="nav-analytics"
+                    class="tech-btn w-full p-3 text-left flex items-center gap-3">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+                        </path>
+                    </svg> Analytics <span
+                        class="text-[10px] bg-cyan-100 text-cyan-700 px-1.5 rounded font-bold ml-auto tech-font">NEW</span>
+                </button>
             </div>
         </aside>
 
@@ -387,6 +477,104 @@
                         </table>
                     </div>
                 </div>
+                <!-- SCI-FI ANALYTICS VIEW -->
+                <div id="view-analytics" class="hidden sci-fi-theme p-6 rounded-3xl grid-bg">
+                    <div class="flex justify-between items-center mb-8">
+                        <div>
+                            <h1 class="text-4xl font-black sci-fi-font hologram-text tracking-widest uppercase mb-1">
+                                System Analytics <span class="text-xs align-middle text-cyan-400 font-mono">v9.0</span>
+                            </h1>
+                            <p class="text-sm tech-font text-cyan-700 uppercase tracking-widest">Real-time Production
+                                Telemetry</p>
+                        </div>
+
+                        <!-- Global Counters -->
+                        <div class="flex gap-4">
+                            <div class="sci-fi-card px-6 py-4 min-w-[140px]">
+                                <p class="text-[10px] uppercase font-bold text-cyan-500 mb-1 tech-font">System Load</p>
+                                <div class="text-2xl font-black text-slate-700 sci-fi-font" id="ana-load">42%</div>
+                            </div>
+                            <div class="sci-fi-card px-6 py-4 min-w-[140px]">
+                                <p class="text-[10px] uppercase font-bold text-cyan-500 mb-1 tech-font">Efficiency</p>
+                                <div class="text-2xl font-black text-slate-700 sci-fi-font" id="ana-efficiency">98%
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                        <!-- Line Chart: Production Velocity -->
+                        <div class="sci-fi-card p-6 h-80 flex flex-col">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-lg font-bold text-slate-700 sci-fi-font uppercase tracking-wide">Output
+                                    Velocity</h3>
+                                <span class="text-[10px] text-cyan-500 font-mono animate-pulse">● LIVE STREAM</span>
+                            </div>
+                            <div class="flex-1 relative">
+                                <canvas id="chart-velocity"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Radar Chart: Skill Matrix -->
+                        <div class="sci-fi-card p-6 h-80 flex flex-col">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="text-lg font-bold text-slate-700 sci-fi-font uppercase tracking-wide">
+                                    Operational Balance</h3>
+                                <span class="text-[10px] text-cyan-500 font-mono">MATRIX-7</span>
+                            </div>
+                            <div class="flex-1 relative flex items-center justify-center">
+                                <canvas id="chart-radar"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Secondary Stats Grid -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="sci-fi-card p-4 flex items-center gap-4">
+                            <div
+                                class="w-12 h-12 rounded-full bg-cyan-100 flex items-center justify-center text-cyan-600">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="text-2xl font-black sci-fi-font text-slate-800" id="ana-active-batches">0
+                                </div>
+                                <div class="text-[10px] uppercase font-bold text-cyan-600">Active Batches</div>
+                            </div>
+                        </div>
+                        <div class="sci-fi-card p-4 flex items-center gap-4">
+                            <div
+                                class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10">
+                                    </path>
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="text-2xl font-black sci-fi-font text-slate-800" id="ana-total-items">0</div>
+                                <div class="text-[10px] uppercase font-bold text-blue-600">Items Processing</div>
+                            </div>
+                        </div>
+                        <div class="sci-fi-card p-4 flex items-center gap-4">
+                            <div
+                                class="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center text-purple-600">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                            <div>
+                                <div class="text-2xl font-black sci-fi-font text-slate-800" id="ana-avg-time">--</div>
+                                <div class="text-[10px] uppercase font-bold text-purple-600">Avg Cycle Time</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- End view-analytics -->
             </div>
 
         </section>
@@ -609,8 +797,10 @@
         }
 
         function switchTab(id) {
-            ['active', 'config', 'detail'].forEach(t => document.getElementById(`view-${t}`).classList.add('hidden'));
+            ['active', 'config', 'detail', 'analytics'].forEach(t => document.getElementById(`view-${t}`).classList.add('hidden'));
             document.getElementById(`view-${id}`).classList.remove('hidden');
+
+            if (id === 'analytics') renderAnalytics();
 
             // Sidebar Toggle Logic
             const sidebar = document.getElementById('sidebar-panel');
@@ -2382,6 +2572,105 @@
                 console.error(e);
                 alert("Delete Failed: Network Error");
             }
+        }
+
+        // --- ANALYTICS MODULE (Sci-Fi) ---
+        let anaCharts = {};
+
+        function renderAnalytics() {
+            // 1. Calculate Stats
+            const totalBatches = ALL_GROUPS.length;
+            const activeBatches = ALL_GROUPS.filter(g => g.status === 'Active').length;
+            let totalVolume = 0;
+            let totalCompletedPoints = 0;
+            let avgPct = 0;
+
+            ALL_GROUPS.forEach(g => {
+                totalVolume += (g._vol || 0);
+                avgPct += (g._pct || 0);
+            });
+            if (totalBatches > 0) avgPct = Math.round(avgPct / totalBatches);
+
+            // Populate Counters
+            document.getElementById('ana-active-batches').textContent = activeBatches;
+            document.getElementById('ana-total-items').textContent = totalVolume.toLocaleString();
+            document.getElementById('ana-efficiency').textContent = `${avgPct}%`;
+            document.getElementById('ana-load').textContent = `${Math.min(100, Math.round((activeBatches / 20) * 100))}%`; // Pseudo load
+
+            // 2. Render Charts
+            initCharts();
+        }
+
+        function initCharts() {
+            // Destroy old
+            if (anaCharts.velocity) anaCharts.velocity.destroy();
+            if (anaCharts.radar) anaCharts.radar.destroy();
+
+            // Setup Theme Colors (Cyan/Blue)
+            const cyan = '#06b6d4';
+            const blue = '#3b82f6';
+            const gridColor = 'rgba(6, 182, 212, 0.1)';
+
+            // A. Velocity Chart (Line)
+            const ctxVel = document.getElementById('chart-velocity').getContext('2d');
+            anaCharts.velocity = new Chart(ctxVel, {
+                type: 'line',
+                data: {
+                    labels: ['08:00', '10:00', '12:00', '14:00', '16:00', '18:00'],
+                    datasets: [{
+                        label: 'Hourly Output',
+                        data: [12, 45, 67, 40, 88, 30], // Mock Data for now
+                        borderColor: cyan,
+                        backgroundColor: 'rgba(6, 182, 212, 0.1)',
+                        borderWidth: 2,
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: '#fff',
+                        pointBorderColor: cyan
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { color: gridColor, borderColor: gridColor }, ticks: { color: '#94a3b8' } },
+                        y: { grid: { color: gridColor, borderColor: gridColor }, ticks: { color: '#94a3b8' } }
+                    }
+                }
+            });
+
+            // B. Radar Chart (Skill Matrix)
+            const ctxRadar = document.getElementById('chart-radar').getContext('2d');
+            anaCharts.radar = new Chart(ctxRadar, {
+                type: 'radar',
+                data: {
+                    labels: ['Quality', 'Speed', 'Volume', 'Efficiency', 'Uptime'],
+                    datasets: [{
+                        label: 'Current Shift',
+                        data: [90, 75, 85, 95, 80],
+                        backgroundColor: 'rgba(6, 182, 212, 0.2)',
+                        borderColor: cyan,
+                        pointBackgroundColor: cyan,
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: cyan
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            angleLines: { color: gridColor },
+                            grid: { color: gridColor },
+                            pointLabels: { color: '#64748b', font: { family: 'Rajdhani', size: 12, weight: 'bold' } },
+                            ticks: { display: false, backdropColor: 'transparent' }
+                        }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
         }
 
         function logout() { sessionStorage.clear(); window.location = 'login.html'; }
