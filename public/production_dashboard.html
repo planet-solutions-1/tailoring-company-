@@ -2602,75 +2602,90 @@
         }
 
         function initCharts() {
-            // Destroy old
-            if (anaCharts.velocity) anaCharts.velocity.destroy();
-            if (anaCharts.radar) anaCharts.radar.destroy();
+            try {
+                // Destroy old charts if they exist
+                if (anaCharts.velocity) { anaCharts.velocity.destroy(); anaCharts.velocity = null; }
+                if (anaCharts.radar) { anaCharts.radar.destroy(); anaCharts.radar = null; }
 
-            // Setup Theme Colors (Cyan/Blue)
-            const cyan = '#06b6d4';
-            const blue = '#3b82f6';
-            const gridColor = 'rgba(6, 182, 212, 0.1)';
+                // Check canvas existence
+                const cVel = document.getElementById('chart-velocity');
+                const cRadar = document.getElementById('chart-radar');
+                if (!cVel || !cRadar) { console.warn("Analytics Canvas Missing"); return; }
 
-            // A. Velocity Chart (Line)
-            const ctxVel = document.getElementById('chart-velocity').getContext('2d');
-            anaCharts.velocity = new Chart(ctxVel, {
-                type: 'line',
-                data: {
-                    labels: ['08:00', '10:00', '12:00', '14:00', '16:00', '18:00'],
-                    datasets: [{
-                        label: 'Hourly Output',
-                        data: [12, 45, 67, 40, 88, 30], // Mock Data for now
-                        borderColor: cyan,
-                        backgroundColor: 'rgba(6, 182, 212, 0.1)',
-                        borderWidth: 2,
-                        tension: 0.4,
-                        fill: true,
-                        pointBackgroundColor: '#fff',
-                        pointBorderColor: cyan
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        x: { grid: { color: gridColor, borderColor: gridColor }, ticks: { color: '#94a3b8' } },
-                        y: { grid: { color: gridColor, borderColor: gridColor }, ticks: { color: '#94a3b8' } }
-                    }
-                }
-            });
+                // Setup Theme Colors
+                const cyan = '#06b6d4';
+                const gridColor = 'rgba(6, 182, 212, 0.1)';
 
-            // B. Radar Chart (Skill Matrix)
-            const ctxRadar = document.getElementById('chart-radar').getContext('2d');
-            anaCharts.radar = new Chart(ctxRadar, {
-                type: 'radar',
-                data: {
-                    labels: ['Quality', 'Speed', 'Volume', 'Efficiency', 'Uptime'],
-                    datasets: [{
-                        label: 'Current Shift',
-                        data: [90, 75, 85, 95, 80],
-                        backgroundColor: 'rgba(6, 182, 212, 0.2)',
-                        borderColor: cyan,
-                        pointBackgroundColor: cyan,
-                        pointBorderColor: '#fff',
-                        pointHoverBackgroundColor: '#fff',
-                        pointHoverBorderColor: cyan
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        r: {
-                            angleLines: { color: gridColor },
-                            grid: { color: gridColor },
-                            pointLabels: { color: '#64748b', font: { family: 'Rajdhani', size: 12, weight: 'bold' } },
-                            ticks: { display: false, backdropColor: 'transparent' }
-                        }
+                // A. Velocity Chart (Line)
+                const ctxVel = cVel.getContext('2d');
+                anaCharts.velocity = new Chart(ctxVel, {
+                    type: 'line',
+                    data: {
+                        labels: ['08:00', '10:00', '12:00', '14:00', '16:00', '18:00'],
+                        datasets: [{
+                            label: 'Hourly Output',
+                            data: [12, 45, 67, 40, 88, 30],
+                            borderColor: cyan,
+                            backgroundColor: 'rgba(6, 182, 212, 0.1)',
+                            borderWidth: 2,
+                            tension: 0.4,
+                            fill: true,
+                            pointBackgroundColor: '#fff',
+                            pointBorderColor: cyan
+                        }]
                     },
-                    plugins: { legend: { display: false } }
-                }
-            });
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: {
+                                grid: { color: gridColor },
+                                ticks: { color: '#94a3b8' }
+                            },
+                            y: {
+                                beginAtZero: true,
+                                grid: { color: gridColor },
+                                ticks: { color: '#94a3b8', precision: 0 }
+                            }
+                        }
+                    }
+                });
+
+                // B. Radar Chart (Skill Matrix)
+                const ctxRadar = cRadar.getContext('2d');
+                anaCharts.radar = new Chart(ctxRadar, {
+                    type: 'radar',
+                    data: {
+                        labels: ['Quality', 'Speed', 'Volume', 'Efficiency', 'Uptime'],
+                        datasets: [{
+                            label: 'Current Shift',
+                            data: [90, 75, 85, 95, 80],
+                            backgroundColor: 'rgba(6, 182, 212, 0.2)',
+                            borderColor: cyan,
+                            pointBackgroundColor: cyan,
+                            pointBorderColor: '#fff',
+                            pointHoverBackgroundColor: '#fff',
+                            pointHoverBorderColor: cyan
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            r: {
+                                grid: { color: gridColor },
+                                angleLines: { color: gridColor },
+                                pointLabels: { color: '#64748b', font: { size: 11 } },
+                                ticks: { display: false, backdropColor: 'transparent' }
+                            }
+                        },
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            } catch (e) {
+                console.error("Chart Init Failed:", e);
+            }
         }
 
         function logout() { sessionStorage.clear(); window.location = 'login.html'; }
