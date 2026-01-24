@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Production Dashboard - Planet Solutions</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+
 
     <!-- Google Fonts: Inter (Professional SaaS) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -253,6 +253,7 @@
         .hologram-text {
             background: linear-gradient(135deg, #0891b2 0%, #2563eb 100%);
             -webkit-background-clip: text;
+            background-clip: text;
             -webkit-text-fill-color: transparent;
             text-shadow: 0 2px 10px rgba(6, 182, 212, 0.2);
         }
@@ -2574,128 +2575,213 @@
             }
         }
 
-        // --- ANALYTICS MODULE (Sci-Fi) ---
-        let anaCharts = {};
+        // --- ANALYTICS MODULE (Sci-Fi / Custom Canvas) ---
+        // Replacing Chart.js with pure Canvas rendering to fix library crashes.
 
         function renderAnalytics() {
             // 1. Calculate Stats
             const totalBatches = ALL_GROUPS.length;
             const activeBatches = ALL_GROUPS.filter(g => g.status === 'Active').length;
             let totalVolume = 0;
-            let totalCompletedPoints = 0;
-            let avgPct = 0;
+            let totalAvgPct = 0;
 
             ALL_GROUPS.forEach(g => {
                 totalVolume += (g._vol || 0);
-                avgPct += (g._pct || 0);
+                totalAvgPct += (g._pct || 0);
             });
-            if (totalBatches > 0) avgPct = Math.round(avgPct / totalBatches);
+            const globalEfficiency = totalBatches > 0 ? Math.round(totalAvgPct / totalBatches) : 0;
 
             // Populate Counters
             document.getElementById('ana-active-batches').textContent = activeBatches;
             document.getElementById('ana-total-items').textContent = totalVolume.toLocaleString();
-            document.getElementById('ana-efficiency').textContent = `${avgPct}%`;
-            document.getElementById('ana-load').textContent = `${Math.min(100, Math.round((activeBatches / 20) * 100))}%`; // Pseudo load
+            document.getElementById('ana-efficiency').textContent = `${globalEfficiency}%`;
 
-            // 2. Render Charts
-            initCharts();
+            // Pseudo Load: Based on active count vs capacity
+            const loadPct = Math.min(100, Math.round((activeBatches / 50) * 100));
+            document.getElementById('ana-load').textContent = `${loadPct}%`;
+
+            // 2. Render Custom Charts
+            drawVelocityChart([12, 45, 67, 40, 88, 30, 55, 20]);
+            drawRadarChart([90, 75, 85, 95, 80]); // Quality, Speed, Volume, Eff, Uptime
         }
 
-        function initCharts() {
-            try {
-                // Check canvases
-                const cVel = document.getElementById('chart-velocity');
-                const cRadar = document.getElementById('chart-radar');
-                if (!cVel || !cRadar) { console.warn("Analytics Canvas Missing"); return; }
+        // --- CUSTOM CANVAS DRAWING (Robust) ---
 
-                // Destroy existing Chart instances associated with these canvases
-                const oldVel = Chart.getChart(cVel);
-                if (oldVel) oldVel.destroy();
+        function drawVelocityChart(dataPoints) {
+            const canvas = document.getElementById('chart-velocity');
+            if (!canvas) return;
 
-                const oldRadar = Chart.getChart(cRadar);
-                if (oldRadar) oldRadar.destroy();
+            // Fix Resolution
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            const ctx = canvas.getContext('2d');
+            ctx.scale(dpr, dpr);
 
-                anaCharts.velocity = null;
-                anaCharts.radar = null;
+            const w = rect.width;
+            const h = rect.height;
+            const padding = 20;
 
-                // Setup Theme Colors
-                const cyan = '#06b6d4';
-                const gridColor = 'rgba(6, 182, 212, 0.1)';
+            // Clear
+            ctx.clearRect(0, 0, w, h);
 
-                // A. Velocity Chart (Line)
-                const ctxVel = cVel.getContext('2d');
-                anaCharts.velocity = new Chart(ctxVel, {
-                    type: 'line',
-                    data: {
-                        labels: ['08:00', '10:00', '12:00', '14:00', '16:00', '18:00'],
-                        datasets: [{
-                            label: 'Hourly Output',
-                            data: [12, 45, 67, 40, 88, 30],
-                            borderColor: cyan,
-                            backgroundColor: 'rgba(6, 182, 212, 0.1)',
-                            borderWidth: 2,
-                            tension: 0.4,
-                            fill: true,
-                            pointBackgroundColor: '#fff',
-                            pointBorderColor: cyan
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { legend: { display: false } },
-                        scales: {
-                            x: {
-                                grid: { color: gridColor, drawBorder: false },
-                                ticks: { color: '#94a3b8' }
-                            },
-                            y: {
-                                beginAtZero: true,
-                                grid: { color: gridColor, drawBorder: false },
-                                ticks: {
-                                    color: '#94a3b8',
-                                    // FORCE manual formatting to bypass Intl.NumberFormat crash
-                                    callback: function (value) { return Math.floor(value); }
-                                }
-                            }
-                        }
-                    }
-                });
+            // Styling
+            const cyan = '#06b6d4';
+            const bgGlow = 'rgba(6, 182, 212, 0.1)';
 
-                // B. Radar Chart (Skill Matrix)
-                const ctxRadar = cRadar.getContext('2d');
-                anaCharts.radar = new Chart(ctxRadar, {
-                    type: 'radar',
-                    data: {
-                        labels: ['Quality', 'Speed', 'Volume', 'Efficiency', 'Uptime'],
-                        datasets: [{
-                            label: 'Current Shift',
-                            data: [90, 75, 85, 95, 80],
-                            backgroundColor: 'rgba(6, 182, 212, 0.2)',
-                            borderColor: cyan,
-                            pointBackgroundColor: cyan,
-                            pointBorderColor: '#fff',
-                            pointHoverBackgroundColor: '#fff',
-                            pointHoverBorderColor: cyan
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: {
-                            r: {
-                                grid: { color: gridColor },
-                                angleLines: { color: gridColor },
-                                pointLabels: { color: '#64748b', font: { size: 11 } },
-                                ticks: { display: false, backdropColor: 'transparent' }
-                            }
-                        },
-                        plugins: { legend: { display: false } }
-                    }
-                });
-            } catch (e) {
-                console.error("Chart Init Failed:", e);
+            // Draw Grid
+            ctx.strokeStyle = 'rgba(6, 182, 212, 0.1)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            for (let i = 0; i <= 5; i++) {
+                const y = padding + (h - 2 * padding) * (i / 5);
+                ctx.moveTo(padding, y);
+                ctx.lineTo(w - padding, y);
             }
+            ctx.stroke();
+
+            // Draw Line Path
+            const maxVal = 100;
+            const stepX = (w - 2 * padding) / (dataPoints.length - 1);
+
+            ctx.beginPath();
+            dataPoints.forEach((val, i) => {
+                const x = padding + i * stepX;
+                const y = h - padding - ((val / maxVal) * (h - 2 * padding));
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+
+            // Gradient Fill
+            const grad = ctx.createLinearGradient(0, 0, 0, h);
+            grad.addColorStop(0, 'rgba(6, 182, 212, 0.3)');
+            grad.addColorStop(1, 'rgba(6, 182, 212, 0.0)');
+
+            ctx.fillStyle = grad;
+            ctx.lineTo(w - padding, h - padding);
+            ctx.lineTo(padding, h - padding);
+            ctx.fill();
+
+            // Stroke Line
+            ctx.strokeStyle = cyan;
+            ctx.lineWidth = 2;
+            ctx.shadowColor = cyan;
+            ctx.shadowBlur = 10;
+            ctx.stroke();
+            ctx.shadowBlur = 0; // Reset
+
+            // Dots
+            ctx.fillStyle = "#fff";
+            dataPoints.forEach((val, i) => {
+                const x = padding + i * stepX;
+                const y = h - padding - ((val / maxVal) * (h - 2 * padding));
+                ctx.beginPath();
+                ctx.arc(x, y, 4, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+            });
+        }
+
+        function drawRadarChart(values) {
+            const canvas = document.getElementById('chart-radar');
+            if (!canvas) return;
+
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            const ctx = canvas.getContext('2d');
+            ctx.scale(dpr, dpr);
+
+            const w = rect.width;
+            const h = rect.height;
+            const cx = w / 2;
+            const cy = h / 2;
+            const radius = Math.min(w, h) / 2 - 30;
+            const sides = 5;
+
+            // Labels
+            const labels = ['Quality', 'Speed', 'Volume', 'Eff', 'Uptime'];
+
+            // Clear
+            ctx.clearRect(0, 0, w, h);
+
+            // Draw Web (Grid)
+            ctx.strokeStyle = 'rgba(6, 182, 212, 0.15)';
+            ctx.lineWidth = 1;
+
+            for (let level = 1; level <= 4; level++) {
+                const r = radius * (level / 4);
+                ctx.beginPath();
+                for (let i = 0; i < sides; i++) {
+                    const ang = (Math.PI * 2 * i) / sides - Math.PI / 2;
+                    const x = cx + Math.cos(ang) * r;
+                    const y = cy + Math.sin(ang) * r;
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.closePath();
+                ctx.stroke();
+            }
+
+            // Draw Axes & Labels
+            ctx.fillStyle = '#64748b';
+            ctx.font = 'bold 10px Inter';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            for (let i = 0; i < sides; i++) {
+                const ang = (Math.PI * 2 * i) / sides - Math.PI / 2;
+                const x = cx + Math.cos(ang) * radius;
+                const y = cy + Math.sin(ang) * radius;
+
+                // Axis Line
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.lineTo(x, y);
+                ctx.stroke();
+
+                // Label
+                const lx = cx + Math.cos(ang) * (radius + 20);
+                const ly = cy + Math.sin(ang) * (radius + 20);
+                ctx.fillText(labels[i], lx, ly);
+            }
+
+            // Draw Data Shape
+            ctx.beginPath();
+            values.forEach((val, i) => {
+                const ang = (Math.PI * 2 * i) / sides - Math.PI / 2;
+                const r = radius * (val / 100);
+                const x = cx + Math.cos(ang) * r;
+                const y = cy + Math.sin(ang) * r;
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+            ctx.closePath();
+
+            ctx.fillStyle = 'rgba(6, 182, 212, 0.2)';
+            ctx.fill();
+
+            ctx.strokeStyle = '#06b6d4';
+            ctx.lineWidth = 2;
+            ctx.shadowColor = '#06b6d4';
+            ctx.shadowBlur = 10;
+            ctx.stroke();
+            ctx.shadowBlur = 0;
+
+            // Data Points
+            values.forEach((val, i) => {
+                const ang = (Math.PI * 2 * i) / sides - Math.PI / 2;
+                const r = radius * (val / 100);
+                const x = cx + Math.cos(ang) * r;
+                const y = cy + Math.sin(ang) * r;
+
+                ctx.beginPath();
+                ctx.fillStyle = '#fff';
+                ctx.arc(x, y, 4, 0, Math.PI * 2);
+                ctx.fill();
+            });
         }
 
         function logout() { sessionStorage.clear(); window.location = 'login.html'; }
