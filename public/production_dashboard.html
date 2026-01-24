@@ -468,12 +468,12 @@
                         </div>
                         <div class="md:col-span-1">
                             <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Tasks Count</label>
-                            <input type="number" id="count-tasks" class="clay-input w-full p-2.5" min="1" max="20"
+                            <input type="number" id="count-tasks" class="clay-input w-full p-2.5" min="1" max="100"
                                 value="10" onchange="loadWizardConfig()" oninput="loadWizardConfig()">
                         </div>
                         <div class="md:col-span-1">
                             <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Phases Count</label>
-                            <input type="number" id="count-groups" class="clay-input w-full p-2.5" min="1" max="20"
+                            <input type="number" id="count-groups" class="clay-input w-full p-2.5" min="1" max="50"
                                 value="5" onchange="loadWizardConfig()" oninput="loadWizardConfig()">
                         </div>
                     </div>
@@ -1079,8 +1079,8 @@
 
         async function loadWizardConfig() {
             const type = document.getElementById('wiz-type').value;
-            const taskLimit = parseInt(document.getElementById('count-tasks').value) || 10;
-            const groupLimit = parseInt(document.getElementById('count-groups').value) || 5;
+            const taskLimit = parseInt(document.getElementById('count-tasks').value) || 100;
+            const groupLimit = parseInt(document.getElementById('count-groups').value) || 50;
 
             const sPool = document.getElementById('wiz-pool');
             const pCanvas = document.getElementById('wiz-canvas');
@@ -2029,7 +2029,7 @@
             const sPool = document.getElementById('wiz-pool');
             const pCanvas = document.getElementById('wiz-canvas');
             const type = document.getElementById('wiz-type').value;
-            const taskLimit = parseInt(document.getElementById('count-tasks').value) || 20;
+            const taskLimit = parseInt(document.getElementById('count-tasks').value) || 100;
 
             // 0. Fetch Config for Labels
             let conf = {};
