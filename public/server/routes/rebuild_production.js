@@ -86,20 +86,40 @@ router.post('/config', authenticateToken, requireRole('company'), async (req, re
 
 router.get('/config-list', authenticateToken, async (req, res) => {
     try {
-        // Fetch from Configs
+        // 1. Fetch from Configs (Production Templates)
         const configRows = await query("SELECT DISTINCT dress_type FROM production_config");
         const configTypes = configRows.map(r => r.dress_type).filter(x => x);
 
-        // Fetch from Used Groups (so ad-hoc types also appear)
+        // 2. Fetch from Used Groups (Ad-hoc usage)
         const groupRows = await query("SELECT DISTINCT dress_type FROM production_groups");
         const groupTypes = groupRows.map(r => r.dress_type).filter(x => x);
+
+        // 3. Fetch from Company Dashboard Config (System Config Record)
+        let systemTypes = [];
+        try {
+            // The company dashboard saves global config in a school record with username 'system_config'
+            const sysRows = await query("SELECT address FROM schools WHERE username = 'system_config'");
+            if (sysRows.length > 0 && sysRows[0].address) {
+                const raw = JSON.parse(sysRows[0].address);
+                // ConfigLoader saves as { marker:..., data: [items...] } OR { items: [...] }
+                let items = [];
+                if (raw.data && Array.isArray(raw.data)) items = raw.data;
+                else if (raw.items && Array.isArray(raw.items)) items = raw.items;
+                else if (Array.isArray(raw)) items = raw; // Legacy array
+
+                // Extract name
+                systemTypes = items.map(i => i.name).filter(x => x);
+            }
+        } catch (e) {
+            console.log("Error fetching system_config for dress types:", e.message);
+        }
 
         const defaults = ["Shirt", "Pant", "Suit", "Jacket", "Vest", "Kurta", "Safari"];
 
         // Merge & De-duplicate (Case Insensitive Normalization)
-        const rawList = [...defaults, ...configTypes, ...groupTypes];
+        const rawList = [...defaults, ...configTypes, ...groupTypes, ...systemTypes];
         const uniqueSet = new Set();
-        const finalMap = new Map(); // Lowercase -> Original (First wins? or Title Case wins?)
+        const finalMap = new Map();
 
         rawList.forEach(t => {
             if (!t || typeof t !== 'string') return;
@@ -107,8 +127,12 @@ router.get('/config-list', authenticateToken, async (req, res) => {
             const lower = clean.toLowerCase();
 
             if (!finalMap.has(lower)) {
-                // Formatting: Simple Title Case
-                const formatted = clean.charAt(0).toUpperCase() + clean.slice(1);
+                // Formatting: Title Case IF it was all lower, otherwise keep original casing (e.g. CAPS)
+                const isAllLower = clean === lower;
+                let formatted = clean;
+                if (isAllLower) {
+                    formatted = clean.charAt(0).toUpperCase() + clean.slice(1);
+                }
                 finalMap.set(lower, formatted);
             }
         });
