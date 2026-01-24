@@ -1553,11 +1553,20 @@
                                 <div class="grid grid-cols-2 gap-4 mb-3">
                                     <div>
                                         <label class="text-xs font-bold text-slate-400">Start Time</label>
-                                        <input type="time" id="log-start" value="${todayLog ? todayLog.start_time : ''}" class="clay-input w-full p-2 text-sm">
+                                        <input type="time" id="log-start" value="${todayLog ? todayLog.start_time : ''}" 
+                                            oninput="calculateLogDuration()"
+                                            class="clay-input w-full p-2 text-sm">
                                     </div>
                                     <div>
-                                        <label class="text-xs font-bold text-slate-400">End Time</label>
-                                        <input type="time" id="log-end" value="${todayLog ? todayLog.end_time : ''}" class="clay-input w-full p-2 text-sm">
+                                        <label class="text-xs font-bold text-slate-400 mb-1 block">End Time</label>
+                                        <div class="relative">
+                                            <input type="time" id="log-end" value="${todayLog ? todayLog.end_time : ''}" 
+                                                oninput="calculateLogDuration()"
+                                                class="clay-input w-full p-2 text-sm">
+                                            <div id="live-duration" class="absolute right-0 -top-6 text-[10px] font-bold text-slate-400 bg-slate-100 px-2 rounded hidden">
+                                                --
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
 
@@ -1633,6 +1642,36 @@
         function toggleLogForm() {
             const f = document.getElementById('daily-log-form');
             if (f) f.classList.toggle('hidden');
+        }
+
+        function calculateLogDuration() {
+            const sVal = document.getElementById('log-start').value;
+            const eVal = document.getElementById('log-end').value;
+            const disp = document.getElementById('live-duration');
+
+            if (sVal && eVal && disp) {
+                const start = new Date(`1970-01-01T${sVal}`);
+                const end = new Date(`1970-01-01T${eVal}`);
+                let diff = (end - start) / (1000 * 60 * 60); // hours
+                if (diff < 0) diff += 24;
+
+                const hrs = Math.floor(diff);
+                const mins = Math.round((diff - hrs) * 60);
+
+                disp.textContent = `⏱ ${hrs}h ${mins}m`;
+                disp.classList.remove('hidden');
+
+                // Live Color Feedback
+                if (diff > 9) {
+                    disp.className = "absolute right-0 -top-6 text-[10px] font-bold text-red-500 bg-red-50 px-2 rounded border border-red-100 flex items-center";
+                } else if (diff <= 8) {
+                    disp.className = "absolute right-0 -top-6 text-[10px] font-bold text-green-600 bg-green-50 px-2 rounded border border-green-100 flex items-center";
+                } else {
+                    disp.className = "absolute right-0 -top-6 text-[10px] font-bold text-slate-400 bg-slate-100 px-2 rounded flex items-center";
+                }
+            } else if (disp) {
+                disp.classList.add('hidden');
+            }
         }
 
         async function submitDailyLog(id, dateStr) {
