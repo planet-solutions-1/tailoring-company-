@@ -1550,20 +1550,24 @@
                                     <button onclick="toggleLogForm()" class="text-xs text-blue-400 hover:text-blue-600">Cancel</button>
                                 </h5>
                                 
-                                <div class="grid grid-cols-2 gap-4 mb-3">
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
                                     <div>
                                         <label class="text-xs font-bold text-slate-400">Start Time</label>
                                         <input type="time" id="log-start" value="${todayLog ? todayLog.start_time : ''}" 
-                                            oninput="calculateLogDuration()"
                                             class="clay-input w-full p-2 text-sm">
                                     </div>
                                     <div>
-                                        <label class="text-xs font-bold text-slate-400 mb-1 block">End Time</label>
+                                        <label class="text-xs font-bold text-slate-400">Target End Time</label>
+                                        <input type="time" id="log-target-end" value="${todayLog ? todayLog.target_end : ''}" 
+                                            class="clay-input w-full p-2 text-sm">
+                                    </div>
+                                    <div>
+                                        <label class="text-xs font-bold text-slate-400 mb-1 block">Completed At</label>
                                         <div class="relative">
-                                            <input type="time" id="log-end" value="${todayLog ? todayLog.end_time : ''}" 
-                                                oninput="calculateLogDuration()"
-                                                class="clay-input w-full p-2 text-sm">
-                                            <div id="live-duration" class="absolute right-0 -top-6 text-[10px] font-bold text-slate-400 bg-slate-100 px-2 rounded hidden">
+                                            <input type="time" id="log-actual-end" value="${todayLog ? todayLog.actual_end : ''}" 
+                                                oninput="calculateLogEfficiency()"
+                                                class="clay-input w-full p-2 text-sm font-bold text-blue-800">
+                                            <div id="live-efficiency" class="absolute right-0 -top-6 text-[10px] font-bold text-slate-400 bg-slate-100 px-2 rounded hidden">
                                                 --
                                             </div>
                                         </div>
@@ -1593,21 +1597,28 @@
                                 ${history.slice().reverse().map(h => {
                         const met = h.achieved >= h.target;
                         let durationBadge = '';
-                        if (h.start_time && h.end_time) {
-                            // Simple duration calc for display
+                        // New Shift Efficiency Logic
+                        if (h.target_end && h.actual_end) {
+                            const targetDate = new Date(`1970-01-01T${h.target_end}`);
+                            const actualDate = new Date(`1970-01-01T${h.actual_end}`);
+                            let diffMins = Math.round((actualDate - targetDate) / (1000 * 60));
+
+                            if (diffMins <= 0) {
+                                // Efficient
+                                durationBadge = `<span class="text-[10px] bg-green-100 text-green-600 px-1.5 py-0.5 rounded font-bold ml-2">⚡ -${Math.abs(diffMins)}m</span>`;
+                            } else {
+                                // Late
+                                durationBadge = `<span class="text-[10px] bg-red-100 text-red-500 px-1.5 py-0.5 rounded font-bold ml-2">🛑 +${diffMins}m</span>`;
+                            }
+                        }
+                        // Fallback to legacy Duration if new fields missing
+                        else if (h.start_time && h.end_time) {
                             const start = new Date(`1970-01-01T${h.start_time}`);
                             const end = new Date(`1970-01-01T${h.end_time}`);
-                            let diff = (end - start) / (1000 * 60 * 60); // hours
-                            if (diff < 0) diff += 24; // Handle overnight? Assume same day for now or standard shift
+                            let diff = (end - start) / (1000 * 60 * 60);
+                            if (diff < 0) diff += 24;
                             const hrs = Math.floor(diff);
-                            const mins = Math.round((diff - hrs) * 60);
-                            const durStr = `${hrs}h ${mins > 0 ? mins + 'm' : ''}`;
-
-                            let color = 'bg-gray-100 text-gray-500';
-                            if (diff > 9) color = 'bg-red-100 text-red-600'; // Late / Long
-                            else if (diff <= 8 && met) color = 'bg-blue-100 text-blue-600'; // Efficient
-
-                            durationBadge = `<span class="text-[10px] ${color} px-1.5 py-0.5 rounded font-bold ml-2">${durStr}</span>`;
+                            durationBadge = `<span class="text-[10px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded font-bold ml-2">${hrs}h</span>`;
                         }
 
                         return `
@@ -1644,30 +1655,33 @@
             if (f) f.classList.toggle('hidden');
         }
 
-        function calculateLogDuration() {
-            const sVal = document.getElementById('log-start').value;
-            const eVal = document.getElementById('log-end').value;
-            const disp = document.getElementById('live-duration');
+        function calculateLogEfficiency() {
+            const tEnd = document.getElementById('log-target-end').value;
+            const aEnd = document.getElementById('log-actual-end').value;
+            const disp = document.getElementById('live-efficiency');
 
-            if (sVal && eVal && disp) {
-                const start = new Date(`1970-01-01T${sVal}`);
-                const end = new Date(`1970-01-01T${eVal}`);
-                let diff = (end - start) / (1000 * 60 * 60); // hours
-                if (diff < 0) diff += 24;
+            if (tEnd && aEnd && disp) {
+                const targetDate = new Date(`1970-01-01T${tEnd}`);
+                const actualDate = new Date(`1970-01-01T${aEnd}`);
 
-                const hrs = Math.floor(diff);
-                const mins = Math.round((diff - hrs) * 60);
+                // Diff in Minutes
+                let diffMs = actualDate - targetDate;
+                let diffMins = Math.round(diffMs / (1000 * 60));
 
-                disp.textContent = `⏱ ${hrs}h ${mins}m`;
+                // If diffMins <= 0 -> Early/OnTime (Efficient)
+                // If diffMins > 0 -> Late
+
                 disp.classList.remove('hidden');
 
-                // Live Color Feedback
-                if (diff > 9) {
-                    disp.className = "absolute right-0 -top-6 text-[10px] font-bold text-red-500 bg-red-50 px-2 rounded border border-red-100 flex items-center";
-                } else if (diff <= 8) {
-                    disp.className = "absolute right-0 -top-6 text-[10px] font-bold text-green-600 bg-green-50 px-2 rounded border border-green-100 flex items-center";
+                if (diffMins <= 0) {
+                    // Efficient
+                    const saved = Math.abs(diffMins);
+                    disp.textContent = `⚡ Efficient (-${saved}m)`;
+                    disp.className = "absolute right-0 -top-6 text-[10px] font-bold text-green-600 bg-green-50 px-2 rounded border border-green-100 flex items-center shadow-sm";
                 } else {
-                    disp.className = "absolute right-0 -top-6 text-[10px] font-bold text-slate-400 bg-slate-100 px-2 rounded flex items-center";
+                    // Late
+                    disp.textContent = `🛑 Late (+${diffMins}m)`;
+                    disp.className = "absolute right-0 -top-6 text-[10px] font-bold text-red-500 bg-red-50 px-2 rounded border border-red-100 flex items-center shadow-sm";
                 }
             } else if (disp) {
                 disp.classList.add('hidden');
@@ -1680,7 +1694,8 @@
             const notes = document.getElementById('log-notes').value || '';
             const target = g.daily_target || 0;
             const startTime = document.getElementById('log-start').value || null;
-            const endTime = document.getElementById('log-end').value || null;
+            const targetEnd = document.getElementById('log-target-end').value || null;
+            const actualEnd = document.getElementById('log-actual-end').value || null;
 
             // Shortfall Check
             if (target > 0 && achieved < target && !notes.trim()) {
@@ -1692,7 +1707,15 @@
             try {
                 const res = await fetchAuth(`${API}/groups/${id}/log-daily`, {
                     method: 'POST',
-                    body: JSON.stringify({ date: dateStr, achieved, target, notes, start_time: startTime, end_time: endTime })
+                    body: JSON.stringify({
+                        date: dateStr,
+                        achieved,
+                        target,
+                        notes,
+                        start_time: startTime,
+                        target_end: targetEnd,
+                        actual_end: actualEnd
+                    })
                 });
 
                 const data = await res.json();

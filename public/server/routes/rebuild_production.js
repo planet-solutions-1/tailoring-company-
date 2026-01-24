@@ -338,27 +338,29 @@ router.post('/groups/:id/log-daily', authenticateToken, async (req, res) => {
         }
 
         // ... existing gamification ...
-        // Extract Times
-        const { start_time, end_time } = req.body;
+        // Extract Shift Times
+        const { start_time, target_end, actual_end } = req.body;
         newEntry.start_time = start_time;
-        newEntry.end_time = end_time;
+        newEntry.target_end = target_end;
+        newEntry.actual_end = actual_end;
 
-        // Calculate Duration Bonus
+        // Calculate Efficiency Bonus
         let durationBonus = 0;
         let isLate = false;
 
-        if (start_time && end_time) {
-            const start = new Date(`1970-01-01T${start_time}`);
-            const end = new Date(`1970-01-01T${end_time}`);
-            let diff = (end - start) / (1000 * 60 * 60); // hours
-            if (diff < 0) diff += 24; // Overflow handling
+        if (target_end && actual_end) {
+            const tDate = new Date(`1970-01-01T${target_end}`);
+            const aDate = new Date(`1970-01-01T${actual_end}`);
 
-            // Logic: <= 8h (Fast) -> Bonus. > 9h (Late) -> Flag.
-            if (diff <= 8 && newEntry.achieved >= newEntry.target) {
-                durationBonus = 10;
-            } else if (diff > 9) {
+            // Difference in minutes
+            const diffMs = aDate - tDate;
+            // If diffMs <= 0 -> Early/OnTime
+            // If diffMs > 0 -> Late
+
+            if (diffMs <= 0 && newEntry.achieved >= newEntry.target) {
+                durationBonus = 10; // Speed Bonus
+            } else if (diffMs > 0) {
                 isLate = true;
-                // newEntry.late = true; // Store flag if needed
             }
         }
 
