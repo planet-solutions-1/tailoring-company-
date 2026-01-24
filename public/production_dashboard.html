@@ -1543,47 +1543,82 @@
                                 ${todayLog ? 'Edit Today\'s Log' : '+ Log Today'}
                             </button>
                         </div>
-                        
-                        <!-- Log Form -->
-                        <div id="daily-log-form" class="${todayLog ? 'hidden' : ''} bg-white p-4 rounded-xl border border-blue-100 shadow-sm mb-6">
-                            <h4 class="text-sm font-bold text-slate-600 mb-2">Log Output for ${todayStr}</h4>
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
-                                <div>
-                                    <label class="text-xs font-bold text-slate-400">Achieved Qty</label>
-                                    <input type="number" id="log-achieved" value="${todayLog ? todayLog.achieved : suggestedValue}" 
-                                        class="clay-input w-full p-2" placeholder="0">
+                                                <!-- Log Form -->
+                            <div id="daily-log-form" class="bg-blue-50/50 p-4 rounded-xl border border-blue-100 mb-6 transition-all duration-300 ${todayLog ? 'hidden' : ''}">
+                                <h5 class="text-sm font-bold text-blue-800 mb-3 flex items-center justify-between">
+                                    <span>Log Output for ${todayStr}</span>
+                                    <button onclick="toggleLogForm()" class="text-xs text-blue-400 hover:text-blue-600">Cancel</button>
+                                </h5>
+                                
+                                <div class="grid grid-cols-2 gap-4 mb-3">
+                                    <div>
+                                        <label class="text-xs font-bold text-slate-400">Start Time</label>
+                                        <input type="time" id="log-start" value="${todayLog ? todayLog.start_time : ''}" class="clay-input w-full p-2 text-sm">
+                                    </div>
+                                    <div>
+                                        <label class="text-xs font-bold text-slate-400">End Time</label>
+                                        <input type="time" id="log-end" value="${todayLog ? todayLog.end_time : ''}" class="clay-input w-full p-2 text-sm">
+                                    </div>
                                 </div>
-                                <div class="col-span-2">
-                                    <label class="text-xs font-bold text-slate-400">Notes / Shortfall Reason</label>
-                                    <input type="text" id="log-notes" value="${todayLog ? todayLog.notes : ''}" 
-                                        class="clay-input w-full p-2" placeholder="Optional if target met...">
-                                </div>
-                            </div>
-                            <button onclick="submitDailyLog('${g.id}', '${todayStr}')" class="clay-btn clay-btn-primary w-full py-2">
-                                Save Log
-                            </button>
-                        </div>
 
-                        <!-- History List -->
-                        <div class="space-y-2 max-h-40 overflow-y-auto pr-2">
-                            ${history.length === 0 ? '<p class="text-xs text-slate-400 italic">No history logged yet.</p>' : ''}
-                            ${history.slice().reverse().map(h => {
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
+                                    <div>
+                                        <label class="text-xs font-bold text-slate-400">Achieved Qty</label>
+                                        <input type="number" id="log-achieved" value="${todayLog ? todayLog.achieved : suggestedValue}" 
+                                            class="clay-input w-full p-2" placeholder="0">
+                                    </div>
+                                    <div class="col-span-2">
+                                        <label class="text-xs font-bold text-slate-400">Notes / Shortfall Reason</label>
+                                        <input type="text" id="log-notes" value="${todayLog ? todayLog.notes : ''}" 
+                                            class="clay-input w-full p-2" placeholder="Optional if target met...">
+                                    </div>
+                                </div>
+                                <button onclick="submitDailyLog('${g.id}', '${todayStr}')" class="clay-btn clay-btn-primary w-full py-2">
+                                    Save Log
+                                </button>
+                            </div>
+
+                            <!-- History List -->
+                            <div class="space-y-2 max-h-40 overflow-y-auto pr-2">
+                                ${history.length === 0 ? '<p class="text-xs text-slate-400 italic">No history logged yet.</p>' : ''}
+                                ${history.slice().reverse().map(h => {
                         const met = h.achieved >= h.target;
+                        let durationBadge = '';
+                        if (h.start_time && h.end_time) {
+                            // Simple duration calc for display
+                            const start = new Date(`1970-01-01T${h.start_time}`);
+                            const end = new Date(`1970-01-01T${h.end_time}`);
+                            let diff = (end - start) / (1000 * 60 * 60); // hours
+                            if (diff < 0) diff += 24; // Handle overnight? Assume same day for now or standard shift
+                            const hrs = Math.floor(diff);
+                            const mins = Math.round((diff - hrs) * 60);
+                            const durStr = `${hrs}h ${mins > 0 ? mins + 'm' : ''}`;
+
+                            let color = 'bg-gray-100 text-gray-500';
+                            if (diff > 9) color = 'bg-red-100 text-red-600'; // Late / Long
+                            else if (diff <= 8 && met) color = 'bg-blue-100 text-blue-600'; // Efficient
+
+                            durationBadge = `<span class="text-[10px] ${color} px-1.5 py-0.5 rounded font-bold ml-2">${durStr}</span>`;
+                        }
+
                         return `
-                                <div class="flex justify-between items-center p-3 bg-white rounded-lg border ${met ? 'border-green-100' : 'border-red-100'} text-sm">
-                                    <div class="flex items-center gap-3">
-                                        <div class="font-mono text-xs text-slate-400">${h.date}</div>
-                                        <div>
-                                            <span class="font-bold ${met ? 'text-green-600' : 'text-slate-700'}">${h.achieved}</span>
-                                            <span class="text-xs text-slate-400">/ ${h.target}</span>
+                                    <div class="flex justify-between items-center p-3 bg-white rounded-lg border ${met ? 'border-green-100' : 'border-red-100'} text-sm">
+                                        <div class="flex items-center gap-3">
+                                            <div class="font-mono text-xs text-slate-400">${h.date}</div>
+                                            <div>
+                                                <span class="font-bold ${met ? 'text-green-600' : 'text-slate-700'}">${h.achieved}</span>
+                                                <span class="text-xs text-slate-400">/ ${h.target}</span>
+                                                ${durationBadge}
+                                            </div>
+                                        </div>
+                                        ${!met && h.notes ? `<div class="text-xs text-red-500 max-w-[150px] truncate" title="${h.notes}">${h.notes}</div>` : ''}
+                                        <div class="flex gap-1">
+                                            ${met ? '<span class="text-xs bg-green-100 text-green-600 px-2 py-0.5 rounded-full font-bold">Target Met</span>' : ''}
                                         </div>
                                     </div>
-                                    ${!met && h.notes ? `<div class="text-xs text-red-500 max-w-[150px] truncate" title="${h.notes}">${h.notes}</div>` : ''}
-                                    ${met ? '<span class="text-xs bg-green-100 text-green-600 px-2 py-0.5 rounded-full font-bold">Target Met</span>' : ''}
-                                </div>
-                                `;
+                                    `;
                     }).join('')}
-                        </div>
+                            </div>
                     `;
                 }
 
@@ -1605,6 +1640,8 @@
             const achieved = parseInt(document.getElementById('log-achieved').value) || 0;
             const notes = document.getElementById('log-notes').value || '';
             const target = g.daily_target || 0;
+            const startTime = document.getElementById('log-start').value || null;
+            const endTime = document.getElementById('log-end').value || null;
 
             // Shortfall Check
             if (target > 0 && achieved < target && !notes.trim()) {
@@ -1616,7 +1653,7 @@
             try {
                 const res = await fetchAuth(`${API}/groups/${id}/log-daily`, {
                     method: 'POST',
-                    body: JSON.stringify({ date: dateStr, achieved, target, notes })
+                    body: JSON.stringify({ date: dateStr, achieved, target, notes, start_time: startTime, end_time: endTime })
                 });
 
                 const data = await res.json();

@@ -337,6 +337,31 @@ router.post('/groups/:id/log-daily', authenticateToken, async (req, res) => {
             history.push(newEntry);
         }
 
+        // ... existing gamification ...
+        // Extract Times
+        const { start_time, end_time } = req.body;
+        newEntry.start_time = start_time;
+        newEntry.end_time = end_time;
+
+        // Calculate Duration Bonus
+        let durationBonus = 0;
+        let isLate = false;
+        
+        if (start_time && end_time) {
+            const start = new Date(`1970-01-01T${start_time}`);
+            const end = new Date(`1970-01-01T${end_time}`);
+            let diff = (end - start) / (1000 * 60 * 60); // hours
+            if (diff < 0) diff += 24; // Overflow handling
+            
+            // Logic: <= 8h (Fast) -> Bonus. > 9h (Late) -> Flag.
+            if (diff <= 8 && newEntry.achieved >= newEntry.target) {
+                durationBonus = 10;
+            } else if (diff > 9) {
+                isLate = true;
+                // newEntry.late = true; // Store flag if needed
+            }
+        }
+
         // Gamification Logic
         let awarded = false;
         let pointsToAdd = 0;
@@ -347,7 +372,18 @@ router.post('/groups/:id/log-daily', authenticateToken, async (req, res) => {
         if (newEntry.achieved >= newEntry.target && newEntry.target > 0) {
             if (lastReward !== today) {
                 awarded = true;
-                pointsToAdd = 10; // Fixed reward?
+                pointsToAdd = 10 + durationBonus; // Base 10 + Speed Bonus
+            } else if (durationBonus > 0) {
+                 // Already awarded base, but maybe speed bonus achieved now?
+                 // For simplicity, only award ONCE per day to avoid spamming updates.
+                 // OR allow additive updates? Simpler to stick to "First completion wins".
+                 // Let's assume re-saving updates points if not already capped?
+                 // Current logic resets points per day in DB? No, it accumulates.
+                 // We only add points if `lastReward !== today`. so once per day.
+                 // If they update log to be faster, they miss the bonus if already claimed.
+                 // This is acceptable V1.
+            }
+        }
             }
         }
 
