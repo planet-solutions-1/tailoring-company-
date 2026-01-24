@@ -189,10 +189,45 @@
         </button>
     </div>
 
-    <!-- Backdrop -->
+    <!-- Backdrop (Fixed: Forced hidden on Desktop) -->
     <div id="sidebar-backdrop" onclick="toggleSidebar()"
-        class="fixed inset-0 bg-gray-900/10 backdrop-blur-sm z-40 hidden opacity-0 transition-opacity duration-300 md:hidden">
+        class="fixed inset-0 bg-gray-900/10 backdrop-blur-sm z-40 hidden opacity-0 transition-opacity duration-300 md:hidden"
+        style="display: none;">
     </div>
+
+    <script>
+        // EMERGENCY FIX: Remove stuck overlays
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.innerWidth >= 768) {
+                const backdrop = document.getElementById('sidebar-backdrop');
+                if (backdrop) {
+                    backdrop.classList.add('hidden');
+                    backdrop.style.display = 'none';
+                }
+            }
+        });
+
+        function toggleSidebar() {
+            const sb = document.getElementById('sidebar');
+            const bd = document.getElementById('sidebar-backdrop');
+
+            if (sb.classList.contains('-translate-x-full')) {
+                // Open
+                sb.classList.remove('-translate-x-full');
+                bd.classList.remove('hidden');
+                bd.style.display = 'block';
+                setTimeout(() => bd.classList.remove('opacity-0'), 10);
+            } else {
+                // Close
+                sb.classList.add('-translate-x-full');
+                bd.classList.add('opacity-0');
+                setTimeout(() => {
+                    bd.classList.add('hidden');
+                    bd.style.display = 'none';
+                }, 300);
+            }
+        }
+    </script>
 
     <!-- Sidebar -->
     <aside id="sidebar"
