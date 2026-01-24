@@ -198,33 +198,38 @@
     <script>
         // EMERGENCY FIX: Remove stuck overlays
         document.addEventListener('DOMContentLoaded', () => {
-            if (window.innerWidth >= 768) {
-                const backdrop = document.getElementById('sidebar-backdrop');
-                if (backdrop) {
-                    backdrop.classList.add('hidden');
-                    backdrop.style.display = 'none';
+            const stuckIds = ['sidebar-backdrop', 'reply-modal', 'measurement-modal', 'loading-modal'];
+            stuckIds.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.classList.add('hidden');
+                    el.style.display = 'none'; // Force hide
                 }
-            }
+            });
         });
 
         function toggleSidebar() {
             const sb = document.getElementById('sidebar');
             const bd = document.getElementById('sidebar-backdrop');
 
-            if (sb.classList.contains('-translate-x-full')) {
+            if (sb && sb.classList.contains('-translate-x-full')) {
                 // Open
                 sb.classList.remove('-translate-x-full');
-                bd.classList.remove('hidden');
-                bd.style.display = 'block';
-                setTimeout(() => bd.classList.remove('opacity-0'), 10);
-            } else {
+                if (bd) {
+                    bd.classList.remove('hidden');
+                    bd.style.display = 'block';
+                    setTimeout(() => bd.classList.remove('opacity-0'), 10);
+                }
+            } else if (sb) {
                 // Close
                 sb.classList.add('-translate-x-full');
-                bd.classList.add('opacity-0');
-                setTimeout(() => {
-                    bd.classList.add('hidden');
-                    bd.style.display = 'none';
-                }, 300);
+                if (bd) {
+                    bd.classList.add('opacity-0');
+                    setTimeout(() => {
+                        bd.classList.add('hidden');
+                        bd.style.display = 'none';
+                    }, 300);
+                }
             }
         }
     </script>
