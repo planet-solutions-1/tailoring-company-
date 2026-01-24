@@ -234,6 +234,12 @@ router.post('/groups/:id/edit', authenticateToken, async (req, res) => {
         if (daily_target !== undefined) { updates.push("daily_target = ?"); params.push(daily_target); }
         if (quantity !== undefined) { updates.push("quantity = ?"); params.push(quantity); }
 
+        // Fix: Update Stages if provided
+        if (req.body.required_stages) {
+            updates.push("required_stages = ?");
+            params.push(JSON.stringify(req.body.required_stages));
+        }
+
         updates.push("updated_at = CURRENT_TIMESTAMP");
 
         if (updates.length === 1) return res.json({ success: true }); // Nothing to update
