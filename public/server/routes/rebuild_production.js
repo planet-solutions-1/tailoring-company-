@@ -86,16 +86,38 @@ router.post('/config', authenticateToken, requireRole('company'), async (req, re
 
 router.get('/config-list', authenticateToken, async (req, res) => {
     try {
-        // Simple distinct query
-        const rows = await query("SELECT DISTINCT dress_type FROM production_config");
-        const customTypes = rows.map(r => r.dress_type);
-        const defaults = ["Shirt", "Pant", "Suit", "Jacket", "Vest", "Kurta", "Safari"]; // Extended Basics
+        // Fetch from Configs
+        const configRows = await query("SELECT DISTINCT dress_type FROM production_config");
+        const configTypes = configRows.map(r => r.dress_type).filter(x => x);
 
-        const all = Array.from(new Set([...defaults, ...customTypes])).sort();
+        // Fetch from Used Groups (so ad-hoc types also appear)
+        const groupRows = await query("SELECT DISTINCT dress_type FROM production_groups");
+        const groupTypes = groupRows.map(r => r.dress_type).filter(x => x);
+
+        const defaults = ["Shirt", "Pant", "Suit", "Jacket", "Vest", "Kurta", "Safari"];
+
+        // Merge & De-duplicate (Case Insensitive Normalization)
+        const rawList = [...defaults, ...configTypes, ...groupTypes];
+        const uniqueSet = new Set();
+        const finalMap = new Map(); // Lowercase -> Original (First wins? or Title Case wins?)
+
+        rawList.forEach(t => {
+            if (!t || typeof t !== 'string') return;
+            const clean = t.trim();
+            const lower = clean.toLowerCase();
+
+            if (!finalMap.has(lower)) {
+                // Formatting: Simple Title Case
+                const formatted = clean.charAt(0).toUpperCase() + clean.slice(1);
+                finalMap.set(lower, formatted);
+            }
+        });
+
+        const all = Array.from(finalMap.values()).sort();
         res.json(all);
     } catch (err) {
         safeLog("Config List Error", err);
-        res.json(["Shirt", "Pant"]); // Fallback
+        res.json(["Shirt", "Pant", "Suit"]); // Fallback
     }
 });
 
