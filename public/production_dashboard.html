@@ -642,7 +642,7 @@
         }
 
         async function loadDressTypeOptions() {
-            const res = await fetchAuth(`${API}/config-list`);
+            const res = await fetchAuth(`${API}/config-list?_t=${Date.now()}`);
             let types = [];
             if (res.ok) types = await res.json();
             if (types.length === 0) types = ["Shirt", "Pant", "Suit"];
