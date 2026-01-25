@@ -599,7 +599,7 @@ router.post('/groups/:id/defects', authenticateToken, async (req, res) => {
         const ensureSchema = async () => {
             console.log(`[Defects] Checked Schema for Group ${id}`);
             const fixes = [
-                "ALTER TABLE production_groups ADD COLUMN defects TEXT DEFAULT '[]'",
+                "ALTER TABLE production_groups ADD COLUMN defects TEXT",
                 "ALTER TABLE production_groups ADD COLUMN points INT DEFAULT 0"
             ];
             for (const sql of fixes) {
