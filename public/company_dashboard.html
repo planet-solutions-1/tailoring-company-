@@ -3021,15 +3021,29 @@
             } catch (e) { console.error("Config Load Failed", e); }
 
             await Promise.all([fetchStats(), fetchAllStudents(), fetchSchoolsForSelect(), fetchGlobalPatterns()]);
-            renderTailoringData();
-            renderCharts();
+
+            // Check URL param for tab
+            const urlParams = new URLSearchParams(window.location.search);
+            const tabParam = urlParams.get('tab');
+
+            if (tabParam) {
+                switchTab(tabParam);
+            } else {
+                renderTailoringData();
+                renderCharts(); // Default view stuff
+            }
+
             populateDynamicFilters();
             // Smart Insights
-            // renderLeaderboard(); // Removed: Function definition missing
             fetchActivityLogs();
             if (window.renderUrgentDeadlines) renderUrgentDeadlines();
         }
         function switchTab(clickedId) {
+            // Update URL
+            const url = new URL(window.location);
+            url.searchParams.set('tab', clickedId);
+            window.history.pushState({}, '', url);
+
             // Map Button IDs to View IDs (Corrected to match HTML)
             const map = {
                 'overview': 'view-overview',
