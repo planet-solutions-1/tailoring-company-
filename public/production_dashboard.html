@@ -798,14 +798,32 @@
         }
 
         function switchTab(id) {
+            // 1. Hide all Views
             ['active', 'config', 'detail', 'analytics'].forEach(t => document.getElementById(`view-${t}`).classList.add('hidden'));
-            document.getElementById(`view-${id}`).classList.remove('hidden');
+
+            // 2. Show Target View
+            const target = document.getElementById(`view-${id}`);
+            if (target) target.classList.remove('hidden');
+
+            // 3. Highlight Sidebar Button
+            ['active', 'config', 'analytics'].forEach(t => {
+                const btn = document.getElementById(`nav-${t}`);
+                if (btn) {
+                    if (t === id) {
+                        btn.classList.add('tech-btn-primary', 'shadow-md');
+                        btn.classList.remove('text-slate-500', 'hover:bg-slate-50');
+                    } else {
+                        btn.classList.remove('tech-btn-primary', 'shadow-md');
+                        btn.classList.add('text-slate-500', 'hover:bg-slate-50');
+                    }
+                }
+            });
 
             if (id === 'analytics') renderAnalytics();
 
             // Sidebar Toggle Logic
             const sidebar = document.getElementById('sidebar-panel');
-            const main = document.getElementById('main-content');
+            const main = document.getElementById('main-content'); // Fixed ID reference
 
             if (id === 'detail') {
                 sidebar.classList.add('hidden');
