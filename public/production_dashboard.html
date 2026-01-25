@@ -797,12 +797,27 @@
         }
 
         function switchTab(id) {
-            // 1. Hide all Views
-            ['active', 'config', 'detail', 'analytics'].forEach(t => document.getElementById(`view-${t}`).classList.add('hidden'));
+            console.log("Switching to tab:", id);
+            const tabs = ['active', 'config', 'detail', 'analytics'];
 
-            // 2. Show Target View
+            // 1. Hard Hide All
+            tabs.forEach(t => {
+                const el = document.getElementById(`view-${t}`);
+                if (el) {
+                    el.classList.add('hidden');
+                    el.style.display = 'none'; // FORCE HIDE
+                }
+            });
+
+            // 2. Hard Show Target
             const target = document.getElementById(`view-${id}`);
-            if (target) target.classList.remove('hidden');
+            if (target) {
+                target.classList.remove('hidden');
+                target.style.display = 'block'; // FORCE SHOW
+                console.log("Shown target:", target.id);
+            } else {
+                console.error("Target view not found:", `view-${id}`);
+            }
 
             // 3. Highlight Sidebar Button
             ['active', 'config', 'analytics'].forEach(t => {
@@ -818,12 +833,14 @@
                 }
             });
 
-            if (id === 'analytics') renderAnalytics();
+            // 4. Trigger Logic
+            if (id === 'analytics') {
+                setTimeout(() => renderAnalytics(), 50); // Small delay to ensure render after layout
+            }
 
-            // Sidebar Toggle Logic
+            // Sidebar Toggle Logic (for Detail view)
             const sidebar = document.getElementById('sidebar-panel');
-            const main = document.getElementById('main-content'); // Fixed ID reference
-
+            const main = document.getElementById('main-content');
             if (id === 'detail') {
                 sidebar.classList.add('hidden');
                 main.classList.remove('lg:col-span-9');
@@ -832,8 +849,7 @@
                 sidebar.classList.remove('hidden');
                 main.classList.add('lg:col-span-9');
                 main.classList.remove('lg:col-span-12');
-
-                // Clear URL param if leaving detail
+                // Clear URL
                 const url = new URL(window.location);
                 url.searchParams.delete('batch');
                 window.history.pushState({}, '', url);
