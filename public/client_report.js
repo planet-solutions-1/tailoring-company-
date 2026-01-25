@@ -356,9 +356,10 @@ function renderDeadlineVolume(groups) {
         if (daysLeft < 0) urgency = 2;
         else if (daysLeft < 3) urgency = 1;
 
-        if (!timeline[dateStr]) timeline[dateStr] = { qty: 0, urgency: 0 };
+        if (!timeline[dateStr]) timeline[dateStr] = { qty: 0, urgency: 0, names: [] };
         timeline[dateStr].qty += parseInt(g.quantity);
         timeline[dateStr].urgency = Math.max(timeline[dateStr].urgency, urgency);
+        timeline[dateStr].names.push(g.group_name);
     });
 
     const sortedDates = Object.keys(timeline).sort();
@@ -402,7 +403,10 @@ function renderDeadlineVolume(groups) {
                 legend: { display: false },
                 tooltip: {
                     callbacks: {
-                        label: (ctx) => `Due: ${ctx.raw} Items`
+                        label: (ctx) => {
+                            const item = timeline[sortedDates[ctx.dataIndex]];
+                            return [`Total: ${ctx.raw} Items`, ...item.names.map(n => `• ${n}`)];
+                        }
                     }
                 }
             },
