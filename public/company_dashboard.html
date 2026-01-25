@@ -7130,6 +7130,9 @@
     <!-- DASHBOARD WIDGETS INIT -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
+            // Main Init (Restores Tab from URL)
+            if (typeof init === 'function') init();
+
             // Give a small delay to ensure globalSchools might be populated if it's race-conditional, 
             // but fetchProductionPipeline handles its own fetching if needed.
             setTimeout(() => {
