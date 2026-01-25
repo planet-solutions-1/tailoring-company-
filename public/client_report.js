@@ -15,6 +15,11 @@ async function initReport() {
         renderVelocity(groups);
         renderRankings(groups);
         renderRisks(groups);
+
+        // Event Listener for Filter
+        document.getElementById('timeline-filter').addEventListener('change', (e) => {
+            renderVelocity(groups, parseInt(e.target.value));
+        });
     } catch (err) {
         console.error("Report Init Error:", err);
         alert("Failed to load Executive Report data. Check console.");
@@ -207,21 +212,19 @@ function renderFunnel(groups) {
 /**
  * Section 3: Velocity Chart (History)
  */
-function renderVelocity(groups) {
+// Global Chart Instance
+let velocityChartInstance = null;
+
+function renderVelocity(groups, days = 14) {
     const ctx = document.getElementById('velocityChart').getContext('2d');
 
-    // Aggregate daily_history from all groups
-    // daily_history structure: { "YYYY-MM-DD": count, ... } (stored as JSON string)
+    // Aggregate daily_history
     const timeline = {};
-
     groups.forEach(g => {
         let history = {};
         try {
-            if (typeof g.daily_history === 'string') {
-                history = JSON.parse(g.daily_history);
-            } else if (typeof g.daily_history === 'object') {
-                history = g.daily_history || {};
-            }
+            if (typeof g.daily_history === 'string') history = JSON.parse(g.daily_history);
+            else if (typeof g.daily_history === 'object') history = g.daily_history || {};
         } catch (e) { }
 
         Object.keys(history).forEach(date => {
@@ -230,24 +233,26 @@ function renderVelocity(groups) {
         });
     });
 
-    // Sort Dates
     let sortedDates = Object.keys(timeline).sort();
 
-    // Fill gaps? For now, just show active days.
-    // If empty, show dummy
+    // Fill gaps? If empty, use today.
     if (sortedDates.length === 0) {
-        // Dummy data for visual if no history yet
         const today = new Date().toISOString().split('T')[0];
         sortedDates = [today];
         timeline[today] = 0;
     }
 
-    // Limit to last 14 days by default
-    if (sortedDates.length > 14) sortedDates = sortedDates.slice(-14);
+    // Filter by Days
+    if (sortedDates.length > days) {
+        sortedDates = sortedDates.slice(-days);
+    }
 
     const values = sortedDates.map(d => timeline[d]);
 
-    new Chart(ctx, {
+    // Destroy old if exists
+    if (velocityChartInstance) velocityChartInstance.destroy();
+
+    velocityChartInstance = new Chart(ctx, {
         type: 'line',
         data: {
             labels: sortedDates,
@@ -255,27 +260,17 @@ function renderVelocity(groups) {
                 label: 'Total Units Completed',
                 data: values,
                 fill: true,
-                backgroundColor: 'rgba(99, 102, 241, 0.2)', // Indigo-500 alpha
+                backgroundColor: 'rgba(99, 102, 241, 0.2)',
                 borderColor: 'rgba(99, 102, 241, 1)',
-                tension: 0.4 // Smooth curves
+                tension: 0.4
             }]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
-            plugins: {
-                legend: { display: false }
-            },
-            scales: {
-                y: { beginAtZero: true }
-            }
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true } }
         }
-    });
-
-    // Handle Filter Change
-    document.getElementById('timeline-filter').addEventListener('change', (e) => {
-        // In a real app, we'd re-slice sortedDates based on e.target.value
-        // For now, this is static
     });
 }
 
