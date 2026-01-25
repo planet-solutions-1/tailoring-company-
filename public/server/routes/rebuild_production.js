@@ -594,8 +594,21 @@ router.post('/groups/:id/defects', authenticateToken, async (req, res) => {
         const { type, description } = req.body;
         const id = req.params.id;
 
-        // Fetch current
-        const rows = await query("SELECT defects, points FROM production_groups WHERE id = ?", [id]);
+        // Fetch current with Self-Healing
+        let rows;
+        try {
+            rows = await query("SELECT defects, points FROM production_groups WHERE id = ?", [id]);
+        } catch (e) {
+            if (e.message && (e.message.includes("no such column") || e.message.includes("Unknown column"))) {
+                console.log("Self-Healing: Adding defects column...");
+                try { await query("ALTER TABLE production_groups ADD COLUMN defects TEXT DEFAULT '[]'"); } catch (ex) { }
+                try { await query("ALTER TABLE production_groups ADD COLUMN points INT DEFAULT 0"); } catch (ex) { }
+                rows = await query("SELECT defects, points FROM production_groups WHERE id = ?", [id]);
+            } else {
+                throw e;
+            }
+        }
+
         if (!rows.length) return res.status(404).json({ error: "Batch not found" });
 
         let defects = [];
