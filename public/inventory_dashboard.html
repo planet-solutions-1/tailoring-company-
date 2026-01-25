@@ -47,7 +47,7 @@
             </div>
             <h1 class="text-2xl font-bold text-slate-800">Inventory <span class="text-indigo-600">Pro</span></h1>
         </div>
-        <a href="company_dashboard.html"
+        <a href="production_dashboard.html"
             class="px-4 py-2 bg-white text-slate-600 font-bold rounded-lg shadow-sm hover:bg-slate-50 transition">
             Back to Dashboard
         </a>
@@ -174,7 +174,7 @@
                             <strong>${item.stock}</strong> <span class="text-xs text-slate-400">${item.unit}</span>
                         </td>
                          <td class="p-4 text-right font-mono text-slate-400">
-                            $${(item.stock * (item.cost_per_unit || 0)).toLocaleString()}
+                            ₹${(item.stock * (item.cost_per_unit || 0)).toLocaleString()}
                         </td>
                     </tr>
                 `;
