@@ -3105,14 +3105,15 @@
         }
 
         async function submitDefect() {
-            if (!CURRENT_EDIT_ID) return;
+            if (!CURRENT_BATCH) { alert("No active batch selected."); return; }
+            const id = CURRENT_BATCH.id;
 
             const type = document.getElementById('defect-type').value;
             const desc = document.getElementById('defect-desc').value;
 
             try {
                 const token = sessionStorage.getItem('token');
-                const res = await fetch(`${API}/groups/${CURRENT_EDIT_ID}/defects`, {
+                const res = await fetch(`${API}/groups/${id}/defects`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                     body: JSON.stringify({ type, description: desc })
