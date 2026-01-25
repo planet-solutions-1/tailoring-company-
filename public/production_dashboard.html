@@ -578,6 +578,11 @@
                                 onchange="loadWizardConfig()"></select>
                         </div>
                         <div class="md:col-span-1">
+                            <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Total Quantity</label>
+                            <input type="number" id="wiz-quantity" class="clay-input w-full p-2.5" min="1"
+                                placeholder="e.g. 1000">
+                        </div>
+                        <div class="md:col-span-1">
                             <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Daily Target</label>
                             <input type="number" id="wiz-target" class="clay-input w-full p-2.5" min="1"
                                 placeholder="e.g. 500">
@@ -1478,6 +1483,7 @@
             const payload = {
                 group_name: name,
                 dress_type: type,
+                quantity: parseInt(document.getElementById('wiz-quantity').value) || 0,
                 required_stages: finalStages,
                 details: 'Hierarchy Created',
                 daily_target: parseInt(document.getElementById('wiz-target').value) || 0,
