@@ -800,7 +800,60 @@ router.post('/groups/:id/log-daily', authenticateToken, async (req, res) => {
 });
 
 
-// === 3. FIX ROUTE (User Requested "Rebuild/Fix Issues") ===
+// === WORKFLOW CONTROL (PRIORITY & PAUSE) ===
+
+router.post('/groups/:id/toggle-status', authenticateToken, async (req, res) => {
+    try {
+        const id = req.params.id;
+        const rows = await query("SELECT status FROM production_groups WHERE id = ?", [id]);
+        if (!rows.length) return res.status(404).json({ error: "Batch not found" });
+
+        const current = rows[0].status;
+        let newStatus = 'Active';
+        if (current === 'Active') newStatus = 'Paused';
+        else if (current === 'Paused') newStatus = 'Active';
+        else return res.status(400).json({ error: "Cannot toggle (Completed/Archived)" });
+
+        await query("UPDATE production_groups SET status = ? WHERE id = ?", [newStatus, id]);
+        res.json({ success: true, status: newStatus });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+router.post('/groups/:id/priority', authenticateToken, async (req, res) => {
+    try {
+        const id = req.params.id;
+
+        // HELPER: Schema Repair for Priority
+        const ensurePrioritySchema = async () => {
+            // SQLite uses INTEGER 0/1 for Boolean
+            try { await query("ALTER TABLE production_groups ADD COLUMN is_urgent BOOLEAN DEFAULT 0"); } catch (e) { }
+        };
+
+        // 1. Fetch
+        let rows;
+        try {
+            rows = await query("SELECT is_urgent FROM production_groups WHERE id = ?", [id]);
+        } catch (e) {
+            await ensurePrioritySchema();
+            rows = await query("SELECT is_urgent FROM production_groups WHERE id = ?", [id]);
+        }
+
+        if (!rows.length) return res.status(404).json({ error: "Batch not found" });
+
+        const current = rows[0].is_urgent;
+        const newVal = current ? 0 : 1; // Toggle
+
+        await query("UPDATE production_groups SET is_urgent = ? WHERE id = ?", [newVal, id]);
+        res.json({ success: true, is_urgent: newVal });
+
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// === ADMIN FIXES ===
 router.post('/admin/fix-schema-force', async (req, res) => {
     try {
         // Manual trigger to add columns if auto-migration failed
