@@ -221,15 +221,25 @@ function renderVelocity(groups, days = 14) {
     // Aggregate daily_history
     const timeline = {};
     groups.forEach(g => {
-        let history = {};
+        let history = [];
         try {
             if (typeof g.daily_history === 'string') history = JSON.parse(g.daily_history);
-            else if (typeof g.daily_history === 'object') history = g.daily_history || {};
+            else if (Array.isArray(g.daily_history)) history = g.daily_history;
+            else if (typeof g.daily_history === 'object') {
+                // Handle legacy Map format { "YYYY-MM-DD": count }
+                history = Object.keys(g.daily_history).map(k => ({ date: k, achieved: g.daily_history[k] }));
+            }
         } catch (e) { }
 
-        Object.keys(history).forEach(date => {
-            const val = parseInt(history[date] || 0);
-            timeline[date] = (timeline[date] || 0) + val;
+        // Ensure history is array
+        if (!Array.isArray(history)) history = [];
+
+        history.forEach(entry => {
+            const date = entry.date;
+            const val = parseInt(entry.achieved || 0);
+            if (date) {
+                timeline[date] = (timeline[date] || 0) + val;
+            }
         });
     });
 
