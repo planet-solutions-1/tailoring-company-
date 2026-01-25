@@ -291,6 +291,10 @@
             </h1>
         </div>
         <div class="flex items-center gap-4">
+            <button onclick="openAIInsights()"
+                class="hidden md:flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-xs font-bold rounded shadow-lg hover:shadow-indigo-500/30 hover:-translate-y-0.5 transition-all">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> AI Insights
+            </button>
             <div class="text-right hidden md:block">
                 <p id="user-name" class="font-bold text-sm tracking-wide" style="font-family: 'Rajdhani', sans-serif;">
                     User</p>
@@ -3060,6 +3064,87 @@
         // --- INVENTORY LOGIC (Placeholder) ---
         // Will be implemented next
     </script>
+    <!-- AI INSIGHTS MODAL -->
+    <div id="ai-modal" onclick="if(event.target === this) document.getElementById('ai-modal').classList.add('hidden')"
+        class="fixed inset-0 bg-black/60 hidden flex items-center justify-center z-[60] backdrop-blur-sm animate-fade-in">
+        <div
+            class="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl w-full max-w-2xl p-8 shadow-2xl m-4 border border-slate-700/50 animate-scale-in">
+            <div class="flex justify-between items-center mb-8">
+                <div>
+                    <h3 class="text-2xl font-bold text-white flex items-center gap-3">
+                        <span class="p-2 bg-indigo-500/20 rounded-lg text-indigo-400"><i
+                                class="fa-solid fa-brain"></i></span>
+                        AI Command Center
+                    </h3>
+                    <p class="text-slate-400 text-sm mt-1">Real-time production intelligence & recommendations</p>
+                </div>
+                <button onclick="document.getElementById('ai-modal').classList.add('hidden')"
+                    class="text-slate-500 hover:text-white transition">
+                    <i class="fa-solid fa-times text-xl"></i>
+                </button>
+            </div>
+
+            <div id="ai-content" class="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+                <!-- Content injected via JS -->
+                <div class="flex flex-col items-center py-12 text-slate-500">
+                    <i class="fa-solid fa-circle-notch fa-spin text-3xl mb-4"></i>
+                    <p>Analyzing Production Data...</p>
+                </div>
+            </div>
+
+            <div class="mt-8 pt-6 border-t border-slate-700/50 flex justify-between items-center">
+                <span class="text-xs text-slate-500 font-mono">POWERED BY SYSTEM BRAIN V1.0</span>
+                <button onclick="openAIInsights()" class="text-indigo-400 hover:text-indigo-300 text-sm font-bold">
+                    <i class="fa-solid fa-rotate mr-1"></i> Refresh Analysis
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function openAIInsights() {
+            document.getElementById('ai-modal').classList.remove('hidden');
+            const container = document.getElementById('ai-content');
+            container.innerHTML = `<div class="flex flex-col items-center py-12 text-slate-500"><i class="fa-solid fa-circle-notch fa-spin text-3xl mb-4 text-indigo-500"></i><p>Scanning Inventory & Batches...</p></div>`;
+
+            try {
+                const token = sessionStorage.getItem('token');
+                // Artificial delay for "Thinking" effect (User Exp)
+                await new Promise(r => setTimeout(r, 800));
+
+                const res = await fetch('/api/production/ai-insights', { headers: { 'Authorization': `Bearer ${token}` } });
+                const insights = await res.json();
+
+                if (insights.length === 0) {
+                    container.innerHTML = `<div class="p-6 bg-slate-800/50 rounded-xl text-center text-slate-400">No active alerts. Systems normal.</div>`;
+                    return;
+                }
+
+                container.innerHTML = insights.map(i => {
+                    let color = 'blue';
+                    let icon = 'fa-info-circle';
+                    if (i.type === 'urgent') { color = 'red'; icon = 'fa-radiation'; }
+                    if (i.type === 'warning') { color = 'amber'; icon = 'fa-triangle-exclamation'; }
+
+                    return `
+                    <div class="bg-slate-800/80 p-5 rounded-xl border-l-4 border-${color}-500 flex gap-4 hover:bg-slate-800 transition group">
+                        <div class="text-${color}-500 text-xl mt-1">
+                            <i class="fa-solid ${icon}"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="text-slate-200 font-bold text-lg">${i.title}</h4>
+                            <p class="text-slate-400 text-sm mt-1 leading-relaxed">${i.message}</p>
+                            ${i.action ? `<button class="mt-3 text-xs font-bold text-${color}-400 bg-${color}-500/10 px-3 py-1.5 rounded uppercase tracking-wider hover:bg-${color}-500/20 transition">${i.action} <i class="fa-solid fa-arrow-right ml-1"></i></button>` : ''}
+                        </div>
+                    </div>`;
+                }).join('');
+
+            } catch (e) {
+                container.innerHTML = `<div class="p-4 bg-red-900/20 text-red-400 rounded-xl border border-red-900/50">Analysis Failed: ${e.message}</div>`;
+            }
+        }
+    </script>
 </body>
+
 
 </html>

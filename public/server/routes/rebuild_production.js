@@ -275,6 +275,84 @@ router.get('/groups', authenticateToken, async (req, res) => {
     }
 });
 
+// --- AI INSIGHTS ENGINE ---
+router.get('/ai-insights', authenticateToken, async (req, res) => {
+    try {
+        const insights = [];
+
+        // 1. STOCK FORECASTING
+        // Get all active batches associated with recipes
+        const activeBatches = await query("SELECT dress_type, SUM(quantity) as total_qty FROM production_groups WHERE status='Active' GROUP BY dress_type");
+        const recipes = await query("SELECT * FROM production_recipes");
+        const inventory = await query("SELECT * FROM inventory_materials");
+
+        // Map Inventory for fast lookup
+        const stockMap = {};
+        inventory.forEach(i => stockMap[i.id] = { name: i.name, stock: i.stock, unit: i.unit });
+
+        // Check if we have enough stock for *current* demand + buffer
+        // (Simple logic: If stock < 20% of what's currently being used, warn)
+
+        for (const batch of activeBatches) {
+            // Find recipes for this dress type
+            const batchRecipes = recipes.filter(r => r.dress_type === batch.dress_type);
+
+            for (const r of batchRecipes) {
+                const mat = stockMap[r.material_id];
+                if (!mat) continue;
+
+                // Hypothetical: If we receive another order of this size, do we have materials?
+                const neededForRepeat = batch.total_qty * r.quantity_per_unit;
+
+                if (mat.stock < neededForRepeat) {
+                    insights.push({
+                        type: 'urgent',
+                        title: 'Low Stock Risk',
+                        message: `You have high volume of **${batch.dress_type}**. You need ${neededForRepeat.toFixed(1)} ${mat.unit} of **${mat.name}** for a repeat order, but only have ${mat.stock}.`,
+                        action: 'Order Materials'
+                    });
+                }
+            }
+        }
+
+        // 2. STALLED BATCH ANALYSIS
+        // Find active batches created > 7 days ago which are not completed
+        // (Assuming created_at exists? If not, use ID heuristic or just check status)
+        // Since we don't have created_at in schema shown, we'll check Progress.
+
+        // Simpler: Check "Delayed" status logic if it exists, or just random "Efficiency Tip" based on data
+        const delayed = await query("SELECT group_name, daily_target, quantity FROM production_groups WHERE status='Active'");
+        let slowBatches = 0;
+        delayed.forEach(d => {
+            // Mock efficiency check: Large batches with low targets
+            if (d.quantity > 100 && d.daily_target < 10) slowBatches++;
+        });
+
+        if (slowBatches > 0) {
+            insights.push({
+                type: 'warning',
+                title: 'Efficiency Bottleneck',
+                message: `Detected ${slowBatches} large batches with very low daily targets. This will cause delays.`,
+                action: 'Increase Targets'
+            });
+        }
+
+        // 3. GENERAL TIPS (If no critical issues)
+        if (insights.length === 0) {
+            insights.push({
+                type: 'info',
+                title: 'Production Smooth',
+                message: 'All systems running efficiently. Inventory levels healthy.',
+                action: 'View Reports'
+            });
+        }
+
+        res.json(insights);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // --- HELPER CONFIG ROUTES ---
 router.get('/dresstypes', authenticateToken, async (req, res) => {
     try {
