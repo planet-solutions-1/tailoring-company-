@@ -154,6 +154,24 @@ router.get('/inventory', authenticateToken, async (req, res) => {
         const rows = await query("SELECT * FROM inventory_materials ORDER BY name");
         res.json(rows);
     } catch (err) {
+        // Self-Healing: Create Table if missing
+        if (err.message && (err.message.includes("no such table") || err.message.includes("does not exist"))) {
+            console.log("Auto-Creating Inventory Table...");
+            try {
+                await query(`CREATE TABLE IF NOT EXISTS inventory_materials (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT, 
+                    name TEXT, 
+                    stock INTEGER DEFAULT 0, 
+                    unit TEXT DEFAULT 'Units', 
+                    cost_per_unit REAL DEFAULT 0
+                )`);
+                // Retry
+                const rows = await query("SELECT * FROM inventory_materials ORDER BY name");
+                return res.json(rows);
+            } catch (e2) {
+                return res.status(500).json({ error: "Init Failed: " + e2.message });
+            }
+        }
         res.status(500).json({ error: err.message });
     }
 });
