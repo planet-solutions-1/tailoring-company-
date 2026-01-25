@@ -785,6 +785,10 @@
 
         function switchTab(id) {
             console.log("Switching to tab:", id);
+
+            // LOGGING
+            if (window.Logger) Logger.log('VIEW_PROD_TAB', `Switched to ${id}`);
+
             const tabs = ['active', 'config', 'detail', 'analytics'];
 
             // 1. Hard Hide All
