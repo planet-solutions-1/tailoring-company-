@@ -479,151 +479,43 @@
                     </div>
                 </div>
                 <!-- SCI-FI ANALYTICS VIEW -->
-                <div id="view-analytics" class="hidden sci-fi-theme p-6 rounded-3xl grid-bg">
-                    <div class="flex justify-between items-center mb-8">
+                <!-- SCI-FI ANALYTICS VIEW (FRESH REBUILD) -->
+                <div id="view-analytics" class="hidden sci-fi-theme p-6 rounded-3xl"
+                    style="background: radial-gradient(circle at 50% 0%, #f1f5f9 0%, #e2e8f0 100%); min-height: 80vh;">
+
+                    <div class="flex justify-between items-end mb-8">
                         <div>
-                            <h1 class="text-4xl font-black sci-fi-font hologram-text tracking-widest uppercase mb-1">
-                                System Analytics <span class="text-xs align-middle text-cyan-400 font-mono">v9.0</span>
-                            </h1>
-                            <p class="text-sm tech-font text-cyan-700 uppercase tracking-widest">Real-time Production
-                                Telemetry</p>
+                            <h1 class="text-4xl font-black text-slate-800 uppercase tracking-widest">Analytics <span
+                                    class="text-cyan-600">Pro</span></h1>
+                            <p class="font-mono text-xs text-slate-500 mt-1">SYSTEM_STATUS: <span
+                                    class="text-green-500 font-bold">ONLINE</span></p>
                         </div>
-
-                        <!-- Global Counters -->
                         <div class="flex gap-4">
-                            <div class="sci-fi-card px-6 py-4 min-w-[140px]">
-                                <p class="text-[10px] uppercase font-bold text-cyan-500 mb-1 tech-font">System Load</p>
-                                <div class="text-2xl font-black text-slate-700 sci-fi-font" id="ana-load">42%</div>
+                            <div class="bg-white px-4 py-2 rounded-lg shadow-sm border border-slate-200">
+                                <span class="block text-[10px] text-slate-400 font-bold uppercase">Efficiency</span>
+                                <span class="text-xl font-black text-slate-800" id="ana-metric-1">--%</span>
                             </div>
-                            <div class="sci-fi-card px-6 py-4 min-w-[140px]">
-                                <p class="text-[10px] uppercase font-bold text-cyan-500 mb-1 tech-font">Efficiency</p>
-                                <div class="text-2xl font-black text-slate-700 sci-fi-font" id="ana-efficiency">98%
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- AI PROCESS FLOW MAP -->
-                    <div class="sci-fi-card p-0 overflow-hidden mb-8 relative">
-                        <div class="absolute top-0 left-0 w-full p-6 z-10 pointer-events-none">
-                            <div class="flex justify-between items-start">
-                                <div>
-                                    <h3 class="text-xl font-black text-slate-700 sci-fi-font uppercase tracking-widest">
-                                        Production Neural Network</h3>
-                                    <p class="text-xs font-mono text-cyan-600">LIVE WORKFLOW TELEMETRY</p>
-                                </div>
-                                <div
-                                    class="bg-white/80 backdrop-blur px-3 py-1 rounded border border-cyan-100 shadow-sm">
-                                    <span class="text-[10px] font-bold text-cyan-500 animate-pulse">● AI
-                                        OPTIMIZING</span>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- Canvas for Node Graph -->
-                        <div class="h-64 md:h-80 bg-slate-50 relative">
-                            <canvas id="chart-process-flow" class="w-full h-full block"></canvas>
-
-                            <!-- Overlay Stats (HTML for accessibility/crispness) -->
-                            <div class="absolute inset-0 pointer-events-none flex items-center justify-around px-10">
-                                <!-- Nodes will be drawn by Canvas, labels here for semantic structure if needed, or purely canvas -->
+                            <div class="bg-white px-4 py-2 rounded-lg shadow-sm border border-slate-200">
+                                <span class="block text-[10px] text-slate-400 font-bold uppercase">Volume</span>
+                                <span class="text-xl font-black text-slate-800" id="ana-metric-2">--</span>
                             </div>
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-                        <!-- Line Chart: Production Velocity -->
-                        <div class="sci-fi-card p-6 h-80 flex flex-col">
-                            <div class="flex justify-between items-center mb-4">
-                                <h3 class="text-lg font-bold text-slate-700 sci-fi-font uppercase tracking-wide">Output
-                                    Velocity</h3>
-                                <span class="text-[10px] text-cyan-500 font-mono animate-pulse">● LIVE STREAM</span>
-                            </div>
-                            <div class="flex-1 relative">
-                                <canvas id="chart-velocity"></canvas>
-                            </div>
-                        </div>
+                    <!-- Main Canvas Stage -->
+                    <div class="relative w-full bg-slate-900 rounded-2xl overflow-hidden shadow-2xl border border-slate-700"
+                        style="height: 600px;">
+                        <canvas id="chart-main" class="w-full h-full block"></canvas>
 
-                        <!-- Radar Chart: Skill Matrix -->
-                        <div class="sci-fi-card p-6 h-80 flex flex-col">
-                            <div class="flex justify-between items-center mb-4">
-                                <h3 class="text-lg font-bold text-slate-700 sci-fi-font uppercase tracking-wide">
-                                    Operational Balance</h3>
-                                <span class="text-[10px] text-cyan-500 font-mono">MATRIX-7</span>
-                            </div>
-                            <div class="flex-1 relative flex items-center justify-center">
-                                <canvas id="chart-radar"></canvas>
-                            </div>
+                        <!-- Overlay UI (Absolute) -->
+                        <div
+                            class="absolute bottom-0 left-0 w-full p-4 bg-gradient-to-t from-black/80 to-transparent pointer-events-none">
+                            <p class="font-mono text-xs text-cyan-400 opacity-70">RENDER_ENGINE: CANVAS_V2 //
+                                AI_NODE_LINKING_ACTIVE</p>
                         </div>
                     </div>
 
-                    <!-- AI INSIGHTS TERMINAL -->
-                    <div class="sci-fi-card p-6 mb-8 bg-slate-900 text-cyan-400 border-cyan-500/30">
-                        <div class="flex items-center gap-3 mb-4 border-b border-cyan-800/50 pb-2">
-                            <svg class="w-5 h-5 animate-spin-slow" fill="none" stroke="currentColor"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                            </svg>
-                            <h3 class="font-mono text-sm tracking-widest uppercase">CORTEX_AI // PREDICTIVE_ANALYSIS
-                            </h3>
-                        </div>
-                        <div class="font-mono text-sm space-y-2 opacity-90" id="ai-insights-log">
-                            <p>> Analyzing workflow efficiency...</p>
-                            <p>> <span class="text-white">Detected:</span> 98% Efficiency rating. Systems nominal.</p>
-                            <p>> <span class="text-yellow-400">Recommendation:</span> Increase batch size for 'Shirt'
-                                production line to optimize stitching throughput.</p>
-                        </div>
-                    </div>
-
-                    <!-- Secondary Stats Grid -->
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div class="sci-fi-card p-4 flex items-center gap-4">
-                            <div
-                                class="w-12 h-12 rounded-full bg-cyan-100 flex items-center justify-center text-cyan-600">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M13 10V3L4 14h7v7l9-11h-7z"></path>
-                                </svg>
-                            </div>
-                            <div>
-                                <div class="text-2xl font-black sci-fi-font text-slate-800" id="ana-active-batches">
-                                    0
-                                </div>
-                                <div class="text-[10px] uppercase font-bold text-cyan-600">Active Batches</div>
-                            </div>
-                        </div>
-                        <div class="sci-fi-card p-4 flex items-center gap-4">
-                            <div
-                                class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10">
-                                    </path>
-                                </svg>
-                            </div>
-                            <div>
-                                <div class="text-2xl font-black sci-fi-font text-slate-800" id="ana-total-items">0
-                                </div>
-                                <div class="text-[10px] uppercase font-bold text-blue-600">Items Processing</div>
-                            </div>
-                        </div>
-                        <div class="sci-fi-card p-4 flex items-center gap-4">
-                            <div
-                                class="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center text-purple-600">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                </svg>
-                            </div>
-                            <div>
-                                <div class="text-2xl font-black sci-fi-font text-slate-800" id="ana-avg-time">--
-                                </div>
-                                <div class="text-[10px] uppercase font-bold text-purple-600">Avg Cycle Time</div>
-                            </div>
-                        </div>
-                    </div>
                 </div>
-
                 <!-- End view-analytics -->
 
         </section>
@@ -2657,320 +2549,146 @@
             }
         }
 
-        // --- ANALYTICS MODULE (Sci-Fi / Custom Canvas) ---
-        // Replacing Chart.js with pure Canvas rendering to fix library crashes.
+        // --- ANALYTICS MODULE (FRESH REBUILD) ---
+        // V2: Unified Canvas Engine
 
         function renderAnalytics() {
-            // 1. Calculate Stats
+            // 1. Calc Stats
             const totalBatches = ALL_GROUPS.length;
             const activeBatches = ALL_GROUPS.filter(g => g.status === 'Active').length;
-            let totalVolume = 0;
             let totalAvgPct = 0;
+            ALL_GROUPS.forEach(g => totalAvgPct += (g._pct || 0));
+            const globalEff = totalBatches > 0 ? Math.round(totalAvgPct / totalBatches) : 0;
 
-            ALL_GROUPS.forEach(g => {
-                totalVolume += (g._vol || 0);
-                totalAvgPct += (g._pct || 0);
-            });
-            const globalEfficiency = totalBatches > 0 ? Math.round(totalAvgPct / totalBatches) : 0;
+            // 2. Update Html
+            const m1 = document.getElementById('ana-metric-1');
+            const m2 = document.getElementById('ana-metric-2');
+            if (m1) m1.textContent = `${globalEff}%`;
+            if (m2) m2.textContent = activeBatches;
 
-            // Populate Counters
-            document.getElementById('ana-active-batches').textContent = activeBatches;
-            document.getElementById('ana-total-items').textContent = totalVolume.toLocaleString();
-            document.getElementById('ana-efficiency').textContent = `${globalEfficiency}%`;
-
-            // Pseudo Load: Based on active count vs capacity
-            const loadPct = Math.min(100, Math.round((activeBatches / 50) * 100));
-            document.getElementById('ana-load').textContent = `${loadPct}%`;
-
-            // AI INSIGHTS (Dynamic)
-            const aiLog = document.getElementById('ai-insights-log');
-            if (aiLog) {
-                let suggestion = "Maintain current velocity.";
-                let color = "text-green-400";
-
-                if (globalEfficiency < 60) {
-                    suggestion = "Bottleneck detected. Increase resource allocation.";
-                    color = "text-red-400";
-                } else if (globalEfficiency < 85) {
-                    suggestion = "Optimize batch sizing for improved throughput.";
-                    color = "text-yellow-400";
-                }
-
-                aiLog.innerHTML = `
-                    <p>> Analyzing workflow efficiency...</p>
-                    <p>> <span class="text-white">Detected:</span> ${globalEfficiency}% Efficiency rating.</p>
-                    <p>> <span class="${color}">Recommendation:</span> ${suggestion}</p>
-                `;
-            }
-
-            // 2. Render Custom Charts
-            drawVelocityChart([12, 45, 67, 40, 88, 30, 55, 20]);
-            drawRadarChart([90, 75, 85, 95, 80]);
-            drawProcessFlow(); // New AI Visual
+            // 3. Render Canvas
+            drawUnifiedSystem(globalEff, activeBatches);
         }
 
-        // --- CUSTOM CANVAS DRAWING (Robust) ---
+        function drawUnifiedSystem(efficiency, volume) {
+            const canvas = document.getElementById('chart-main');
+            if (!canvas) { console.warn("Main chart missing"); return; }
 
-        function drawProcessFlow() {
-            const canvas = document.getElementById('chart-process-flow');
-            if (!canvas) return;
-
+            // Scaling
             const dpr = window.devicePixelRatio || 1;
             const rect = canvas.getBoundingClientRect();
             canvas.width = rect.width * dpr;
             canvas.height = rect.height * dpr;
+
             const ctx = canvas.getContext('2d');
             ctx.scale(dpr, dpr);
-
             const w = rect.width;
             const h = rect.height;
+
+            // Colors
+            const bg = '#0f172a'; // slate-900
             const cyan = '#06b6d4';
+            const grid = 'rgba(6, 182, 212, 0.1)';
 
-            // Clear
-            ctx.clearRect(0, 0, w, h);
+            // 1. Clean Slate
+            ctx.fillStyle = bg;
+            ctx.fillRect(0, 0, w, h);
 
-            // Nodes Config
-            const stages = ["Materials", "Cutting", "Stitching", "Finishing", "Warehouse"];
-            const nodes = stages.map((s, i) => ({
-                label: s,
-                x: (w / (stages.length + 0.5)) * (i + 0.75),
-                y: h / 2,
-                active: Math.floor(Math.random() * 5) + 1 // Mock Data for visual demo
-            }));
+            // 2. Draw Grid
+            ctx.strokeStyle = grid;
+            ctx.lineWidth = 1;
+            const step = 40;
 
-            // Draw Connections (Neural Lines)
-            ctx.lineWidth = 2;
-            nodes.forEach((node, i) => {
-                if (i < nodes.length - 1) {
-                    const next = nodes[i + 1];
-                    const grad = ctx.createLinearGradient(node.x, node.y, next.x, next.y);
-                    grad.addColorStop(0, cyan);
-                    grad.addColorStop(1, 'rgba(6, 182, 212, 0.2)');
+            ctx.beginPath();
+            for (let x = 0; x < w; x += step) { ctx.moveTo(x, 0); ctx.lineTo(x, h); }
+            for (let y = 0; y < h; y += step) { ctx.moveTo(0, y); ctx.lineTo(w, y); }
+            ctx.stroke();
 
+            // 3. Central Node (Process Hub)
+            const cx = w / 2;
+            const cy = h / 2 - 50;
+
+            // Draw Node Graph (Left Side)
+            drawNodes(ctx, 100, cy, w - 100);
+
+            // Draw Velocity Graph (Bottom overlaid)
+            drawMiniGraph(ctx, 40, h - 140, w - 80, 100);
+        }
+
+        function drawNodes(ctx, xStart, y, width) {
+            const cyan = '#06b6d4';
+            const stages = ["Materials", "Cutting", "Stitching", "QC", "Packing"];
+            const gap = width / (stages.length + 1);
+
+            let prevX = null;
+
+            stages.forEach((label, i) => {
+                const nx = xStart + (i * gap) + (gap / 2);
+
+                // Connection
+                if (prevX !== null) {
                     ctx.beginPath();
-                    ctx.strokeStyle = grad;
-                    ctx.moveTo(node.x, node.y);
-                    // Bezier Curve for "Flow" feel
-                    ctx.bezierCurveTo(node.x + 50, node.y, next.x - 50, next.y, next.x, next.y);
+                    ctx.strokeStyle = 'rgba(6, 182, 212, 0.3)';
+                    ctx.lineWidth = 2;
+                    ctx.moveTo(prevX, y);
+                    ctx.lineTo(nx, y);
                     ctx.stroke();
 
-                    // Animated Packet (Static Snapshot)
-                    const midX = (node.x + next.x) / 2;
+                    // Moving Packet
+                    const t = (Date.now() / 1000) % 1; // 1s loop
+                    const px = prevX + (nx - prevX) * t;
                     ctx.beginPath();
-                    ctx.fillStyle = "#fff";
+                    ctx.fillStyle = '#fff';
                     ctx.shadowColor = cyan;
                     ctx.shadowBlur = 10;
-                    ctx.arc(midX, node.y, 4, 0, Math.PI * 2);
+                    ctx.arc(px, y, 3, 0, Math.PI * 2);
                     ctx.fill();
                     ctx.shadowBlur = 0;
                 }
-            });
 
-            // Draw Nodes
-            nodes.forEach(node => {
-                // Outer Glow
+                // Node
                 ctx.beginPath();
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-                ctx.shadowColor = cyan;
-                ctx.shadowBlur = 15;
-                ctx.arc(node.x, node.y, 8, 0, Math.PI * 2);
+                ctx.fillStyle = 'rgba(15, 23, 42, 0.8)';
+                ctx.strokeStyle = cyan;
+                ctx.lineWidth = 2;
+                ctx.arc(nx, y, 12, 0, Math.PI * 2);
                 ctx.fill();
-                ctx.shadowBlur = 0;
-
-                // Inner Core
-                ctx.beginPath();
-                ctx.fillStyle = cyan;
-                ctx.arc(node.x, node.y, 4, 0, Math.PI * 2);
-                ctx.fill();
+                ctx.stroke();
 
                 // Label
-                ctx.fillStyle = '#475569';
-                ctx.font = 'bold 10px Inter';
+                ctx.fillStyle = cyan;
+                ctx.font = '10px monospace';
                 ctx.textAlign = 'center';
-                ctx.fillText(node.label, node.x, node.y + 25);
+                ctx.fillText(label, nx, y + 25);
 
-                // Count Badge
-                ctx.fillStyle = cyan;
-                ctx.font = 'bold 9px Inter';
-                ctx.fillText(`${node.active} Active`, node.x, node.y - 20);
+                prevX = nx;
             });
         }
 
-        function drawVelocityChart(dataPoints) {
-            const canvas = document.getElementById('chart-velocity');
-            if (!canvas) return;
+        function drawMiniGraph(ctx, x, y, w, h) {
+            // Background
+            ctx.fillStyle = 'rgba(6, 182, 212, 0.05)';
+            ctx.fillRect(x, y, w, h);
 
-            // Fix Resolution
-            const dpr = window.devicePixelRatio || 1;
-            const rect = canvas.getBoundingClientRect();
-            canvas.width = rect.width * dpr;
-            canvas.height = rect.height * dpr;
-            const ctx = canvas.getContext('2d');
-            ctx.scale(dpr, dpr);
-
-            const w = rect.width;
-            const h = rect.height;
-            const padding = 20;
-
-            // Clear
-            ctx.clearRect(0, 0, w, h);
-
-            // Styling
-            const cyan = '#06b6d4';
-            const bgGlow = 'rgba(6, 182, 212, 0.1)';
-
-            // Draw Grid
-            ctx.strokeStyle = 'rgba(6, 182, 212, 0.1)';
-            ctx.lineWidth = 1;
+            // Mock Data Line
             ctx.beginPath();
-            for (let i = 0; i <= 5; i++) {
-                const y = padding + (h - 2 * padding) * (i / 5);
-                ctx.moveTo(padding, y);
-                ctx.lineTo(w - padding, y);
-            }
-            ctx.stroke();
-
-            // Draw Line Path
-            const maxVal = 100;
-            const stepX = (w - 2 * padding) / (dataPoints.length - 1);
-
-            ctx.beginPath();
-            dataPoints.forEach((val, i) => {
-                const x = padding + i * stepX;
-                const y = h - padding - ((val / maxVal) * (h - 2 * padding));
-                if (i === 0) ctx.moveTo(x, y);
-                else ctx.lineTo(x, y);
-            });
-
-            // Gradient Fill
-            const grad = ctx.createLinearGradient(0, 0, 0, h);
-            grad.addColorStop(0, 'rgba(6, 182, 212, 0.3)');
-            grad.addColorStop(1, 'rgba(6, 182, 212, 0.0)');
-
-            ctx.fillStyle = grad;
-            ctx.lineTo(w - padding, h - padding);
-            ctx.lineTo(padding, h - padding);
-            ctx.fill();
-
-            // Stroke Line
-            ctx.strokeStyle = cyan;
+            ctx.strokeStyle = '#22d3ee';
             ctx.lineWidth = 2;
-            ctx.shadowColor = cyan;
-            ctx.shadowBlur = 10;
+
+            const points = [20, 45, 30, 60, 55, 80, 70, 90, 60, 75];
+            const step = w / (points.length - 1);
+
+            points.forEach((val, i) => {
+                const px = x + i * step;
+                const py = y + h - (val / 100 * h);
+                if (i === 0) ctx.moveTo(px, py);
+                else ctx.lineTo(px, py);
+            });
             ctx.stroke();
-            ctx.shadowBlur = 0; // Reset
 
-            // Dots
-            ctx.fillStyle = "#fff";
-            dataPoints.forEach((val, i) => {
-                const x = padding + i * stepX;
-                const y = h - padding - ((val / maxVal) * (h - 2 * padding));
-                ctx.beginPath();
-                ctx.arc(x, y, 4, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.stroke();
-            });
-        }
-
-        function drawRadarChart(values) {
-            const canvas = document.getElementById('chart-radar');
-            if (!canvas) return;
-
-            const dpr = window.devicePixelRatio || 1;
-            const rect = canvas.getBoundingClientRect();
-            canvas.width = rect.width * dpr;
-            canvas.height = rect.height * dpr;
-            const ctx = canvas.getContext('2d');
-            ctx.scale(dpr, dpr);
-
-            const w = rect.width;
-            const h = rect.height;
-            const cx = w / 2;
-            const cy = h / 2;
-            const radius = Math.min(w, h) / 2 - 30;
-            const sides = 5;
-
-            // Labels
-            const labels = ['Quality', 'Speed', 'Volume', 'Eff', 'Uptime'];
-
-            // Clear
-            ctx.clearRect(0, 0, w, h);
-
-            // Draw Web (Grid)
-            ctx.strokeStyle = 'rgba(6, 182, 212, 0.15)';
-            ctx.lineWidth = 1;
-
-            for (let level = 1; level <= 4; level++) {
-                const r = radius * (level / 4);
-                ctx.beginPath();
-                for (let i = 0; i < sides; i++) {
-                    const ang = (Math.PI * 2 * i) / sides - Math.PI / 2;
-                    const x = cx + Math.cos(ang) * r;
-                    const y = cy + Math.sin(ang) * r;
-                    if (i === 0) ctx.moveTo(x, y);
-                    else ctx.lineTo(x, y);
-                }
-                ctx.closePath();
-                ctx.stroke();
-            }
-
-            // Draw Axes & Labels
-            ctx.fillStyle = '#64748b';
-            ctx.font = 'bold 10px Inter';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-
-            for (let i = 0; i < sides; i++) {
-                const ang = (Math.PI * 2 * i) / sides - Math.PI / 2;
-                const x = cx + Math.cos(ang) * radius;
-                const y = cy + Math.sin(ang) * radius;
-
-                // Axis Line
-                ctx.beginPath();
-                ctx.moveTo(cx, cy);
-                ctx.lineTo(x, y);
-                ctx.stroke();
-
-                // Label
-                const lx = cx + Math.cos(ang) * (radius + 20);
-                const ly = cy + Math.sin(ang) * (radius + 20);
-                ctx.fillText(labels[i], lx, ly);
-            }
-
-            // Draw Data Shape
-            ctx.beginPath();
-            values.forEach((val, i) => {
-                const ang = (Math.PI * 2 * i) / sides - Math.PI / 2;
-                const r = radius * (val / 100);
-                const x = cx + Math.cos(ang) * r;
-                const y = cy + Math.sin(ang) * r;
-                if (i === 0) ctx.moveTo(x, y);
-                else ctx.lineTo(x, y);
-            });
-            ctx.closePath();
-
-            ctx.fillStyle = 'rgba(6, 182, 212, 0.2)';
-            ctx.fill();
-
-            ctx.strokeStyle = '#06b6d4';
-            ctx.lineWidth = 2;
-            ctx.shadowColor = '#06b6d4';
-            ctx.shadowBlur = 10;
-            ctx.stroke();
-            ctx.shadowBlur = 0;
-
-            // Data Points
-            values.forEach((val, i) => {
-                const ang = (Math.PI * 2 * i) / sides - Math.PI / 2;
-                const r = radius * (val / 100);
-                const x = cx + Math.cos(ang) * r;
-                const y = cy + Math.sin(ang) * r;
-
-                ctx.beginPath();
-                ctx.fillStyle = '#fff';
-                ctx.arc(x, y, 4, 0, Math.PI * 2);
-                ctx.fill();
-            });
+            // Label
+            ctx.fillStyle = 'rgba(255,255,255,0.5)';
+            ctx.fillText("HOURLY PRODUCTION VELOCITY", x + 10, y + 15);
         }
 
         function logout() { sessionStorage.clear(); window.location = 'login.html'; }
