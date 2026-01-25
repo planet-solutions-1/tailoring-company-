@@ -3211,8 +3211,27 @@
 
                 if (res.ok) {
                     alert("✅ Target Updated. Production plan aligned.");
+
+                    // 1. Update Local State
+                    const g = ALL_GROUPS.find(item => item.id == id);
+                    if (g) {
+                        g.daily_target = target;
+                    }
+                    if (CURRENT_BATCH && CURRENT_BATCH.id == id) {
+                        CURRENT_BATCH.daily_target = target;
+                        // Update Header Display if visible
+                        const targetInput = document.getElementById('wiz-target');
+                        if (targetInput) targetInput.value = target; // If in edit mode
+
+                        // Force Detail Reload if open
+                        openDetail(id);
+                    }
+
+                    // 2. Global Reload
+                    loadBatches();
+
                     document.getElementById('ai-modal').classList.add('hidden');
-                    openAIInsights(); // Refresh analysis
+                    // openAIInsights(); // Don't re-open, let user see change
                 } else {
                     alert("Failed to update target.");
                 }
