@@ -3112,7 +3112,7 @@
 
             try {
                 const token = sessionStorage.getItem('token');
-                const res = await fetch(`${API_BASE}/groups/${CURRENT_EDIT_ID}/defects`, {
+                const res = await fetch(`${API}/groups/${CURRENT_EDIT_ID}/defects`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                     body: JSON.stringify({ type, description: desc })
