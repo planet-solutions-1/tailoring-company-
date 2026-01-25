@@ -6237,19 +6237,52 @@
             const tbody = document.getElementById(id);
             if (!tbody) { console.error("Log Table Body Not Found:", id); return; }
             if (logs.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" class="p-8 text-center text-gray-400 italic">No logs found matching criteria.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-gray-400 italic">No logs found matching criteria.</td></tr>`;
                 return;
             }
-            tbody.innerHTML = logs.map(l => `
-                <tr class="hover:bg-gray-50 border-b border-gray-50">
+
+            // MAPPING HELPER
+            const getActionStyle = (act) => {
+                if (act === 'VIEW_ADMIN_TAB') return { label: 'Admin Nav', cls: 'bg-blue-50 text-blue-600 border-blue-100' };
+                if (act === 'VIEW_PROD_TAB') return { label: 'Prod Nav', cls: 'bg-violet-50 text-violet-600 border-violet-100' };
+                if (act === 'CREATE_BATCH') return { label: 'Batch Created', cls: 'bg-emerald-50 text-emerald-600 border-emerald-100' };
+                if (act === 'UPDATE_BATCH') return { label: 'Batch Updated', cls: 'bg-blue-50 text-blue-600 border-blue-100' };
+                if (act === 'PAUSE_BATCH') return { label: 'Work Paused', cls: 'bg-amber-50 text-amber-600 border-amber-100' };
+                if (act === 'RESUME_BATCH') return { label: 'Resumed', cls: 'bg-cyan-50 text-cyan-600 border-cyan-100' };
+                if (act === 'UPDATE_STATUS') return { label: 'Status Change', cls: 'bg-slate-50 text-slate-600 border-slate-100' };
+                if (act === 'REPORT_DELAY') return { label: 'Delay Reported', cls: 'bg-red-50 text-red-600 border-red-100' };
+                if (act === 'ENDORSE_BATCH') return { label: 'Award Given', cls: 'bg-yellow-50 text-yellow-600 border-yellow-100' };
+                if (act === 'DELETE_BATCH') return { label: 'Batch Deleted', cls: 'bg-gray-100 text-gray-600 border-gray-200' };
+                if (act === 'FIX_DATABASE') return { label: 'System Fix', cls: 'bg-pink-50 text-pink-600 border-pink-100' };
+
+                return { label: act, cls: 'bg-gray-50 text-gray-500 border-gray-100' };
+            };
+
+            const getSchoolName = (sid) => {
+                if (!sid) return '-';
+                // Try from populated list
+                if (globalSchools && globalSchools.length > 0) {
+                    const match = globalSchools.find(s => s.id == sid);
+                    if (match) return match.name;
+                }
+                // Fallback: If 1 digit, just say "School #X"
+                return !isNaN(sid) ? `School #${sid}` : sid;
+            }
+
+            tbody.innerHTML = logs.map(l => {
+                const style = getActionStyle(l.action);
+                const schoolDisplay = l.school_name || getSchoolName(l.school_id);
+
+                return `
+                <tr class="hover:bg-gray-50 border-b border-gray-50 transition-colors">
                     <td class="p-4 whitespace-nowrap text-gray-400 text-[10px] font-mono">${new Date(l.created_at).toLocaleString()}</td>
                     <td class="p-4 font-bold text-gray-700 text-xs">${l.username}</td>
                     <td class="p-4 text-xs text-gray-500">${l.role || '-'}</td>
-                    <td class="p-4 text-xs text-blue-600 font-medium">${l.school_name || l.school_id || '-'}</td>
-                    <td class="p-4"><span class="px-2 py-1 rounded text-[10px] font-bold bg-gray-100 text-gray-600 border border-gray-200">${l.action}</span></td>
+                    <td class="p-4 text-xs text-blue-600 font-medium">${schoolDisplay}</td>
+                    <td class="p-4"><span class="px-2 py-1 rounded text-[10px] font-bold border uppercase tracking-wide ${style.cls}">${style.label}</span></td>
                     <td class="p-4 text-xs text-gray-500 truncate max-w-xs" title="${l.details}">${l.details}</td>
                 </tr>
-            `).join('');
+            `}).join('');
         }
 
         async function cleanupLogs() {
