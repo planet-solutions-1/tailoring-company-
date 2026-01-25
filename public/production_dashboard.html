@@ -303,6 +303,8 @@
 
     <!-- Confetti Lib -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <!-- Logger (Shared) -->
+    <script src="js/logger.js"></script>
 </head>
 
 <body class="min-h-screen text-slate-800">
@@ -1599,6 +1601,11 @@
             });
 
             if (res.ok) {
+                // LOGGING
+                const action = WIZARD_MODE === 'edit' ? 'UPDATE_BATCH' : 'CREATE_BATCH';
+                const msg = `${WIZARD_MODE === 'edit' ? 'Updated' : 'Created'} Batch: ${name} (${type})`;
+                if (window.Logger) Logger.log(action, msg);
+
                 closeWizard();
                 loadBatches();
                 if (WIZARD_MODE === 'edit') {
@@ -2159,6 +2166,7 @@
 
                 if (res.ok) {
                     showToast(`Status updated to ${status}`);
+                    if (window.Logger) Logger.log(status === 'Paused' ? 'PAUSE_BATCH' : (status === 'Active' ? 'RESUME_BATCH' : 'UPDATE_STATUS'), `Batch ${id} set to ${status}`);
 
                     // Update Local Data
                     const g = ALL_GROUPS.find(i => i.id == id);
@@ -2659,6 +2667,7 @@
 
                 if (res.ok) {
                     closeEndorseModal();
+                    if (window.Logger) Logger.log('ENDORSE_BATCH', `Awarded ${points}pts to Batch ${CURRENT_BATCH.id} (${type})`);
                     showToast(`${icon} ${message} (+${points} pts)`);
 
                     // Confetti Explosion
@@ -2693,6 +2702,7 @@
 
                 if (res.ok) {
                     showToast("🐢 Delay Logged. Team alerted.", 'warning'); // Use warning/error color
+                    if (window.Logger) Logger.log('REPORT_DELAY', `Batch ${CURRENT_BATCH.id} Delayed: ${reason}`);
                     loadBatches();
                     switchTab('active');
                 } else {
@@ -2716,6 +2726,7 @@
 
                 if (res.ok) {
                     alert("Batch Deleted Successfully");
+                    if (window.Logger) Logger.log('DELETE_BATCH', `Deleted Batch #${CURRENT_BATCH.id}: ${CURRENT_BATCH.group_name}`);
                     switchTab('active');
                     loadBatches();
                 } else {
