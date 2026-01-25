@@ -134,9 +134,10 @@
                     <div class="space-y-4">
                         <div>
                             <label class="text-xs font-bold text-slate-400 uppercase">Dress Type</label>
-                            <input type="text" id="recipe-dress" placeholder="e.g. Shirt"
-                                class="w-full clay-input p-3 mt-1">
-                            <p class="text-[10px] text-slate-400 mt-1">Must match the Dress Type used in batches</p>
+                            <select id="recipe-dress" class="w-full clay-input p-3 mt-1">
+                                <option value="">Loading types...</option>
+                            </select>
+                            <p class="text-[10px] text-slate-400 mt-1">Select from active production types</p>
                         </div>
                         <div>
                             <label class="text-xs font-bold text-slate-400 uppercase">Material</label>
@@ -189,7 +190,24 @@
         document.addEventListener('DOMContentLoaded', () => {
             loadInventory();
             loadRecipes();
+            loadDressTypes();
         });
+
+        async function loadDressTypes() {
+            const select = document.getElementById('recipe-dress');
+            try {
+                const token = sessionStorage.getItem('token');
+                const res = await fetch('/api/production/dresstypes', { headers: { 'Authorization': `Bearer ${token}` } });
+                if (!res.ok) throw new Error("Failed");
+                const types = await res.json();
+
+                select.innerHTML = '<option value="">Select Dress Type...</option>' +
+                    types.map(t => `<option value="${t}">${t}</option>`).join('');
+            } catch (e) {
+                console.error("Dress Types Error", e);
+                select.innerHTML = '<option value="">Error loading types</option>';
+            }
+        }
 
         async function loadInventory() {
             const list = document.getElementById('inventory-list');

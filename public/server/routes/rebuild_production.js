@@ -275,6 +275,20 @@ router.get('/groups', authenticateToken, async (req, res) => {
     }
 });
 
+// --- HELPER CONFIG ROUTES ---
+router.get('/dresstypes', authenticateToken, async (req, res) => {
+    try {
+        const rows = await query("SELECT DISTINCT dress_type FROM production_groups WHERE dress_type IS NOT NULL AND dress_type != '' ORDER BY dress_type");
+        const types = rows.map(r => r.dress_type);
+        // Ensure defaults exist if DB is empty
+        const defaults = ["Shirt", "Pant", "T-Shirt", "Skirt", "Shorts", "Jacket"];
+        const combined = Array.from(new Set([...defaults, ...types])).sort();
+        res.json(combined);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // --- RECIPE ROUTES ---
 router.get('/recipes', authenticateToken, async (req, res) => {
     try {
