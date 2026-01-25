@@ -30,13 +30,33 @@ function updateDateDisplay() {
 }
 
 async function fetchProductionData() {
+    const token = sessionStorage.getItem('token');
+    if (!token) {
+        alert("You must be logged in to view this report.");
+        window.location.href = 'index.html';
+        return [];
+    }
+
+    const headers = {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+    };
+
     // Try primary API first
-    let res = await fetch(`${API_BASE}/groups`);
+    let res = await fetch(`${API_BASE}/groups`, { headers });
+
     if (!res.ok) {
         // Fallback or retry
         console.warn("Primary API failed, trying fallback /production/groups");
-        res = await fetch(`/production/groups`);
+        res = await fetch(`/production/groups`, { headers });
     }
+
+    if (res.status === 401) {
+        alert("Session expired. Please login again.");
+        window.location.href = 'index.html';
+        throw new Error("Unauthorized");
+    }
+
     if (!res.ok) throw new Error(`API Error: ${res.status}`);
     return await res.json();
 }
