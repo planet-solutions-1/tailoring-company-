@@ -2975,15 +2975,16 @@
         log("Debugger Initialized. Click button to inspect.");
     </script>
     <!-- DEFECT MODAL -->
-    <div id="defect-modal"
-        class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 animate-fade-in">
-        <div class="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl m-4">
+    <div id="defect-modal" onclick="if(event.target === this) toggleDefectModal()"
+        class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 animate-fade-in backdrop-blur-sm">
+        <div class="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl m-4 relative animate-scale-in">
             <div class="flex justify-between items-center mb-6">
                 <h3 class="text-xl font-bold text-red-600 flex items-center gap-2">
                     <i class="fa-solid fa-triangle-exclamation"></i> Report Defect
                 </h3>
-                <button onclick="toggleDefectModal()" class="text-slate-400 hover:text-slate-600">
-                    <i class="fa-solid fa-times text-xl"></i>
+                <button onclick="toggleDefectModal()"
+                    class="text-slate-400 hover:text-slate-600 bg-slate-100 p-2 rounded-full transition h-8 w-8 flex items-center justify-center">
+                    <i class="fa-solid fa-times"></i>
                 </button>
             </div>
 
@@ -3008,10 +3009,17 @@
                     <i class="fa-solid fa-info-circle mr-1"></i> Reporting a defect may deduct <strong>5 points</strong>
                     from the group's efficiency score.
                 </div>
-                <button onclick="submitDefect()"
-                    class="w-full py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-lg shadow-red-500/30 transition-all">
-                    Submit Report
-                </button>
+
+                <div class="flex gap-3 pt-2">
+                    <button onclick="toggleDefectModal()"
+                        class="flex-1 py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold rounded-xl transition-all">
+                        Cancel
+                    </button>
+                    <button onclick="submitDefect()"
+                        class="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-lg shadow-red-500/30 transition-all">
+                        Submit Report
+                    </button>
+                </div>
             </div>
         </div>
     </div>
