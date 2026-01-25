@@ -3126,6 +3126,12 @@
                     if (i.type === 'urgent') { color = 'red'; icon = 'fa-radiation'; }
                     if (i.type === 'warning') { color = 'amber'; icon = 'fa-triangle-exclamation'; }
 
+                    // Action Logic
+                    let actionAttr = '';
+                    if (i.action === 'View Reports') actionAttr = `onclick="window.location.href='company_dashboard.html'"`;
+                    else if (i.action === 'Order Materials') actionAttr = `onclick="window.location.href='inventory_dashboard.html'"`;
+                    else actionAttr = `onclick="document.getElementById('ai-modal').classList.add('hidden')"`; // Dismiss
+
                     return `
                     <div class="bg-slate-800/80 p-5 rounded-xl border-l-4 border-${color}-500 flex gap-4 hover:bg-slate-800 transition group">
                         <div class="text-${color}-500 text-xl mt-1">
@@ -3134,7 +3140,7 @@
                         <div class="flex-1">
                             <h4 class="text-slate-200 font-bold text-lg">${i.title}</h4>
                             <p class="text-slate-400 text-sm mt-1 leading-relaxed">${i.message}</p>
-                            ${i.action ? `<button class="mt-3 text-xs font-bold text-${color}-400 bg-${color}-500/10 px-3 py-1.5 rounded uppercase tracking-wider hover:bg-${color}-500/20 transition">${i.action} <i class="fa-solid fa-arrow-right ml-1"></i></button>` : ''}
+                            ${i.action ? `<button ${actionAttr} class="mt-3 text-xs font-bold text-${color}-400 bg-${color}-500/10 px-3 py-1.5 rounded uppercase tracking-wider hover:bg-${color}-500/20 transition">${i.action} <i class="fa-solid fa-arrow-right ml-1"></i></button>` : ''}
                         </div>
                     </div>`;
                 }).join('');
