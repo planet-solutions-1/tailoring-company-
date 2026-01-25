@@ -2768,6 +2768,88 @@
             </div>
         </div>
     </div>
+    <!-- DEBUG OVERLAY (Fixing Blank Screen Issue) -->
+    <div id="debug-overlay" class="fixed bottom-4 right-4 z-50 flex flex-col items-end pointer-events-none">
+        <div id="debug-panel"
+            class="bg-black/90 text-green-400 p-4 rounded-lg shadow-xl mb-2 font-mono text-xs w-96 hidden pointer-events-auto h-64 overflow-y-auto border border-green-500/50">
+            <div class="flex justify-between border-b border-green-800 pb-1 mb-2">
+                <strong>SYSTEM DIAGNOSTICS</strong>
+                <button onclick="toggleDebug()" class="text-red-400 hover:text-white">[X]</button>
+            </div>
+            <div id="debug-log" class="space-y-1"></div>
+        </div>
+        <button onclick="toggleDebug()"
+            class="pointer-events-auto bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-full shadow-lg border-2 border-white animate-pulse">
+            🐞 DEBUG
+        </button>
+    </div>
+
+    <script>
+        // DEBUGGER LOGIC
+        function toggleDebug() {
+            const p = document.getElementById('debug-panel');
+            p.classList.toggle('hidden');
+            logStatus();
+        }
+
+        function log(msg, type = 'info') {
+            const d = document.getElementById('debug-log');
+            const color = type === 'error' ? 'text-red-500 bg-red-900/20' : 'text-green-400';
+            const time = new Date().toLocaleTimeString();
+            d.innerHTML += `<div class="${color}">[${time}] ${msg}</div>`;
+            d.scrollTop = d.scrollHeight;
+        }
+
+        function logStatus() {
+            try {
+                const ana = document.getElementById('view-analytics');
+                if (!ana) { log("CRITICAL: #view-analytics NOT FOUND in DOM", 'error'); return; }
+
+                const style = window.getComputedStyle(ana);
+                log(`Analytics Status:`);
+                log(`- Classes: ${ana.className}`);
+                log(`- Display: ${ana.style.display} (Computed: ${style.display})`);
+                log(`- Height: ${ana.offsetHeight}px (Min-H: ${style.minHeight})`);
+                log(`- Opacity: ${style.opacity}`);
+
+                const nav = document.getElementById('nav-analytics');
+                log(`Nav Btn Class: ${nav ? nav.className : 'MISSING'}`);
+            } catch (e) {
+                log(`Diag Error: ${e.message}`, 'error');
+            }
+        }
+
+        window.onerror = function (msg, url, line) {
+            log(`JS ERROR: ${msg} @ Line ${line}`, 'error');
+            const btn = document.querySelector('#debug-overlay button');
+            if (btn) btn.classList.add('bg-red-800', 'scale-110'); // Alert user
+            return false;
+        };
+
+        // Override switchTab to log
+        const originalSwitch = window.switchTab;
+        window.switchTab = function (id) {
+            log(`Switching to: ${id}`);
+            try {
+                originalSwitch(id);
+                setTimeout(logStatus, 100);
+            } catch (e) {
+                log(`Switch Error: ${e.message}`, 'error');
+            }
+        }
+
+        // Auto-Open on Load if Analytics
+        /*
+        setTimeout(() => {
+            if(!document.getElementById('view-analytics').classList.contains('hidden')) {
+                document.getElementById('debug-panel').classList.remove('hidden');
+                log("Auto-Detected Analytics View");
+                logStatus();
+            }
+        }, 1000);
+        */
+        log("Debugger Initialized. Click button to inspect.");
+    </script>
 </body>
 
 </html>
