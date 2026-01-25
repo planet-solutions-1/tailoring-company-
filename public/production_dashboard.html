@@ -1540,7 +1540,27 @@
                 document.getElementById('detail-name').textContent = g.group_name;
                 document.getElementById('detail-type').textContent = g.dress_type;
                 const notes = g.details || g.notes || 'No details specified.';
-                document.getElementById('detail-notes').textContent = notes;
+
+                // Deadline & Qty Formatter
+                const qtyDisplay = `📦 ${g.quantity || '0'} Total`;
+                let deadlineDisplay = '';
+                if (g.deadline) {
+                    const d = new Date(g.deadline);
+                    const today = new Date();
+                    const daysLeft = Math.ceil((d - today) / (1000 * 60 * 60 * 24));
+                    let color = 'text-slate-500 bg-slate-100';
+                    if (daysLeft < 0) color = 'text-red-700 bg-red-100';
+                    else if (daysLeft < 3) color = 'text-amber-700 bg-amber-100';
+                    else color = 'text-blue-700 bg-blue-100';
+
+                    deadlineDisplay = `<span class="ml-2 text-xs font-bold px-2 py-1 rounded-md ${color}">📅 Due: ${d.toISOString().split('T')[0]} (${daysLeft}d)</span>`;
+                }
+
+                document.getElementById('detail-notes').innerHTML = `
+                    <span class="font-bold text-slate-700 mr-2 bg-slate-200 px-2 py-0.5 rounded text-xs">${qtyDisplay}</span>
+                    ${deadlineDisplay}
+                    <span class="text-slate-400 ml-2 border-l pl-2">${notes}</span>
+                `;
 
                 // Status Override Injection
                 const statusContainer = document.getElementById('detail-status-container');
