@@ -453,8 +453,8 @@ router.post('/groups', authenticateToken, async (req, res) => {
 
         // 1. Create Batch
         const result = await query(
-            "INSERT INTO production_groups (group_name, dress_type, quantity, daily_target, notes, required_stages, status) VALUES (?, ?, ?, ?, ?, ?, 'Active')",
-            [group_name, dress_type || 'Unspecified', parseInt(quantity) || 0, parseInt(daily_target) || 0, notes || '', JSON.stringify(required_stages || [])]
+            "INSERT INTO production_groups (group_name, dress_type, quantity, daily_target, notes, required_stages, status, deadline) VALUES (?, ?, ?, ?, ?, ?, 'Active', ?)",
+            [group_name, dress_type || 'Unspecified', parseInt(quantity) || 0, parseInt(daily_target) || 0, notes || '', JSON.stringify(required_stages || []), req.body.deadline || null]
         );
 
         // 2. AUTO-DEDUCT INVENTORY
