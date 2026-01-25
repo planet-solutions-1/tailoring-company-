@@ -153,11 +153,12 @@ router.get('/inventory', authenticateToken, async (req, res) => {
     try {
         // Aggressive Self-Healing: Ensure table exists every time
         // Using MySQL Syntax: AUTO_INCREMENT instead of AUTOINCREMENT
+        // Fix: TEXT cols cannot have default in strict MySQL -> Use VARCHAR
         await query(`CREATE TABLE IF NOT EXISTS inventory_materials (
             id INT AUTO_INCREMENT PRIMARY KEY, 
             name TEXT, 
             stock INT DEFAULT 0, 
-            unit TEXT DEFAULT 'Units', 
+            unit VARCHAR(50) DEFAULT 'Units', 
             cost_per_unit DECIMAL(10,2) DEFAULT 0
         )`);
 
