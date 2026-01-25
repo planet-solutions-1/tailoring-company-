@@ -13,6 +13,8 @@ async function initReport() {
         renderMetrics(groups);
         renderFunnel(groups);
         renderVelocity(groups);
+
+        renderDeadlineVolume(groups);
         renderRankings(groups);
         renderRisks(groups);
 
@@ -326,4 +328,88 @@ function renderRisks(groups) {
             </div>
         </div>
     `).join('');
+
+}
+
+/**
+ * Section 2.5: Deadline Volume Forecast
+ */
+function renderDeadlineVolume(groups) {
+    const ctx = document.getElementById('deadlineChart').getContext('2d');
+
+    // Aggregation Map: Date -> { totalQty, maxUrgency }
+    const timeline = {};
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    groups.forEach(g => {
+        if (!g.deadline || !g.quantity) return;
+
+        // Normalize Date
+        const d = new Date(g.deadline);
+        d.setHours(0, 0, 0, 0);
+        const dateStr = d.toISOString().split('T')[0];
+
+        // Calculate Urgency
+        const daysLeft = Math.ceil((d - today) / (1000 * 60 * 60 * 24));
+        let urgency = 0; // 0=Future, 1=Soon, 2=Overdue
+        if (daysLeft < 0) urgency = 2;
+        else if (daysLeft < 3) urgency = 1;
+
+        if (!timeline[dateStr]) timeline[dateStr] = { qty: 0, urgency: 0 };
+        timeline[dateStr].qty += parseInt(g.quantity);
+        timeline[dateStr].urgency = Math.max(timeline[dateStr].urgency, urgency);
+    });
+
+    const sortedDates = Object.keys(timeline).sort();
+
+    // Safety check
+    if (sortedDates.length === 0) {
+        // Render Empty State
+        new Chart(ctx, {
+            type: 'bar',
+            data: { labels: ['No Deadlines Set'], datasets: [] },
+            options: { plugins: { title: { display: true, text: 'No upcoming deadlines found.' } } }
+        });
+        return;
+    }
+
+    const data = sortedDates.map(d => timeline[d].qty);
+    const colors = sortedDates.map(d => {
+        const u = timeline[d].urgency;
+        if (u === 2) return 'rgba(248, 113, 113, 0.8)'; // Red
+        if (u === 1) return 'rgba(251, 191, 36, 0.8)'; // Amber
+        return 'rgba(96, 165, 250, 0.8)'; // Blue
+    });
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: sortedDates,
+            datasets: [{
+                label: 'Total Quantity Due',
+                data: data,
+                backgroundColor: colors,
+                borderColor: colors.map(c => c.replace('0.8', '1')),
+                borderWidth: 1,
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: (ctx) => `Due: ${ctx.raw} Items`
+                    }
+                }
+            },
+            scales: {
+                y: { beginAtZero: true, title: { display: true, text: 'Units' } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
 }

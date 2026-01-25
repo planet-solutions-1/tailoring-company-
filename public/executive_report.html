@@ -190,42 +190,59 @@
             </div>
         </div>
 
-        <!-- Section 3: Group Performance Matrix & Risk Heatmap -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8 report-section">
-
-            <!-- Group Rankings -->
-            <div class="glass-panel rounded-xl p-6 bg-white">
-                <h2 class="text-lg font-bold text-slate-800 mb-4 flex items-center">
-                    <i class="fa-solid fa-trophy text-amber-500 mr-2"></i> Performance Rankings
-                </h2>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full text-sm text-left text-slate-500">
-                        <thead class="text-xs text-slate-700 uppercase bg-slate-50">
-                            <tr>
-                                <th scope="col" class="px-4 py-3">Group</th>
-                                <th scope="col" class="px-4 py-3 text-right">Output</th>
-                                <th scope="col" class="px-4 py-3 text-right">Eff.</th>
-                                <th scope="col" class="px-4 py-3 text-center">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="rankings-table-body">
-                            <!-- Rows injected via JS -->
-                        </tbody>
-                    </table>
+        <!-- Section 2.5: Deadline Volume Forecast -->
+        <div class="glass-panel rounded-xl p-6 mb-8 report-section bg-white">
+            <h2 class="text-lg font-bold text-slate-800 mb-6 flex items-center">
+                <i class="fa-solid fa-hourglass-half text-amber-500 mr-2"></i> Upcoming Workload (Deadline Volume)
+            </h2>
+            <div class="relative h-72 w-full">
+                <canvas id="deadlineChart"></canvas>
+            </div>
+            <div class="mt-4 flex gap-4 text-xs text-slate-500 justify-center">
+                <div class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-red-400"></span> Overdue</div>
+                <div class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-amber-400"></span> Due Soon (<3d)<
+                        /div>
+                        <div class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-blue-400"></span> Future
+                        </div>
                 </div>
             </div>
 
-            <!-- Risk / Delays List -->
-            <div class="glass-panel rounded-xl p-6 bg-white">
-                <h2 class="text-lg font-bold text-slate-800 mb-4 flex items-center">
-                    <i class="fa-solid fa-fire text-red-500 mr-2"></i> Critical Bottlenecks
-                </h2>
-                <div class="space-y-3" id="risk-list">
-                    <!-- Risk items injected via JS -->
-                    <p class="text-sm text-slate-400 italic">No critical delays found.</p>
+            <!-- Section 3: Group Performance Matrix & Risk Heatmap -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8 report-section">
+
+                <!-- Group Rankings -->
+                <div class="glass-panel rounded-xl p-6 bg-white">
+                    <h2 class="text-lg font-bold text-slate-800 mb-4 flex items-center">
+                        <i class="fa-solid fa-trophy text-amber-500 mr-2"></i> Performance Rankings
+                    </h2>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full text-sm text-left text-slate-500">
+                            <thead class="text-xs text-slate-700 uppercase bg-slate-50">
+                                <tr>
+                                    <th scope="col" class="px-4 py-3">Group</th>
+                                    <th scope="col" class="px-4 py-3 text-right">Output</th>
+                                    <th scope="col" class="px-4 py-3 text-right">Eff.</th>
+                                    <th scope="col" class="px-4 py-3 text-center">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rankings-table-body">
+                                <!-- Rows injected via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Risk / Delays List -->
+                <div class="glass-panel rounded-xl p-6 bg-white">
+                    <h2 class="text-lg font-bold text-slate-800 mb-4 flex items-center">
+                        <i class="fa-solid fa-fire text-red-500 mr-2"></i> Critical Bottlenecks
+                    </h2>
+                    <div class="space-y-3" id="risk-list">
+                        <!-- Risk items injected via JS -->
+                        <p class="text-sm text-slate-400 italic">No critical delays found.</p>
+                    </div>
                 </div>
             </div>
-        </div>
 
     </main>
 
