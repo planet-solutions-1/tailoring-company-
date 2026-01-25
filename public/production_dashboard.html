@@ -338,7 +338,44 @@
             </div>
         </aside>
 
-        <section id="main-content" class="col-span-1 lg:col-span-9">
+        <section id="main-content" class="col-span-1 lg:col-span-9 animate-fade-in">
+
+            <!-- SCI-FI ANALYTICS VIEW (Relocated for Layout Fix) -->
+            <div id="view-analytics"
+                class="hidden w-full h-full min-h-[85vh] sci-fi-theme p-6 rounded-3xl relative z-10"
+                style="background: radial-gradient(circle at 50% 0%, #f1f5f9 0%, #e2e8f0 100%);">
+
+                <div class="flex justify-between items-end mb-8">
+                    <div>
+                        <h1 class="text-4xl font-black text-slate-800 uppercase tracking-widest">Analytics <span
+                                class="text-cyan-600">Pro</span></h1>
+                        <p class="font-mono text-xs text-slate-500 mt-1">SYSTEM_STATUS: <span
+                                class="text-green-500 font-bold">ONLINE</span></p>
+                    </div>
+                    <div class="flex gap-4">
+                        <div class="bg-white px-4 py-2 rounded-lg shadow-sm border border-slate-200">
+                            <span class="block text-[10px] text-slate-400 font-bold uppercase">Efficiency</span>
+                            <span class="text-xl font-black text-slate-800" id="ana-metric-1">--%</span>
+                        </div>
+                        <div class="bg-white px-4 py-2 rounded-lg shadow-sm border border-slate-200">
+                            <span class="block text-[10px] text-slate-400 font-bold uppercase">Volume</span>
+                            <span class="text-xl font-black text-slate-800" id="ana-metric-2">--</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Canvas Stage -->
+                <div class="relative w-full bg-slate-900 rounded-2xl overflow-hidden shadow-2xl border border-slate-700"
+                    style="height: 600px;">
+                    <canvas id="chart-main" class="w-full h-full block"></canvas>
+                    <div
+                        class="absolute bottom-0 left-0 w-full p-4 bg-gradient-to-t from-black/80 to-transparent pointer-events-none">
+                        <p class="font-mono text-xs text-cyan-400 opacity-70">RENDER_ENGINE: CANVAS_V2 //
+                            AI_NODE_LINKING_ACTIVE</p>
+                    </div>
+                </div>
+
+            </div>
 
             <!-- ACTIVE BATCHES GRID -->
             <div id="view-active" class="animate-fade-in">
@@ -479,46 +516,7 @@
                     </div>
                 </div>
                 <!-- SCI-FI ANALYTICS VIEW -->
-                <!-- SCI-FI ANALYTICS VIEW (FRESH REBUILD) -->
-                <div id="view-analytics" class="hidden sci-fi-theme p-6 rounded-3xl"
-                    style="background: radial-gradient(circle at 50% 0%, #f1f5f9 0%, #e2e8f0 100%); min-height: 80vh;">
-
-                    <div class="flex justify-between items-end mb-8">
-                        <div>
-                            <h1 class="text-4xl font-black text-slate-800 uppercase tracking-widest">Analytics <span
-                                    class="text-cyan-600">Pro</span></h1>
-                            <p class="font-mono text-xs text-slate-500 mt-1">SYSTEM_STATUS: <span
-                                    class="text-green-500 font-bold">ONLINE</span></p>
-                        </div>
-                        <div class="flex gap-4">
-                            <div class="bg-white px-4 py-2 rounded-lg shadow-sm border border-slate-200">
-                                <span class="block text-[10px] text-slate-400 font-bold uppercase">Efficiency</span>
-                                <span class="text-xl font-black text-slate-800" id="ana-metric-1">--%</span>
-                            </div>
-                            <div class="bg-white px-4 py-2 rounded-lg shadow-sm border border-slate-200">
-                                <span class="block text-[10px] text-slate-400 font-bold uppercase">Volume</span>
-                                <span class="text-xl font-black text-slate-800" id="ana-metric-2">--</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Main Canvas Stage -->
-                    <div class="relative w-full bg-slate-900 rounded-2xl overflow-hidden shadow-2xl border border-slate-700"
-                        style="height: 600px;">
-                        <canvas id="chart-main" class="w-full h-full block"></canvas>
-
-                        <!-- Overlay UI (Absolute) -->
-                        <div
-                            class="absolute bottom-0 left-0 w-full p-4 bg-gradient-to-t from-black/80 to-transparent pointer-events-none">
-                            <p class="font-mono text-xs text-cyan-400 opacity-70">RENDER_ENGINE: CANVAS_V2 //
-                                AI_NODE_LINKING_ACTIVE</p>
-                        </div>
-                    </div>
-
-                </div>
-                <!-- End view-analytics -->
-
-        </section>
+                <!-- End view-analytics (Moved to top) -->
     </main>
 
     <!-- EDIT BATCH MODAL -->
