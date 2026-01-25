@@ -151,13 +151,14 @@ router.get('/config-list', authenticateToken, async (req, res) => {
 // --- INVENTORY ROUTES ---
 router.get('/inventory', authenticateToken, async (req, res) => {
     try {
-        // Aggressive Self-Healing: Ensure table exists every time (Low overhead in SQLite)
+        // Aggressive Self-Healing: Ensure table exists every time
+        // Using MySQL Syntax: AUTO_INCREMENT instead of AUTOINCREMENT
         await query(`CREATE TABLE IF NOT EXISTS inventory_materials (
-            id INTEGER PRIMARY KEY AUTOINCREMENT, 
+            id INT AUTO_INCREMENT PRIMARY KEY, 
             name TEXT, 
-            stock INTEGER DEFAULT 0, 
+            stock INT DEFAULT 0, 
             unit TEXT DEFAULT 'Units', 
-            cost_per_unit REAL DEFAULT 0
+            cost_per_unit DECIMAL(10,2) DEFAULT 0
         )`);
 
         const rows = await query("SELECT * FROM inventory_materials ORDER BY name");
