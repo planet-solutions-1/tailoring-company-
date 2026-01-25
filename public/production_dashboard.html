@@ -1176,10 +1176,11 @@
 
                         if (daysLeft < 0) {
                             deadlineBadge = `<span class="text-[10px] font-bold text-red-600 bg-red-100 px-1.5 py-0.5 rounded flex items-center gap-1 animate-pulse"><i class="fa-solid fa-triangle-exclamation"></i> Overdue ${Math.abs(daysLeft)}d</span>`;
-                            cardBorder = 'border-l-4 border-red-600'; // Override styled border
+                            cardBorder = 'border-l-4 border-red-600 bg-red-50/30'; // Red Border + Tint
                         }
                         else if (daysLeft < 3) {
                             deadlineBadge = `<span class="text-[10px] font-bold text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded flex items-center gap-1"><i class="fa-regular fa-clock"></i> Due ${daysLeft}d</span>`;
+                            cardBorder = 'border-l-4 border-amber-500'; // Amber Border
                         }
                         else {
                             deadlineBadge = `<span class="text-[10px] font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded flex items-center gap-1"><i class="fa-regular fa-calendar"></i> ${d.getMonth() + 1}/${d.getDate()}</span>`;
