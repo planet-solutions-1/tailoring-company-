@@ -335,6 +335,15 @@
                     </svg> Executive Report <span
                         class="text-[10px] bg-cyan-100 text-cyan-700 px-1.5 rounded font-bold ml-auto tech-font">NEW</span>
                 </button>
+
+                <button onclick="window.location.href='inventory_dashboard.html'" target="_blank"
+                    class="tech-btn w-full p-3 text-left flex items-center gap-3 hover:bg-slate-100 transition-colors text-indigo-600">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                    </svg>
+                    Inventory Manager
+                </button>
             </div>
         </aside>
 
@@ -427,13 +436,22 @@
                                     Endorse
                                 </button>
 
-                                <button onclick="reportDelay()"
-                                    class="text-xs bg-red-50 hover:bg-red-100 text-red-600 px-3 py-1.5 rounded-lg flex items-center gap-1 transition font-bold border border-red-200 ml-2 admin-only">
+                                <button onclick="toggleDefectModal()"
+                                    class="text-xs bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-500/30 px-3 py-1.5 rounded-lg flex items-center gap-1 transition font-bold ml-2 admin-only ring-1 ring-white/20">
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                             d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                                     </svg>
-                                    Delay
+                                    Report Issue
+                                </button>
+
+                                <button onclick="reportDelay()"
+                                    class="text-xs bg-orange-50 hover:bg-orange-100 text-orange-600 px-3 py-1.5 rounded-lg flex items-center gap-1 transition font-bold border border-orange-200 ml-2 admin-only">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                    Log Delay
                                 </button>
 
                                 <button onclick="deleteBatch()"
@@ -852,13 +870,41 @@
                 const pct = t > 0 ? (c / t) * 100 : 0;
 
                 // Systematic Metrics
+                // Systematic Metrics
                 const dailyTarget = g.daily_target || 0;
-                const dailyProgressPct = dailyTarget > 0 ? (c / dailyTarget) * 100 : 0; // Simplified: Total vs Daily Target
+                const dailyProgressPct = dailyTarget > 0 ? (c / dailyTarget) * 100 : 0;
+
+                // --- AI PREDICTION LOGIC ---
+                // 1. Calculate Velocity (Items per day) based on history or elapsed time
+                // Use history length if available, else elapsed days since creation
+                let velocity = 0;
+                let daysActive = 1;
+                try {
+                    const createdDate = new Date(g.created_at);
+                    const now = new Date();
+                    const diffTime = Math.abs(now - createdDate);
+                    daysActive = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) || 1;
+                } catch (e) { }
+
+                velocity = (c > 0) ? (c / daysActive) : 0; // Avg items per day
+
+                // 2. Predict Completion
+                let predictedDate = null;
+                let isLate = false;
+                if (velocity > 0 && t > c) {
+                    const remaining = t - c;
+                    const daysLeft = Math.ceil(remaining / velocity);
+                    const d = new Date();
+                    d.setDate(d.getDate() + daysLeft);
+                    predictedDate = d;
+                }
 
                 g._pct = pct;
                 g._vol = t;
                 g._dailyPct = dailyProgressPct;
                 g._completedItems = c;
+                g._velocity = velocity;
+                g._predicted = predictedDate;
 
                 // Push to Leaderboard Candidate List (if active)
                 if (pct < 100) leaderboard.push(g);
@@ -1114,6 +1160,14 @@
                                         ${isDelayed ? '<span class="text-red-500 text-xs animate-pulse">⚠️ Alert</span>' : ''}
                                     </div>
                                     <h3 class="text-lg font-black text-slate-800 leading-tight">${g.group_name}</h3>
+                                    ${g._predicted ? `
+                                        <div class="mt-1 flex items-center gap-1.5">
+                                            <span class="text-[10px] font-bold ${g._predicted > new Date(new Date().setDate(new Date().getDate() + 7)) ? 'text-red-500 bg-red-50' : 'text-emerald-600 bg-emerald-50'} px-1.5 py-0.5 rounded border border-transparent flex items-center gap-1">
+                                                <i class="fa-solid fa-wand-magic-sparkles text-[8px]"></i> 
+                                                Est: ${g._predicted.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                            </span>
+                                        </div>
+                                    ` : ''}
                                 </div>
                                 <div class="text-right">
                                     <p class="text-[10px] font-bold ${statusClass} uppercase bg-slate-50 px-2 py-1 rounded inline-block">${statusText}</p>
@@ -1705,12 +1759,19 @@
                     }
 
                     hDiv.innerHTML = `
-                        <div class="flex justify-between items-center mb-4">
-                            <h3 class="font-bold text-slate-700 text-lg">Daily Production Log</h3>
-                            <button onclick="toggleLogForm()" class="text-xs text-blue-600 font-bold hover:underline">
-                                ${todayLog ? 'Edit Today\'s Log' : '+ Log Today'}
-                            </button>
-                        </div>
+                            <div class="flex justify-between items-start mb-4">
+                                <h3 class="font-bold text-lg text-slate-800 leading-tight">${g.group_name}</h3>
+                                <div class="flex flex-col items-end">
+                                    <span class="px-2 py-1 rounded bg-blue-50 text-blue-600 text-xs font-bold uppercase tracking-wide">
+                                        ${g.completed_items || 0} / ${g.quantity}
+                                    </span>
+                                    ${g._predicted ? `
+                                        <span class="mt-1 text-[10px] font-bold ${g._predicted > new Date(new Date().setDate(new Date().getDate() + 10)) ? 'text-red-500' : 'text-emerald-600'} flex items-center gap-1" title="Based on current daily velocity">
+                                            <i class="fa-solid fa-wand-magic-sparkles"></i> Est: ${g._predicted.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
+                                        </span>
+                                    ` : ''}
+                                </div>
+                            </div>
                                                 <!-- Log Form -->
                             <div id="daily-log-form" class="bg-blue-50/50 p-4 rounded-xl border border-blue-100 mb-6 transition-all duration-300 ${todayLog ? 'hidden' : ''}">
                                 <h5 class="text-sm font-bold text-blue-800 mb-3 flex items-center justify-between">
@@ -2912,6 +2973,84 @@
         }, 1000);
         */
         log("Debugger Initialized. Click button to inspect.");
+    </script>
+    <!-- DEFECT MODAL -->
+    <div id="defect-modal"
+        class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 animate-fade-in">
+        <div class="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl m-4">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-red-600 flex items-center gap-2">
+                    <i class="fa-solid fa-triangle-exclamation"></i> Report Defect
+                </h3>
+                <button onclick="toggleDefectModal()" class="text-slate-400 hover:text-slate-600">
+                    <i class="fa-solid fa-times text-xl"></i>
+                </button>
+            </div>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-1">Defect Type</label>
+                    <select id="defect-type"
+                        class="w-full clay-input p-3 bg-red-50/50 border-red-100 focus:border-red-300">
+                        <option value="Fabric Flaw">Fabric Flaw</option>
+                        <option value="Stitching Error">Stitching Error</option>
+                        <option value="Sizing Issue">Sizing Issue</option>
+                        <option value="Stain/Damage">Stain / Damage</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-1">Description</label>
+                    <textarea id="defect-desc" rows="3" class="w-full clay-input p-3"
+                        placeholder="Describe the issue..."></textarea>
+                </div>
+                <div class="bg-yellow-50 p-3 rounded-lg border border-yellow-100 text-xs text-yellow-700">
+                    <i class="fa-solid fa-info-circle mr-1"></i> Reporting a defect may deduct <strong>5 points</strong>
+                    from the group's efficiency score.
+                </div>
+                <button onclick="submitDefect()"
+                    class="w-full py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow-lg shadow-red-500/30 transition-all">
+                    Submit Report
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- DEFECT LOGIC ---
+        function toggleDefectModal() {
+            const el = document.getElementById('defect-modal');
+            el.classList.toggle('hidden');
+        }
+
+        async function submitDefect() {
+            if (!CURRENT_EDIT_ID) return;
+
+            const type = document.getElementById('defect-type').value;
+            const desc = document.getElementById('defect-desc').value;
+
+            try {
+                const token = sessionStorage.getItem('token');
+                const res = await fetch(`${API_BASE}/groups/${CURRENT_EDIT_ID}/defects`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ type, description: desc })
+                });
+
+                if (!res.ok) throw new Error("Failed to log defect");
+
+                toggleDefectModal();
+                alert("Defect logged. Efficiency score adjusted.");
+                renderDashboard(); // Refresh
+                openDetail(CURRENT_EDIT_ID); // Refresh Detail View
+
+            } catch (e) {
+                alert("Error: " + e.message);
+            }
+        }
+
+        // --- INVENTORY LOGIC (Placeholder) ---
+        // Will be implemented next
     </script>
 </body>
 

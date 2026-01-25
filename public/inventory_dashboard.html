@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+
+        .clay-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+            border-radius: 1rem;
+        }
+
+        .clay-input {
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            transition: all 0.2s;
+        }
+
+        .clay-input:focus {
+            background: #fff;
+            border-color: #6366f1;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        }
+    </style>
+</head>
+
+<body class="p-6">
+
+    <nav class="max-w-6xl mx-auto mb-8 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-white text-xl">
+                <i class="fa-solid fa-boxes-stacked"></i>
+            </div>
+            <h1 class="text-2xl font-bold text-slate-800">Inventory <span class="text-indigo-600">Pro</span></h1>
+        </div>
+        <a href="company_dashboard.html"
+            class="px-4 py-2 bg-white text-slate-600 font-bold rounded-lg shadow-sm hover:bg-slate-50 transition">
+            Back to Dashboard
+        </a>
+    </nav>
+
+    <main class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
+
+        <!-- Add Material Form -->
+        <div class="md:col-span-1">
+            <div class="clay-card p-6 sticky top-6">
+                <h2 class="text-lg font-bold text-slate-700 mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-plus-circle text-indigo-500"></i> Stock New Item
+                </h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-xs font-bold text-slate-400 uppercase">Material Name</label>
+                        <input type="text" id="mat-name" placeholder="e.g. Cotton Fabric"
+                            class="w-full clay-input p-3 mt-1">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-xs font-bold text-slate-400 uppercase">Stock Qty</label>
+                            <input type="number" id="mat-stock" placeholder="0" class="w-full clay-input p-3 mt-1">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-slate-400 uppercase">Unit</label>
+                            <select id="mat-unit" class="w-full clay-input p-3 mt-1">
+                                <option value="Meters">Meters</option>
+                                <option value="Units">Units</option>
+                                <option value="Kg">Kg</option>
+                                <option value="Rolls">Rolls</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-slate-400 uppercase">Cost Per Unit</label>
+                        <input type="number" id="mat-cost" placeholder="0.00" class="w-full clay-input p-3 mt-1">
+                    </div>
+                    <button onclick="addMaterial()"
+                        class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/30 transition-all mt-2">
+                        Update Inventory
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Inventory List -->
+        <div class="md:col-span-2">
+            <div class="clay-card p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-lg font-bold text-slate-700">Current Stock Levels</h2>
+                    <button onclick="loadInventory()" class="text-slate-400 hover:text-indigo-600 transition">
+                        <i class="fa-solid fa-rotate"></i>
+                    </button>
+                </div>
+
+                <div class="overflow-hidden rounded-xl border border-slate-100">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-slate-50 text-slate-500 font-bold uppercase text-xs">
+                            <tr>
+                                <th class="p-4">Item</th>
+                                <th class="p-4 text-center">Status</th>
+                                <th class="p-4 text-right">Available</th>
+                                <th class="p-4 text-right">Value</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inventory-list" class="divide-y divide-slate-100 bg-white">
+                            <!-- JS Injected -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <script>
+        const API_BASE = '/api/production'; // Fallback logic handled in fetch? No, assuming standard.
+
+        document.addEventListener('DOMContentLoaded', loadInventory);
+
+        async function loadInventory() {
+            const list = document.getElementById('inventory-list');
+            list.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-slate-400">Loading...</td></tr>';
+
+            try {
+                const token = sessionStorage.getItem('token');
+                if (!token) { window.location.href = 'index.html'; return; }
+
+                const res = await fetch('/api/production/inventory', { // Assuming route added
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                // If route not found (404), maybe user didn't restart server? 
+                if (res.status === 404) throw new Error("Inventory API not ready yet. Please restart server.");
+                if (!res.ok) throw new Error("Failed to load inventory");
+
+                const items = await res.json();
+                renderItems(items);
+            } catch (e) {
+                list.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-red-400 font-bold">${e.message}</td></tr>`;
+            }
+        }
+
+        function renderItems(items) {
+            const list = document.getElementById('inventory-list');
+            if (items.length === 0) {
+                list.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-slate-400 italic">Inventory is empty. Add your first item.</td></tr>';
+                return;
+            }
+
+            list.innerHTML = items.map(item => {
+                const lowStock = item.stock < 50; // Threshold
+                const statusHtml = lowStock
+                    ? `<span class="px-2 py-1 bg-red-100 text-red-600 rounded-full text-xs font-bold">Low Stock</span>`
+                    : `<span class="px-2 py-1 bg-green-100 text-green-600 rounded-full text-xs font-bold">Healthy</span>`;
+
+                return `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="p-4 font-bold text-slate-700">${item.name}</td>
+                        <td class="p-4 text-center">${statusHtml}</td>
+                        <td class="p-4 text-right font-mono text-slate-600">
+                            <strong>${item.stock}</strong> <span class="text-xs text-slate-400">${item.unit}</span>
+                        </td>
+                         <td class="p-4 text-right font-mono text-slate-400">
+                            $${(item.stock * (item.cost_per_unit || 0)).toLocaleString()}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        async function addMaterial() {
+            const name = document.getElementById('mat-name').value;
+            const stock = document.getElementById('mat-stock').value;
+            const unit = document.getElementById('mat-unit').value;
+            const cost = document.getElementById('mat-cost').value;
+
+            if (!name || !stock) return alert("Please fill details");
+
+            try {
+                const token = sessionStorage.getItem('token');
+                const res = await fetch('/api/production/inventory', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ name, stock, unit, cost })
+                });
+
+                if (!res.ok) throw new Error("Failed");
+                loadInventory();
+                document.getElementById('mat-name').value = '';
+                document.getElementById('mat-stock').value = '';
+            } catch (e) {
+                alert("Error saving: " + e.message);
+            }
+        }
+    </script>
+</body>
+
+</html>

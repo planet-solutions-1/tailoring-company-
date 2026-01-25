@@ -148,6 +148,48 @@ router.get('/config-list', authenticateToken, async (req, res) => {
 
 // === 2. GROUPS / BATCHES (THE PROBLEM AREA) ===
 
+// --- INVENTORY ROUTES ---
+router.get('/inventory', authenticateToken, async (req, res) => {
+    try {
+        const rows = await query("SELECT * FROM inventory_materials ORDER BY name");
+        res.json(rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+router.post('/inventory', authenticateToken, async (req, res) => {
+    try {
+        const { name, stock, unit, cost } = req.body;
+        // Check if exists
+        const existing = await query("SELECT id FROM inventory_materials WHERE name = ?", [name]);
+        if (existing.length > 0) {
+            // Update
+            await query("UPDATE inventory_materials SET stock = stock + ? WHERE id = ?", [parseInt(stock), existing[0].id]);
+        } else {
+            // Insert
+            await query("INSERT INTO inventory_materials (name, stock, unit, cost_per_unit) VALUES (?, ?, ?, ?)",
+                [name, parseInt(stock), unit || 'Meters', parseFloat(cost) || 0]);
+        }
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+router.post('/inventory/deduct', authenticateToken, async (req, res) => {
+    try {
+        const { deductions } = req.body; // Array of { id, qty }
+        for (const d of deductions) {
+            await query("UPDATE inventory_materials SET stock = MAX(0, stock - ?) WHERE id = ?", [d.qty, d.id]);
+        }
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// --- EXPORT ROUTES ---
 router.get('/groups', authenticateToken, async (req, res) => {
     try {
         // REFACTOR: Use a simplified query first to avoid JOIN bombs if tables are inconsistent
@@ -341,6 +383,37 @@ router.delete('/groups/:id', authenticateToken, async (req, res) => {
     }
 });
 
+router.post('/groups/:id/defects', authenticateToken, async (req, res) => {
+    try {
+        const { type, description } = req.body;
+        const id = req.params.id;
+
+        // Fetch current
+        const rows = await query("SELECT defects, points FROM production_groups WHERE id = ?", [id]);
+        if (!rows.length) return res.status(404).json({ error: "Batch not found" });
+
+        let defects = [];
+        try { defects = JSON.parse(rows[0].defects || '[]'); } catch (e) { }
+
+        const newDefect = {
+            type,
+            description,
+            date: new Date().toISOString()
+        };
+        defects.push(newDefect);
+
+        // Penalty? Maybe -5 points
+        const newPoints = Math.max(0, (rows[0].points || 0) - 5);
+
+        await query("UPDATE production_groups SET defects = ?, points = ? WHERE id = ?",
+            [JSON.stringify(defects), newPoints, id]);
+
+        res.json({ success: true, message: "Defect Logged" });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 router.post('/groups/:id/log-daily', authenticateToken, async (req, res) => {
     try {
         const { date, achieved, target, notes } = req.body;
@@ -357,7 +430,10 @@ router.post('/groups/:id/log-daily', authenticateToken, async (req, res) => {
                     "ALTER TABLE production_groups ADD COLUMN daily_history TEXT",
                     "ALTER TABLE production_groups ADD COLUMN last_reward_date DATE",
                     "ALTER TABLE production_groups ADD COLUMN points INT DEFAULT 0",
-                    "ALTER TABLE production_groups ADD COLUMN delay_reason TEXT"
+                    "ALTER TABLE production_groups ADD COLUMN delay_reason TEXT",
+                    // New Columns for QC & Inventory
+                    "ALTER TABLE production_groups ADD COLUMN defects TEXT DEFAULT '[]'",
+                    "CREATE TABLE IF NOT EXISTS inventory_materials (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, stock INTEGER, unit TEXT, cost_per_unit REAL)"
                 ];
                 for (const c of fixCols) { try { await query(c); } catch (ex) { } }
                 // Retry
