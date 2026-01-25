@@ -565,7 +565,7 @@
                 <div id="wiz-step-1" class="flex flex-col min-h-0">
 
                     <div
-                        class="mb-6 p-6 bg-white rounded-xl shadow-sm border border-gray-100 grid grid-cols-1 md:grid-cols-5 gap-6 items-end">
+                        class="mb-6 p-6 bg-white rounded-xl shadow-sm border border-gray-100 grid grid-cols-1 md:grid-cols-6 gap-6 items-end">
                         <div class="md:col-span-1">
                             <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Work Name <span
                                     class="text-blue-500 text-[9px]">v2.2</span></label>
@@ -581,6 +581,10 @@
                             <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Daily Target</label>
                             <input type="number" id="wiz-target" class="clay-input w-full p-2.5" min="1"
                                 placeholder="e.g. 500">
+                        </div>
+                        <div class="md:col-span-1">
+                            <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Deadline</label>
+                            <input type="date" id="wiz-deadline" class="clay-input w-full p-2.5">
                         </div>
                         <div class="md:col-span-1">
                             <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Tasks Count</label>
@@ -1477,6 +1481,7 @@
                 required_stages: finalStages,
                 details: 'Hierarchy Created',
                 daily_target: parseInt(document.getElementById('wiz-target').value) || 0,
+                deadline: document.getElementById('wiz-deadline').value,
                 status: (CURRENT_BATCH && CURRENT_BATCH.status) || 'Active'
             };
 
@@ -3130,6 +3135,7 @@
                     let actionAttr = '';
                     if (i.action === 'View Reports') actionAttr = `onclick="window.location.href='executive_report.html'"`;
                     else if (i.action === 'Order Materials') actionAttr = `onclick="window.location.href='inventory_dashboard.html'"`;
+                    else if (i.action === 'Auto-Adjust Target') actionAttr = `onclick="applyNewTarget('${i.data.id}', ${i.data.new_target})"`;
                     else actionAttr = `onclick="document.getElementById('ai-modal').classList.add('hidden')"`; // Dismiss
 
                     return `
@@ -3147,6 +3153,30 @@
 
             } catch (e) {
                 container.innerHTML = `<div class="p-4 bg-red-900/20 text-red-400 rounded-xl border border-red-900/50">Analysis Failed: ${e.message}</div>`;
+            }
+        }
+
+        async function applyNewTarget(id, target) {
+            if (!confirm(`🤖 AI Suggestion:\n\nIncrease Daily Target to ${target}/day to finish on time?\n\nThis will update the batch settings.`)) return;
+
+            try {
+                const token = sessionStorage.getItem('token');
+                const res = await fetch(`/api/production/groups/${id}/target`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ target })
+                });
+
+                if (res.ok) {
+                    alert("✅ Target Updated. Production plan aligned.");
+                    document.getElementById('ai-modal').classList.add('hidden');
+                    openAIInsights(); // Refresh analysis
+                } else {
+                    alert("Failed to update target.");
+                }
+            } catch (e) {
+                console.error(e);
+                alert("Error: " + e.message);
             }
         }
     </script>
