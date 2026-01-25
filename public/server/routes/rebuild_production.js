@@ -162,6 +162,14 @@ router.get('/inventory', authenticateToken, async (req, res) => {
             cost_per_unit DECIMAL(10,2) DEFAULT 0
         )`);
 
+        await query(`CREATE TABLE IF NOT EXISTS production_recipes (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            dress_type VARCHAR(100),
+            material_id INT,
+            quantity_per_unit DECIMAL(10,3),
+            FOREIGN KEY(material_id) REFERENCES inventory_materials(id)
+        )`);
+
         const rows = await query("SELECT * FROM inventory_materials ORDER BY name");
         res.json(rows);
     } catch (err) {
@@ -267,38 +275,72 @@ router.get('/groups', authenticateToken, async (req, res) => {
     }
 });
 
+// --- RECIPE ROUTES ---
+router.get('/recipes', authenticateToken, async (req, res) => {
+    try {
+        const rows = await query(`
+            SELECT r.*, i.name as material_name, i.unit 
+            FROM production_recipes r 
+            JOIN inventory_materials i ON r.material_id = i.id 
+            ORDER BY r.dress_type
+        `);
+        res.json(rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+router.post('/recipes', authenticateToken, async (req, res) => {
+    try {
+        const { dress_type, material_id, qty } = req.body;
+        // Check if exists
+        const existing = await query("SELECT id FROM production_recipes WHERE dress_type = ? AND material_id = ?", [dress_type, material_id]);
+
+        if (existing.length > 0) {
+            await query("UPDATE production_recipes SET quantity_per_unit = ? WHERE id = ?", [parseFloat(qty), existing[0].id]);
+        } else {
+            await query("INSERT INTO production_recipes (dress_type, material_id, quantity_per_unit) VALUES (?, ?, ?)",
+                [dress_type, material_id, parseFloat(qty)]);
+        }
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// === CREATE NEW BATCH (With Auto-Inventory Deduction) ===
 router.post('/groups', authenticateToken, async (req, res) => {
     try {
-        const { group_name, dress_type, required_stages, daily_target, quantity, notes } = req.body;
+        const { group_name, dress_type, quantity, daily_target, notes, required_stages } = req.body;
 
-        if (!group_name) return res.status(400).json({ error: "Name required" });
+        if (!group_name || !quantity) return res.status(400).json({ error: "Missing Name or Quantity" });
 
-        const stagesJson = JSON.stringify(required_stages || []);
-        const safeTarget = parseInt(daily_target) || 0;
-        const safeQty = parseInt(quantity) || 0;
-
-        // INSERT
-        // Note: If columns are missing in DB, this INSERT will fail.
-        // We wrap in try-catch and specific column checks? No, `init.js` should have fixed it.
-        // We'll trust the migration, but catch the error.
-
+        // 1. Create Batch
         const result = await query(
-            `INSERT INTO production_groups 
-            (group_name, dress_type, status, required_stages, daily_target, quantity, notes) 
-            VALUES (?, ?, 'Active', ?, ?, ?, ?)`,
-            [group_name, dress_type, stagesJson, safeTarget, safeQty, notes || '']
+            "INSERT INTO production_groups (group_name, dress_type, quantity, daily_target, notes, required_stages, status) VALUES (?, ?, ?, ?, ?, ?, 'Active')",
+            [group_name, dress_type || 'Unspecified', parseInt(quantity) || 0, parseInt(daily_target) || 0, notes || '', JSON.stringify(required_stages || [])]
         );
 
-        const newId = result.insertId || result.id; // MySQL vs SQLite
+        // 2. AUTO-DEDUCT INVENTORY
+        if (dress_type && parseInt(quantity) > 0) {
+            console.log(`Auto-Deducting for ${dress_type} x ${quantity}`);
+            const recipes = await query("SELECT material_id, quantity_per_unit FROM production_recipes WHERE dress_type = ?", [dress_type]);
 
-        // Init Progress
-        await query("INSERT INTO production_progress (group_id, current_stage, completed_stages) VALUES (?, ?, ?)",
-            [newId, 0, '{}']);
+            for (const r of recipes) {
+                const totalNeeded = r.quantity_per_unit * parseInt(quantity);
+                await query("UPDATE inventory_materials SET stock = MAX(0, stock - ?) WHERE id = ?", [totalNeeded, r.material_id]);
+            }
+        }
+
+        // Init Progress (Legacy/Required?) - Check if original had it. 
+        // Original line 303: INSERT INTO production_progress ...
+        // Yes, verify logic. I'll include it for safety.
+        const newId = result.insertId;
+        await query("INSERT INTO production_progress (group_id, current_stage, completed_stages) VALUES (?, ?, ?)", [newId, 0, '{}']);
 
         res.json({ success: true, id: newId, message: "Work Created" });
-
     } catch (err) {
-        safeLog("Create Group Error", err);
+        safeLog("Create Batch Error", err);
         res.status(500).json({ error: "Create Failed: " + err.message });
     }
 });
