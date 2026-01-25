@@ -524,6 +524,10 @@
                     <select id="edit-type" class="clay-input w-full p-2.5"></select>
                 </div>
                 <div>
+                    <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Deadline</label>
+                    <input type="date" id="edit-deadline" class="clay-input w-full p-2.5">
+                </div>
+                <div>
                     <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Status</label>
                     <select id="edit-status" class="clay-input w-full p-2.5">
                         <option value="Active">Active</option>
@@ -2230,6 +2234,18 @@
             document.getElementById('wiz-type').value = CURRENT_BATCH.dress_type;
             const tVal = CURRENT_BATCH.daily_target;
             document.getElementById('wiz-target').value = (tVal !== undefined && tVal !== null) ? tVal : 0;
+
+            // Hydrate New Fields
+            document.getElementById('wiz-quantity').value = CURRENT_BATCH.quantity || 0;
+            const dVal = CURRENT_BATCH.deadline;
+            if (dVal) {
+                // Format YYYY-MM-DD
+                try {
+                    document.getElementById('wiz-deadline').value = new Date(dVal).toISOString().split('T')[0];
+                } catch (e) { }
+            } else {
+                document.getElementById('wiz-deadline').value = '';
+            }
 
             // 6. Re-construct WIZARD_DATA from required_stages
             WIZARD_DATA = { groups: [], tasks: [] };

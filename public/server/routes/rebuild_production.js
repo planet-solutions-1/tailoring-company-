@@ -510,6 +510,12 @@ router.post('/groups/:id/edit', authenticateToken, async (req, res) => {
         if (status) { updates.push("status = ?"); params.push(status); }
         if (daily_target !== undefined) { updates.push("daily_target = ?"); params.push(daily_target); }
         if (quantity !== undefined) { updates.push("quantity = ?"); params.push(quantity); }
+        if (req.body.deadline !== undefined) {
+            // Handle empty string as NULL to clear deadline
+            const d = req.body.deadline;
+            updates.push("deadline = ?");
+            params.push(d ? d : null);
+        }
 
         // Fix: Update Stages if provided
         if (req.body.required_stages) {
