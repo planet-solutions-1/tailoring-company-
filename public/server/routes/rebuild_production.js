@@ -278,11 +278,29 @@ router.get('/groups', authenticateToken, async (req, res) => {
 // --- HELPER CONFIG ROUTES ---
 router.get('/dresstypes', authenticateToken, async (req, res) => {
     try {
+        // 1. From Active Batches
         const rows = await query("SELECT DISTINCT dress_type FROM production_groups WHERE dress_type IS NOT NULL AND dress_type != '' ORDER BY dress_type");
-        const types = rows.map(r => r.dress_type);
-        // Ensure defaults exist if DB is empty
+        const activeTypes = rows.map(r => r.dress_type);
+
+        // 2. From System Config (Global Settings)
+        let configTypes = [];
+        try {
+            const sysRows = await query("SELECT address FROM schools WHERE username = 'system_config'");
+            if (sysRows.length > 0 && sysRows[0].address) {
+                const raw = JSON.parse(sysRows[0].address);
+                let items = [];
+                if (raw.data && Array.isArray(raw.data)) items = raw.data;
+                else if (raw.items && Array.isArray(raw.items)) items = raw.items;
+                else if (Array.isArray(raw)) items = raw;
+                configTypes = items.map(i => i.name).filter(x => x);
+            }
+        } catch (e) { }
+
+        // 3. Defaults
         const defaults = ["Shirt", "Pant", "T-Shirt", "Skirt", "Shorts", "Jacket"];
-        const combined = Array.from(new Set([...defaults, ...types])).sort();
+
+        // Merge & Sort
+        const combined = Array.from(new Set([...defaults, ...activeTypes, ...configTypes])).sort();
         res.json(combined);
     } catch (err) {
         res.status(500).json({ error: err.message });
