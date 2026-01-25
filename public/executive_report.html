@@ -206,6 +206,38 @@
             </div>
         </div>
 
+        <!-- Section 2.8: QC Defect Analysis -->
+        <div class="glass-panel rounded-xl p-6 mb-8 report-section bg-white">
+            <h2 class="text-lg font-bold text-slate-800 mb-6 flex items-center">
+                <i class="fa-solid fa-microscope text-rose-500 mr-2"></i> Quality Control Center
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Doughnut Chart -->
+                <div>
+                    <canvas id="defectChart" height="200"></canvas>
+                </div>
+                <!-- Stats & List -->
+                <div class="md:col-span-2 space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="p-4 bg-slate-50 rounded-lg border border-slate-100">
+                            <h4 class="text-xs font-bold text-slate-500 uppercase">Total Defects Logged</h4>
+                            <p class="text-2xl font-bold text-slate-900" id="qc-total">0</p>
+                        </div>
+                        <div class="p-4 bg-slate-50 rounded-lg border border-slate-100">
+                            <h4 class="text-xs font-bold text-slate-500 uppercase">Affected Batches</h4>
+                            <p class="text-2xl font-bold text-rose-600" id="qc-affected">0</p>
+                        </div>
+                    </div>
+                    <div class="bg-slate-50 rounded-lg p-4 border border-slate-100 h-40 overflow-y-auto">
+                        <h4 class="text-xs font-bold text-slate-400 uppercase mb-2">Recent Issues</h4>
+                        <div id="qc-list" class="space-y-2 text-sm">
+                            <p class="text-slate-400 italic">No defects reported recently.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Section 3: Group Performance Matrix & Risk Heatmap -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8 report-section">
 

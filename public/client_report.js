@@ -15,6 +15,7 @@ async function initReport() {
         renderVelocity(groups);
 
         renderDeadlineVolume(groups);
+        renderDefects(groups);
         renderRankings(groups);
         renderRisks(groups);
 
@@ -413,6 +414,100 @@ function renderDeadlineVolume(groups) {
             scales: {
                 y: { beginAtZero: true, title: { display: true, text: 'Units' } },
                 x: { grid: { display: false } }
+            }
+        }
+    });
+}
+
+/**
+ * Section 2.8: QC Defect Analysis
+ */
+function renderDefects(groups) {
+    const ctx = document.getElementById('defectChart').getContext('2d');
+
+    let totalDefects = 0;
+    let affectedBatches = 0;
+    const typeCount = {};
+    const recentList = [];
+
+    groups.forEach(g => {
+        let defects = [];
+        try {
+            if (typeof g.defects === 'string') defects = JSON.parse(g.defects);
+            else if (Array.isArray(g.defects)) defects = g.defects;
+        } catch (e) { }
+
+        if (defects.length > 0) {
+            affectedBatches++;
+            defects.forEach(d => {
+                totalDefects++;
+                const t = d.type || 'Unspecified';
+                typeCount[t] = (typeCount[t] || 0) + 1;
+                recentList.push({
+                    group: g.group_name,
+                    type: t,
+                    desc: d.description || '',
+                    date: d.date || ''
+                });
+            });
+        }
+    });
+
+    // Update Stats
+    document.getElementById('qc-total').textContent = totalDefects;
+    document.getElementById('qc-affected').textContent = affectedBatches;
+
+    // Update List
+    const listEl = document.getElementById('qc-list');
+    if (recentList.length > 0) {
+        // Sort by date desc
+        recentList.sort((a, b) => new Date(b.date) - new Date(a.date));
+        listEl.innerHTML = recentList.slice(0, 10).map(item => `
+            <div class="flex justify-between items-start border-b border-slate-100 pb-2">
+                <div>
+                    <span class="font-bold text-slate-700">${item.type}</span>
+                    <span class="text-xs text-slate-400">in ${item.group}</span>
+                    <p class="text-xs text-slate-500">${item.desc}</p>
+                </div>
+                <div class="text-[10px] text-slate-400 font-mono">${item.date.split('T')[0]}</div>
+            </div>
+        `).join('');
+    }
+
+    // Chart
+    const types = Object.keys(typeCount);
+    const data = Object.values(typeCount);
+
+    if (types.length === 0) {
+        // Empty State
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: { labels: ['No Defects'], datasets: [{ data: [1], backgroundColor: ['#f1f5f9'] }] },
+            options: { plugins: { title: { display: true, text: 'No defects recorded' }, tooltip: { enabled: false } } }
+        });
+        return;
+    }
+
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: types,
+            datasets: [{
+                data: data,
+                backgroundColor: [
+                    '#f43f5e', // Rose
+                    '#fbbf24', // Amber
+                    '#3b82f6', // Blue
+                    '#8b5cf6', // Violet
+                    '#10b981'  // Emerald
+                ],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { position: 'right', labels: { boxWidth: 10, font: { size: 10 } } }
             }
         }
     });
