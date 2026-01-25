@@ -503,6 +503,33 @@
                         </div>
                     </div>
 
+                    <!-- AI PROCESS FLOW MAP -->
+                    <div class="sci-fi-card p-0 overflow-hidden mb-8 relative">
+                        <div class="absolute top-0 left-0 w-full p-6 z-10 pointer-events-none">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h3 class="text-xl font-black text-slate-700 sci-fi-font uppercase tracking-widest">
+                                        Production Neural Network</h3>
+                                    <p class="text-xs font-mono text-cyan-600">LIVE WORKFLOW TELEMETRY</p>
+                                </div>
+                                <div
+                                    class="bg-white/80 backdrop-blur px-3 py-1 rounded border border-cyan-100 shadow-sm">
+                                    <span class="text-[10px] font-bold text-cyan-500 animate-pulse">● AI
+                                        OPTIMIZING</span>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Canvas for Node Graph -->
+                        <div class="h-64 md:h-80 bg-slate-50 relative">
+                            <canvas id="chart-process-flow" class="w-full h-full block"></canvas>
+
+                            <!-- Overlay Stats (HTML for accessibility/crispness) -->
+                            <div class="absolute inset-0 pointer-events-none flex items-center justify-around px-10">
+                                <!-- Nodes will be drawn by Canvas, labels here for semantic structure if needed, or purely canvas -->
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
                         <!-- Line Chart: Production Velocity -->
                         <div class="sci-fi-card p-6 h-80 flex flex-col">
@@ -529,6 +556,25 @@
                         </div>
                     </div>
 
+                    <!-- AI INSIGHTS TERMINAL -->
+                    <div class="sci-fi-card p-6 mb-8 bg-slate-900 text-cyan-400 border-cyan-500/30">
+                        <div class="flex items-center gap-3 mb-4 border-b border-cyan-800/50 pb-2">
+                            <svg class="w-5 h-5 animate-spin-slow" fill="none" stroke="currentColor"
+                                viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                            </svg>
+                            <h3 class="font-mono text-sm tracking-widest uppercase">CORTEX_AI // PREDICTIVE_ANALYSIS
+                            </h3>
+                        </div>
+                        <div class="font-mono text-sm space-y-2 opacity-90" id="ai-insights-log">
+                            <p>> Analyzing workflow efficiency...</p>
+                            <p>> <span class="text-white">Detected:</span> 98% Efficiency rating. Systems nominal.</p>
+                            <p>> <span class="text-yellow-400">Recommendation:</span> Increase batch size for 'Shirt'
+                                production line to optimize stitching throughput.</p>
+                        </div>
+                    </div>
+
                     <!-- Secondary Stats Grid -->
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div class="sci-fi-card p-4 flex items-center gap-4">
@@ -540,7 +586,8 @@
                                 </svg>
                             </div>
                             <div>
-                                <div class="text-2xl font-black sci-fi-font text-slate-800" id="ana-active-batches">0
+                                <div class="text-2xl font-black sci-fi-font text-slate-800" id="ana-active-batches">
+                                    0
                                 </div>
                                 <div class="text-[10px] uppercase font-bold text-cyan-600">Active Batches</div>
                             </div>
@@ -555,7 +602,8 @@
                                 </svg>
                             </div>
                             <div>
-                                <div class="text-2xl font-black sci-fi-font text-slate-800" id="ana-total-items">0</div>
+                                <div class="text-2xl font-black sci-fi-font text-slate-800" id="ana-total-items">0
+                                </div>
                                 <div class="text-[10px] uppercase font-bold text-blue-600">Items Processing</div>
                             </div>
                         </div>
@@ -568,7 +616,8 @@
                                 </svg>
                             </div>
                             <div>
-                                <div class="text-2xl font-black sci-fi-font text-slate-800" id="ana-avg-time">--</div>
+                                <div class="text-2xl font-black sci-fi-font text-slate-800" id="ana-avg-time">--
+                                </div>
                                 <div class="text-[10px] uppercase font-bold text-purple-600">Avg Cycle Time</div>
                             </div>
                         </div>
@@ -2633,12 +2682,119 @@
             const loadPct = Math.min(100, Math.round((activeBatches / 50) * 100));
             document.getElementById('ana-load').textContent = `${loadPct}%`;
 
+            // AI INSIGHTS (Dynamic)
+            const aiLog = document.getElementById('ai-insights-log');
+            if (aiLog) {
+                let suggestion = "Maintain current velocity.";
+                let color = "text-green-400";
+
+                if (globalEfficiency < 60) {
+                    suggestion = "Bottleneck detected. Increase resource allocation.";
+                    color = "text-red-400";
+                } else if (globalEfficiency < 85) {
+                    suggestion = "Optimize batch sizing for improved throughput.";
+                    color = "text-yellow-400";
+                }
+
+                aiLog.innerHTML = `
+                    <p>> Analyzing workflow efficiency...</p>
+                    <p>> <span class="text-white">Detected:</span> ${globalEfficiency}% Efficiency rating.</p>
+                    <p>> <span class="${color}">Recommendation:</span> ${suggestion}</p>
+                `;
+            }
+
             // 2. Render Custom Charts
             drawVelocityChart([12, 45, 67, 40, 88, 30, 55, 20]);
-            drawRadarChart([90, 75, 85, 95, 80]); // Quality, Speed, Volume, Eff, Uptime
+            drawRadarChart([90, 75, 85, 95, 80]);
+            drawProcessFlow(); // New AI Visual
         }
 
         // --- CUSTOM CANVAS DRAWING (Robust) ---
+
+        function drawProcessFlow() {
+            const canvas = document.getElementById('chart-process-flow');
+            if (!canvas) return;
+
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            const ctx = canvas.getContext('2d');
+            ctx.scale(dpr, dpr);
+
+            const w = rect.width;
+            const h = rect.height;
+            const cyan = '#06b6d4';
+
+            // Clear
+            ctx.clearRect(0, 0, w, h);
+
+            // Nodes Config
+            const stages = ["Materials", "Cutting", "Stitching", "Finishing", "Warehouse"];
+            const nodes = stages.map((s, i) => ({
+                label: s,
+                x: (w / (stages.length + 0.5)) * (i + 0.75),
+                y: h / 2,
+                active: Math.floor(Math.random() * 5) + 1 // Mock Data for visual demo
+            }));
+
+            // Draw Connections (Neural Lines)
+            ctx.lineWidth = 2;
+            nodes.forEach((node, i) => {
+                if (i < nodes.length - 1) {
+                    const next = nodes[i + 1];
+                    const grad = ctx.createLinearGradient(node.x, node.y, next.x, next.y);
+                    grad.addColorStop(0, cyan);
+                    grad.addColorStop(1, 'rgba(6, 182, 212, 0.2)');
+
+                    ctx.beginPath();
+                    ctx.strokeStyle = grad;
+                    ctx.moveTo(node.x, node.y);
+                    // Bezier Curve for "Flow" feel
+                    ctx.bezierCurveTo(node.x + 50, node.y, next.x - 50, next.y, next.x, next.y);
+                    ctx.stroke();
+
+                    // Animated Packet (Static Snapshot)
+                    const midX = (node.x + next.x) / 2;
+                    ctx.beginPath();
+                    ctx.fillStyle = "#fff";
+                    ctx.shadowColor = cyan;
+                    ctx.shadowBlur = 10;
+                    ctx.arc(midX, node.y, 4, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                }
+            });
+
+            // Draw Nodes
+            nodes.forEach(node => {
+                // Outer Glow
+                ctx.beginPath();
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+                ctx.shadowColor = cyan;
+                ctx.shadowBlur = 15;
+                ctx.arc(node.x, node.y, 8, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+
+                // Inner Core
+                ctx.beginPath();
+                ctx.fillStyle = cyan;
+                ctx.arc(node.x, node.y, 4, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Label
+                ctx.fillStyle = '#475569';
+                ctx.font = 'bold 10px Inter';
+                ctx.textAlign = 'center';
+                ctx.fillText(node.label, node.x, node.y + 25);
+
+                // Count Badge
+                ctx.fillStyle = cyan;
+                ctx.font = 'bold 9px Inter';
+                ctx.fillText(`${node.active} Active`, node.x, node.y - 20);
+            });
+        }
 
         function drawVelocityChart(dataPoints) {
             const canvas = document.getElementById('chart-velocity');
