@@ -3119,7 +3119,10 @@
                     body: JSON.stringify({ type, description: desc })
                 });
 
-                if (!res.ok) throw new Error("Failed to log defect");
+                if (!res.ok) {
+                    const errData = await res.json();
+                    throw new Error(errData.error || "Failed to log defect");
+                }
 
                 toggleDefectModal();
                 alert("Defect logged. Efficiency score adjusted.");

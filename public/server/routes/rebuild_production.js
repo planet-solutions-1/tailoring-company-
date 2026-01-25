@@ -589,47 +589,70 @@ router.delete('/groups/:id', authenticateToken, async (req, res) => {
     }
 });
 
+// === ROBUST DEFECT HANDLER ===
 router.post('/groups/:id/defects', authenticateToken, async (req, res) => {
     try {
         const { type, description } = req.body;
         const id = req.params.id;
 
-        // Fetch current with Self-Healing
+        // HELPER: Schema Repair
+        const ensureSchema = async () => {
+            console.log(`[Defects] Checked Schema for Group ${id}`);
+            const fixes = [
+                "ALTER TABLE production_groups ADD COLUMN defects TEXT DEFAULT '[]'",
+                "ALTER TABLE production_groups ADD COLUMN points INT DEFAULT 0"
+            ];
+            for (const sql of fixes) {
+                try { await query(sql); } catch (e) { /* Ignore exists error */ }
+            }
+        };
+
+        // 1. Fetch Request
         let rows;
         try {
             rows = await query("SELECT defects, points FROM production_groups WHERE id = ?", [id]);
-        } catch (e) {
-            if (e.message && (e.message.includes("no such column") || e.message.includes("Unknown column"))) {
-                console.log("Self-Healing: Adding defects column...");
-                try { await query("ALTER TABLE production_groups ADD COLUMN defects TEXT DEFAULT '[]'"); } catch (ex) { }
-                try { await query("ALTER TABLE production_groups ADD COLUMN points INT DEFAULT 0"); } catch (ex) { }
-                rows = await query("SELECT defects, points FROM production_groups WHERE id = ?", [id]);
-            } else {
-                throw e;
-            }
+        } catch (fetchErr) {
+            console.warn("[Defects] Fetch failed, attempting repair...", fetchErr.message);
+            await ensureSchema();
+            // Retry Fetch
+            rows = await query("SELECT defects, points FROM production_groups WHERE id = ?", [id]);
         }
 
-        if (!rows.length) return res.status(404).json({ error: "Batch not found" });
+        if (!rows || rows.length === 0) return res.status(404).json({ error: "Batch not found" });
 
+        // 2. Parse & Update
+        const group = Array.isArray(rows) ? rows[0] : rows;
         let defects = [];
-        try { defects = JSON.parse(rows[0].defects || '[]'); } catch (e) { }
+        try {
+            defects = group.defects ? JSON.parse(group.defects) : [];
+        } catch (e) { defects = []; } // Reset if corrupt
 
         const newDefect = {
-            type,
-            description,
+            type: type || 'Unspecified',
+            description: description || '',
             date: new Date().toISOString()
         };
         defects.push(newDefect);
 
-        // Penalty? Maybe -5 points
-        const newPoints = Math.max(0, (rows[0].points || 0) - 5);
+        const currentPoints = parseInt(group.points) || 0;
+        const newPoints = Math.max(0, currentPoints - 5);
 
-        await query("UPDATE production_groups SET defects = ?, points = ? WHERE id = ?",
-            [JSON.stringify(defects), newPoints, id]);
+        // 3. Save
+        try {
+            await query("UPDATE production_groups SET defects = ?, points = ? WHERE id = ?",
+                [JSON.stringify(defects), newPoints, id]);
+        } catch (saveErr) {
+            // Last ditch repair if Update failed (e.g. column added but type mismatch? Unlikely but safe)
+            await ensureSchema();
+            await query("UPDATE production_groups SET defects = ?, points = ? WHERE id = ?",
+                [JSON.stringify(defects), newPoints, id]);
+        }
 
-        res.json({ success: true, message: "Defect Logged" });
+        res.json({ success: true, message: "Defect Logged", points: newPoints });
+
     } catch (err) {
-        res.status(500).json({ error: err.message });
+        console.error("[Defects] CRITICAL ERROR:", err);
+        res.status(500).json({ error: "Server Error: " + err.message });
     }
 });
 
