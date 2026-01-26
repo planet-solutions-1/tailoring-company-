@@ -1749,53 +1749,19 @@
                                     ` : ''}
                                 </div>
                             </div>
-                                                <!-- Log Form -->
-                            <div id="daily-log-form" class="bg-blue-50/50 p-4 rounded-xl border border-blue-100 mb-6 transition-all duration-300 ${todayLog ? 'hidden' : ''}">
-                                <h5 class="text-sm font-bold text-blue-800 mb-3 flex items-center justify-between">
-                                    <span>Log Output for ${todayStr}</span>
-                                    <button onclick="toggleLogForm()" class="text-xs text-blue-400 hover:text-blue-600">Cancel</button>
-                                </h5>
-                                
-                                <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
-                                    <div>
-                                        <label class="text-xs font-bold text-slate-400">Start Time</label>
-                                        <input type="time" id="log-start" value="${todayLog ? todayLog.start_time : ''}" 
-                                            class="clay-input w-full p-2 text-sm">
-                                    </div>
-                                    <div>
-                                        <label class="text-xs font-bold text-slate-400">Target End Time</label>
-                                        <input type="time" id="log-target-end" value="${todayLog ? todayLog.target_end : ''}" 
-                                            class="clay-input w-full p-2 text-sm">
-                                    </div>
-                                    <div>
-                                        <label class="text-xs font-bold text-slate-400 mb-1 block">Completed At</label>
-                                        <div class="relative">
-                                            <input type="time" id="log-actual-end" value="${todayLog ? todayLog.actual_end : ''}" 
-                                                oninput="calculateLogEfficiency()"
-                                                class="clay-input w-full p-2 text-sm font-bold text-blue-800">
-                                            <div id="live-efficiency" class="absolute right-0 -top-6 text-[10px] font-bold text-slate-400 bg-slate-100 px-2 rounded hidden">
-                                                --
-                                            </div>
-                                        </div>
-                                    </div>
+                            
+                            <!-- Workflow Tip -->
+                            <div class="mb-6 p-3 bg-indigo-50 border border-indigo-100 rounded-lg flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600">
+                                    <i class="fa-solid fa-bolt"></i>
                                 </div>
-
-                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
-                                    <div>
-                                        <label class="text-xs font-bold text-slate-400">Achieved Qty</label>
-                                        <input type="number" id="log-achieved" value="${todayLog ? todayLog.achieved : suggestedValue}" 
-                                            class="clay-input w-full p-2" placeholder="0">
-                                    </div>
-                                    <div class="col-span-2">
-                                        <label class="text-xs font-bold text-slate-400">Notes / Shortfall Reason</label>
-                                        <input type="text" id="log-notes" value="${todayLog ? todayLog.notes : ''}" 
-                                            class="clay-input w-full p-2" placeholder="Optional if target met...">
-                                    </div>
+                                <div>
+                                    <p class="text-xs font-bold text-indigo-900">Auto-Sync Active</p>
+                                    <p class="text-[10px] text-indigo-600">Update the final stage below to automatically log daily output.</p>
                                 </div>
-                                <button onclick="submitDailyLog('${g.id}', '${todayStr}')" class="clay-btn clay-btn-primary w-full py-2">
-                                    Save Log
-                                </button>
                             </div>
+
+                            <!-- History List -->
 
                             <!-- History List -->
                             <div class="space-y-2 max-h-40 overflow-y-auto pr-2">
