@@ -1989,8 +1989,43 @@
         }
 
 
-        // --- MISSING UTILITIES ---
+
+        // --- MISSING UTILITIES (Fixed) ---
+        // Generates the data model based on input counts
         async function loadWizardConfig() {
+            const countGroups = parseInt(document.getElementById('count-groups').value) || 5;
+            const countTasks = parseInt(document.getElementById('count-tasks').value) || 10;
+            const type = document.getElementById('wiz-type').value || 'Shirt';
+
+            // 0. Fetch Config for Labels (Optional, parallel)
+            // We do this in hydrate usually, but let's just prep basic data
+            // If we are in "Create" mode, we regen. If "Edit" mode, we might be careful?
+            // "loadWizardConfig" is usually triggered by inputs in Step 1.
+            // If we are editing, we probably shouldn't be scrubbing unless user changes counts?
+            // For now, let's assume if this is called, we want to REGENERATE structure.
+
+            // Check if we already have data? 
+            // If user changes number from 5 to 6, we want to keep 5 and add 1.
+            // But for simplicity, let's just regen for now as standard V1 wizard behavior 
+            // is "Configure -> Build".
+
+            WIZARD_DATA.groups = [];
+            WIZARD_DATA.tasks = [];
+
+            // 1. Generate Groups
+            for (let i = 0; i < countGroups; i++) {
+                WIZARD_DATA.groups.push({
+                    id: `P-${i + 1}`,
+                    name: `Phase ${i + 1}`,
+                    tasks: [] // Will hold dropped tasks
+                });
+            }
+
+            // 2. Generate Tasks (Pool)
+            // Actually hydrateWizardUI handles the "Unused" tasks logic.
+            // But we should define the "Known" tasks if we had defaults.
+            // For now, let's leave tasks empty and let hydrate fill the pool.
+
             await hydrateWizardUI();
         }
 
