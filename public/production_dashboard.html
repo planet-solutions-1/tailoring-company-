@@ -1547,12 +1547,15 @@
 
                 const historyContainer = document.getElementById('detail-history-section');
                 if (!historyContainer) {
-                    // Inject container once if missing (helper to inject before detailed table)
-                    const tableContainer = document.getElementById('detail-table').parentElement.parentElement; // The .clay-card around table
-                    const newSection = document.createElement('div');
-                    newSection.id = 'detail-history-section';
-                    newSection.className = "mb-6 clay-card p-6 bg-slate-50 border-slate-100 hidden";
-                    tableContainer.before(newSection);
+                    // Inject container once if missing
+                    const tbl = document.getElementById('detail-table');
+                    if (tbl && tbl.parentElement && tbl.parentElement.parentElement) {
+                        const tableCard = tbl.parentElement.parentElement;
+                        const newSection = document.createElement('div');
+                        newSection.id = 'detail-history-section';
+                        newSection.className = "mb-6 clay-card p-6 bg-slate-50 border-slate-100 hidden";
+                        tableCard.before(newSection);
+                    }
                 }
 
                 // Render History UI
@@ -2755,6 +2758,7 @@
 
         function log(msg, type = 'info') {
             const d = document.getElementById('debug-log');
+            if (!d) return; // Fail silently if debug panel removed
             const color = type === 'error' ? 'text-red-500 bg-red-900/20' : 'text-green-400';
             const time = new Date().toLocaleTimeString();
             d.innerHTML += `<div class="${color}">[${time}] ${msg}</div>`;
