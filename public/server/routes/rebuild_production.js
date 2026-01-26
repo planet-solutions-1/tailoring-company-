@@ -517,10 +517,15 @@ router.post('/groups/:id/edit', authenticateToken, async (req, res) => {
             params.push(d ? d : null);
         }
 
-        // Fix: Update Stages if provided
         if (req.body.required_stages) {
             updates.push("required_stages = ?");
             params.push(JSON.stringify(req.body.required_stages));
+        }
+
+        // Fix: Update Completed Stages (Critical for Progress Tracking)
+        if (req.body.completed_stages) {
+            updates.push("completed_stages = ?");
+            params.push(JSON.stringify(req.body.completed_stages));
         }
 
         updates.push("updated_at = CURRENT_TIMESTAMP");
