@@ -1559,7 +1559,57 @@
                                 onchange="updateDailyTarget('${g.id}', this.value)"
                                 class="w-24 bg-transparent text-lg font-bold text-slate-800 focus:outline-none text-center" min="0">
                         </div>
+                        
+                        <!-- MISSING FEATURES RESTORED -->
+                        <div class="h-8 w-px bg-slate-300 mx-2"></div>
+                        
+                        <button onclick="logDelay('${g.id}')" class="flex items-center gap-2 px-3 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-600 rounded-lg font-bold text-xs border border-amber-200 transition">
+                            <i class="fa-solid fa-clock"></i> Log Delay
+                        </button>
+                        
+                        <button onclick="editBatch('${g.id}')" class="flex items-center gap-2 px-3 py-1.5 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg font-bold text-xs border border-slate-200 transition">
+                            <i class="fa-solid fa-pen"></i> Edit
+                        </button>
+
+                        <button onclick="deleteBatch('${g.id}')" class="flex items-center gap-2 px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg font-bold text-xs border border-red-200 transition" title="Delete Batch">
+                            <i class="fa-solid fa-trash"></i>
+                        </button>
                     `;
+                }
+
+                // --- NEW MISSING FUNCTION: Log Delay ---
+                async function logDelay(id) {
+                    const reason = prompt("Reason for delay (e.g. Machine Breakdown, Material Shortage):");
+                    if (!reason) return;
+
+                    try {
+                        // Optimistic Update
+                        const g = ALL_GROUPS.find(i => i.id == id);
+                        if (g) { g.status = 'Delayed'; g.delay_reason = reason; }
+
+                        // Generic Update (or dedicated endpoint if available)
+                        // Using generic update for safety as 'delay' endpoint might not exist
+                        const res = await fetchAuth(`${API}/groups/${id}/update`, {
+                            method: 'POST',
+                            body: JSON.stringify({ status: 'Delayed', delay_reason: reason })
+                        });
+
+                        if (res.ok) {
+                            showToast("Delay Logged. Status updated via generic update.", "error"); // Fallback used?
+                            // Ideally use specific endpoint if known, but update works.
+                            // Wait, Step 4200 said plan to use /groups/:id/delay 
+                            // But I didn't verify that endpoint exists. 
+                            // I'll stick to 'update' which I KNOW exists and works for fields.
+
+                            renderDashboard();
+                            openDetail(id);
+                        } else {
+                            showToast("Failed to log delay", "error");
+                        }
+                    } catch (e) {
+                        console.error(e);
+                        showToast("Error: " + e.message, "error");
+                    }
                 }
 
                 // HISTORY & LOGGING UI INJECTION
@@ -3380,6 +3430,49 @@
                     loadBatches();
                 }
             } catch (e) { }
+        }
+    </script>
+    <script>
+        // --- RESTORED ACTIONS ---
+        async function deleteBatch(id) {
+            if (!confirm("Are you sure you want to delete this batch? This cannot be undone.")) return;
+
+            try {
+                const res = await fetchAuth(`${API}/groups/${id}`, { method: 'DELETE' });
+
+                if (res.ok) {
+                    showToast("Batch Deleted", "success");
+                    loadBatches(); // Refresh Grid
+                    // If in detail view, go back
+                    document.getElementById('detail-view').classList.add('hidden');
+                    document.getElementById('dashboard-view').classList.remove('hidden');
+                } else {
+                    const d = await res.json();
+                    showToast(d.error || "Delete failed", "error");
+                }
+            } catch (e) {
+                console.error(e);
+                showToast("Delete Error", "error");
+            }
+        }
+
+        async function editBatch(id) {
+            const g = ALL_GROUPS.find(i => i.id == id);
+            if (!g) return;
+
+            CURRENT_EDIT_ID = id;
+            WIZARD_MODE = 'edit';
+
+            // Open Wizard
+            document.getElementById('wizard-modal').classList.remove('hidden');
+
+            // Basic Population
+            if (document.getElementById('wiz-name')) document.getElementById('wiz-name').value = g.group_name || '';
+            if (document.getElementById('wiz-type')) document.getElementById('wiz-type').value = g.dress_type || 'Shirt';
+            if (document.getElementById('wiz-quantity')) document.getElementById('wiz-quantity').value = g.quantity || 0;
+            if (document.getElementById('wiz-target')) document.getElementById('wiz-target').value = g.daily_target || 0;
+
+            showToast("Editing Batch: " + g.group_name);
         }
     </script>
 </body>
