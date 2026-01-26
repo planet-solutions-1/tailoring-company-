@@ -120,7 +120,56 @@
                     </table>
                 </div>
             </div>
+
+            <!-- ANALYTICS SECTION -->
+            <div class="grid grid-cols-2 gap-6 mt-6">
+                <div class="clay-card p-6">
+                    <h3 class="font-bold text-slate-700 mb-4">Stock Distribution</h3>
+                    <div class="h-64 relative">
+                        <canvas id="stockChart"></canvas>
+                    </div>
+                </div>
+                <div class="clay-card p-6 flex flex-col justify-center items-center text-center">
+                    <div
+                        class="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mb-4 text-2xl shadow-lg">
+                        <i class="fa-solid fa-sack-dollar"></i>
+                    </div>
+                    <p class="text-xs font-bold text-slate-400 uppercase tracking-widest">Total Inventory Value</p>
+                    <h3 class="text-3xl font-black text-slate-800 mt-2" id="total-val">₹0.00</h3>
+                    <p class="text-xs text-slate-400 mt-2">Based on current stock cost</p>
+                </div>
+            </div>
         </div>
+
+        <!-- TOAST CONTAINER -->
+        <div id="toast-container" class="fixed top-4 right-4 z-[9999] space-y-3 pointer-events-none"></div>
+
+        <!-- Chart JS -->
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <style>
+            /* Toast Styles */
+            .toast-enter {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+
+            .toast-enter-active {
+                transform: translateX(0);
+                opacity: 1;
+                transition: all 0.5s cubic-bezier(0.18, 0.89, 0.32, 1.28);
+            }
+
+            .toast-leave {
+                transform: translateX(0);
+                opacity: 1;
+            }
+
+            .toast-leave-active {
+                transform: translateX(100%);
+                opacity: 0;
+                transition: all 0.5s ease;
+            }
+        </style>
 
         <!-- Recipe Manager -->
         <div class="md:col-span-3 mt-8">
@@ -308,13 +357,190 @@
             }
         }
 
+        // --- PREMIUM NOTIFICATIONS ---
+        function showToast(msg, type = 'success') {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+
+            const el = document.createElement('div');
+            const isErr = type === 'error';
+
+            el.className = `
+                flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg 
+                ${isErr ? 'bg-red-500/90 text-white' : 'bg-slate-900/90 text-white'}
+                backdrop-blur-md transform transition-all duration-500 text-sm font-medium
+                pointer-events-auto border-l-4 ${isErr ? 'border-white' : 'border-indigo-400'}
+                toast-enter
+             `;
+
+            el.innerHTML = `
+                <div class="${isErr ? 'bg-red-400/20' : 'bg-indigo-500/20'} p-1 rounded-full">
+                    <i class="fa-solid ${isErr ? 'fa-triangle-exclamation' : 'fa-check'}"></i>
+                </div>
+                <span>${msg}</span>
+             `;
+
+            container.appendChild(el);
+            // Trigger anim
+            requestAnimationFrame(() => el.classList.remove('toast-enter'));
+            setTimeout(() => el.classList.add('toast-enter-active'), 10);
+
+            setTimeout(() => {
+                el.classList.add('toast-leave-active');
+                setTimeout(() => el.remove(), 500);
+            }, 3000);
+        }
+
+        async function loadInventory() {
+            const list = document.getElementById('inventory-list');
+            list.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-slate-400">Loading...</td></tr>';
+
+            try {
+                const token = sessionStorage.getItem('token');
+                if (!token) { window.location.href = 'index.html'; return; }
+
+                const res = await fetch('/api/production/inventory', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.error || "Failed to load inventory");
+                }
+
+                const items = await res.json();
+                renderItems(items);
+                renderAnalytics(items); // NEW: Update Chart
+            } catch (e) {
+                list.innerHTML = `<tr><td colspan="4" class="p-4 text-center text-red-400 font-bold">${e.message}</td></tr>`;
+                showToast(e.message, 'error');
+            }
+        }
+
+        let ctx = null;
+        let chartInstance = null;
+
+        function renderAnalytics(items) {
+            const totalVal = items.reduce((acc, i) => acc + (i.stock * (i.cost_per_unit || 0)), 0);
+            document.getElementById('total-val').textContent = "₹" + totalVal.toLocaleString();
+
+            // Chart Data
+            // Group Low stock vs Healthy? Or just top items by value?
+            // Let's do Top 5 Items by Stock Volume
+            const sorted = [...items].sort((a, b) => b.stock - a.stock).slice(0, 5);
+            const labels = sorted.map(i => i.name);
+            const data = sorted.map(i => i.stock);
+
+            const canvas = document.getElementById('stockChart');
+            if (!canvas) return;
+
+            if (chartInstance) chartInstance.destroy();
+
+            chartInstance = new Chart(canvas, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: ['#6366f1', '#8b5cf6', '#ec4899', '#f43f5e', '#10b981'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'right', labels: { usePointStyle: true, boxWidth: 6 } }
+                    },
+                    cutout: '70%'
+                }
+            });
+        }
+
+        function renderItems(items) {
+            const list = document.getElementById('inventory-list');
+            const dropdown = document.getElementById('recipe-material');
+
+            // Populate Dropdown
+            if (dropdown) {
+                dropdown.innerHTML = '<option value="">Select Material...</option>' +
+                    items.map(i => `<option value="${i.id}">${i.name} (${i.unit})</option>`).join('');
+            }
+
+            if (items.length === 0) {
+                list.innerHTML = '<tr><td colspan="4" class="p-8 text-center text-slate-400 italic">Inventory is empty. Add your first item.</td></tr>';
+                return;
+            }
+
+            list.innerHTML = items.map(item => {
+                const lowStock = item.stock < 50;
+                const statusHtml = lowStock
+                    ? `<span class="px-2 py-1 bg-red-100 text-red-600 rounded-full text-xs font-bold">Low Stock</span>`
+                    : `<span class="px-2 py-1 bg-green-100 text-green-600 rounded-full text-xs font-bold">Healthy</span>`;
+
+                return `
+                    <tr class="hover:bg-slate-50 transition">
+                        <td class="p-4 font-bold text-slate-700">${item.name}</td>
+                        <td class="p-4 text-center">${statusHtml}</td>
+                        <td class="p-4 text-right font-mono text-slate-600">
+                            <strong>${item.stock}</strong> <span class="text-xs text-slate-400">${item.unit}</span>
+                        </td>
+                         <td class="p-4 text-right font-mono text-slate-400">
+                            ₹${(item.stock * (item.cost_per_unit || 0)).toLocaleString()}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        async function loadRecipes() {
+            const list = document.getElementById('recipe-list');
+            try {
+                const token = sessionStorage.getItem('token');
+                const res = await fetch('/api/production/recipes', { headers: { 'Authorization': `Bearer ${token}` } });
+                if (!res.ok) return;
+                const recipes = await res.json();
+
+                list.innerHTML = recipes.map(r => `
+                    <tr>
+                        <td class="p-3 font-bold text-slate-700">${r.dress_type}</td>
+                        <td class="p-3 text-slate-600">${r.material_name}</td>
+                        <td class="p-3 text-right font-mono">${r.quantity_per_unit} <span class="text-xs text-slate-400">${r.unit}</span></td>
+                    </tr>
+                `).join('');
+            } catch (e) { console.error(e); }
+        }
+
+        async function saveRecipe() {
+            const dress_type = document.getElementById('recipe-dress').value;
+            const material_id = document.getElementById('recipe-material').value;
+            const qty = document.getElementById('recipe-qty').value;
+
+            if (!dress_type || !material_id || !qty) return showToast("Please fill all fields", "error");
+
+            try {
+                const token = sessionStorage.getItem('token');
+                const res = await fetch('/api/production/recipes', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ dress_type, material_id, qty })
+                });
+
+                if (!res.ok) throw new Error("Failed to save recipe");
+                loadRecipes();
+                showToast("Recipe Saved!");
+            } catch (e) {
+                showToast(e.message, 'error');
+            }
+        }
+
         async function addMaterial() {
             const name = document.getElementById('mat-name').value;
             const stock = document.getElementById('mat-stock').value;
             const unit = document.getElementById('mat-unit').value;
             const cost = document.getElementById('mat-cost').value;
 
-            if (!name || !stock) return alert("Please fill details");
+            if (!name || !stock) return showToast("Please fill details", "error");
 
             try {
                 const token = sessionStorage.getItem('token');
@@ -329,10 +555,11 @@
                     throw new Error(err.error || "Failed to save");
                 }
                 loadInventory();
+                showToast("Inventory Updated!");
                 document.getElementById('mat-name').value = '';
                 document.getElementById('mat-stock').value = '';
             } catch (e) {
-                alert("Error saving: " + e.message);
+                showToast("Error saving: " + e.message, 'error');
             }
         }
     </script>

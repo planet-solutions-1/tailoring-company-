@@ -889,4 +889,104 @@ router.post('/admin/fix-schema-force', async (req, res) => {
     }
 });
 
+// === INVENTORY & RECIPES SUBSYSTEM ===
+
+const ensureInventoryTables = async () => {
+    const tableInventory = `
+    CREATE TABLE IF NOT EXISTS inventory (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        stock REAL DEFAULT 0,
+        unit TEXT DEFAULT 'Units',
+        cost_per_unit REAL DEFAULT 0,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`;
+
+    const tableRecipes = `
+    CREATE TABLE IF NOT EXISTS production_recipes (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        dress_type TEXT NOT NULL,
+        material_id INTEGER,
+        quantity_per_unit REAL DEFAULT 1,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )`;
+
+    try {
+        await query(tableInventory);
+        await query(tableRecipes);
+        // await query("INSERT INTO inventory (name, stock, unit) VALUES ('Cotton Fabric', 500, 'Meters')"); // Seed?
+    } catch (e) { safeLog("Inventory Schema Error", e); }
+};
+// Run once
+ensureInventoryTables();
+
+
+// 1. INVENTORY ENDPOINTS
+router.get('/inventory', authenticateToken, async (req, res) => {
+    try {
+        const rows = await query("SELECT * FROM inventory ORDER BY name ASC");
+        res.json(rows);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+router.post('/inventory', authenticateToken, async (req, res) => {
+    try {
+        const { name, stock, unit, cost } = req.body;
+        if (!name) return res.status(400).json({ error: "Name required" });
+
+        // Update if exists or Insert
+        // Unique Constraint? Let's check name manually
+        const existing = await query("SELECT id FROM inventory WHERE name = ?", [name]);
+        if (existing.length > 0) {
+            await query("UPDATE inventory SET stock = ?, unit = ?, cost_per_unit = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+                [stock, unit, cost, existing[0].id]);
+        } else {
+            await query("INSERT INTO inventory (name, stock, unit, cost_per_unit) VALUES (?, ?, ?, ?)",
+                [name, stock, unit, cost]);
+        }
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// 2. RECIPES ENDPOINTS
+router.get('/recipes', authenticateToken, async (req, res) => {
+    try {
+        // Join with inventory name
+        const sql = `
+            SELECT r.*, i.name as material_name, i.unit 
+            FROM production_recipes r 
+            LEFT JOIN inventory i ON r.material_id = i.id
+        `;
+        const rows = await query(sql);
+        res.json(rows);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+router.post('/recipes', authenticateToken, async (req, res) => {
+    try {
+        const { dress_type, material_id, qty } = req.body;
+        await query("INSERT INTO production_recipes (dress_type, material_id, quantity_per_unit) VALUES (?, ?, ?)",
+            [dress_type, material_id, qty]);
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// 3. HELPERS
+router.get('/dresstypes', authenticateToken, async (req, res) => {
+    try {
+        // Fetch unique dress types from config + groups
+        const configRows = await query("SELECT DISTINCT dress_type FROM production_config");
+        const groupRows = await query("SELECT DISTINCT dress_type FROM production_groups");
+
+        const types = new Set([
+            ...configRows.map(r => r.dress_type),
+            ...groupRows.map(r => r.dress_type),
+            'Shirt', 'Pant', 'Suit' // Defaults
+        ].filter(x => x));
+
+        res.json([...types]);
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+
 module.exports = router;
