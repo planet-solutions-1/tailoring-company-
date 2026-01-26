@@ -3021,7 +3021,7 @@
 
 
     <!-- TOAST CONTAINER -->
-    <div id="toast-container" class="fixed top-4 right-4 z-[200] space-y-3 pointer-events-none"></div>
+    <div id="toast-container" class="fixed top-4 right-4 z-[9999] space-y-3 pointer-events-none"></div>
 
     <script>
         // --- PREMIUM NOTIFICATIONS ---
@@ -3212,12 +3212,12 @@
                 }
 
                 toggleDefectModal();
-                alert("Defect logged. Efficiency score adjusted.");
+                showToast("Defect logged. Efficiency score adjusted.", "error"); // Use Toast
                 renderDashboard(); // Refresh
                 openDetail(id); // Refresh Detail View
 
             } catch (e) {
-                alert("Error: " + e.message);
+                showToast("Error: " + e.message, "error");
             }
         }
 
