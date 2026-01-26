@@ -407,13 +407,22 @@
         </div>
 
         <!-- BATCH DETAIL VIEW -->
-        <div id="view-detail" class="hidden">
-            <button onclick="switchTab('active')"
-                class="mb-4 text-blue-500 hover:underline flex items-center gap-1 font-medium"><svg class="w-4 h-4"
-                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-                </svg> Back</button>
+        <div id="view-detail" class="hidden animate-fade-in">
+            <div class="flex items-center justify-between mb-6">
+                <button onclick="switchTab('active')"
+                    class="group flex items-center gap-2 px-4 py-2 bg-white/60 hover:bg-white text-slate-600 font-bold rounded-xl shadow-sm hover:shadow-md transition-all">
+                    <div
+                        class="w-6 h-6 rounded-full bg-slate-200 group-hover:bg-indigo-100 text-slate-500 group-hover:text-indigo-600 flex items-center justify-center transition">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                        </svg>
+                    </div>
+                    <span>Back to Dashboard</span>
+                </button>
+                <div class="h-1 w-24 bg-gradient-to-r from-transparent via-indigo-200 to-transparent rounded-full">
+                </div>
+            </div>
 
             <div class="clay-card p-8 mb-6 bg-gradient-to-br from-white to-blue-50 border-blue-100">
                 <div class="flex justify-between items-start">
