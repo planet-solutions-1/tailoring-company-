@@ -315,7 +315,7 @@
         </header>
 
         <!-- DASHBOARD STATS RIBBON -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div id="global-stats-ribbon" class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
             <div class="modern-card p-5 flex items-center gap-4 bg-gradient-to-br from-white to-indigo-50/50">
                 <div
                     class="w-12 h-12 rounded-2xl bg-indigo-500 text-white flex items-center justify-center shadow-lg shadow-indigo-500/30">
@@ -839,6 +839,13 @@
                 sidebar.classList.add('lg:block');
             }
             if (main) main.classList.add('lg:ml-64');
+
+            // TOGGLE GLOBAL STATS: Hide on Detail View
+            const globalStats = document.getElementById('global-stats-ribbon');
+            if (globalStats) {
+                if (id === 'detail') globalStats.classList.add('hidden');
+                else globalStats.classList.remove('hidden');
+            }
 
             if (id === 'active') loadBatches();
         }
