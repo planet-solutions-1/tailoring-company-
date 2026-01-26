@@ -773,41 +773,56 @@
             if (target) {
                 target.classList.remove('hidden');
                 target.style.display = 'block'; // FORCE SHOW
-                console.log("Shown target:", target.id);
-            } else {
-                console.error("Target view not found:", `view-${id}`);
             }
 
             // 3. Highlight Sidebar Button
-            ['active', 'config', 'analytics'].forEach(t => {
-                const btn = document.getElementById(`nav-${t}`);
-                if (btn) {
-                    if (t === id) {
-                        btn.classList.add('tech-btn-primary', 'shadow-md');
-                        btn.classList.remove('text-slate-500', 'hover:bg-slate-50');
-                    } else {
-                        btn.classList.remove('tech-btn-primary', 'shadow-md');
-                        btn.classList.add('text-slate-500', 'hover:bg-slate-50');
-                    }
+            // Using querySelector to find buttons inside the new Nav structure
+            document.querySelectorAll('.active-nav-link').forEach(btn => {
+                btn.classList.remove('bg-indigo-600', 'text-white', 'shadow-md', 'active-nav-link');
+                btn.classList.add('text-slate-600', 'hover:bg-white/40');
+                // Reset icon colors
+                const iconBox = btn.querySelector('div');
+                if (iconBox) {
+                    iconBox.classList.remove('bg-indigo-600', 'text-white');
+                    iconBox.classList.add('bg-slate-100', 'text-slate-500');
                 }
             });
 
-            // 4. Trigger Logic
-            if (id === 'analytics') {
-                setTimeout(() => renderAnalytics(), 50); // Small delay to ensure render after layout
+            let activeBtnId = '';
+            if (id === 'active') activeBtnId = 'nav-active';
+            if (id === 'analytics') activeBtnId = 'nav-analytics';
+
+            if (activeBtnId) {
+                const btn = document.getElementById(activeBtnId);
+                if (btn) {
+                    btn.classList.add('bg-indigo-600', 'text-white', 'shadow-md', 'active-nav-link');
+                    btn.classList.remove('text-slate-600', 'hover:bg-white/40');
+                    const iconBox = btn.querySelector('div');
+                    if (iconBox) {
+                        iconBox.classList.remove('bg-slate-100', 'text-slate-500');
+                        iconBox.classList.add('bg-indigo-600', 'text-white'); // Keep icon white on active
+                    }
+                }
             }
 
-            // Sidebar Toggle Logic (for Detail view)
-            const sidebar = document.getElementById('sidebar-panel');
-            const main = document.getElementById('main-content');
+
+            // 4. Trigger Logic
+            if (id === 'analytics') {
+                setTimeout(() => renderAnalytics(), 50);
+            }
+
+            // Sidebar Toggle Logic (Corrected for Fixed Sidebar)
+            const sidebar = document.querySelector('aside');
+            const main = document.querySelector('main');
+
             if (id === 'detail') {
-                sidebar.classList.add('hidden');
-                main.classList.remove('lg:col-span-9');
-                main.classList.add('lg:col-span-12');
+                if (sidebar) sidebar.classList.add('hidden'); // Hide Sidebar
+                if (main) main.classList.remove('lg:ml-64');   // Full Width
             } else {
-                sidebar.classList.remove('hidden');
-                main.classList.add('lg:col-span-9');
-                main.classList.remove('lg:col-span-12');
+                if (sidebar) sidebar.classList.remove('hidden'); // Show Sidebar
+                if (sidebar) sidebar.classList.add('lg:block'); // Ensure generic block class checks out
+                if (main) main.classList.add('lg:ml-64');      // Indent
+
                 // Clear URL
                 const url = new URL(window.location);
                 url.searchParams.delete('batch');
@@ -1309,8 +1324,12 @@
                 window.history.pushState({}, '', url);
 
                 // Populate Header
-                document.getElementById('detail-name').textContent = g.group_name;
-                document.getElementById('detail-type').textContent = g.dress_type;
+                const dName = document.getElementById('detail-name');
+                const dType = document.getElementById('detail-type');
+                const dNotes = document.getElementById('detail-notes');
+
+                if (dName) dName.textContent = g.group_name;
+                if (dType) dType.textContent = g.dress_type;
                 const notes = g.details || g.notes || 'No details specified.';
 
                 // Deadline & Qty Formatter
@@ -1328,7 +1347,7 @@
                     deadlineDisplay = `<span class="ml-2 text-xs font-bold px-2 py-1 rounded-md ${color}">📅 Due: ${d.toISOString().split('T')[0]} (${daysLeft}d)</span>`;
                 }
 
-                document.getElementById('detail-notes').innerHTML = `
+                if (dNotes) dNotes.innerHTML = `
                     <span class="font-bold text-slate-700 mr-2 bg-slate-200 px-2 py-0.5 rounded text-xs">${qtyDisplay}</span>
                     ${deadlineDisplay}
                     <span class="text-slate-400 ml-2 border-l pl-2">${notes}</span>
@@ -1350,13 +1369,18 @@
                     }
                 }
 
+                switchTab('detail');
+
                 // Calc Percent
                 const pct = Math.round(g._pct || 0);
-                document.getElementById('detail-percent').textContent = pct + "%";
-                document.getElementById('detail-bar').style.width = pct + "%";
+                const dPercent = document.getElementById('detail-percent');
+                if (dPercent) dPercent.textContent = pct + "%";
+                // bar?
 
                 // Render Stages
                 const tbody = document.getElementById('detail-table');
+                if (!tbody) return console.warn("Detail table not found");
+
                 tbody.innerHTML = '';
 
                 // MANUAL MODE CHECK
