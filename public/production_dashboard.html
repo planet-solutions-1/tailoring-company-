@@ -816,18 +816,20 @@
             const main = document.querySelector('main');
 
             if (id === 'detail') {
-                if (sidebar) sidebar.classList.add('hidden'); // Hide Sidebar
-                if (main) main.classList.remove('lg:ml-64');   // Full Width
+                // Detail View: Keep Sidebar, Keep Margin (Don't change layout)
             } else {
-                if (sidebar) sidebar.classList.remove('hidden'); // Show Sidebar
-                if (sidebar) sidebar.classList.add('lg:block'); // Ensure generic block class checks out
-                if (main) main.classList.add('lg:ml-64');      // Indent
-
-                // Clear URL
+                // Clear URL if not detail
                 const url = new URL(window.location);
                 url.searchParams.delete('batch');
                 window.history.pushState({}, '', url);
             }
+
+            // Always enforce layout (Fixes overlap issue)
+            if (sidebar) {
+                sidebar.classList.remove('hidden');
+                sidebar.classList.add('lg:block');
+            }
+            if (main) main.classList.add('lg:ml-64');
 
             if (id === 'active') loadBatches();
         }
