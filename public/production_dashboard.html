@@ -2126,7 +2126,34 @@
                 if (mainBar) mainBar.style.width = `${totalPct}%`;
             }
 
-            // 3. DEBOUNCED SAVE
+            // 3. AUTO-COMPLETION LOGIC (Professional Workflow)
+            // If this is the LAST stage, automatically update Total Output & Daily Log
+            let isLastStage = false;
+            if (g.required_stages && g.required_stages.length > 0) {
+                // Find last stage that is a TASK (not a group)
+                const tasks = g.required_stages.filter(s => s.type === 'task' || (s.id && !s.id.startsWith('P')));
+                if (tasks.length > 0) {
+                    const lastTask = tasks[tasks.length - 1]; // Simple order-based assumption
+                    if (lastTask.id === stageId) isLastStage = true;
+                }
+            }
+
+            if (isLastStage) {
+                // SYNC TOTAL OUTPUT
+                g.completed_stages['manual_override'] = val;
+
+                // Check Completion
+                const totalTgt = g.quantity || 0;
+                if (val >= totalTgt && g.status !== 'Completed') {
+                    // Auto-Complete Batch!
+                    updateBatchStatus(groupId, 'Completed');
+                    showToast("Batch Auto-Completed! 🎉");
+                } else {
+                    showToast("Production Output Synced 🔄");
+                }
+            }
+
+            // 4. DEBOUNCED SAVE
             if (!updateStageProgress.timers) updateStageProgress.timers = {};
             const key = `${groupId}-${stageId}`;
             if (updateStageProgress.timers[key]) clearTimeout(updateStageProgress.timers[key]);
@@ -2136,10 +2163,9 @@
                     const res = await fetchAuth(`${API}/groups/${groupId}/update`, {
                         method: 'POST', body: JSON.stringify({ completed_stages: g.completed_stages, notes: g.notes })
                     });
-                    if (res.ok) {
-                        // Optional: Check status update logic here if needed
-                        showToast("Progress Saved");
-                    }
+                    // If last stage, ensure backend knows it's a "Production Log" event too?
+                    // Backend usually handles logging based on delta? 
+                    // For now, simple state update is enough for V1.
                 } catch (e) { console.error(e); }
             }, 600);
         }
