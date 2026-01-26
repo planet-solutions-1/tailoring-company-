@@ -295,11 +295,21 @@
                     </svg>
                 </div>
                 <input type="text" id="search-input" onkeyup="filterBatches()"
-                    class="block w-full pl-10 pr-3 py-3 rounded-xl bg-white/60 border-none backdrop-blur shadow-sm focus:ring-2 focus:ring-indigo-500 transition-all placeholder-slate-400 font-medium"
+                    class="block w-full pl-10 pr-10 py-3 rounded-xl bg-white/60 border-none backdrop-blur shadow-sm focus:ring-2 focus:ring-indigo-500 transition-all placeholder-slate-400 font-medium"
                     placeholder="Search production batches...">
+                <button onclick="clearSearch()" id="btn-clear-search"
+                    class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 hidden">
+                    <i class="fa-solid fa-times-circle"></i>
+                </button>
+            </div>
             </div>
 
             <div class="flex items-center gap-4 w-full md:w-auto">
+                <button onclick="loadBatches(true)"
+                    class="p-2.5 bg-slate-100 text-slate-500 hover:text-indigo-600 rounded-xl hover:bg-white transition-all shadow-sm"
+                    title="Refresh Data">
+                    <i class="fa-solid fa-rotate"></i>
+                </button>
                 <button onclick="openAIInsights()"
                     class="hidden md:flex items-center gap-2 px-4 py-2.5 bg-white/60 text-indigo-700 text-sm font-bold rounded-xl shadow-sm hover:bg-white hover:text-indigo-600 hover:shadow-md transition-all">
                     <i class="fa-solid fa-wand-magic-sparkles"></i> Insights
@@ -363,13 +373,15 @@
             <div class="flex items-center justify-between">
                 <h2 class="text-xl font-bold text-slate-700">Recent Production</h2>
                 <div class="flex bg-white/40 p-1 rounded-xl backdrop-blur border border-white/50">
-                    <button
-                        class="px-4 py-1.5 rounded-lg text-xs font-bold text-white bg-indigo-600 shadow-sm transition">All</button>
-                    <button
-                        class="px-4 py-1.5 rounded-lg text-xs font-bold text-slate-500 hover:bg-white/50 transition">In
+                    <button onclick="filterStatus('all')" data-status="all"
+                        class="filter-pill px-4 py-1.5 rounded-lg text-xs font-bold text-white bg-blue-600 shadow-md transition">All</button>
+                    <button onclick="filterStatus('In Progress')" data-status="in progress"
+                        class="filter-pill px-4 py-1.5 rounded-lg text-xs font-bold text-slate-500 hover:bg-white/50 transition">In
                         Progress</button>
-                    <button
-                        class="px-4 py-1.5 rounded-lg text-xs font-bold text-slate-500 hover:bg-white/50 transition">Completed</button>
+                    <button onclick="filterStatus('Completed')" data-status="completed"
+                        class="filter-pill px-4 py-1.5 rounded-lg text-xs font-bold text-slate-500 hover:bg-white/50 transition">Completed</button>
+                    <button onclick="filterStatus('Delayed')" data-status="delayed"
+                        class="filter-pill px-4 py-1.5 rounded-lg text-xs font-bold text-slate-500 hover:bg-white/50 transition">Delayed</button>
                 </div>
             </div>
 
@@ -432,16 +444,6 @@
                         <h1 id="detail-name" class="text-3xl font-bold text-slate-800 mt-2">Batch #1002</h1>
                         <div class="flex items-center gap-2 mt-1">
                             <p id="detail-notes" class="text-slate-500 max-w-xl">No details.</p>
-                            <button onclick="editBatchFull()"
-                                class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1.5 rounded-lg flex items-center gap-1 transition font-bold border border-slate-200">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z">
-                                    </path>
-                                </svg>
-                                Edit
-                            </button>
-
                             <div id="detail-status-container" class="ml-2"></div>
                             <div id="detail-target-container" class="ml-2"></div>
 
@@ -893,7 +895,21 @@
 
         function filterBatches() {
             FILTER_QUERY = document.getElementById('search-input').value;
+            // Toggle Clear Button
+            const btn = document.getElementById('btn-clear-search');
+            if (btn) {
+                if (FILTER_QUERY.length > 0) btn.classList.remove('hidden');
+                else btn.classList.add('hidden');
+            }
             renderDashboard();
+        }
+
+        function clearSearch() {
+            const input = document.getElementById('search-input');
+            if (input) {
+                input.value = '';
+                filterBatches();
+            }
         }
 
         function filterStatus(status) {
