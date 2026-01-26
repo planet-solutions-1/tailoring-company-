@@ -2217,15 +2217,17 @@
             // 1. Update Global Target
             g.daily_target = v;
 
-            // 2. SYNC SUBTASKS (Flexible Logic)
-            // User wants "automatically change it".
-            // We update the target of all individual tasks to match the global daily target.
+            // 2. SYNC SUBTASKS (Aggressive)
+            let updatedCount = 0;
             if (g.required_stages && Array.isArray(g.required_stages)) {
                 g.required_stages.forEach(s => {
-                    // Only update tasks, not groups? Or all?
-                    // Usually tasks are the ones with progress bars.
-                    if (!s.type || s.type === 'task' || (s.id && s.id.startsWith('S'))) {
+                    // Update ANYTHING that is not explicitly a group
+                    // This covers 'task', undefined type, 's-1', 'S-1', etc.
+                    const isGroup = s.type === 'group' || (s.id && String(s.id).toUpperCase().startsWith('P'));
+
+                    if (!isGroup) {
                         s.target = v;
+                        updatedCount++;
                     }
                 });
             }
@@ -2236,21 +2238,19 @@
                     method: 'POST',
                     body: JSON.stringify({
                         daily_target: v,
-                        required_stages: g.required_stages // Save updated task targets
+                        required_stages: g.required_stages
                     })
                 });
-                showToast(`Daily Target updated to ${v} (Synced to tasks)`);
 
                 // 4. Refresh View
                 if (CURRENT_BATCH && CURRENT_BATCH.id == groupId) {
-                    renderDetailTable(); // Refresh progress bars
-
-                    // Also update the header input itself if it wasn't the trigger (optional, but good for consistency)
-                    // But since this is triggered by onchange, the input has the value.
+                    // Force DOM update
+                    renderDetailTable();
+                    showToast(`Updated Target to ${v} (Synced ${updatedCount} tasks)`);
                 }
             } catch (e) {
                 console.error(e);
-                showToast("Failed to update target", "error");
+                showToast("Failed to sync target", "error");
             }
         }
 
