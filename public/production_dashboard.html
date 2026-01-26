@@ -1619,18 +1619,28 @@
                 // Daily Target Injection
                 const targetContainer = document.getElementById('detail-target-container');
                 if (targetContainer) {
+                    const lastStageVal = (g.completed_stages && g.completed_stages['manual_override']) || 0;
+                    const dailyPct = g.daily_target > 0 ? Math.round((lastStageVal / g.daily_target) * 100) : 0;
+                    const dailyColor = dailyPct >= 100 ? 'bg-green-500' : 'bg-indigo-500';
+
                     targetContainer.innerHTML = `
-                        <div class="flex items-center gap-2 bg-white rounded-lg px-3 py-1 border border-slate-200 shadow-sm relative group">
-                             <span class="text-[10px] uppercase font-bold text-slate-400">Daily Target</span>
-                             <input type="number" 
-                                value="${g.daily_target || 0}" 
-                                oninput="debouncedUpdateTarget('${g.id}', this.value)"
-                                class="w-24 bg-transparent text-lg font-bold text-slate-800 focus:outline-none text-center" min="0">
-                             
-                             <!-- Status Indicator -->
-                             <span id="target-save-status-${g.id}" class="absolute -right-2 top-0 text-[8px] font-bold text-slate-400 opacity-0 transition-opacity">Saved</span>
-                        </div>
-                    `;
+                             <div class="flex flex-col gap-1">
+                                <div class="flex items-center gap-2 bg-white rounded-lg px-3 py-1 border border-slate-200 shadow-sm relative group">
+                                     <span class="text-[10px] uppercase font-bold text-slate-400">Daily Target</span>
+                                     <input type="number" 
+                                        value="${g.daily_target || 0}" 
+                                        oninput="debouncedUpdateTarget('${g.id}', this.value)"
+                                        class="w-24 bg-transparent text-lg font-bold text-slate-800 focus:outline-none text-center" min="0">
+                                     
+                                     <!-- Status Indicator -->
+                                     <span id="target-save-status-${g.id}" class="absolute -right-2 top-0 text-[8px] font-bold text-slate-400 opacity-0 transition-opacity">Saved</span>
+                                </div>
+                                <div class="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden flex items-center" title="Daily Goal Progress">
+                                    <div id="daily-progress-bar-${g.id}" class="h-full ${dailyColor} transition-all duration-500" style="width: ${Math.min(dailyPct, 100)}%"></div>
+                                </div>
+                                <div class="text-[9px] text-center font-bold text-slate-400" id="daily-progress-text-${g.id}">${dailyPct}% Achieved</div>
+                            </div>
+                        `;
                 }
 
                 // --- NEW MISSING FUNCTION: Log Delay ---
