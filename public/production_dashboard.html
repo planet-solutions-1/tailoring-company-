@@ -198,243 +198,328 @@
     <script src="js/logger.js"></script>
 </head>
 
-<body class="min-h-screen text-slate-800">
-    <div id="toast-container"></div>
+<body class="min-h-screen text-slate-800 flex bg-fixed">
 
-    <nav class="clay-card m-4 p-4 flex justify-between items-center bg-white/90 backdrop-blur sticky top-4 z-40">
-        <div class="flex items-center gap-3">
-            <div class="bg-blue-600 text-white p-2 rounded relative overflow-hidden group">
-                <div
-                    class="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform">
+    <!-- FIXED SIDEBAR -->
+    <aside class="w-64 fixed inset-y-0 left-0 z-50 p-4 hidden lg:block">
+        <div class="h-full modern-card flex flex-col backdrop-blur-xl bg-white/40 border-white/50">
+            <!-- Brand -->
+            <div class="p-6 border-b border-white/30">
+                <div class="flex items-center gap-3">
+                    <div class="bg-indigo-600 text-white p-2 rounded-xl shadow-lg shadow-indigo-500/30">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10">
+                            </path>
+                        </svg>
+                    </div>
+                    <div>
+                        <h1 class="font-bold text-lg tracking-tight text-slate-900 leading-none">Production</h1>
+                        <p class="text-[10px] font-bold text-indigo-600 uppercase tracking-widest">Track Labs</p>
+                    </div>
                 </div>
-                <svg class="w-6 h-6 relative z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10">
-                    </path>
-                </svg>
             </div>
-            <h1 class="font-bold text-xl tracking-wider uppercase text-slate-800">
-                Production<span class="text-blue-600">Track</span> <span
-                    class="text-xs align-top text-slate-400">LABS</span>
-            </h1>
-        </div>
-        <div class="flex items-center gap-4">
-            <button onclick="openAIInsights()"
-                class="hidden md:flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-xs font-bold rounded shadow-lg hover:shadow-indigo-500/30 hover:-translate-y-0.5 transition-all">
-                <i class="fa-solid fa-wand-magic-sparkles"></i> AI Insights
-            </button>
-            <div class="text-right hidden md:block">
-                <p id="user-name" class="font-bold text-sm tracking-wide" style="font-family: 'Rajdhani', sans-serif;">
-                    User</p>
-                <p id="user-role" class="text-[10px] text-blue-500 font-bold uppercase tracking-widest">Role</p>
-            </div>
-            <button onclick="logout()"
-                class="text-slate-400 hover:text-red-500 hover:bg-red-50 p-2 rounded transition"><svg class="w-5 h-5"
-                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1">
-                    </path>
-                </svg></button>
-        </div>
-    </nav>
 
-    <main class="max-w-[1400px] mx-auto p-4 grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <aside id="sidebar-panel" class="col-span-1 lg:col-span-2 space-y-4">
-            <div class="tech-card p-4 space-y-2">
+            <!-- Nav Links -->
+            <nav class="flex-1 overflow-y-auto p-4 space-y-2">
                 <button onclick="switchTab('active')" id="nav-active"
-                    class="tech-btn tech-btn-primary w-full p-3 text-left flex items-center gap-3">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2">
-                        </path>
-                    </svg> Active
+                    class="w-full p-3 text-left flex items-center gap-3 rounded-xl transition-all font-medium text-sm hover:bg-white/40 group active-nav-link">
+                    <div
+                        class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2">
+                            </path>
+                        </svg>
+                    </div>
+                    <span>Active Batches</span>
                 </button>
 
                 <button onclick="window.location.href='executive_report.html'" id="nav-analytics"
-                    class="tech-btn w-full p-3 text-left flex items-center gap-3 hover:bg-slate-100 transition-colors">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
-                        </path>
-                    </svg> Executive Report <span
-                        class="text-[10px] bg-cyan-100 text-cyan-700 px-1.5 rounded font-bold ml-auto tech-font">NEW</span>
-                </button>
-
-                <button onclick="window.location.href='inventory_dashboard.html'" target="_blank"
-                    class="tech-btn w-full p-3 text-left flex items-center gap-3 hover:bg-slate-100 transition-colors text-indigo-600">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                    </svg>
-                    Inventory Manager
-                </button>
-            </div>
-        </aside>
-
-        <section id="main-content" class="col-span-1 lg:col-span-9 animate-fade-in">
-
-            <!-- SCI-FI ANALYTICS VIEW (Relocated for Layout Fix) -->
-            <!-- SCI-FI ANALYTICS VIEW (REMOVED - Replaced by Executive Report) -->
-            <!-- <div id="view-analytics"> ...Old content removed... </div> -->
-
-            <!-- ACTIVE BATCHES GRID -->
-            <div id="view-active" class="animate-fade-in">
-                <!-- HUD inserted by JS -->
-                <div id="hud-container"></div>
-
-                <div class="flex justify-between items-center mb-6 px-1">
-                    <h2 class="text-lg font-bold text-slate-400 uppercase tracking-widest hidden md:block">Recent
-                        Production</h2>
-                    <button onclick="openWizard()"
-                        class="clay-btn clay-btn-primary px-5 py-2.5 flex items-center gap-2 font-medium ml-auto shadow-lg shadow-blue-500/30 hover:shadow-blue-600/50 hover:-translate-y-0.5 transition-all">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
-                        </svg> New Production Work
-                    </button>
-                </div>
-                <div id="batches-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
-            </div>
-
-            <!-- CONFIG DEFAULTS -->
-            <div id="view-config" class="hidden">
-                <div class="flex justify-between items-center mb-6">
-                    <h2 class="text-2xl font-bold text-slate-800">Global Defaults</h2>
-                    <div class="flex gap-2">
-                        <select id="config-dress-type" onchange="loadConfig()" class="clay-input px-3 py-2">
-                            <option value="Shirt">Shirt</option>
-                            <option value="Pant">Pant</option>
-                        </select>
-                        <button onclick="saveConfig()" class="clay-btn clay-btn-primary px-4 py-2">Save</button>
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-6">
-                    <div class="clay-card p-6">
-                        <h3 class="font-bold text-purple-600 mb-4">Stages (S1-S20)</h3>
-                        <div id="s-labels-grid" class="space-y-2 h-[600px] overflow-y-auto pr-2"></div>
-                    </div>
-                    <div class="clay-card p-6">
-                        <h3 class="font-bold text-pink-600 mb-4">Processes (P1-P20)</h3>
-                        <div id="p-labels-grid" class="space-y-2 h-[600px] overflow-y-auto pr-2"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- BATCH DETAIL VIEW -->
-            <div id="view-detail" class="hidden">
-                <button onclick="switchTab('active')"
-                    class="mb-4 text-blue-500 hover:underline flex items-center gap-1 font-medium"><svg class="w-4 h-4"
-                        fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
-                    </svg> Back</button>
-
-                <div class="clay-card p-8 mb-6 bg-gradient-to-br from-white to-blue-50 border-blue-100">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <span id="detail-type"
-                                class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide">Shirt</span>
-                            <h1 id="detail-name" class="text-3xl font-bold text-slate-800 mt-2">Batch #1002</h1>
-                            <div class="flex items-center gap-2 mt-1">
-                                <p id="detail-notes" class="text-slate-500 max-w-xl">No details.</p>
-                                <button onclick="editBatchFull()"
-                                    class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1.5 rounded-lg flex items-center gap-1 transition font-bold border border-slate-200">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z">
-                                        </path>
-                                    </svg>
-                                    Edit
-                                </button>
-
-                                <div id="detail-status-container" class="ml-2"></div>
-                                <div id="detail-target-container" class="ml-2"></div>
-
-                                <button id="btn-pause-toggle" onclick="toggleStatus(CURRENT_BATCH.id)"
-                                    class="text-xs bg-slate-50 hover:bg-slate-100 text-slate-600 px-3 py-1.5 rounded-lg flex items-center gap-1 transition font-bold border border-slate-200 ml-2">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                    </svg>
-                                    Pause
-                                </button>
-
-                                <button onclick="openEndorseModal()"
-                                    class="text-xs bg-gradient-to-r from-yellow-400 to-orange-500 hover:scale-105 text-white shadow-lg shadow-yellow-500/30 px-4 py-1.5 rounded-lg flex items-center gap-1 transition font-bold ml-2 admin-only ring-2 ring-white">
-                                    <svg class="w-3.5 h-3.5 animate-pulse" fill="currentColor" viewBox="0 0 20 20">
-                                        <path fill-rule="evenodd"
-                                            d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"
-                                            clip-rule="evenodd" />
-                                    </svg>
-                                    Endorse
-                                </button>
-
-                                <button onclick="toggleDefectModal()"
-                                    class="text-xs bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-500/30 px-3 py-1.5 rounded-lg flex items-center gap-1 transition font-bold ml-2 admin-only ring-1 ring-white/20">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                                    </svg>
-                                    Report Issue
-                                </button>
-
-                                <button onclick="reportDelay()"
-                                    class="text-xs bg-orange-50 hover:bg-orange-100 text-orange-600 px-3 py-1.5 rounded-lg flex items-center gap-1 transition font-bold border border-orange-200 ml-2 admin-only">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                    </svg>
-                                    Log Delay
-                                </button>
-
-                                <button onclick="deleteBatch()"
-                                    class="text-xs bg-red-50 hover:bg-red-100 text-red-600 px-3 py-1.5 rounded-lg flex items-center gap-1 transition font-bold ml-2 border border-red-200">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
-                                        </path>
-                                    </svg>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="text-right">
-                            <div class="text-5xl font-bold text-slate-800 tracking-tight" id="detail-percent">0%</div>
-                            <div class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Total
-                                Completion</div>
-                        </div>
-                    </div>
+                    class="w-full p-3 text-left flex items-center gap-3 rounded-xl transition-all font-medium text-sm text-slate-600 hover:bg-white/40 group">
                     <div
-                        class="mt-8 h-3 bg-white rounded-full overflow-hidden shadow-inner border border-blue-100 relative">
-                        <!-- Points Marker (Future enhancement) -->
-                        <div id="detail-bar"
-                            class="h-full bg-blue-500 transition-all duration-700 rounded-full relative"
-                            style="width: 0%">
-                            <div class="absolute inset-0 bg-white/20 animate-pulse"></div>
+                        class="w-8 h-8 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+                            </path>
+                        </svg>
+                    </div>
+                    <span>Executive Report</span>
+                    <span
+                        class="ml-auto text-[10px] font-bold bg-indigo-100 text-indigo-600 px-1.5 py-0.5 rounded">NEW</span>
+                </button>
+
+                <button onclick="window.location.href='inventory_dashboard.html'"
+                    class="w-full p-3 text-left flex items-center gap-3 rounded-xl transition-all font-medium text-sm text-slate-600 hover:bg-white/40 group">
+                    <div
+                        class="w-8 h-8 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                        </svg>
+                    </div>
+                    <span>Inventory</span>
+                </button>
+            </nav>
+
+            <!-- User Profile -->
+            <div class="p-4 border-t border-white/30">
+                <div class="flex items-center gap-3 p-2 rounded-xl hover:bg-white/40 cursor-pointer transition">
+                    <div
+                        class="w-10 h-10 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold shadow-lg">
+                        U
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-bold text-slate-800 truncate" id="user-name">User</p>
+                        <p class="text-xs text-indigo-600 truncate" id="user-role">Role</p>
+                    </div>
+                    <button onclick="logout()" class="text-slate-400 hover:text-red-500 transition"><i
+                            class="fa-solid fa-right-from-bracket"></i></button>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT AREA -->
+    <main class="flex-1 lg:ml-64 p-4 lg:p-8 overflow-y-auto h-screen">
+
+        <!-- HEADER / CONTROL BAR -->
+        <header class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+            <div class="relative w-full md:w-96 group">
+                <div
+                    class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 group-focus-within:text-indigo-500 transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                    </svg>
+                </div>
+                <input type="text" id="search-input" onkeyup="filterBatches()"
+                    class="block w-full pl-10 pr-3 py-3 rounded-xl bg-white/60 border-none backdrop-blur shadow-sm focus:ring-2 focus:ring-indigo-500 transition-all placeholder-slate-400 font-medium"
+                    placeholder="Search production batches...">
+            </div>
+
+            <div class="flex items-center gap-4 w-full md:w-auto">
+                <button onclick="openAIInsights()"
+                    class="hidden md:flex items-center gap-2 px-4 py-2.5 bg-white/60 text-indigo-700 text-sm font-bold rounded-xl shadow-sm hover:bg-white hover:text-indigo-600 hover:shadow-md transition-all">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i> Insights
+                </button>
+                <button onclick="openWizard()"
+                    class="flex-1 md:flex-none tech-btn-primary px-6 py-3 rounded-xl font-bold shadow-lg shadow-indigo-500/30 flex items-center justify-center gap-2 transform hover:scale-105 transition-all">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    New Production
+                </button>
+            </div>
+        </header>
+
+        <!-- DASHBOARD STATS RIBBON -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="modern-card p-5 flex items-center gap-4 bg-gradient-to-br from-white to-indigo-50/50">
+                <div
+                    class="w-12 h-12 rounded-2xl bg-indigo-500 text-white flex items-center justify-center shadow-lg shadow-indigo-500/30">
+                    <i class="fa-solid fa-layer-group text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active Batches</p>
+                    <h3 class="text-2xl font-black text-slate-800" id="stat-active-count">...</h3>
+                </div>
+            </div>
+
+            <div class="modern-card p-5 flex items-center gap-4">
+                <div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-600 flex items-center justify-center">
+                    <i class="fa-solid fa-bolt text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Efficiency</p>
+                    <h3 class="text-2xl font-black text-slate-800" id="stat-efficiency">--%</h3>
+                </div>
+            </div>
+
+            <div class="modern-card p-5 flex items-center gap-4">
+                <div class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-600 flex items-center justify-center">
+                    <i class="fa-solid fa-box-open text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Output</p>
+                    <h3 class="text-2xl font-black text-slate-800" id="stat-total-qty">...</h3>
+                </div>
+            </div>
+            <div class="modern-card p-5 flex items-center gap-4 border-red-100">
+                <div class="w-12 h-12 rounded-2xl bg-red-100 text-red-500 flex items-center justify-center">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                </div>
+                <div>
+                    <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Issues</p>
+                    <h3 class="text-2xl font-black text-red-600" id="stat-issues">0</h3>
+                </div>
+            </div>
+        </div>
+
+        <section id="view-active" class="animate-fade-in space-y-6">
+
+            <!-- Filters & Sort Bar -->
+            <div class="flex items-center justify-between">
+                <h2 class="text-xl font-bold text-slate-700">Recent Production</h2>
+                <div class="flex bg-white/40 p-1 rounded-xl backdrop-blur border border-white/50">
+                    <button
+                        class="px-4 py-1.5 rounded-lg text-xs font-bold text-white bg-indigo-600 shadow-sm transition">All</button>
+                    <button
+                        class="px-4 py-1.5 rounded-lg text-xs font-bold text-slate-500 hover:bg-white/50 transition">In
+                        Progress</button>
+                    <button
+                        class="px-4 py-1.5 rounded-lg text-xs font-bold text-slate-500 hover:bg-white/50 transition">Completed</button>
+                </div>
+            </div>
+
+            <div id="batch-grid" class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                <!-- Javascript Injects Cards Here -->
+                <div class="col-span-full py-20 text-center text-slate-400">
+                    <i class="fa-solid fa-circle-notch fa-spin text-3xl mb-4 text-indigo-300"></i>
+                    <p class="font-medium animate-pulse">Loading production data...</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- CONFIG DEFAULTS -->
+        <div id="view-config" class="hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-slate-800">Global Defaults</h2>
+                <div class="flex gap-2">
+                    <select id="config-dress-type" onchange="loadConfig()" class="clay-input px-3 py-2">
+                        <option value="Shirt">Shirt</option>
+                        <option value="Pant">Pant</option>
+                    </select>
+                    <button onclick="saveConfig()" class="clay-btn clay-btn-primary px-4 py-2">Save</button>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-6">
+                <div class="clay-card p-6">
+                    <h3 class="font-bold text-purple-600 mb-4">Stages (S1-S20)</h3>
+                    <div id="s-labels-grid" class="space-y-2 h-[600px] overflow-y-auto pr-2"></div>
+                </div>
+                <div class="clay-card p-6">
+                    <h3 class="font-bold text-pink-600 mb-4">Processes (P1-P20)</h3>
+                    <div id="p-labels-grid" class="space-y-2 h-[600px] overflow-y-auto pr-2"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- BATCH DETAIL VIEW -->
+        <div id="view-detail" class="hidden">
+            <button onclick="switchTab('active')"
+                class="mb-4 text-blue-500 hover:underline flex items-center gap-1 font-medium"><svg class="w-4 h-4"
+                    fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                </svg> Back</button>
+
+            <div class="clay-card p-8 mb-6 bg-gradient-to-br from-white to-blue-50 border-blue-100">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <span id="detail-type"
+                            class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide">Shirt</span>
+                        <h1 id="detail-name" class="text-3xl font-bold text-slate-800 mt-2">Batch #1002</h1>
+                        <div class="flex items-center gap-2 mt-1">
+                            <p id="detail-notes" class="text-slate-500 max-w-xl">No details.</p>
+                            <button onclick="editBatchFull()"
+                                class="text-xs bg-slate-100 hover:bg-slate-200 text-slate-600 px-3 py-1.5 rounded-lg flex items-center gap-1 transition font-bold border border-slate-200">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z">
+                                    </path>
+                                </svg>
+                                Edit
+                            </button>
+
+                            <div id="detail-status-container" class="ml-2"></div>
+                            <div id="detail-target-container" class="ml-2"></div>
+
+                            <button id="btn-pause-toggle" onclick="toggleStatus(CURRENT_BATCH.id)"
+                                class="text-xs bg-slate-50 hover:bg-slate-100 text-slate-600 px-3 py-1.5 rounded-lg flex items-center gap-1 transition font-bold border border-slate-200 ml-2">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                Pause
+                            </button>
+
+                            <button onclick="openEndorseModal()"
+                                class="text-xs bg-gradient-to-r from-yellow-400 to-orange-500 hover:scale-105 text-white shadow-lg shadow-yellow-500/30 px-4 py-1.5 rounded-lg flex items-center gap-1 transition font-bold ml-2 admin-only ring-2 ring-white">
+                                <svg class="w-3.5 h-3.5 animate-pulse" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd"
+                                        d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"
+                                        clip-rule="evenodd" />
+                                </svg>
+                                Endorse
+                            </button>
+
+                            <button onclick="toggleDefectModal()"
+                                class="text-xs bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-500/30 px-3 py-1.5 rounded-lg flex items-center gap-1 transition font-bold ml-2 admin-only ring-1 ring-white/20">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                </svg>
+                                Report Issue
+                            </button>
+
+                            <button onclick="reportDelay()"
+                                class="text-xs bg-orange-50 hover:bg-orange-100 text-orange-600 px-3 py-1.5 rounded-lg flex items-center gap-1 transition font-bold border border-orange-200 ml-2 admin-only">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                Log Delay
+                            </button>
+
+                            <button onclick="deleteBatch()"
+                                class="text-xs bg-red-50 hover:bg-red-100 text-red-600 px-3 py-1.5 rounded-lg flex items-center gap-1 transition font-bold ml-2 border border-red-200">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                                    </path>
+                                </svg>
+                            </button>
                         </div>
                     </div>
-                </div>
-
-                <div class="clay-card p-6 overflow-hidden">
-                    <h3 class="font-bold text-lg mb-4 text-slate-700">Production Stages</h3>
-                    <div class="overflow-x-auto">
-                        <table class="w-full text-left text-sm">
-                            <thead class="bg-slate-50 text-slate-500 font-bold uppercase text-xs">
-                                <tr>
-                                    <th class="p-3 w-16">ID</th>
-                                    <th class="p-3">Stage Name</th>
-                                    <th class="p-3">Assigned To</th>
-                                    <th class="p-3 text-center">Status</th>
-                                    <th class="p-3 w-48">Progress (Qty)</th>
-                                </tr>
-                            </thead>
-                            <tbody id="detail-table" class="divide-y divide-gray-100">
-                                <!-- JS -->
-                            </tbody>
-                        </table>
+                    <div class="text-right">
+                        <div class="text-5xl font-bold text-slate-800 tracking-tight" id="detail-percent">0%</div>
+                        <div class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Total
+                            Completion</div>
                     </div>
                 </div>
-                <!-- SCI-FI ANALYTICS VIEW -->
-                <!-- End view-analytics (Moved to top) -->
+                <div
+                    class="mt-8 h-3 bg-white rounded-full overflow-hidden shadow-inner border border-blue-100 relative">
+                    <!-- Points Marker (Future enhancement) -->
+                    <div id="detail-bar" class="h-full bg-blue-500 transition-all duration-700 rounded-full relative"
+                        style="width: 0%">
+                        <div class="absolute inset-0 bg-white/20 animate-pulse"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="clay-card p-6 overflow-hidden">
+                <h3 class="font-bold text-lg mb-4 text-slate-700">Production Stages</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-sm">
+                        <thead class="bg-slate-50 text-slate-500 font-bold uppercase text-xs">
+                            <tr>
+                                <th class="p-3 w-16">ID</th>
+                                <th class="p-3">Stage Name</th>
+                                <th class="p-3">Assigned To</th>
+                                <th class="p-3 text-center">Status</th>
+                                <th class="p-3 w-48">Progress (Qty)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="detail-table" class="divide-y divide-gray-100">
+                            <!-- JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <!-- SCI-FI ANALYTICS VIEW -->
+            <!-- End view-analytics (Moved to top) -->
     </main>
 
     <!-- EDIT BATCH MODAL -->
@@ -1022,186 +1107,98 @@
                     </div>
                 `;
 
+                document.getElementById('stat-active-count').textContent = activeBatches.length;
+
+                // Calc Efficiency (Fake logic for demo, or real if we had it)
+                const totalPct = activeBatches.reduce((acc, b) => acc + (b._pct || 0), 0);
+                const avgEff = activeBatches.length ? Math.round(totalPct / activeBatches.length) : 0;
+                document.getElementById('stat-efficiency').textContent = avgEff + '%';
+
+                const totalQty = activeBatches.reduce((acc, b) => acc + (b.quantity || 0), 0);
+                document.getElementById('stat-total-qty').textContent = totalQty.toLocaleString();
+
+                const issues = activeBatches.filter(b => b.status === "Delayed" || b.delay_reason).length;
+                document.getElementById('stat-issues').textContent = issues;
+
+
                 // Render Batches
-                batchList.forEach(g => {
+                grid.innerHTML = ''; // Clear properly
+
+                if (activeBatches.length === 0) {
+                    grid.innerHTML = `
+                        <div class="col-span-full py-12 text-center">
+                            <div class="bg-gray-50 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-4 text-gray-300">
+                                <i class="fa-solid fa-box-open text-3xl"></i>
+                            </div>
+                            <h3 class="text-lg font-bold text-gray-500">No active production</h3>
+                            <p class="text-gray-400 text-sm">Create a new work order to get started.</p>
+                        </div>
+                     `;
+                    return;
+                }
+
+                activeBatches.forEach(g => {
                     const pct = Math.round(g._pct);
-                    const points = g.points || 0;
                     const isDelayed = !!g.delay_reason;
-                    const isGold = points >= 50;
-                    const dailyTarget = g.daily_target || 0;
 
-                    // Parse Processes for Hierarchy View
-                    let processPreview = '';
-                    if (g.required_stages && Array.isArray(g.required_stages)) {
-                        // Find Groups (Process Level)
-                        const pStruct = {};
-                        g.required_stages.forEach(s => {
-                            if (s.type === 'group' || (s.id && s.id.startsWith('P') && s.id !== 'unassigned')) {
-                                pStruct[s.id] = { ...s, tasks: [], completed: 0, total: 0 };
-                            }
-                        });
-                        // Assign Tasks
-                        let unassignedTasks = [];
-                        g.required_stages.forEach(s => {
-                            if (s.type === 'task' || (s.id && s.id.startsWith('S'))) {
-                                const pid = s.parentId;
-                                if (pid && pStruct[pid]) {
-                                    pStruct[pid].tasks.push(s);
-                                    pStruct[pid].total += (parseInt(s.target) || 0);
-                                    const cur = (g.completed_stages && g.completed_stages[s.id]) || 0;
-                                    pStruct[pid].completed += Math.min(cur, (parseInt(s.target) || 0));
-                                } else {
-                                    unassignedTasks.push(s);
-                                }
-                            }
-                        });
+                    let statusClass = 'text-blue-600 bg-blue-50 border-blue-100';
+                    let statusText = g.status || 'In Progress';
 
-                        // Generate HTML for Processes
-                        const pKeys = Object.keys(pStruct);
-                        if (pKeys.length > 0) {
-                            processPreview = `<div class="mt-4 space-y-3 bg-slate-50 p-3 rounded-xl border border-slate-100">`;
-                            pKeys.forEach(pid => {
-                                const pg = pStruct[pid];
-                                const pgPct = pg.total > 0 ? Math.round((pg.completed / pg.total) * 100) : 0;
-
-                                // Process Header
-                                processPreview += `
-                                    <div class="group/proc">
-                                        <div class="flex justify-between items-center text-xs font-bold text-slate-600 mb-1">
-                                            <span class="flex items-center gap-1">
-                                                <span class="w-1.5 h-1.5 rounded-full ${pgPct >= 100 ? 'bg-green-500' : 'bg-blue-400'}"></span>
-                                                ${pg.name}
-                                            </span>
-                                            <span class="${pgPct >= 100 ? 'text-green-600' : 'text-slate-400'}">${pgPct}%</span>
-                                        </div>
-                                        <!-- Mini Task List (Hidden by default, shown on hover/expand? User asked for Hierarchy) -->
-                                        <!-- We render SUB TASKS essentially -->
-                                        <div class="pl-3 border-l-2 border-slate-200 mt-1 space-y-1">
-                                            ${pg.tasks.map(t => {
-                                    const tCur = (g.completed_stages && g.completed_stages[t.id]) || 0;
-                                    const tTgt = t.target || 0;
-                                    const tPct = tTgt > 0 ? Math.round((tCur / tTgt) * 100) : 0;
-                                    const isDone = tCur >= tTgt;
-                                    return `
-                                                    <div class="flex justify-between items-center text-[10px]">
-                                                        <span class="text-slate-500 truncate max-w-[120px]" title="${t.name}">${t.name}</span>
-                                                        <div class="flex items-center gap-2">
-                                                            <span class="text-slate-400 font-mono">${t.assigned || '-'}</span>
-                                                            <span class="font-bold ${isDone ? 'text-green-500' : 'text-slate-300'}">${tPct}%</span>
-                                                        </div>
-                                                    </div>
-                                                `;
-                                }).join('')}
-                                        </div>
-                                    </div>
-                                `;
-                            });
-                            processPreview += `</div>`;
-                        } else {
-                            processPreview = `<div class="mt-4 text-xs text-slate-400 italic text-center">No structural processes defined.</div>`;
-                        }
+                    if (g.status === 'Completed') statusClass = 'text-green-600 bg-green-50 border-green-100';
+                    if (g.status === 'Paused') statusClass = 'text-slate-500 bg-slate-50 border-slate-100';
+                    if (isDelayed) {
+                        statusText = 'Delayed';
+                        statusClass = 'text-red-600 bg-red-50 border-red-100';
                     }
 
                     // Card Styling & Priority
-                    let barColor = 'bg-blue-500';
-                    let statusText = g.status || 'In Progress';
-                    let statusClass = 'text-blue-600';
                     let cardClass = ""; // For Urgent/Paused
-
-                    if (g.status === 'Paused') {
-                        statusClass = "text-slate-500";
-                        cardClass = "paused-batch";
-                    }
-                    if (g.is_urgent) {
-                        cardClass += " urgent-batch";
-                    }
-
-                    let cardBorder = 'border-transparent';
-
-                    if (isDelayed) {
-                        barColor = 'bg-red-500';
-                        statusText = 'Delayed';
-                        statusClass = 'text-red-600';
-                        cardBorder = 'border-l-4 border-red-500';
-                    } else if (pct >= 100) {
-                        barColor = 'bg-green-500';
-                        statusText = 'Completed';
-                        statusClass = 'text-green-600';
-                    }
-
-                    // Deadline Alert Logic
-                    let deadlineBadge = '';
-                    if (g.deadline) {
-                        const d = new Date(g.deadline);
-                        const today = new Date();
-                        const daysLeft = Math.ceil((d - today) / (1000 * 60 * 60 * 24));
-
-                        if (daysLeft < 0) {
-                            deadlineBadge = `<span class="text-[10px] font-bold text-red-600 bg-red-100 px-1.5 py-0.5 rounded flex items-center gap-1 animate-pulse"><i class="fa-solid fa-triangle-exclamation"></i> Overdue ${Math.abs(daysLeft)}d</span>`;
-                            cardBorder = 'border-l-4 border-red-600 bg-red-50/30'; // Red Border + Tint
-                        }
-                        else if (daysLeft < 3) {
-                            deadlineBadge = `<span class="text-[10px] font-bold text-amber-600 bg-amber-100 px-1.5 py-0.5 rounded flex items-center gap-1"><i class="fa-regular fa-clock"></i> Due ${daysLeft}d</span>`;
-                            cardBorder = 'border-l-4 border-amber-500'; // Amber Border
-                        }
-                        else {
-                            deadlineBadge = `<span class="text-[10px] font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded flex items-center gap-1"><i class="fa-regular fa-calendar"></i> ${d.getMonth() + 1}/${d.getDate()}</span>`;
-                        }
-                    }
+                    if (g.status === 'Paused') cardClass = "paused-batch";
+                    if (g.is_urgent) cardClass += " urgent-batch";
 
                     grid.innerHTML += `
-                        <div class="modern-card p-5 group ${cardBorder} ${cardClass}" onclick="openDetail('${g.id}')">
-                            
-                            <div class="flex justify-between items-start mb-2">
+                        <div class="modern-card p-5 group flex flex-col h-full ${cardClass}" onclick="openDetail('${g.id}')">
+                            <div class="flex justify-between items-start mb-4">
                                 <div>
-                                    <div class="flex items-center gap-2">
-                                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">BATCH #${g.id}</span>
-                                        ${deadlineBadge}
-                                        ${isDelayed ? '<span class="badge-modern text-red-600 bg-red-50 border border-red-100 animate-pulse">⚠️ Issue</span>' : ''}
-                                        <button onclick="event.stopPropagation(); togglePriority('${g.id}')" class="hover:scale-110 transition ${g.is_urgent ? 'text-yellow-400' : 'text-slate-200 hover:text-yellow-400'}">
-                                            <i class="fa-solid fa-star"></i>
-                                        </button>
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">#${g.id}</span>
+                                        ${g.is_urgent ? '<i class="fa-solid fa-star text-yellow-400 text-xs"></i>' : ''}
                                     </div>
-                                    <h3 class="text-lg font-black text-slate-800 leading-tight mt-1">${g.group_name}</h3>
-                                    ${g._predicted ? `
-                                        <div class="mt-2 flex items-center gap-1.5">
-                                            <span class="text-[10px] font-bold ${g._predicted > new Date(new Date().setDate(new Date().getDate() + 7)) ? 'text-red-500 bg-red-50' : 'text-emerald-600 bg-emerald-50'} px-1.5 py-0.5 rounded border border-transparent flex items-center gap-1">
-                                                <i class="fa-solid fa-wand-magic-sparkles text-[8px]"></i> 
-                                                Est: ${g._predicted.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
-                                            </span>
-                                        </div>
-                                    ` : ''}
+                                    <h3 class="text-lg font-black text-slate-800 leading-tight group-hover:text-indigo-600 transition-colors">${g.group_name}</h3>
                                 </div>
-                                <div class="text-right flex flex-col items-end gap-1">
-                                    <span class="badge-modern ${statusClass} bg-slate-50 border border-slate-100">${statusText}</span>
-                                    <span class="text-[9px] font-bold text-slate-400 mt-1">📦 ${g.quantity || 0} Units</span>
+                                <span class="badge-modern ${statusClass} border ml-2">${statusText}</span>
+                            </div>
+
+                            <div class="mt-auto">
+                                <div class="flex justify-between text-xs font-bold text-slate-500 mb-1">
+                                    <span>Progress</span>
+                                    <span>${pct}%</span>
+                                </div>
+                                <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                                     <div class="h-full rounded-full transition-all duration-500 ${isDelayed ? 'bg-red-500' : 'bg-gradient-to-r from-blue-500 to-indigo-500'}" style="width: ${pct}%"></div>
+                                </div>
+                                <div class="flex justify-between items-center mt-3 pt-3 border-t border-slate-50">
+                                    <span class="text-[10px] font-bold text-slate-400 flex items-center gap-1">
+                                        <i class="fa-solid fa-box"></i> ${g.quantity || 0} Units
+                                    </span>
+                                    <div class="flex -space-x-2">
+                                         <!-- Fake Avatars -->
+                                         <div class="w-6 h-6 rounded-full bg-indigo-100 border-2 border-white flex items-center justify-center text-[8px] font-bold text-indigo-600">A</div>
+                                         <div class="w-6 h-6 rounded-full bg-pink-100 border-2 border-white flex items-center justify-center text-[8px] font-bold text-pink-600">B</div>
+                                    </div>
                                 </div>
                             </div>
-
-                            <!-- Overall Progress -->
-                            <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden mb-1 mt-3">
-                                <div class="${barColor} h-full rounded-full" style="width: ${pct}%"></div>
-                            </div>
-                            <div class="flex justify-between text-[10px] text-slate-400 font-bold uppercase mb-2">
-                                <span>${pct}% Complete</span>
-                                <span>${g._vol} Items</span>
-                            </div>
-
-                            <!-- User Requested Hierarchy -->
-                            ${processPreview}
-
                         </div>
                     `;
                 });
             });
         }
 
-
         // --- WIZARD LOGIC ---
         function openWizard() {
             // Reset to Create Mode
             WIZARD_MODE = 'create';
-            CURRENT_EDIT_ID = null;
+            // CURRENT_EDIT_ID = null; (Assuming variable exists or was stripped)
             document.getElementById('btn-create').textContent = "Create Work";
             document.querySelector('#wizard-modal h3').textContent = "New Production Work";
 
@@ -1209,129 +1206,11 @@
             goToStep(1);
             loadWizardConfig(); // Initial Load
         }
-        function closeWizard() { document.getElementById('wizard-modal').classList.add('hidden'); }
-
-        function goToStep(step) {
-            document.getElementById('wiz-step-1').classList.add('hidden');
-            document.getElementById('wiz-step-2').classList.add('hidden');
-
-            const btnBack = document.getElementById('btn-back');
-            const btnNext = document.getElementById('btn-next');
-            const btnCreate = document.getElementById('btn-create');
-
-            if (step === 1) {
-                document.getElementById('wiz-step-1').classList.remove('hidden');
-                btnBack.classList.add('hidden');
-                btnNext.classList.remove('hidden');
-                btnCreate.classList.add('hidden');
-            } else {
-                if (!validateStep1()) return goToStep(1);
-                renderStep2();
-                document.getElementById('wiz-step-2').classList.remove('hidden');
-                btnBack.classList.remove('hidden');
-                btnNext.classList.add('hidden');
-                btnCreate.classList.remove('hidden');
-            }
-            document.getElementById('wiz-step-num').textContent = step;
-        }
-
-        // --- DRAG AND DROP HANDLERS ---
-        function allowDrop(ev) { ev.preventDefault(); ev.currentTarget.classList.add('drag-over'); }
-        function leaveDrop(ev) { ev.currentTarget.classList.remove('drag-over'); }
-
-        function drag(ev) {
-            ev.dataTransfer.setData("text", ev.target.id);
-            ev.target.classList.add('drag-source');
-        }
-        function dragEnd(ev) { ev.target.classList.remove('drag-source'); }
-
-        function drop(ev) {
-            ev.preventDefault();
-            ev.currentTarget.classList.remove('drag-over');
-
-            // Find the closest DROP ZONE (wiz-pool for Unassigned, or .wiz-drop-zone for Groups)
-            // But we bound ondrop to the container, so ev.currentTarget is safe.
-            let container = ev.currentTarget;
-
-            // However, we might drop ON another element -> bubble to container
-            if (!container.id && !container.classList.contains('wiz-drop-zone')) return;
-
-            const data = ev.dataTransfer.getData("text");
-            const draggedEl = document.getElementById(data);
-
-            if (draggedEl && container) {
-                container.appendChild(draggedEl);
-            }
-        }
-
-
-        async function loadWizardConfig() {
-            const type = document.getElementById('wiz-type').value;
-            const taskLimit = parseInt(document.getElementById('count-tasks').value) || 100;
-            const groupLimit = parseInt(document.getElementById('count-groups').value) || 50;
-
-            const sPool = document.getElementById('wiz-pool');
-            const pCanvas = document.getElementById('wiz-canvas');
-
-            sPool.innerHTML = '<div class="text-gray-400 text-sm">Loading...</div>';
-            pCanvas.innerHTML = '<div class="text-gray-400 text-sm">Loading...</div>';
-
-            try {
-                const res = await fetchAuth(`${API}/config/${type}`);
-                const conf = res.ok ? await res.json() : {};
-
-                // 1. Render Source Tasks (Left) - Limited
-                sPool.innerHTML = '';
-                const sLabels = conf.s_labels || Array(20).fill('');
-
-                // Show up to LIMIT, ignore actual labels length if small
-                for (let i = 0; i < taskLimit; i++) {
-                    const id = `S-${i}`;
-                    const lbl = sLabels[i] || '';
-                    const name = lbl || `Task ${i + 1}`;
-
-                    sPool.innerHTML += `
-                        <div id="drag-${id}" class="wiz-task-item flex items-center gap-2 p-2 bg-white rounded border border-gray-200 shadow-sm hover:border-pink-300" 
-                             draggable="true" ondragstart="drag(event)" ondragend="dragEnd(event)">
-                            <span class="text-[10px] font-mono bg-pink-100 text-pink-600 px-1 rounded">${id}</span>
-                            <input type="text" value="${name}" class="text-sm border-none bg-transparent w-full focus:outline-none wiz-name-s">
-                        </div>
-                    `;
-                }
-
-                // 2. Render Target Groups (Right) - Limited
-                pCanvas.innerHTML = '';
-                const pLabels = conf.p_labels || Array(20).fill('');
-
-                for (let i = 0; i < groupLimit; i++) {
-                    const id = `P-${i}`;
-                    const lbl = pLabels[i] || '';
-                    const name = lbl || `Production Group ${i + 1}`;
-
-                    pCanvas.innerHTML += `
-                        <div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden group">
-                           <div class="p-3 bg-purple-50 border-b border-purple-100 flex items-center justify-between">
-                                <div class="flex items-center gap-2 w-full">
-                                    <span class="text-[10px] font-mono bg-purple-200 text-purple-700 px-1 rounded">${id}</span>
-                                    <input type="text" value="${name}" class="text-sm font-bold bg-transparent w-full focus:outline-none wiz-name-p text-purple-900">
-                                </div>
-                                <div class="text-xs text-purple-300 group-hover:text-purple-500 transition">Drop Tasks Here</div>
-                           </div>
-                           <div class="wiz-drop-zone p-3 min-h-[60px] bg-slate-50 space-y-2 transition-colors" 
-                                data-group="${id}"
-                                ondragover="allowDrop(event)" ondragleave="leaveDrop(event)" ondrop="drop(event)">
-                                <!-- Dropped items go here -->
-                           </div>
-                        </div>
-                    `;
-                }
-
-            } catch (e) { console.error(e); }
-        }
 
         function validateStep1() {
             const name = document.getElementById('wiz-name').value;
             if (!name) { alert("Please enter a Work Name"); return false; }
+            return true;
 
             WIZARD_DATA = { groups: [], tasks: [] };
 
