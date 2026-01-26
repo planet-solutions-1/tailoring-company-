@@ -3020,7 +3020,51 @@
     </div>
 
 
+    <!-- TOAST CONTAINER -->
+    <div id="toast-container" class="fixed top-4 right-4 z-[200] space-y-3 pointer-events-none"></div>
+
     <script>
+        // --- PREMIUM NOTIFICATIONS ---
+        function showToast(msg, type = 'success') {
+            const container = document.getElementById('toast-container');
+            if (!container) return; // Should exist now
+
+            // Create Toast
+            const el = document.createElement('div');
+            const isErr = type === 'error';
+
+            // Styling: Glassmorphism + Animation
+            el.className = `
+                flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg 
+                ${isErr ? 'bg-red-500/90 text-white' : 'bg-slate-900/90 text-white'}
+                backdrop-blur-md transform transition-all duration-500 translate-x-10 opacity-0
+                pointer-events-auto border-l-4 ${isErr ? 'border-white' : 'border-indigo-400'}
+             `;
+
+            el.innerHTML = `
+                <div class="${isErr ? 'bg-red-400/20' : 'bg-indigo-500/20'} p-1 rounded-full">
+                    ${isErr ? '<i class="fa-solid fa-triangle-exclamation"></i>' : '<i class="fa-solid fa-check"></i>'}
+                </div>
+                <div>
+                    <h4 class="text-sm font-bold leading-tight">${isErr ? 'Attention' : 'Success'}</h4>
+                    <p class="text-xs font-medium opacity-90">${msg}</p>
+                </div>
+             `;
+
+            container.appendChild(el);
+
+            // Animate In
+            requestAnimationFrame(() => {
+                el.classList.remove('translate-x-10', 'opacity-0');
+            });
+
+            // Auto Dismiss
+            setTimeout(() => {
+                el.classList.add('translate-x-10', 'opacity-0');
+                setTimeout(() => el.remove(), 500);
+            }, 3000);
+        }
+
         // DEBUGGER LOGIC
         function toggleDebug() {
             const p = document.getElementById('debug-panel');
