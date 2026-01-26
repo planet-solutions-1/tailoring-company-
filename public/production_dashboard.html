@@ -201,7 +201,9 @@
 <body class="min-h-screen text-slate-800 flex bg-fixed">
 
     <!-- FIXED SIDEBAR -->
-    <aside class="w-64 fixed inset-y-0 left-0 z-50 p-4 hidden lg:block">
+    <!-- FIXED SIDEBAR -->
+    <aside id="main-sidebar"
+        class="w-64 fixed inset-y-0 left-0 z-50 p-4 hidden lg:block transition-transform duration-300">
         <div class="h-full modern-card flex flex-col backdrop-blur-xl bg-white/40 border-white/50">
             <!-- Brand -->
             <div class="p-6 border-b border-white/30">
@@ -286,6 +288,10 @@
 
         <!-- HEADER / CONTROL BAR -->
         <header class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+            <button onclick="toggleSidebar()"
+                class="lg:hidden absolute left-4 top-8 z-40 p-2 bg-white/50 backdrop-blur rounded-lg shadow-sm text-slate-600 hover:text-indigo-600">
+                <i class="fa-solid fa-bars"></i>
+            </button>
             <div class="relative w-full md:w-96 group">
                 <div
                     class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400 group-focus-within:text-indigo-500 transition">
@@ -817,10 +823,23 @@
             if (id === 'active') loadBatches();
         }
 
+        function toggleSidebar() {
+            const s = document.getElementById('main-sidebar');
+            s.classList.toggle('hidden');
+        }
+
         async function fetchAuth(url, opts = {}) {
             const token = sessionStorage.getItem('token');
+            if (!token) { window.location.href = 'index.html'; return; }
+
             const h = { ...opts.headers, 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' };
             const res = await fetch(url, { ...opts, headers: h });
+
+            if (res.status === 401) {
+                sessionStorage.clear();
+                window.location.href = 'index.html';
+                return res;
+            }
             return res;
         }
 
