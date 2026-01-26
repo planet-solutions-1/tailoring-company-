@@ -1145,8 +1145,8 @@
         function validateStep1() {
             const name = document.getElementById('wiz-name').value;
             if (!name) { alert("Please enter a Work Name"); return false; }
-            return true;
 
+            // Rebuild Data from DOM State
             WIZARD_DATA = { groups: [], tasks: [] };
 
             // 1. Iterate over P Groups (Right Column) to find active ones
