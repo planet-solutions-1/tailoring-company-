@@ -2418,6 +2418,24 @@
             document.getElementById('detail-type').textContent = CURRENT_BATCH.dress_type;
 
             renderDetailTable();
+        }
+
+        function renderDetailTable() {
+            const g = CURRENT_BATCH;
+            const tbody = document.getElementById('detail-table');
+            tbody.innerHTML = '';
+
+            let totalWorkTgt = 0;
+            let totalWorkCur = 0;
+
+            // 1. Separate Groups vs Tasks
+            const groups = g.required_stages.filter(s => s.type === 'group' || (s.id && String(s.id).toUpperCase().startsWith('P')));
+            const tasks = g.required_stages.filter(s => !s.type || s.type === 'task' || (s.id && String(s.id).toUpperCase().startsWith('S')));
+
+            // 2. Map Tasks to Groups
+            const tree = {};
+            groups.forEach(grp => tree[grp.id] = { ...grp, children: [] });
+            tree['unassigned'] = { id: 'unassigned', name: 'Other Tasks', children: [] };
 
             tasks.forEach(t => {
                 if (t.parentId && tree[t.parentId]) {
