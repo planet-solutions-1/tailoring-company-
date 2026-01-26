@@ -2113,6 +2113,60 @@
             await hydrateWizardUI();
         }
 
+
+        // --- DRAG AND DROP HANDLERS (Missing) ---
+        function allowDrop(ev) {
+            ev.preventDefault();
+            const zone = ev.target.closest('.wiz-drop-zone');
+            if (zone) {
+                zone.classList.add('bg-purple-50', 'border-purple-200');
+            }
+        }
+
+        function leaveDrop(ev) {
+            const zone = ev.target.closest('.wiz-drop-zone');
+            if (zone) {
+                zone.classList.remove('bg-purple-50', 'border-purple-200');
+            }
+        }
+
+        function drag(ev) {
+            ev.dataTransfer.setData("text", ev.target.id);
+            ev.dataTransfer.effectAllowed = "move";
+            ev.target.classList.add('opacity-50');
+        }
+
+        function dragEnd(ev) {
+            ev.target.classList.remove('opacity-50');
+            document.querySelectorAll('.wiz-drop-zone').forEach(z => {
+                z.classList.remove('bg-purple-50', 'border-purple-200');
+            });
+        }
+
+        function drop(ev) {
+            ev.preventDefault();
+            const data = ev.dataTransfer.getData("text");
+            const draggedEl = document.getElementById(data);
+            if (!draggedEl) return;
+
+            // Find Drop Zone (bubbling up)
+            const zone = ev.target.closest('.wiz-drop-zone');
+            if (zone) {
+                zone.classList.remove('bg-purple-50', 'border-purple-200');
+
+                // Update WIZARD_DATA Model
+                const taskId = draggedEl.id.replace('drag-', '');
+                const targetGroupId = zone.dataset.group;
+
+                // Move DOM
+                zone.appendChild(draggedEl);
+
+                // Update Data
+                const task = WIZARD_DATA.tasks.find(t => t.id === taskId);
+                if (task) task.parentId = targetGroupId;
+            }
+        }
+
         // --- MISSING UTILITIES (Fixed & Robust) ---
         async function loadWizardConfig() {
             try {
