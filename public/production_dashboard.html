@@ -1740,19 +1740,8 @@
         };
 
         async function reportIssue() {
-            if (!CURRENT_BATCH) return;
-            const reason = prompt("Describe the quality issue or defect:");
-            if (!reason) return;
-
-            try {
-                const res = await fetchAuth(`${API}/groups/${CURRENT_BATCH.id}/issue`, {
-                    method: 'POST', body: JSON.stringify({ reason })
-                });
-                if (res.ok) {
-                    showToast("Issue Reported. Team notified.", "error");
-                    if (window.Logger) Logger.log('REPORT_ISSUE', `Issue in Batch ${CURRENT_BATCH.id}: ${reason}`);
-                } else { showToast("Failed to report issue", "error"); }
-            } catch (e) { console.error(e); }
+            // Instead of prompt, open the Modal
+            toggleDefectModal();
         }
 
         // --- RENDER HELPERS ---
