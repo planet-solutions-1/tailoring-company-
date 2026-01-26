@@ -1090,6 +1090,10 @@
         }
 
         // --- WIZARD LOGIC ---
+        function closeWizard() {
+            document.getElementById('wizard-modal').classList.add('hidden');
+        }
+
         function openWizard() {
             // Reset to Create Mode
             WIZARD_MODE = 'create';
@@ -1100,6 +1104,42 @@
             document.getElementById('wizard-modal').classList.remove('hidden');
             goToStep(1);
             loadWizardConfig(); // Initial Load
+        }
+
+        function goToStep(step) {
+            // Validate Step 1 before moving
+            if (step === 2) {
+                if (!validateStep1()) return;
+                renderStep2();
+            }
+
+            // Toggle Panes
+            document.getElementById('wiz-step-1').classList.toggle('hidden', step !== 1);
+            document.getElementById('wiz-step-2').classList.toggle('hidden', step !== 2);
+
+            // Update Header
+            document.querySelector('#wizard-modal h3').textContent = step === 1 ?
+                (WIZARD_MODE === 'edit' ? "Edit Batch Details" : "New Production Work") :
+                "Assign Targets & Users";
+
+            // Update Step Text
+            const stepNum = document.getElementById('wiz-step-num');
+            if (stepNum) stepNum.textContent = step;
+
+            // Buttons
+            const btnBack = document.getElementById('btn-back');
+            const btnNext = document.getElementById('btn-next');
+            const btnCreate = document.getElementById('btn-create');
+
+            if (step === 1) {
+                btnBack.classList.add('hidden');
+                btnNext.classList.remove('hidden');
+                btnCreate.classList.add('hidden');
+            } else {
+                btnBack.classList.remove('hidden');
+                btnNext.classList.add('hidden');
+                btnCreate.classList.remove('hidden');
+            }
         }
 
         function validateStep1() {
