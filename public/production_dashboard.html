@@ -16,310 +16,179 @@
         rel="stylesheet">
 
     <style>
-        /* --- PROFESSIONAL SAAS DESIGN SYSTEM --- */
+        /* --- VIBRANT GLASS DESIGN SYSTEM --- */
         :root {
-            /* Palette - Clean & Trustworthy */
-            --bg-body: #f8f9fa;
-            --bg-card: #ffffff;
-            --text-primary: #1e293b;
-            --text-secondary: #64748b;
+            /* Palette - Deep & Vibrant */
+            --glass-bg: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%);
+            /* Soft Purple-Blue */
+            --glass-card: rgba(255, 255, 255, 0.65);
+            --glass-border: rgba(255, 255, 255, 0.8);
+            --glass-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.1);
 
-            --brand-primary: #2563eb;
-            /* Blue-600 */
-            --brand-hover: #1d4ed8;
-            /* Blue-700 */
+            --text-primary: #1e1b4b;
+            /* Deep Indigo for contrast */
+            --text-secondary: #475569;
 
-            --border-subtle: #e2e8f0;
-            --shadow-card: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-            --shadow-hover: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --brand-primary: #6366f1;
+            /* Indigo-500 */
         }
 
         body {
             font-family: 'Inter', sans-serif;
-            background-color: var(--bg-body);
+            background-image: var(--glass-bg);
+            background-attachment: fixed;
+            background-size: cover;
             color: var(--text-primary);
-            -webkit-font-smoothing: antialiased;
-        }
-
-        h1,
-        h2,
-        h3,
-        h4,
-        h5,
-        h6,
-        .font-header {
-            font-family: 'Inter', sans-serif;
-            /* Unify fonts for consistency */
-            letter-spacing: -0.025em;
-            /* Tight tracking for modern headlines */
+            min-height: 100vh;
         }
 
         /* --- COMPONENTS --- */
 
+        /* The Main Glass Card Class */
+        .modern-card,
         .clay-card,
         .tech-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-subtle);
-            box-shadow: var(--shadow-card);
-            border-radius: 12px;
-            transition: all 0.2s ease-in-out;
-        }
-
-        /* Preserve hover lift but make it subtle */
-        .clay-card:hover,
-        .tech-card:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-hover);
-            border-color: #cbd5e1;
-        }
-
-        .clay-input,
-        .tech-input {
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            color: var(--text-primary);
-            font-family: 'Inter', sans-serif;
-            transition: all 0.2s;
-            box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-        }
-
-        .clay-input:focus,
-        .tech-input:focus {
-            border-color: var(--brand-primary);
-            outline: none;
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
-        }
-
-        .clay-btn,
-        .tech-btn {
-            border-radius: 8px;
-            font-weight: 500;
-            letter-spacing: 0;
-            text-transform: none;
-            /* No more ALL CAPS */
-            font-size: 0.875rem;
-            transition: all 0.2s;
-        }
-
-        .clay-btn-primary,
-        .tech-btn-primary {
-            background: var(--brand-primary);
-            color: white;
-            border: 1px solid transparent;
-            box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
-        }
-
-        .clay-btn-primary:hover,
-        .tech-btn-primary:hover {
-            background: var(--brand-hover);
-        }
-
-        /* Filter Pills */
-        .filter-pill {
-            border-radius: 9999px;
-            font-weight: 500;
-            border: 1px solid transparent;
-        }
-
-        .filter-pill[data-status="all"].bg-blue-600 {
-            background-color: var(--brand-primary);
-        }
-
-        /* --- UTILS --- */
-        .admin-only {
-            display: none;
-        }
-
-        /* Toast */
-        #toast-container {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            z-index: 50;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .toast {
-            animation: slideIn 0.3s ease-out;
-            border-radius: 8px;
-            box-shadow: var(--shadow-hover);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        @keyframes slideIn {
-            from {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-
-        @keyframes fadeOut {
-            to {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-        }
-
-        /* Shimmer - Make subtle */
-        @keyframes shimmer {
-            0% {
-                transform: translateX(-100%);
-            }
-
-            100% {
-                transform: translateX(100%);
-            }
-        }
-
-        /* Grid Background Pattern - Subtle dots */
-        body {
-            background-image: radial-gradient(#e2e8f0 1px, transparent 1px);
-            background-size: 24px 24px;
-        }
-
-        /* --- SCI-FI LIGHT THEME (Analytics) --- */
-        .sci-fi-theme {
-            --sf-bg: #f8fafc;
-            --sf-card: rgba(255, 255, 255, 0.7);
-            --sf-border: #93c5fd;
-            /* Soft Blue */
-            --sf-accent: #06b6d4;
-            /* Cyan-500 */
-            --sf-text: #334155;
-            background: radial-gradient(circle at 60% 0%, #f0f9ff 0%, #e0f2fe 100%);
-            min-height: 100vh;
-        }
-
-        .sci-fi-font {
-            font-family: 'Orbitron', sans-serif;
-            letter-spacing: 1px;
-        }
-
-        .tech-font {
-            font-family: 'Rajdhani', sans-serif;
-            font-weight: 600;
-        }
-
-        .sci-fi-card {
-            background: var(--sf-card);
-            backdrop-filter: blur(16px);
-            border: 1px solid white;
-            box-shadow:
-                0 4px 20px -5px rgba(6, 182, 212, 0.15),
-                0 0 0 1px rgba(255, 255, 255, 0.8) inset;
-            border-radius: 1.5rem;
-            position: relative;
-            overflow: hidden;
+            background: var(--glass-card);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            /* Softer Curves */
+            box-shadow: var(--glass-shadow);
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
 
-        .sci-fi-card:hover {
-            transform: translateY(-4px);
-            box-shadow:
-                0 10px 30px -5px rgba(6, 182, 212, 0.2),
-                0 0 0 1px rgba(6, 182, 212, 0.3) inset;
-        }
-
-        .sci-fi-card::before {
-            /* Accent Line */
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 4px;
-            height: 100%;
-            background: linear-gradient(to bottom, #06b6d4, transparent);
-            opacity: 0.8;
-        }
-
-        .sci-fi-card::after {
-            /* Scanline effect */
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(transparent 50%, rgba(6, 182, 212, 0.02) 50%);
-            background-size: 100% 3px;
-            pointer-events: none;
-        }
-
-        .hologram-text {
-            background: linear-gradient(135deg, #0891b2 0%, #2563eb 100%);
-            -webkit-background-clip: text;
-            background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-shadow: 0 2px 10px rgba(6, 182, 212, 0.2);
-        }
-
-        .grid-bg {
-            background-image:
-                linear-gradient(rgba(6, 182, 212, 0.03) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(6, 182, 212, 0.03) 1px, transparent 1px);
-            background-size: 40px 40px;
-        }
-
-        /* --- PRIORITY & STATUS STYLES --- */
-        .modern-card {
-            background: white;
-            border-radius: 16px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
-            border: 1px solid #f1f5f9;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            position: relative;
-            overflow: hidden;
-        }
-
         .modern-card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-            border-color: #e2e8f0;
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.2);
+            background: rgba(255, 255, 255, 0.75);
+            /* Lighten on hover */
         }
 
-        .badge-modern {
-            padding: 2px 8px;
-            border-radius: 6px;
-            font-size: 0.7rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
+        /* Navbar & Sidebar override */
+        nav.clay-card,
+        aside .tech-card {
+            background: rgba(255, 255, 255, 0.8) !important;
+            border-radius: 20px;
         }
 
-        .tech-btn-primary {
-            background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%);
+        /* Inputs */
+        .clay-input,
+        .tech-input,
+        input[type="text"],
+        input[type="number"],
+        select {
+            background: rgba(255, 255, 255, 0.5) !important;
+            border: 1px solid rgba(255, 255, 255, 0.6) !important;
+            border-radius: 12px !important;
+            padding: 10px 16px;
+            color: var(--text-primary);
+            backdrop-filter: blur(4px);
+            transition: all 0.2s;
+        }
+
+        .clay-input:focus,
+        .tech-input:focus,
+        input:focus,
+        select:focus {
+            background: rgba(255, 255, 255, 0.9) !important;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3) !important;
+            outline: none;
+        }
+
+        /* Buttons */
+        .clay-btn,
+        .tech-btn,
+        .btn {
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.2s;
+            text-transform: none;
+        }
+
+        .tech-btn-primary,
+        .clay-btn-primary {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            /* Indigo to Violet */
             color: white;
-            border: 1px solid transparent;
-            box-shadow: 0 4px 6px -1px rgba(37, 99, 235, 0.2);
+            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+            border: none;
         }
 
         .tech-btn-primary:hover {
-            box-shadow: 0 8px 12px -1px rgba(37, 99, 235, 0.3);
-            transform: translateY(-1px);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.5);
+            filter: brightness(110%);
         }
 
+        /* Sidebar Buttons */
+        aside .tech-btn {
+            background: transparent;
+            color: var(--text-secondary);
+        }
+
+        aside .tech-btn:hover {
+            background: rgba(255, 255, 255, 0.5);
+            color: var(--brand-primary);
+        }
+
+        aside .tech-btn-primary {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%) !important;
+            color: white !important;
+        }
+
+        /* Badges */
+        .badge-modern {
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 0.7rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Status colors override for vibrant look */
+        .text-slate-400 {
+            color: #64748b !important;
+        }
+
+        .text-slate-800 {
+            color: #1e293b !important;
+        }
+
+        /* Specific Status Styling */
         .urgent-batch {
-            box-shadow: 0 0 0 1px #eab308;
+            border: 2px solid #fbbf24;
+            /* Amber-400 */
+            background: rgba(255, 251, 235, 0.8);
         }
 
-        .urgent-batch::before {
-            content: '';
+        .urgent-batch::after {
+            content: '★ URGENT';
             position: absolute;
             top: 0;
-            left: 0;
             right: 0;
-            height: 4px;
-            background: #eab308;
+            background: #fbbf24;
+            color: #78350f;
+            font-size: 0.6rem;
+            font-weight: 900;
+            padding: 4px 12px;
+            border-bottom-left-radius: 16px;
         }
 
         .paused-batch {
-            opacity: 0.85;
-            background-image: repeating-linear-gradient(45deg, #f8fafc 0, #f8fafc 10px, #ffffff 10px, #ffffff 20px);
+            opacity: 0.8;
+            filter: grayscale(80%);
+            border: 2px dashed #94a3b8;
+        }
+
+        /* Toast */
+        .toast {
+            background: rgba(30, 41, 59, 0.9);
+            backdrop-filter: blur(8px);
+            color: white;
+            border-radius: 12px;
         }
     </style>
 
