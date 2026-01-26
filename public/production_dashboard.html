@@ -1620,12 +1620,15 @@
                 const targetContainer = document.getElementById('detail-target-container');
                 if (targetContainer) {
                     targetContainer.innerHTML = `
-                        <div class="flex items-center gap-2 bg-white rounded-lg px-3 py-1 border border-slate-200 shadow-sm">
+                        <div class="flex items-center gap-2 bg-white rounded-lg px-3 py-1 border border-slate-200 shadow-sm relative group">
                              <span class="text-[10px] uppercase font-bold text-slate-400">Daily Target</span>
                              <input type="number" 
                                 value="${g.daily_target || 0}" 
-                                onchange="updateDailyTarget('${g.id}', this.value)"
+                                oninput="debouncedUpdateTarget('${g.id}', this.value)"
                                 class="w-24 bg-transparent text-lg font-bold text-slate-800 focus:outline-none text-center" min="0">
+                             
+                             <!-- Status Indicator -->
+                             <span id="target-save-status-${g.id}" class="absolute -right-2 top-0 text-[8px] font-bold text-slate-400 opacity-0 transition-opacity">Saved</span>
                         </div>
                         
                         <!-- MISSING FEATURES RESTORED -->
@@ -3542,6 +3545,20 @@
 
             showToast("Editing Batch: " + g.group_name);
         }
+        // --- UTILS & TARGET LOGIC ---
+        function debounce(func, wait) {
+            let timeout;
+            return function (...args) {
+                const context = this;
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(context, args), wait);
+            };
+        }
+
+        const debouncedUpdateTarget = debounce((id, val) => {
+            updateDailyTarget(id, val);
+        }, 500);
+
         async function updateDailyTarget(id, val) {
             const target = parseInt(val);
             if (isNaN(target) || target < 0) return;
@@ -3550,18 +3567,42 @@
             const g = ALL_GROUPS.find(i => i.id == id);
             if (g) g.daily_target = target;
 
+            // Show "Saving..."
+            const statusEl = document.getElementById(`target-save-status-${id}`);
+            if (statusEl) {
+                statusEl.textContent = "Saving...";
+                statusEl.classList.remove('opacity-0', 'text-green-500');
+                statusEl.classList.add('text-indigo-500');
+            }
+
             try {
                 // Use Generic Update
                 await fetchAuth(`${API}/groups/${id}/update`, {
                     method: 'POST',
                     body: JSON.stringify({ daily_target: target })
                 });
-                showToast("Daily Target Updated to " + target);
+
+                // Success UI
+                if (statusEl) {
+                    statusEl.textContent = "Saved";
+                    statusEl.classList.remove('text-indigo-500');
+                    statusEl.classList.add('text-green-500');
+                    setTimeout(() => statusEl.classList.add('opacity-0'), 2000);
+                }
             } catch (e) {
                 console.error(e);
                 showToast("Failed to save target", "error");
+                if (statusEl) statusEl.textContent = "Error";
             }
         }
+
+        // Auto-Run: Schema Fix
+        document.addEventListener('DOMContentLoaded', () => {
+            // Force check capability
+            fetchAuth(`${API}/admin/fix-schema-force`, { method: 'POST' }).catch(() => { });
+        });
+
+
     </script>
 </body>
 
