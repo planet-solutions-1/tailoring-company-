@@ -878,8 +878,19 @@
         }
 
         // --- BATCHES (Dashboard Grid) ---
-        async function loadBatches() {
+        // Auto-Refresh Loop
+        const REFRESH_INTERVAL = 30000; // 30s
+        let refreshTimer = setInterval(() => loadBatches(true), REFRESH_INTERVAL);
+
+        async function loadBatches(silent = false) {
             try {
+                // If silent, don't clear grid yet
+                if (!silent) {
+                    // Only show spinner if manual full load
+                    // grid.innerHTML ... (Managed in renderDashboard now?)
+                    // Actually, let's leave spinner logic to renderDashboard unless silent
+                }
+
                 const res = await fetchAuth(`${API}/groups`);
                 if (!res.ok) throw new Error("Server Error");
                 ALL_GROUPS = await res.json();
@@ -902,10 +913,10 @@
                     return new Date(b.created_at) - new Date(a.created_at);
                 });
 
-                renderDashboard();
+                renderDashboard(silent);
             } catch (e) {
                 console.error("Load Error", e);
-                showRepairButton();
+                if (!silent) showRepairButton();
             }
         }
 
@@ -957,7 +968,7 @@
             renderDashboard();
         }
 
-        function renderDashboard() {
+        function renderDashboard(silent = false) {
             const grid = document.getElementById('batch-grid');
             if (!grid) return console.error("Batch Grid not found!");
 
@@ -1050,6 +1061,28 @@
 
             const issues = activeBatches.filter(b => b.status === "Delayed" || b.delay_reason).length;
             document.getElementById('stat-issues').textContent = issues;
+
+            // --- SAFE DETAIL UPDATE ---
+            const detailView = document.getElementById('view-detail');
+            const isDetailOpen = detailView && !detailView.classList.contains('hidden');
+
+            if (silent && isDetailOpen) {
+                // Do nothing to detail view to preserve input focus
+                console.log("Silent Refresh: Preserving Detail View State");
+            } else {
+                if (isDetailOpen && CURRENT_BATCH) {
+                    // Only re-open if we have a valid batch (refresh data)
+                    // But we must be careful not to reset scroll.
+                    // openDetail(CURRENT_BATCH.id); -> This might be too aggressive?
+                    // Let's rely on manual refresh for full detail reload?
+                    // Or just update the data behind the scenes?
+                    // For 'Target Flexibility', we MUST NOT re-render inputs.
+                    // So we do ... nothing?
+                    // Wait, if status changed externally, we want to know.
+                    // But user priority is input safety.
+                    // So avoiding openDetail() is the correct move for silent refresh.
+                }
+            }
 
 
             // Render Batches
