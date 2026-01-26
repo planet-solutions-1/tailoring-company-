@@ -531,42 +531,7 @@
             <!-- End view-analytics (Moved to top) -->
     </main>
 
-    <!-- EDIT BATCH MODAL -->
-    <div id="edit-modal"
-        class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
-        <div class="clay-card w-full max-w-md p-6 animate-fade-in-up bg-white">
-            <h3 class="text-xl font-bold text-slate-800 mb-4">Edit Batch Details</h3>
-
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Work Name</label>
-                    <input type="text" id="edit-name" class="clay-input w-full p-2.5">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Dress Type</label>
-                    <select id="edit-type" class="clay-input w-full p-2.5"></select>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Deadline</label>
-                    <input type="date" id="edit-deadline" class="clay-input w-full p-2.5">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-gray-400 uppercase mb-2">Status</label>
-                    <select id="edit-status" class="clay-input w-full p-2.5">
-                        <option value="Active">Active</option>
-                        <option value="Completed">Completed</option>
-                        <option value="Paused">Paused</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="mt-6 flex justify-end gap-3">
-                <button onclick="document.getElementById('edit-modal').classList.add('hidden')"
-                    class="text-slate-500 hover:text-slate-800 font-medium px-4">Cancel</button>
-                <button onclick="saveBatchEdit()" class="clay-btn clay-btn-primary px-6 py-2">Save Changes</button>
-            </div>
-        </div>
-    </div>
+    <!-- EDIT BATCH MODAL (Removed: Using Wizard Edit Mode) -->
 
     <!-- CREATE WIZARD MODAL -->
     <div id="wizard-modal"
@@ -2021,6 +1986,39 @@
                     }
                 } catch (e) { console.error(e); }
             }, 600);
+        }
+
+
+        // --- MISSING UTILITIES ---
+        async function loadWizardConfig() {
+            await hydrateWizardUI();
+        }
+
+        async function toggleStatus(id) {
+            const g = ALL_GROUPS.find(item => item.id == id);
+            if (!g) return;
+
+            const newStatus = g.status === 'Paused' ? 'Active' : 'Paused';
+            // Optimistic Update
+            g.status = newStatus;
+
+            // Update UI immediately
+            if (CURRENT_BATCH && CURRENT_BATCH.id == g.id) {
+                openDetail(g.id); // Refresh detail view buttons
+            }
+            renderDashboard(); // Refresh grid active/paused state
+
+            try {
+                // Use edit endpoint for status update
+                await fetchAuth(`${API}/groups/${g.id}/edit`, {
+                    method: 'POST',
+                    body: JSON.stringify({ status: newStatus })
+                });
+                showToast(`Batch ${newStatus === 'Paused' ? 'Paused' : 'Resumed'}`);
+            } catch (e) {
+                console.error(e);
+                showToast("Failed to update status", "error");
+            }
         }
 
 
