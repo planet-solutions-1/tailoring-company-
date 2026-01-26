@@ -2081,11 +2081,6 @@
             document.querySelector('#wizard-modal h3').textContent = `Editing Batch #${CURRENT_EDIT_ID}`;
 
             // 5. Hydrate Inputs
-            document.getElementById('wiz-name').value = CURRENT_BATCH.group_name;
-            document.getElementById('wiz-type').value = CURRENT_BATCH.dress_type;
-            const tVal = CURRENT_BATCH.daily_target;
-            document.getElementById('wiz-target').value = (tVal !== undefined && tVal !== null) ? tVal : 0;
-
             // Hydrate New Fields
             document.getElementById('wiz-quantity').value = CURRENT_BATCH.quantity || 0;
             const dVal = CURRENT_BATCH.deadline;
@@ -2118,26 +2113,74 @@
             await hydrateWizardUI();
         }
 
-        async function hydrateWizardUI() {
-            const sPool = document.getElementById('wiz-pool');
-            const pCanvas = document.getElementById('wiz-canvas');
-            const type = document.getElementById('wiz-type').value;
-            const taskLimit = parseInt(document.getElementById('count-tasks').value) || 100;
-
-            // 0. Fetch Config for Labels
-            let conf = {};
+        // --- MISSING UTILITIES (Fixed & Robust) ---
+        async function loadWizardConfig() {
             try {
-                const res = await fetchAuth(`${API}/config/${type}`);
-                if (res.ok) conf = await res.json();
-            } catch (e) { console.error(e); }
+                console.log("Loading Wizard Config...");
+                const countGroupsInput = document.getElementById('count-groups');
+                const countTasksInput = document.getElementById('count-tasks');
 
-            const sLabels = conf.s_labels || Array(20).fill('');
+                if (!countGroupsInput || !countTasksInput) {
+                    console.error("Wizard Inputs missing!");
+                    return;
+                }
 
-            // 1. Render Groups (Right) from DATA
-            pCanvas.innerHTML = '';
+                const countGroups = parseInt(countGroupsInput.value) || 5;
+                const countTasks = parseInt(countTasksInput.value) || 10;
 
-            WIZARD_DATA.groups.forEach(g => {
-                pCanvas.innerHTML += `
+                // Clear and Regen Data
+                WIZARD_DATA.groups = [];
+                // Preserve tasks if we want? For now reset to clean state on config change
+                // WIZARD_DATA.tasks = []; 
+
+                for (let i = 0; i < countGroups; i++) {
+                    WIZARD_DATA.groups.push({
+                        id: `P-${i + 1}`,
+                        name: `Phase ${i + 1}`,
+                        tasks: []
+                    });
+                }
+
+                console.log(`Generated ${WIZARD_DATA.groups.length} groups`);
+                await hydrateWizardUI();
+
+            } catch (e) {
+                console.error("Error in loadWizardConfig:", e);
+                alert("Wizard Config Error: " + e.message);
+            }
+        }
+
+        async function hydrateWizardUI() {
+            try {
+                const sPool = document.getElementById('wiz-pool');
+                const pCanvas = document.getElementById('wiz-canvas');
+                if (!sPool || !pCanvas) {
+                    console.error("Wizard DOM Elements (pool/canvas) missing");
+                    return;
+                }
+
+                const type = document.getElementById('wiz-type').value || 'Shirt';
+                const taskLimit = parseInt(document.getElementById('count-tasks').value) || 10;
+
+                // 0. Fetch Config for Labels
+                let conf = {};
+                try {
+                    // Timeout fetch to prevent hanging
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 2000);
+                    const res = await fetchAuth(`${API}/config/${type}`, { signal: controller.signal });
+                    clearTimeout(timeoutId);
+                    if (res && res.ok) conf = await res.json();
+                } catch (e) {
+                    console.warn("Config fetch skipped/failed, using defaults", e);
+                }
+
+                const sLabels = conf.s_labels || Array(50).fill('');
+
+                // 1. Render Groups (Right)
+                let groupHtml = '';
+                WIZARD_DATA.groups.forEach(g => {
+                    groupHtml += `
                         <div class="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden group">
                            <div class="p-3 bg-purple-50 border-b border-purple-100 flex items-center justify-between">
                                 <div class="flex items-center gap-2 w-full">
@@ -2153,48 +2196,76 @@
                            </div>
                         </div>
                     `;
-            });
+                });
+                pCanvas.innerHTML = groupHtml;
 
-            // 2. Render SAVED Tasks into their zones (or pool if no parent)
-            const existingIds = new Set();
-            sPool.innerHTML = '';
+                // 2. Render SAVED Tasks into their zones (or pool if no parent)
+                // We need to re-find the drop zones we just created
+                const dropZones = {};
+                document.querySelectorAll('.wiz-drop-zone').forEach(z => {
+                    dropZones[z.dataset.group] = z;
+                });
 
-            WIZARD_DATA.tasks.forEach(t => {
-                existingIds.add(t.id);
+                const existingIds = new Set();
+                let poolHtml = '';
 
-                const cardHtml = `
-                    <div id="drag-${t.id}" class="wiz-task-item flex items-center gap-2 p-2 bg-white rounded border border-gray-200 shadow-sm hover:border-pink-300" 
-                             draggable="true" ondragstart="drag(event)" ondragend="dragEnd(event)">
-                            <span class="text-[10px] font-mono bg-pink-100 text-pink-600 px-1 rounded">${t.id}</span>
-                            <input type="text" value="${t.name}" class="text-sm border-none bg-transparent w-full focus:outline-none wiz-name-s">
-                    </div>
-                 `;
+                WIZARD_DATA.tasks.forEach(t => {
+                    existingIds.add(t.id);
+                    const cardHtml = `
+                        <div id="drag-${t.id}" class="wiz-task-item flex items-center gap-2 p-2 bg-white rounded border border-gray-200 shadow-sm hover:border-pink-300" 
+                                 draggable="true" ondragstart="drag(event)" ondragend="dragEnd(event)">
+                                <span class="text-[10px] font-mono bg-pink-100 text-pink-600 px-1 rounded">${t.id}</span>
+                                <input type="text" value="${t.name}" class="text-sm border-none bg-transparent w-full focus:outline-none wiz-name-s">
+                        </div>
+                     `;
 
-                const zone = document.querySelector(`.wiz-drop-zone[data-group="${t.parentId}"]`);
-                if (zone) {
-                    zone.innerHTML += cardHtml;
-                } else {
-                    sPool.innerHTML += cardHtml;
+                    if (t.parentId && dropZones[t.parentId]) {
+                        // Append directly to zone usually, but here we are string building?
+                        // Actually mixing string build and DOM append is tricky.
+                        // Better to append to DOM for tasks to ensure zones exist.
+                        dropZones[t.parentId].insertAdjacentHTML('beforeend', cardHtml);
+                    } else {
+                        poolHtml += cardHtml;
+                    }
+                });
+
+                // 3. Render UNUSED Tasks into Pool
+                for (let i = 0; i < taskLimit; i++) {
+                    const id = `S-${i + 1}`;
+                    if (existingIds.has(id)) continue;
+
+                    const lbl = sLabels[i] || '';
+                    const name = lbl || `Task ${i + 1}`;
+
+                    poolHtml += `
+                        <div id="drag-${id}" class="wiz-task-item flex items-center gap-2 p-2 bg-white rounded border border-gray-200 shadow-sm hover:border-pink-300" 
+                                 draggable="true" ondragstart="drag(event)" ondragend="dragEnd(event)">
+                                <span class="text-[10px] font-mono bg-pink-100 text-pink-600 px-1 rounded">${id}</span>
+                                <input type="text" value="${name}" class="text-sm border-none bg-transparent w-full focus:outline-none wiz-name-s">
+                        </div>
+                     `;
                 }
-            });
+                sPool.innerHTML = poolHtml;
 
-            // 3. Render UNUSED Tasks into Pool
-            for (let i = 0; i < taskLimit; i++) {
-                const id = `S-${i}`;
-                if (existingIds.has(id)) continue;
-
-                const lbl = sLabels[i] || '';
-                const name = lbl || `Task ${i + 1}`;
-
-                sPool.innerHTML += `
-                    <div id="drag-${id}" class="wiz-task-item flex items-center gap-2 p-2 bg-white rounded border border-gray-200 shadow-sm hover:border-pink-300" 
-                             draggable="true" ondragstart="drag(event)" ondragend="dragEnd(event)">
-                            <span class="text-[10px] font-mono bg-pink-100 text-pink-600 px-1 rounded">${id}</span>
-                            <input type="text" value="${name}" class="text-sm border-none bg-transparent w-full focus:outline-none wiz-name-s">
-                    </div>
-                 `;
+            } catch (e) {
+                console.error("Hydrate Error:", e);
             }
         }
+
+        async function toggleStatus(id) {
+            // ... (Keep existing toggleStatus logic if possible, or just re-paste it to be safe)
+            const g = ALL_GROUPS.find(item => item.id == id);
+            if (!g) return;
+            const newStatus = g.status === 'Paused' ? 'Active' : 'Paused';
+            g.status = newStatus;
+            if (CURRENT_BATCH && CURRENT_BATCH.id == g.id) openDetail(g.id);
+            renderDashboard();
+            try {
+                await fetchAuth(`${API}/groups/${g.id}/edit`, { method: 'POST', body: JSON.stringify({ status: newStatus }) });
+                showToast(`Batch ${newStatus === 'Paused' ? 'Paused' : 'Resumed'}`);
+            } catch (e) { console.error(e); }
+        }
+
 
         // --- DETAIL VIEW ---
         function openDetail(id) {
@@ -2206,24 +2277,6 @@
             document.getElementById('detail-type').textContent = CURRENT_BATCH.dress_type;
 
             renderDetailTable();
-        }
-
-        function renderDetailTable() {
-            const g = CURRENT_BATCH;
-            const tbody = document.getElementById('detail-table');
-            tbody.innerHTML = '';
-
-            let totalWorkTgt = 0;
-            let totalWorkCur = 0;
-
-            // 1. Separate Groups vs Tasks
-            const groups = g.required_stages.filter(s => s.type === 'group' || s.id.startsWith('P'));
-            const tasks = g.required_stages.filter(s => s.type === 'task' || s.id.startsWith('S'));
-
-            // 2. Map Tasks to Groups
-            const tree = {};
-            groups.forEach(grp => tree[grp.id] = { ...grp, children: [] });
-            tree['unassigned'] = { id: 'unassigned', name: 'Other Tasks', children: [] };
 
             tasks.forEach(t => {
                 if (t.parentId && tree[t.parentId]) {
