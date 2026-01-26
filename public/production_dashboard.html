@@ -2207,6 +2207,53 @@
             }
         }
 
+
+        // --- DAILY TARGET SYNC ---
+        async function updateDailyTarget(groupId, val) {
+            const v = parseInt(val) || 0;
+            const g = ALL_GROUPS.find(i => i.id == groupId);
+            if (!g) return;
+
+            // 1. Update Global Target
+            g.daily_target = v;
+
+            // 2. SYNC SUBTASKS (Flexible Logic)
+            // User wants "automatically change it".
+            // We update the target of all individual tasks to match the global daily target.
+            if (g.required_stages && Array.isArray(g.required_stages)) {
+                g.required_stages.forEach(s => {
+                    // Only update tasks, not groups? Or all?
+                    // Usually tasks are the ones with progress bars.
+                    if (!s.type || s.type === 'task' || (s.id && s.id.startsWith('S'))) {
+                        s.target = v;
+                    }
+                });
+            }
+
+            // 3. Persist
+            try {
+                await fetchAuth(`${API}/groups/${groupId}/edit`, {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        daily_target: v,
+                        required_stages: g.required_stages // Save updated task targets
+                    })
+                });
+                showToast(`Daily Target updated to ${v} (Synced to tasks)`);
+
+                // 4. Refresh View
+                if (CURRENT_BATCH && CURRENT_BATCH.id == groupId) {
+                    renderDetailTable(); // Refresh progress bars
+
+                    // Also update the header input itself if it wasn't the trigger (optional, but good for consistency)
+                    // But since this is triggered by onchange, the input has the value.
+                }
+            } catch (e) {
+                console.error(e);
+                showToast("Failed to update target", "error");
+            }
+        }
+
         // --- MISSING UTILITIES (Fixed & Robust) ---
         async function loadWizardConfig() {
             try {
