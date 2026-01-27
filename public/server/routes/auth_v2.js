@@ -49,7 +49,6 @@ router.post('/login', async (req, res) => {
             const accessToken = jwt.sign(
                 { id: user.id, username: user.username, role: user.role, schoolId: user.school_id },
                 'hardcoded_secret_key_fixed',
-                'hardcoded_secret_key_fixed',
                 { expiresIn: '12h' }
             );
 
