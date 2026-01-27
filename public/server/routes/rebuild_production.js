@@ -578,11 +578,14 @@ router.post('/groups/:id/reward', authenticateToken, async (req, res) => {
 // === NEW: GENERIC UPDATE + DAILY LOGGING ===
 router.post('/groups/:id/update', authenticateToken, async (req, res) => {
     try {
-        const { completed_stages, status, delay_reason, daily_increment, notes } = req.body;
+        const { completed_stages, status, delay_reason, daily_increment, notes, daily_target } = req.body;
         const id = req.params.id;
 
-        // 1. Handle Status / Delay
+        // 1. Handle Status / Delay / Target
         if (status) await query("UPDATE production_groups SET status = ? WHERE id = ?", [status, id]);
+        if (delay_reason) await query("UPDATE production_groups SET delay_reason = ? WHERE id = ?", [delay_reason, id]);
+        if (notes) await query("UPDATE production_groups SET notes = ? WHERE id = ?", [notes, id]);
+        if (daily_target !== undefined) await query("UPDATE production_groups SET daily_target = ? WHERE id = ?", [daily_target, id]);
         if (delay_reason) await query("UPDATE production_groups SET delay_reason = ? WHERE id = ?", [delay_reason, id]);
         if (notes) await query("UPDATE production_groups SET notes = ? WHERE id = ?", [notes, id]);
 
