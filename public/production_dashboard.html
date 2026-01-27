@@ -3747,40 +3747,188 @@
             const parsed = parseInt(newVal);
             if (isNaN(parsed) || parsed < 0) return;
 
-            const delta = parsed - current;
-            if (delta === 0) return;
+        } catch (e) {
+            alert("Failed to save: " + e.message);
+        }
+        }
 
-            // Optimistic Update
-            const g = ALL_GROUPS.find(i => i.id == id);
-            const today = new Date().toISOString().split('T')[0];
-            if (g && g.daily_history) {
-                const entry = g.daily_history.find(h => h.date === today);
-                if (entry) entry.qty = parsed;
-                else g.daily_history.push({ date: today, qty: parsed });
-            } else if (g) {
-                g.daily_history = [{ date: today, qty: parsed }];
+        // === AI MANAGER (SELF-HEALING SYSTEM) ===
+        class AIManager {
+            constructor() {
+                this.issues = [];
+                this.isScanning = false;
             }
 
-            // Refresh
-            openDetail(id);
+            async scan() {
+                this.isScanning = true;
+                this.updateUI();
+                await new Promise(r => setTimeout(r, 800)); // Fake scan effect
+                this.issues = [];
 
-            try {
-                await fetchAuth(`${API}/groups/${id}/update`, {
-                    method: 'POST',
-                    body: JSON.stringify({ daily_increment: delta })
+                const today = new Date().toISOString().split('T')[0];
+
+                ALL_GROUPS.forEach(g => {
+                    // 1. Check for Sync Mismatch (Progress > 0 but Daily = 0?)
+                    // Heuristic: If CreatedAt is TODAY, then Total Progress MUST = Daily Output
+                    const createdDate = g.created_at ? g.created_at.split('T')[0] : '';
+                    if (createdDate === today) {
+                        // Find last stage value
+                        let lastStageVal = 0;
+                        if (g.completed_stages) {
+                            // Find max value? No, find specific last stage?
+                            // Let's assume manual_override or find the last logic
+                            if (g.completed_stages.manual_override) lastStageVal = g.completed_stages.manual_override;
+                            else {
+                                // Find largest task value
+                                const taskVals = Object.values(g.completed_stages).map(v => parseInt(v) || 0);
+                                if (taskVals.length) lastStageVal = Math.max(...taskVals);
+                            }
+                        }
+
+                        // Find Daily
+                        let dailyVal = 0;
+                        if (g.daily_history) {
+                            const entry = g.daily_history.find(h => h.date === today);
+                            if (entry) dailyVal = entry.qty;
+                        }
+
+                        if (lastStageVal > dailyVal) {
+                            this.issues.push({
+                                id: g.id,
+                                type: 'sync',
+                                title: `Data Mismatch: Batch #${g.id}`,
+                                desc: `Tracking says ${lastStageVal} items done today, but Daily Log has only ${dailyVal}.`,
+                                action: 'Sync Now',
+                                fix: async () => {
+                                    await editDailyOutput(g.id, lastStageVal); // Reuse existing logic
+                                    this.scan(); // Re-scan
+                                }
+                            });
+                        }
+                    }
+
+                    // 2. Check for Missing Target
+                    if (!g.daily_target || g.daily_target === 0) {
+                        this.issues.push({
+                            id: g.id,
+                            type: 'target',
+                            title: `No Target: Batch #${g.id}`,
+                            desc: `Production is running without a goal. Efficiency likely drop.`,
+                            action: 'Set Goal (100)',
+                            fix: async () => {
+                                await updateDailyTarget(g.id, 100);
+                                this.scan();
+                            }
+                        });
+                    }
                 });
-                showToast("Daily Output Updated");
-            } catch (e) {
-                alert("Failed to save: " + e.message);
+
+                this.isScanning = false;
+                this.updateUI();
+            }
+
+            updateUI() {
+                const btn = document.getElementById('ai-manager-btn');
+                const badge = document.getElementById('ai-issue-count');
+                const modal = document.getElementById('ai-manager-modal');
+                const list = document.getElementById('ai-issue-list');
+                const scanText = document.getElementById('ai-scan-status');
+
+                if (this.isScanning) {
+                    if (scanText) scanText.textContent = "Scanning...";
+                    if (btn) btn.classList.add('animate-pulse');
+                    return;
+                }
+
+                if (btn) btn.classList.remove('animate-pulse');
+                if (scanText) scanText.textContent = this.issues.length > 0 ? `${this.issues.length} Issues Found` : "All Systems Nominal";
+
+                if (badge) {
+                    badge.textContent = this.issues.length;
+                    badge.classList.toggle('hidden', this.issues.length === 0);
+                }
+
+                if (list) {
+                    if (this.issues.length === 0) {
+                        list.innerHTML = `
+                            <div class="text-center p-8 text-slate-400">
+                                <i class="fa-solid fa-check-circle text-4xl text-green-500 mb-3"></i>
+                                <p>System Healthy. AI is monitoring.</p>
+                            </div>
+                        `;
+                    } else {
+                        list.innerHTML = this.issues.map((i, idx) => `
+                            <div class="bg-slate-800 p-4 rounded-lg border-l-4 border-amber-500 flex justify-between items-center animate-fade-in mb-2">
+                                <div>
+                                    <h4 class="font-bold text-slate-100 text-sm">${i.title}</h4>
+                                    <p class="text-xs text-slate-400">${i.desc}</p>
+                                </div>
+                                <button onclick="window.AI_INSTANCE.runFix(${idx})" class="text-xs bg-amber-500 hover:bg-amber-400 text-white px-3 py-1.5 rounded font-bold shadow-lg shadow-amber-500/20 transition">
+                                    ${i.action} <i class="fa-solid fa-wand-magic-sparkles ml-1"></i>
+                                </button>
+                            </div>
+                        `).join('');
+                    }
+                }
+            }
+
+            async runFix(idx) {
+                if (this.issues[idx]) {
+                    const btn = document.activeElement;
+                    if (btn) btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Fixing...`;
+                    await this.issues[idx].fix();
+                    showToast("AI Fix Applied Successfully");
+                }
             }
         }
+
+        window.AI_INSTANCE = new AIManager();
 
         // Auto-Run: Schema Fix
         document.addEventListener('DOMContentLoaded', () => {
             // Force check capability
             fetchAuth(`${API}/admin/fix-schema-force`, { method: 'POST' }).catch(() => { });
-        });
 
+            loadBatches().then(() => {
+                setTimeout(() => window.AI_INSTANCE.scan(), 2000); // Auto-scan after load
+            });
+
+            // Inject AI Button if not exists
+            const header = document.querySelector('header .flex.items-center.gap-4'); // Right side header
+            if (header && !document.getElementById('ai-manager-btn')) {
+                const div = document.createElement('div');
+                div.innerHTML = `
+                    <button onclick="document.getElementById('ai-manager-modal').classList.remove('hidden'); window.AI_INSTANCE.scan()" id="ai-manager-btn" class="relative group bg-slate-800 hover:bg-slate-700 text-slate-300 p-2 rounded-lg border border-slate-700 transition">
+                        <i class="fa-solid fa-robot text-purple-400 group-hover:text-purple-300"></i>
+                        <span id="ai-issue-count" class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-bold px-1.5 rounded-full hidden animate-bounce">0</span>
+                    </button>
+                    
+                    <!-- AI MODAL -->
+                    <div id="ai-manager-modal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-sm hidden z-[200] flex items-center justify-center animate-fade-in">
+                        <div class="bg-slate-900 border border-slate-700 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden">
+                            <div class="bg-slate-800 p-4 flex justify-between items-center border-b border-slate-700">
+                                <h3 class="font-bold text-white flex items-center gap-2">
+                                    <i class="fa-solid fa-robot text-purple-500"></i> AI Manager
+                                </h3>
+                                <button onclick="document.getElementById('ai-manager-modal').classList.add('hidden')" class="text-slate-400 hover:text-white">
+                                    <i class="fa-solid fa-times"></i>
+                                </button>
+                            </div>
+                            <div class="p-4 bg-slate-900 min-h-[200px]">
+                                <div class="flex justify-between items-end mb-4">
+                                    <h4 id="ai-scan-status" class="text-xs font-bold text-slate-500 uppercase tracking-widest">Scanning...</h4>
+                                    <button onclick="window.AI_INSTANCE.scan()" class="text-xs text-purple-400 hover:text-purple-300 font-bold"><i class="fa-solid fa-rotate"></i> Re-scan</button>
+                                </div>
+                                <div id="ai-issue-list" class="flex flex-col gap-2">
+                                    <!-- Dynamic -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                header.prepend(div); // Add to left of existing buttons
+            }
+        });
 
     </script>
 </body>
