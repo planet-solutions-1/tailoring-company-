@@ -1553,7 +1553,13 @@
                         delete tree['unassigned'];
                     }
 
+                    // Identify Last Stage for Badge
+                    let lastTaskId = null;
+                    const allTasks = g.required_stages.filter(s => s.type === 'task' || (s.id && !s.id.startsWith('P')));
+                    if (allTasks.length > 0) lastTaskId = allTasks[allTasks.length - 1].id;
+
                     const renderGroup = (grp) => {
+                        // ... (existing vars)
                         let gTgt = 0;
                         let gCur = 0;
                         // Correctly use safe access for completed_stages
@@ -1597,13 +1603,20 @@
                             if (current >= tgt && tgt > 0) { status = 'Done'; statusColor = 'bg-green-100 text-green-600'; }
                             else if (current > 0) { status = 'In Progress'; statusColor = 'bg-blue-100 text-blue-600'; }
 
+                            // Badge Logic
+                            const isFinal = (s.id === lastTaskId);
+                            const finalBadge = isFinal ? `<span class="ml-2 text-[10px] font-bold bg-indigo-100 text-indigo-600 px-1.5 py-0.5 rounded border border-indigo-200">🏁 Final Stage</span>` : '';
+
                             const tr = document.createElement('tr');
                             tr.innerHTML = `
                                 <td class="p-3 pl-8 text-gray-400 font-mono text-xs border-l-4 border-l-transparent hover:border-l-blue-400 transition">
                                     <svg class="w-3 h-3 inline mr-1 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                                     ${s.id}
                                 </td>
-                                <td class="p-3 font-medium text-slate-700 text-sm">${s.name}</td>
+                                <td class="p-3 font-medium text-slate-700 text-sm">
+                                    ${s.name}
+                                    ${finalBadge}
+                                </td>
                                 <td class="p-3 text-sm text-gray-500">${s.assigned || '-'}</td>
                                 <td class="p-3 text-center"><span id="stage-status-badge-${s.id}" class="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs font-bold">${pct}%</span></td>
                                 <td class="p-3 w-64">
@@ -1664,7 +1677,13 @@
                                 <div class="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden flex items-center" title="Daily Goal Progress">
                                     <div id="daily-progress-bar-${g.id}" class="h-full ${dailyColor} transition-all duration-500" style="width: ${Math.min(dailyPct, 100)}%"></div>
                                 </div>
-                                <div class="text-[9px] text-center font-bold text-slate-400" id="daily-progress-text-${g.id}">${todayOutput} / ${g.daily_target || 0} (${dailyPct}%)</div>
+                                <div class="flex items-center justify-center gap-2 mt-1">
+                                    <span class="text-[9px] font-bold text-slate-400">Today:</span>
+                                    <button onclick="editDailyOutput('${g.id}', ${todayOutput})" class="text-[10px] font-bold text-slate-600 border-b border-dotted border-slate-400 hover:text-blue-600 hover:border-blue-600 transition" title="Click to manually edit today's output">
+                                        ${todayOutput}
+                                    </button>
+                                    <span class="text-[9px] font-bold text-slate-400">/ ${g.daily_target || 0} (${dailyPct}%)</span>
+                                </div>
                                 
                                 <!-- BOOST REWARD LOGIC -->
                                 ${dailyPct >= 100 ? `
@@ -3719,6 +3738,40 @@
                 console.error(e);
                 showToast("Failed to save target", "error");
                 if (statusEl) statusEl.textContent = "Error";
+            }
+        }
+
+        async function editDailyOutput(id, current) {
+            const newVal = prompt("Set Today's Output manually:", current);
+            if (newVal === null) return;
+            const parsed = parseInt(newVal);
+            if (isNaN(parsed) || parsed < 0) return;
+
+            const delta = parsed - current;
+            if (delta === 0) return;
+
+            // Optimistic Update
+            const g = ALL_GROUPS.find(i => i.id == id);
+            const today = new Date().toISOString().split('T')[0];
+            if (g && g.daily_history) {
+                const entry = g.daily_history.find(h => h.date === today);
+                if (entry) entry.qty = parsed;
+                else g.daily_history.push({ date: today, qty: parsed });
+            } else if (g) {
+                g.daily_history = [{ date: today, qty: parsed }];
+            }
+
+            // Refresh
+            openDetail(id);
+
+            try {
+                await fetchAuth(`${API}/groups/${id}/update`, {
+                    method: 'POST',
+                    body: JSON.stringify({ daily_increment: delta })
+                });
+                showToast("Daily Output Updated");
+            } catch (e) {
+                alert("Failed to save: " + e.message);
             }
         }
 
