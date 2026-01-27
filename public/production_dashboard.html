@@ -3810,7 +3810,7 @@
                         action: 'Ignore', fix: async () => { }
                     });
                 }
-                const token = localStorage.getItem('token');
+                const token = sessionStorage.getItem('token');
                 if (!token) {
                     this.issues.push({
                         id: 'sec-auth', type: 'security', title: 'Security: No Auth Token',
