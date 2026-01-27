@@ -508,6 +508,15 @@ app.get('/tailor', requireCookieAuth, (req, res) => res.sendFile(path.join(__dir
 app.get('/admin', requireCookieAuth, (req, res) => res.sendFile(path.join(__dirname, '../admin_dashboard.html')));
 app.get('/login', (req, res) => res.sendFile(path.join(__dirname, '../login.html')));
 
+app.get('/api/health', async (req, res) => {
+    try {
+        await db.query("SELECT 1");
+        res.json({ status: 'ok', database: 'connected', time: new Date().toISOString() });
+    } catch (e) {
+        res.status(500).json({ status: 'error', database: e.message });
+    }
+});
+
 // Serve Static Files (CSS, JS, Images) - Excluding HTML due to blocker above
 app.use(express.static(path.join(__dirname, '../')));
 
