@@ -11,9 +11,36 @@ const path = require('path');
 // Fix: Import DB and Auth for SQL Support (Relative)
 const db = require('./config/db');
 const { authenticateToken } = require('./middleware/auth');
+const cookieParser = require('cookie-parser');
+const jwt = require('jsonwebtoken'); // Required for verification
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+app.use(cookieParser()); // Enable Cookie Parsing
+
+// ---------------------------------------------------------
+// SECURITY: COOKIE AUTH GUARD (Blocks Unauthorized Page Access)
+// ---------------------------------------------------------
+const requireCookieAuth = (req, res, next) => {
+    // 1. Check Cookie
+    const token = req.cookies.token;
+
+    if (!token) {
+        // No Token -> Redirect to Login
+        return res.redirect('/login');
+    }
+
+    // 2. Verify Token
+    jwt.verify(token, 'hardcoded_secret_key_fixed', (err, user) => {
+        if (err) {
+            // Invalid/Expired -> Redirect to Login
+            return res.redirect('/login');
+        }
+        // Valid -> Attach User & Proceed
+        req.user = user;
+        next();
+    });
+};
 
 // Security: Rate Limiters
 // 1. Strict Limiter for Login (Anti-Brute Force)
@@ -472,13 +499,13 @@ app.use((req, res, next) => {
     next();
 });
 
-// 2. Map Clean Routes to Html Files
-app.get('/company', (req, res) => res.sendFile(path.join(__dirname, '../dashboard_fixed.html')));
-app.get('/school', (req, res) => res.sendFile(path.join(__dirname, '../school_dashboard.html')));
-app.get('/production', (req, res) => res.sendFile(path.join(__dirname, '../production_dashboard.html')));
-app.get('/packing', (req, res) => res.sendFile(path.join(__dirname, '../packing_dashboard.html')));
-app.get('/tailor', (req, res) => res.sendFile(path.join(__dirname, '../planet_editor.html')));
-app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, '../admin_dashboard.html')));
+// 2. Map Clean Routes to Html Files (PROTECTED)
+app.get('/company', requireCookieAuth, (req, res) => res.sendFile(path.join(__dirname, '../dashboard_fixed.html')));
+app.get('/school', requireCookieAuth, (req, res) => res.sendFile(path.join(__dirname, '../school_dashboard.html')));
+app.get('/production', requireCookieAuth, (req, res) => res.sendFile(path.join(__dirname, '../production_dashboard.html')));
+app.get('/packing', requireCookieAuth, (req, res) => res.sendFile(path.join(__dirname, '../packing_dashboard.html')));
+app.get('/tailor', requireCookieAuth, (req, res) => res.sendFile(path.join(__dirname, '../planet_editor.html')));
+app.get('/admin', requireCookieAuth, (req, res) => res.sendFile(path.join(__dirname, '../admin_dashboard.html')));
 app.get('/login', (req, res) => res.sendFile(path.join(__dirname, '../login.html')));
 
 // Serve Static Files (CSS, JS, Images) - Excluding HTML due to blocker above

@@ -49,8 +49,17 @@ router.post('/login', async (req, res) => {
             const accessToken = jwt.sign(
                 { id: user.id, username: user.username, role: user.role, schoolId: user.school_id },
                 'hardcoded_secret_key_fixed',
+                'hardcoded_secret_key_fixed',
                 { expiresIn: '12h' }
             );
+
+            // SECURITY: Set HTTP-Only Cookie for Dashboard Access
+            res.cookie('token', accessToken, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production', // Secure in Prod
+                maxAge: 12 * 60 * 60 * 1000 // 12 Hours
+            });
+
             res.json({
                 accessToken,
                 role: user.role,
