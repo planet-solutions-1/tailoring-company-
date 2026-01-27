@@ -1664,7 +1664,7 @@
                                 <div class="w-full h-1.5 bg-slate-100 rounded-full overflow-hidden flex items-center" title="Daily Goal Progress">
                                     <div id="daily-progress-bar-${g.id}" class="h-full ${dailyColor} transition-all duration-500" style="width: ${Math.min(dailyPct, 100)}%"></div>
                                 </div>
-                                <div class="text-[9px] text-center font-bold text-slate-400" id="daily-progress-text-${g.id}">${dailyPct}% Achieved</div>
+                                <div class="text-[9px] text-center font-bold text-slate-400" id="daily-progress-text-${g.id}">${todayOutput} / ${g.daily_target || 0} (${dailyPct}%)</div>
                                 
                                 <!-- BOOST REWARD LOGIC -->
                                 ${dailyPct >= 100 ? `
@@ -3669,6 +3669,29 @@
             // Optimistic Update
             const g = ALL_GROUPS.find(i => i.id == id);
             if (g) g.daily_target = target;
+
+            // --- INSTANT DOM REPAINT (Fix for flexibility) ---
+            const today = new Date().toISOString().split('T')[0];
+            let todayOutput = 0;
+            if (g && g.daily_history && Array.isArray(g.daily_history)) {
+                const entry = g.daily_history.find(h => h.date === today);
+                if (entry) todayOutput = entry.qty || 0;
+            }
+            const pct = target > 0 ? Math.round((todayOutput / target) * 100) : 0;
+
+            // Update Bar
+            const bar = document.getElementById(`daily-progress-bar-${id}`);
+            if (bar) {
+                bar.style.width = `${Math.min(pct, 100)}%`;
+                bar.className = `h-full ${pct >= 100 ? 'bg-green-500' : 'bg-indigo-500'} transition-all duration-500`;
+            }
+
+            // Update Text
+            const txt = document.getElementById(`daily-progress-text-${id}`);
+            if (txt) {
+                txt.textContent = `${todayOutput} / ${target} (${pct}%)`; // Better Label
+            }
+            // ------------------------------------------------
 
             // Show "Saving..."
             const statusEl = document.getElementById(`target-save-status-${id}`);
