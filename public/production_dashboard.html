@@ -3823,41 +3823,60 @@
                 if (scanText) scanText.innerHTML = `<span class="w-2 h-2 rounded-full bg-purple-500 animate-pulse"></span> Auditing Workflows...`;
 
                 const today = new Date().toISOString().split('T')[0];
-                const seenIds = new Set(); // Prevent duplicates
+                const seenIssues = new Set();
 
                 ALL_GROUPS.forEach(g => {
-                    if (seenIds.has(g.id)) return;
-                    seenIds.add(g.id);
-
                     // 0. MATH INTEGRITY: Quantity Check
                     if (!g.quantity || g.quantity <= 0) {
-                        this.issues.push({
-                            id: g.id, type: 'math', title: `Invalid Quantity: Batch #${g.id}`,
-                            desc: `Batch has 0 or negative quantity.`,
-                            action: 'Edit Batch', fix: async () => { window.location.href = 'planet_editor.html'; }
-                        });
+                        const issueId = `math-${g.id}`;
+                        if (!seenIssues.has(issueId)) {
+                            seenIssues.add(issueId);
+                            this.issues.push({
+                                id: issueId, type: 'math', title: `Invalid Quantity: Batch #${g.id}`,
+                                desc: `Batch has 0 or negative quantity.`,
+                                action: 'Fix to 100', // Actual Fix
+                                fix: async () => {
+                                    try {
+                                        await fetchAuth(`${API}/groups/${g.id}/update`, {
+                                            method: 'POST',
+                                            body: JSON.stringify({ quantity: 100 }) // Auto-set to 100
+                                        });
+                                        showToast(`Batch #${g.id} Quantity set to 100`);
+                                        await loadBatches(true);
+                                        this.scan();
+                                    } catch (e) { console.error(e); }
+                                }
+                            });
+                        }
                     }
 
                     // 1. WORKFLOW CYCLE: Stage Check
-                    // Heuristic: Must have at least "Cutting" (or generic S-1) and some progress
                     const hasStages = Array.isArray(g.required_stages) && g.required_stages.length > 0;
                     if (!hasStages) {
-                        this.issues.push({
-                            id: g.id, type: 'workflow', title: `Empty Workflow: Batch #${g.id}`,
-                            desc: `Batch has no stages defined. Cannot track.`,
-                            action: 'Archive', fix: async () => { /* Complex logic, let user handle */ }
-                        });
+                        const issueId = `flow-${g.id}`;
+                        if (!seenIssues.has(issueId)) {
+                            seenIssues.add(issueId);
+                            this.issues.push({
+                                id: issueId, type: 'workflow', title: `Empty Workflow: Batch #${g.id}`,
+                                desc: `Batch has no stages defined. Cannot track.`,
+                                action: 'Archive', fix: async () => { /* Complex logic, let user handle */ }
+                            });
+                        }
                     } else {
                         // Check for Overproduction (Math Integrity)
                         g.required_stages.forEach(s => {
                             const tgt = parseInt(s.target) || 0;
                             const cur = parseInt(g.completed_stages?.[s.id]) || 0;
                             if (tgt > 0 && cur > tgt) {
-                                this.issues.push({
-                                    id: g.id + s.id, type: 'math', title: `Overproduction: Batch #${g.id}`,
-                                    desc: `Stage "${s.label || s.id}" has ${cur}/${tgt} items. (>100%)`,
-                                    action: 'Review', fix: async () => { }
-                                });
+                                const issueId = `over-${g.id}-${s.id}`;
+                                if (!seenIssues.has(issueId)) {
+                                    seenIssues.add(issueId);
+                                    this.issues.push({
+                                        id: issueId, type: 'math', title: `Overproduction: Batch #${g.id}`,
+                                        desc: `Stage "${s.label || s.id}" has ${cur}/${tgt} items. (>100%)`,
+                                        action: 'Review', fix: async () => { }
+                                    });
+                                }
                             }
                         });
                     }
@@ -3881,33 +3900,42 @@
                         }
 
                         if (lastStageVal > dailyVal) {
-                            this.issues.push({
-                                id: g.id,
-                                type: 'sync',
-                                title: `Data Mismatch: Batch #${g.id}`,
-                                desc: `Tracking says ${lastStageVal} items done today, but Daily Log has only ${dailyVal}.`,
-                                action: 'Sync Now',
-                                fix: async () => {
-                                    await autoFixDailySync(g.id, dailyVal, lastStageVal);
-                                    this.scan(); // Re-scan
-                                }
-                            });
+                            const issueId = `sync-${g.id}`;
+                            if (!seenIssues.has(issueId)) {
+                                seenIssues.add(issueId);
+                                this.issues.push({
+                                    id: issueId,
+                                    type: 'sync',
+                                    title: `Data Mismatch: Batch #${g.id}`,
+                                    desc: `Tracking says ${lastStageVal} items done today, but Daily Log has only ${dailyVal}.`,
+                                    action: 'Sync Now',
+                                    fix: async () => {
+                                        await autoFixDailySync(g.id, dailyVal, lastStageVal);
+                                        this.scan(); // Re-scan
+                                    }
+                                });
+                            }
                         }
                     }
 
                     // 2. Check for Missing Target
                     if (!g.daily_target || g.daily_target === 0) {
-                        this.issues.push({
-                            id: g.id,
-                            type: 'target',
-                            title: `No Target: Batch #${g.id}`,
-                            desc: `Production is running without a goal.`,
-                            action: 'Set Goal (100)',
-                            fix: async () => {
-                                await updateDailyTarget(g.id, 100);
-                                this.scan();
-                            }
-                        });
+                        const issueId = `target-${g.id}`;
+                        if (!seenIssues.has(issueId)) {
+                            seenIssues.add(issueId);
+                            this.issues.push({
+                                id: issueId,
+                                type: 'target',
+                                title: `No Target: Batch #${g.id}`,
+                                desc: `Production is running without a goal.`,
+                                action: 'Set Goal (100)',
+                                fix: async () => {
+                                    await updateDailyTarget(g.id, 100);
+                                    await loadBatches(true); // Force Reload
+                                    this.scan();
+                                }
+                            });
+                        }
                     }
                 });
 
