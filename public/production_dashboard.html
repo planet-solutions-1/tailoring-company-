@@ -3756,10 +3756,33 @@
             if (newVal === null) return;
             const parsed = parseInt(newVal);
             if (isNaN(parsed) || parsed < 0) return;
+            
+            const delta = parsed - current;
+            if (delta === 0) return;
 
-        } catch (e) {
-            alert("Failed to save: " + e.message);
-        }
+             // Optimistic Update
+            const g = ALL_GROUPS.find(i => i.id == id);
+             const today = new Date().toISOString().split('T')[0];
+             if (g && g.daily_history) {
+                 const entry = g.daily_history.find(h => h.date === today);
+                 if (entry) entry.qty = parsed;
+                 else g.daily_history.push({ date: today, qty: parsed });
+             } else if (g) {
+                 g.daily_history = [{ date: today, qty: parsed }];
+             }
+
+             // Refresh
+             openDetail(id);
+
+            try {
+                await fetchAuth(`${API}/groups/${id}/update`, {
+                    method: 'POST',
+                    body: JSON.stringify({ daily_increment: delta })
+                });
+                showToast("Daily Output Updated");
+            } catch (e) {
+                alert("Failed to save: " + e.message);
+            }
         }
 
         // === AI MANAGER (SELF-HEALING SYSTEM) ===
