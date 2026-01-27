@@ -540,21 +540,61 @@ app.get('/debug-fs', (req, res) => {
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 
-    // Auto-Cleanup Logs Every 24 Hours
+    // Auto-Cleanup Logs & Trash Every 24 Hours
     setInterval(() => {
-        console.log("Running Auto-Cleanup for Logs > 7 Days...");
-        const days = 7;
-        let sql;
-        if (db.execute) sql = "DELETE FROM activity_logs WHERE created_at < DATE_SUB(NOW(), INTERVAL ? DAY)";
-        else sql = "DELETE FROM activity_logs WHERE created_at < date('now', '-' || ? || ' days')";
+        console.log("Running Auto-Cleanup Job (Logs & Trash)...");
+
+        // 1. Logs > 7 Days
+        const logDays = 7;
+        let logSql;
+        if (db.execute) logSql = "DELETE FROM activity_logs WHERE created_at < DATE_SUB(NOW(), INTERVAL ? DAY)";
+        else logSql = "DELETE FROM activity_logs WHERE created_at < date('now', '-' || ? || ' days')";
+
+        // 2. Trash > 5 Days (PERMANENT DELETE)
+        const trashDays = 5;
+        let trashSchoolSql, trashStudentSql;
 
         if (db.execute) {
-            db.execute(sql, [days]).then(() => console.log("Auto-Cleanup Done")).catch(e => console.error("Auto-Cleanup Error", e));
+            // MySQL
+            trashSchoolSql = "DELETE FROM schools WHERE is_deleted = 1 AND deleted_at < DATE_SUB(NOW(), INTERVAL ? DAY)";
+            trashStudentSql = "DELETE FROM students WHERE is_deleted = 1 AND deleted_at < DATE_SUB(NOW(), INTERVAL ? DAY)";
+
+            db.execute(logSql, [logDays]).catch(e => console.error("Log Cleanup Error", e));
+            db.execute(trashSchoolSql, [trashDays]).catch(e => console.error("School Trash Cleanup Error", e));
+            db.execute(trashStudentSql, [trashDays]).catch(e => console.error("Student Trash Cleanup Error", e));
+
         } else {
-            db.run(sql, [days], (err) => {
-                if (err) console.error("Auto-Cleanup Error", err);
-                else console.log("Auto-Cleanup Done");
+            // SQLite
+            trashSchoolSql = "DELETE FROM schools WHERE is_deleted = 1 AND deleted_at < date('now', '-' || ? || ' days')";
+            trashStudentSql = "DELETE FROM students WHERE is_deleted = 1 AND deleted_at < date('now', '-' || ? || ' days')";
+
+            db.serialize(() => {
+                db.run(logSql, [logDays]);
+                db.run(trashSchoolSql, [trashDays]);
+                db.run(trashStudentSql, [trashDays]);
             });
         }
     }, 24 * 60 * 60 * 1000); // 24 Hours
+
+    // SCHEMA MIGRATION: Ensure Soft Delete Columns Exist
+    setTimeout(async () => {
+        const softDeleteCols = [
+            "ALTER TABLE schools ADD COLUMN is_deleted BOOLEAN DEFAULT 0",
+            "ALTER TABLE schools ADD COLUMN deleted_at TIMESTAMP",
+            "ALTER TABLE students ADD COLUMN is_deleted BOOLEAN DEFAULT 0",
+            "ALTER TABLE students ADD COLUMN deleted_at TIMESTAMP"
+        ];
+
+        for (const sql of softDeleteCols) {
+            try {
+                if (db.execute) await db.execute(sql);
+                else {
+                    await new Promise((resolve, reject) => {
+                        db.run(sql, (err) => err ? reject(err) : resolve());
+                    });
+                }
+            } catch (e) { /* Ignore 'duplicate column' errors */ }
+        }
+        console.log("Schema Check: Soft Delete columns ensured.");
+    }, 5000); // Wait 5s for DB connection
 });

@@ -197,9 +197,9 @@ router.get('/schools/:id', authenticateToken, (req, res) => {
 // GET /api/data/schools - List all schools
 router.get('/schools', authenticateToken, requireRole('admin'), (req, res) => {
     if (db.execute) {
-        db.execute("SELECT * FROM schools").then(([rows]) => res.json(rows)).catch(err => res.status(500).json({ error: err.message }));
+        db.execute("SELECT * FROM schools WHERE is_deleted = 0 OR is_deleted IS NULL").then(([rows]) => res.json(rows)).catch(err => res.status(500).json({ error: err.message }));
     } else {
-        db.all("SELECT * FROM schools", [], (err, rows) => {
+        db.all("SELECT * FROM schools WHERE is_deleted = 0 OR is_deleted IS NULL", [], (err, rows) => {
             if (err) return res.status(500).json({ error: err.message });
             res.json(rows);
         });
@@ -343,41 +343,20 @@ router.put('/school/:id', authenticateToken, requireRole('company'), (req, res) 
 router.delete('/schools/:id', authenticateToken, requireRole('company'), async (req, res) => {
     const { id } = req.params;
 
-    if (db.execute) {
-        // MySQL Cascade Delete
-        try {
-            await db.execute("DELETE FROM measurements WHERE student_id IN (SELECT id FROM students WHERE school_id = ?)", [id]);
-            await db.execute("DELETE FROM orders WHERE student_id IN (SELECT id FROM students WHERE school_id = ?)", [id]);
-            await db.execute("DELETE FROM patterns WHERE school_id = ?", [id]);
-            await db.execute("DELETE FROM users WHERE school_id = ? AND role != 'company'", [id]);
-            await db.execute("DELETE FROM complaints WHERE school_id = ?", [id]);
-            await db.execute("DELETE FROM access_codes WHERE school_id = ?", [id]);
-            await db.execute("DELETE FROM students WHERE school_id = ?", [id]);
-            await db.execute("DELETE FROM schools WHERE id = ?", [id]);
-
-            if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'DELETE_SCHOOL', `Deleted School #${id}`, req.user.schoolId, req.user.role);
-            res.json({ message: "School and all related data deleted successfully" });
-        } catch (e) {
-            console.error("Delete Error", e);
-            res.status(500).json({ error: e.message });
-        }
-    } else {
-        // SQLite
-        db.serialize(() => {
-            db.run("DELETE FROM measurements WHERE student_id IN (SELECT id FROM students WHERE school_id = ?)", [id]);
-            db.run("DELETE FROM orders WHERE student_id IN (SELECT id FROM students WHERE school_id = ?)", [id]);
-            db.run("DELETE FROM students WHERE school_id = ?", [id]);
-            db.run("DELETE FROM patterns WHERE school_id = ?", [id]);
-            db.run("DELETE FROM users WHERE school_id = ? AND role != 'company'", [id]);
-            db.run("DELETE FROM complaints WHERE school_id = ?", [id]);
-            db.run("DELETE FROM access_codes WHERE school_id = ?", [id]);
-
-            db.run("DELETE FROM schools WHERE id = ?", [id], function (err) {
-                if (err) return res.status(500).json({ error: err.message });
-                if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'DELETE_SCHOOL', `Deleted School #${id}`, req.user.schoolId, req.user.role);
-                res.json({ message: "School and all related data deleted successfully" });
+    // SOFT DELETE
+    try {
+        const sql = "UPDATE schools SET is_deleted = 1, deleted_at = CURRENT_TIMESTAMP WHERE id = ?";
+        if (db.execute) await db.execute(sql, [id]);
+        else {
+            await new Promise((resolve, reject) => {
+                db.run(sql, [id], (err) => err ? reject(err) : resolve());
             });
-        });
+        }
+
+        if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'DELETE_SCHOOL', `Soft Deleted School #${id}`, req.user.schoolId, req.user.role);
+        res.json({ message: "School moved to Recycle Bin" });
+    } catch (e) {
+        res.status(500).json({ error: e.message });
     }
 });
 
@@ -683,7 +662,7 @@ router.get('/students/:schoolId', authenticateToken, (req, res) => {
         FROM students s
         LEFT JOIN measurements m ON s.id = m.student_id
         LEFT JOIN orders o ON s.id = o.student_id
-        WHERE s.school_id = ? AND s.is_active = 1
+        WHERE s.school_id = ? AND s.is_active = 1 AND (s.is_deleted = 0 OR s.is_deleted IS NULL)
     `;
 
     db.all(query, [requestedSchoolId], (err, rows) => {
@@ -798,27 +777,115 @@ router.delete('/students/:id', authenticateToken, async (req, res) => {
         const locked = await checkLock(req, res, row.school_id);
         if (locked) return;
 
-        // Perform Delete
-        const studentId = row.id;
+        // SOFT DELETE IMPLEMENTATION
+        if (db.execute) {
+            await db.execute("UPDATE students SET is_deleted = 1, deleted_at = CURRENT_TIMESTAMP WHERE id = ?", [id]);
+        } else {
+            db.run("UPDATE students SET is_deleted = 1, deleted_at = CURRENT_TIMESTAMP WHERE id = ?", [id]);
+        }
 
-        // Manual Cascade Delete
-        // Using db.serialize or chained callbacks (Since we are in async, we can just nest or promise)
-        // For simplicity, we keep the callback chain for the deletes as they dont need to return values to us.
-        db.run("DELETE FROM measurements WHERE student_id = ?", [studentId], (errMc) => {
-            if (errMc) console.error("Warn: Measurement delete failed", errMc.message);
-            db.run("DELETE FROM orders WHERE student_id = ?", [studentId], (errOrd) => {
-                db.run("DELETE FROM students WHERE id = ?", [studentId], function (err) {
-                    if (err) return res.status(500).json({ error: err.message });
-                    if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'DELETE_STUDENT', `Deleted student: ${row.name}`, studentId && row.school_id ? row.school_id : (req.user.schoolId || req.user.schoolId), req.user.role);
-                    res.json({ message: "Student and related data deleted" });
-                });
-            });
-        });
+        if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'DELETE_STUDENT', `Soft Deleted Student #${id}`, row.school_id, req.user.role);
+        res.json({ message: "Student moved to Recycle Bin" });
 
     } catch (e) {
         res.status(500).json({ error: e.message });
     }
 });
+
+// === RECYCLE BIN ROUTES ===
+
+// GET /api/data/trash/:type - Get Deleted Items
+router.get('/trash/:type', authenticateToken, requireRole('company'), async (req, res) => {
+    const { type } = req.params; // 'students' or 'schools'
+    const table = type === 'schools' ? 'schools' : 'students';
+
+    try {
+        const sql = `SELECT * FROM ${table} WHERE is_deleted = 1 ORDER BY deleted_at DESC`;
+        if (db.execute) {
+            const [rows] = await db.execute(sql);
+            res.json(rows);
+        } else {
+            db.all(sql, [], (err, rows) => {
+                if (err) return res.status(500).json({ error: err.message });
+                res.json(rows);
+            });
+        }
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// POST /api/data/restore/:type/:id - Restore Item
+router.post('/restore/:type/:id', authenticateToken, requireRole('company'), async (req, res) => {
+    const { type, id } = req.params;
+    const table = type === 'schools' ? 'schools' : 'students';
+
+    try {
+        const sql = `UPDATE ${table} SET is_deleted = 0, deleted_at = NULL WHERE id = ?`;
+        if (db.execute) await db.execute(sql, [id]);
+        else {
+            await new Promise((resolve, reject) => {
+                db.run(sql, [id], (err) => err ? reject(err) : resolve());
+            });
+        }
+
+        if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'RESTORE', `Restored ${type} #${id}`);
+        res.json({ success: true, message: "Item Restored Successfully" });
+    } catch (e) { res.status(500).json({ error: e.message }); }
+});
+
+// DELETE /api/data/trash/:type/:id - Permanent Delete
+router.delete('/trash/:type/:id', authenticateToken, requireRole('company'), async (req, res) => {
+    const { type, id } = req.params;
+
+    if (type === 'schools') {
+        // Cascade Delete Logic for School (Same as original delete)
+        // ... (Call existing logic or duplicate safely)
+        // For now, let's reuse the logic from the old DELETE route which we will modify to be soft.
+        // Actually, we can just execute the hard delete query here.
+        try {
+            if (db.execute) {
+                await db.execute("DELETE FROM measurements WHERE student_id IN (SELECT id FROM students WHERE school_id = ?)", [id]);
+                await db.execute("DELETE FROM orders WHERE student_id IN (SELECT id FROM students WHERE school_id = ?)", [id]);
+                await db.execute("DELETE FROM patterns WHERE school_id = ?", [id]);
+                await db.execute("DELETE FROM users WHERE school_id = ? AND role != 'company'", [id]);
+                await db.execute("DELETE FROM complaints WHERE school_id = ?", [id]);
+                await db.execute("DELETE FROM access_codes WHERE school_id = ?", [id]);
+                await db.execute("DELETE FROM students WHERE school_id = ?", [id]);
+                await db.execute("DELETE FROM schools WHERE id = ?", [id]);
+            } else {
+                db.serialize(() => {
+                    db.run("DELETE FROM measurements WHERE student_id IN (SELECT id FROM students WHERE school_id = ?)", [id]);
+                    db.run("DELETE FROM orders WHERE student_id IN (SELECT id FROM students WHERE school_id = ?)", [id]);
+                    db.run("DELETE FROM students WHERE school_id = ?", [id]);
+                    db.run("DELETE FROM patterns WHERE school_id = ?", [id]);
+                    db.run("DELETE FROM users WHERE school_id = ? AND role != 'company'", [id]);
+                    db.run("DELETE FROM complaints WHERE school_id = ?", [id]);
+                    db.run("DELETE FROM access_codes WHERE school_id = ?", [id]);
+                    db.run("DELETE FROM schools WHERE id = ?", [id]);
+                });
+            }
+            res.json({ message: "Permanently Deleted School" });
+        } catch (e) { res.status(500).json({ error: e.message }); }
+
+    } else if (type === 'students') {
+        try {
+            if (db.execute) {
+                await db.execute("DELETE FROM measurements WHERE student_id = ?", [id]);
+                await db.execute("DELETE FROM orders WHERE student_id = ?", [id]);
+                await db.execute("DELETE FROM students WHERE id = ?", [id]);
+            } else {
+                db.serialize(() => {
+                    db.run("DELETE FROM measurements WHERE student_id = ?", [id]);
+                    db.run("DELETE FROM orders WHERE student_id = ?", [id]);
+                    db.run("DELETE FROM students WHERE id = ?", [id]);
+                });
+            }
+            res.json({ message: "Permanently Deleted Student" });
+        } catch (e) { res.status(500).json({ error: e.message }); }
+    } else {
+        res.status(400).json({ error: "Invalid Type" });
+    }
+});
+
 
 // POST /api/data/measurements
 // POST /api/data/measurements

@@ -44,26 +44,38 @@ if (process.env.RAILWAY_ENVIRONMENT || process.env.NODE_ENV === 'production') {
     // Map common methods to match SQLite style (helper wrapper)
     db = {
         get: async (sql, params, callback) => {
+            if (typeof params === 'function') { callback = params; params = []; }
             try {
                 if (!promisePool) return callback(new Error("Database not connected (No PromisePool)"));
                 // Use .query instead of .execute to avoid "Malformed Packet" errors on Railway proxies
                 const [rows] = await promisePool.query(sql, params);
                 callback(null, rows ? rows[0] : null);
-            } catch (e) { console.error("DB GET Error:", e.message); callback(e, null); }
+            } catch (e) {
+                console.error("DB GET Error:", e.message);
+                if (callback) callback(e, null);
+            }
         },
         all: async (sql, params, callback) => {
+            if (typeof params === 'function') { callback = params; params = []; }
             try {
                 if (!promisePool) return callback(new Error("Database not connected (No PromisePool)"));
                 const [rows] = await promisePool.query(sql, params);
                 callback(null, rows || []);
-            } catch (e) { console.error("DB ALL Error:", e.message); callback(e, null); }
+            } catch (e) {
+                console.error("DB ALL Error:", e.message);
+                if (callback) callback(e, null);
+            }
         },
         run: async (sql, params, callback) => {
+            if (typeof params === 'function') { callback = params; params = []; }
             try {
                 if (!promisePool) return callback(new Error("Database not connected (No PromisePool)"));
                 const [result] = await promisePool.query(sql, params);
                 if (callback) callback.call({ lastID: result.insertId, changes: result.affectedRows }, null);
-            } catch (e) { console.error("DB RUN Error:", e.message); if (callback) callback(e); }
+            } catch (e) {
+                console.error("DB RUN Error:", e.message);
+                if (callback) callback(e);
+            }
         },
         logActivity: (userId, username, action, details, schoolId = null, role = null) => {
             // FIRE AND FORGET - Don't crash

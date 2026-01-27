@@ -298,7 +298,12 @@
                     <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
                     <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
                 </svg>
-                User Management
+                Users & Access
+            </button>
+            <button onclick="openRecycleBin()" id="nav-trash"
+                class="nav-item clay-btn w-full flex items-center gap-4 px-6 py-4 text-sm mb-1 text-red-500 hover:text-red-600 transition-all mt-4">
+                <i class="fas fa-trash-alt text-lg"></i>
+                Recycle Bin
             </button>
             <button onclick="switchTab('access')" id="nav-access"
                 class="nav-item clay-btn w-full flex items-center gap-4 px-6 py-4 text-sm mb-1 text-gray-600 hover:text-blue-600 transition-all">
@@ -8266,6 +8271,161 @@
         } catch (e) {
             alert(e.message);
         }
+    }
+</script>
+<!-- RECYCLE BIN MODAL -->
+<div id="recycle-bin-modal" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog"
+    aria-modal="true">
+    <!-- Backdrop -->
+    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity backdrop-blur-sm"></div>
+
+    <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
+        <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+            <div
+                class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-4xl clay-card">
+                <div class="bg-white px-4 pb-4 pt-5 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div
+                            class="mx-auto flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                            <i class="fas fa-trash-restore text-red-600"></i>
+                        </div>
+                        <div class="mt-3 text-center sm:ml-4 sm:mt-0 sm:text-left w-full">
+                            <h3 class="text-xl font-bold leading-6 text-gray-900" id="modal-title">Recycle Bin</h3>
+                            <div class="mt-2 text-sm text-gray-500">
+                                <p class="mb-4">Items are automatically permanently deleted after 5 days.</p>
+
+                                <!-- Tabs -->
+                                <div class="flex gap-4 mb-4 border-b border-gray-200">
+                                    <button onclick="loadTrash('schools')" id="tab-trash-schools"
+                                        class="px-4 py-2 text-sm font-bold text-blue-600 border-b-2 border-blue-600">Schools</button>
+                                    <button onclick="loadTrash('students')" id="tab-trash-students"
+                                        class="px-4 py-2 text-sm font-bold text-gray-500 hover:text-blue-600">Students</button>
+                                </div>
+
+                                <!-- List -->
+                                <div class="overflow-hidden rounded-xl border border-gray-200">
+                                    <table class="min-w-full divide-y divide-gray-200">
+                                        <thead class="bg-gray-50">
+                                            <tr>
+                                                <th scope="col"
+                                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    ID / Name</th>
+                                                <th scope="col"
+                                                    class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    Deleted At</th>
+                                                <th scope="col"
+                                                    class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                                    Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="trash-list-body" class="bg-white divide-y divide-gray-200">
+                                            <!-- Trash Items -->
+                                        </tbody>
+                                    </table>
+                                    <div id="trash-loading" class="hidden p-4 text-center text-gray-500">Loading
+                                        trash...</div>
+                                    <div id="trash-empty" class="hidden p-8 text-center text-gray-400 italic">Trash is
+                                        empty</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
+                    <button type="button" onclick="closeRecycleBin()"
+                        class="mt-3 inline-flex w-full justify-center rounded-xl bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto clay-btn">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentTrashType = 'schools';
+
+    function openRecycleBin() {
+        document.getElementById('recycle-bin-modal').classList.remove('hidden');
+        loadTrash('schools');
+    }
+
+    function closeRecycleBin() {
+        document.getElementById('recycle-bin-modal').classList.add('hidden');
+    }
+
+    async function loadTrash(type) {
+        currentTrashType = type;
+        // Update Tabs
+        document.getElementById('tab-trash-schools').className = type === 'schools' ? 'px-4 py-2 text-sm font-bold text-blue-600 border-b-2 border-blue-600' : 'px-4 py-2 text-sm font-bold text-gray-500 hover:text-blue-600';
+        document.getElementById('tab-trash-students').className = type === 'students' ? 'px-4 py-2 text-sm font-bold text-blue-600 border-b-2 border-blue-600' : 'px-4 py-2 text-sm font-bold text-gray-500 hover:text-blue-600';
+
+        const tbody = document.getElementById('trash-list-body');
+        const loading = document.getElementById('trash-loading');
+        const empty = document.getElementById('trash-empty');
+
+        tbody.innerHTML = '';
+        loading.classList.remove('hidden');
+        empty.classList.add('hidden');
+
+        try {
+            const res = await fetch(`/api/data/trash/${type}`);
+            if (!res.ok) throw new Error('Failed to fetch trash');
+            const items = await res.json();
+
+            loading.classList.add('hidden');
+            if (items.length === 0) {
+                empty.classList.remove('hidden');
+                return;
+            }
+
+            items.forEach(item => {
+                const name = item.name || item.student_name || `#${item.id}`;
+                const date = new Date(item.deleted_at).toLocaleString();
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${name} <span class="text-xs text-gray-500">(ID: ${item.id})</span></td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${date}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium flex justify-end gap-2">
+                            <button onclick="restoreItem('${type}', ${item.id})" class="text-green-600 hover:text-green-900 bg-green-50 px-3 py-1 rounded-lg border border-green-200 shadow-sm transition-all hover:shadow-md">Restore ♻️</button>
+                            <button onclick="permanentDelete('${type}', ${item.id})" class="text-red-600 hover:text-red-900 bg-red-50 px-3 py-1 rounded-lg border border-red-200 shadow-sm transition-all hover:shadow-md">Delete 💥</button>
+                        </td>
+                    `;
+                tbody.appendChild(tr);
+            });
+
+        } catch (err) {
+            console.error("Trash Error", err);
+            loading.innerText = "Error loading trash";
+        }
+    }
+
+    async function restoreItem(type, id) {
+        if (!confirm(`Restore this ${type.slice(0, -1)}?`)) return;
+        try {
+            const res = await fetch(`/api/data/restore/${type}/${id}`, { method: 'POST' });
+            const d = await res.json();
+            if (res.ok) {
+                alert(d.message);
+                loadTrash(type);
+                // Refresh Main Tables if needed
+                if (type === 'schools' && typeof fetchSchoolsManage === 'function') fetchSchoolsManage();
+            } else {
+                alert('Error: ' + d.error);
+            }
+        } catch (e) { alert('Error: ' + e.message); }
+    }
+
+    async function permanentDelete(type, id) {
+        if (!confirm(`PERMANENTLY DELETE this ${type.slice(0, -1)}? This cannot be undone!`)) return;
+        try {
+            const res = await fetch(`/api/data/trash/${type}/${id}`, { method: 'DELETE' });
+            const d = await res.json();
+            if (res.ok) {
+                alert(d.message);
+                loadTrash(type);
+            } else {
+                alert('Error: ' + d.error);
+            }
+        } catch (e) { alert('Error: ' + e.message); }
     }
 </script>
 </body>
