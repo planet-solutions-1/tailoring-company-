@@ -3089,7 +3089,10 @@
             CURRENT_ENDORSE_ID = id;
             const g = ALL_GROUPS.find(i => i.id == id);
             document.getElementById('endorse-modal').classList.remove('hidden');
-            if (g) document.getElementById('endorse-batch-name').textContent = g.group_name || g.id;
+            if (g) {
+                const name = g.group_name || 'Unnamed';
+                document.getElementById('endorse-batch-name').textContent = `Batch #${g.id}: ${name}`;
+            }
         }
 
         function closeEndorseModal() {
@@ -3140,7 +3143,7 @@
         }
     </script>
     <!-- ENDORSE MODAL -->
-    <div id="endorse-modal"
+    <div id="endorse-modal" onclick="if(event.target === this) closeEndorseModal()"
         class="fixed inset-0 bg-slate-900/60 hidden items-center justify-center z-[100] backdrop-blur-sm animate-fade-in">
         <div
             class="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm transform transition-all scale-100 relative overflow-hidden">
