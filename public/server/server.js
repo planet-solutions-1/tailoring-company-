@@ -425,22 +425,40 @@ app.post('/api/data/upload', upload.array('images', 5), (req, res) => {
     }
 });
 
-// Serve Static Files -> Fix: Use explicit path relative to server.js
-app.use(express.static(path.join(__dirname, '../')));
+// ---------------------------------------------------------
+// URL MASKING & CLEAN ROUTES (Security Feature)
+// ---------------------------------------------------------
 
-// Basic Route
-app.get('/', (req, res) => {
-    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-    res.set('Pragma', 'no-cache');
-    res.set('Expires', '0');
-    res.sendFile(path.join(__dirname, '../login.html'));
+// 1. Block Direct Access to .html files (Force Clean URLs)
+app.use((req, res, next) => {
+    if (req.path.endsWith('.html')) {
+        return res.status(404).send('Not Found (Security Mask Active)');
+    }
+    next();
 });
 
-// Explicit Dashboard Routes (Fallback for Static Issues)
-app.get('/company_dashboard.html', (req, res) => res.sendFile(path.join(__dirname, '../dashboard_fixed.html')));
-app.get('/school_dashboard.html', (req, res) => res.sendFile(path.join(__dirname, '../school_dashboard.html')));
-app.get('/packing_dashboard.html', (req, res) => res.sendFile(path.join(__dirname, '../packing_dashboard.html')));
+// 2. Map Clean Routes to Html Files
+app.get('/company', (req, res) => res.sendFile(path.join(__dirname, '../dashboard_fixed.html')));
+app.get('/school', (req, res) => res.sendFile(path.join(__dirname, '../school_dashboard.html')));
+app.get('/production', (req, res) => res.sendFile(path.join(__dirname, '../production_dashboard.html')));
+app.get('/packing', (req, res) => res.sendFile(path.join(__dirname, '../packing_dashboard.html')));
+app.get('/tailor', (req, res) => res.sendFile(path.join(__dirname, '../planet_editor.html')));
+app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, '../admin_dashboard.html')));
+app.get('/login', (req, res) => res.sendFile(path.join(__dirname, '../login.html')));
 
+// Serve Static Files (CSS, JS, Images) - Excluding HTML due to blocker above
+app.use(express.static(path.join(__dirname, '../')));
+
+// Root Route -> Login
+app.get('/', (req, res) => {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.redirect('/login');
+});
+
+// Remove old explicit fallback routes since we have mapped them above
+// app.get('/company_dashboard.html', ...); // Removed
+// app.get('/school_dashboard.html', ...); // Removed
+// app.get('/packing_dashboard.html', ...); // Removed
 
 // DEBUG ROUTE (Remove later)
 app.get('/debug-fs', (req, res) => {

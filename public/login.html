@@ -268,22 +268,22 @@
                     const role = (data.role || '').trim().toLowerCase();
                     switch (role) {
                         case 'company':
-                            window.location.href = 'company_dashboard.html';
+                            window.location.href = '/company';
                             break;
                         case 'admin':
-                            window.location.href = 'admin_dashboard.html';
+                            window.location.href = '/admin';
                             break;
                         case 'production_manager':
-                            window.location.href = 'production_dashboard.html';
+                            window.location.href = '/production';
                             break;
                         case 'school':
-                            window.location.href = 'school_dashboard.html';
+                            window.location.href = '/school';
                             break;
                         case 'tailor':
-                            window.location.href = 'planet_editor.html';
+                            window.location.href = '/tailor';
                             break;
                         case 'packing':
-                            window.location.href = 'packing_dashboard.html';
+                            window.location.href = '/packing';
                             break;
                         default:
                             throw new Error(`Unknown user role: ${data.role}`);
