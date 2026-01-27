@@ -3810,16 +3810,25 @@
                         action: 'Ignore', fix: async () => { }
                     });
                 }
-                if (!localStorage.getItem('token')) { // Basic check
-                    // We skip this if they are viewing the page at all, assuming auth works, but good to flag
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    this.issues.push({
+                        id: 'sec-auth', type: 'security', title: 'Security: No Auth Token',
+                        desc: 'Session invalid. Please relogin.',
+                        action: 'Login', fix: async () => window.location.href = 'index.html'
+                    });
                 }
 
                 // === DATA CHECKS ===
                 if (scanText) scanText.innerHTML = `<span class="w-2 h-2 rounded-full bg-purple-500 animate-pulse"></span> Auditing Workflows...`;
 
                 const today = new Date().toISOString().split('T')[0];
+                const seenIds = new Set(); // Prevent duplicates
 
                 ALL_GROUPS.forEach(g => {
+                    if (seenIds.has(g.id)) return;
+                    seenIds.add(g.id);
+
                     // 1. Check for Sync Mismatch (Progress > 0 but Daily = 0?)
                     // Heuristic: If CreatedAt is TODAY, then Total Progress MUST = Daily Output
                     const createdDate = g.created_at ? g.created_at.split('T')[0] : '';
@@ -3865,7 +3874,7 @@
                             id: g.id,
                             type: 'target',
                             title: `No Target: Batch #${g.id}`,
-                            desc: `Production is running without a goal. Efficiency likely drop.`,
+                            desc: `Production is running without a goal.`,
                             action: 'Set Goal (100)',
                             fix: async () => {
                                 await updateDailyTarget(g.id, 100);
@@ -3966,6 +3975,7 @@
             }
 
             downloadReport() {
+                const token = localStorage.getItem('token');
                 const report = {
                     title: "System Diagnostic Report",
                     date: new Date().toLocaleString(),
@@ -3976,11 +3986,11 @@
                         total_batches: ALL_GROUPS.length,
                         active_batches: ALL_GROUPS.filter(g => g.status === 'Active').length,
                         user: document.getElementById('user-name')?.textContent || 'Unknown',
-                        app_version: '2.4.1'
+                        app_version: '2.4.2'
                     },
                     security_check: {
                         protocol: window.location.protocol,
-                        auth_token_present: !!TOKEN,
+                        auth_token_present: !!token,
                         secure: window.location.protocol === 'https:' || window.location.hostname === 'localhost'
                     },
                     logs: ALL_GROUPS.map(g => ({
