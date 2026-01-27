@@ -3975,7 +3975,7 @@
             }
 
             downloadReport() {
-                const token = localStorage.getItem('token');
+                const token = sessionStorage.getItem('token');
                 const report = {
                     title: "System Diagnostic Report",
                     date: new Date().toLocaleString(),
@@ -3986,7 +3986,7 @@
                         total_batches: ALL_GROUPS.length,
                         active_batches: ALL_GROUPS.filter(g => g.status === 'Active').length,
                         user: document.getElementById('user-name')?.textContent || 'Unknown',
-                        app_version: '2.4.2'
+                        app_version: '2.4.3'
                     },
                     security_check: {
                         protocol: window.location.protocol,
