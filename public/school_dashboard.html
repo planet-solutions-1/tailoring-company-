@@ -2468,6 +2468,7 @@
         }
 
         async function executeDelete(items) {
+            if (window.isLocked) return alert("School is in READ-ONLY mode. Cannot delete data.");
             if (items.length > 0 && window.Logger) {
                 window.Logger.log(items.length > 1 ? 'BULK_DELETE_STUDENTS' : 'DELETE_STUDENT', `Deleted ${items.length} item(s). IDs: ${items.map(i => i.admission_no).join(', ')}`);
             }
@@ -2859,6 +2860,7 @@
 
         async function submitComplaint(e) {
             e.preventDefault();
+            if (window.isLocked) return alert("School is in READ-ONLY mode. Cannot submit tickets.");
             const submitBtn = e.target.querySelector('button[type="submit"]');
             const originalText = submitBtn.innerHTML;
             submitBtn.disabled = true;
@@ -2950,6 +2952,7 @@
         }
 
         async function deleteComplaint(id) {
+            if (window.isLocked) return alert("School is in READ-ONLY mode. Cannot delete tickets.");
             if (!confirm("Are you sure you want to delete this ticket?")) return;
             try {
                 const res = await fetch(`/api/data/complaints/${id}`, {
@@ -2968,6 +2971,7 @@
         let importFilesList = [];
 
         function openImportModal() {
+            if (window.isLocked) return alert("School is in READ-ONLY mode. Import is disabled.");
             // Reset
             importQueue = [];
             importFilesList = [];
@@ -4492,7 +4496,11 @@
                         if (msg && data.lock_message) msg.innerText = data.lock_message;
                         else if (msg) msg.innerText = "Data editing is disabled by Admin.";
 
-                        document.querySelectorAll('input, select, button.action-btn').forEach(el => el.disabled = true);
+                        document.querySelectorAll('input, select, textarea, button.action-btn').forEach(el => el.disabled = true);
+
+                        // Disable specific critical buttons that might miss the class
+                        const critIds = ['btn-backup-export', 'multiFileImport'];
+                        critIds.forEach(id => { const el = document.getElementById(id); if (el) el.disabled = true; });
 
 
 

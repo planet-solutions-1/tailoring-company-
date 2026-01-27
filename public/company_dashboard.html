@@ -3330,6 +3330,11 @@
                         </td>
                         <td class="p-4 text-right">
                              <div class="flex gap-2 justify-end">
+                                <button onclick="toggleSchoolLockFromList(${s.id}, ${s.is_locked || (s.status === 'Locked')}, '${s.name}')" 
+                                    class="text-xs ${s.is_locked || s.status === 'Locked' ? 'bg-red-50 text-red-600 border-red-200' : 'bg-orange-50 text-orange-600 border-orange-200'} hover:opacity-80 font-bold px-3 py-2 rounded-lg transition-colors shadow-sm border" 
+                                    title="${s.is_locked || s.status === 'Locked' ? 'Unlock School' : 'Lock School'}">
+                                    ${s.is_locked || s.status === 'Locked' ? '🔒 UNLOCK' : '🔓 LOCK'}
+                                </button>
                                 <button onclick="viewSchoolData('${s.name}', ${s.id})" class="text-xs bg-blue-50 text-blue-600 hover:bg-blue-100 font-bold px-3 py-2 rounded-lg transition-colors shadow-sm">STUDENTS</button>
                                 <button onclick="viewSchoolDetails('${s.name}', ${s.id})" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold px-3 py-2 rounded-lg transition-colors shadow-sm">DETAILS</button>
                                 <button onclick="deleteSchool(${s.id}, '${s.name}')" class="text-xs bg-red-50 hover:bg-red-100 text-red-600 font-bold px-3 py-2 rounded-lg transition-colors shadow-sm" title="Delete School">
@@ -5631,6 +5636,49 @@
         }
 
 
+
+        async function toggleSchoolLockFromList(schoolId, isLocked, schoolName) {
+            const action = isLocked ? "UNLOCK" : "LOCK";
+            if (!confirm(`Are you sure you want to ${action} ${schoolName}?\n\n${isLocked ? 'Teachers will be able to edit data again.' : 'Teachers will be BLOCKED from editing data.'}`)) return;
+
+            let lockMsg = null;
+            if (!isLocked) {
+                // Optional: Ask for a message? The prompt logic exists in the other function, let's keep it simple or consistency.
+                // The user requirements said "prompt... logic".
+                // I will include the prompt.
+                lockMsg = prompt("Optional: Enter a message for the school (e.g. 'Payment Pending'). Leave empty for default.");
+            }
+
+            try {
+                // Reuse the same endpoint
+                const res = await fetch(`${API_BASE}/data/schools/${schoolId}/lock`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ is_locked: !isLocked, message: lockMsg })
+                });
+
+                if (res.ok) {
+                    showToast(`School ${action}ED successfully`, 'success');
+                    fetchSchoolsManage(); // Refresh list
+                    if (window.Logger) window.Logger.log('TOGGLE_BS_LOCK', `School ${schoolId} ${action}ED from list`);
+                } else {
+                    const d = await res.json();
+                    // AUTO-FIX: Check for Schema Error (Same as other function)
+                    if (d.error && d.error.includes("Unknown column") && d.error.includes("lock_message")) {
+                        // Try patch?
+                        const fixRes = await fetch(`${API_BASE}/data/fix_db`, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
+                        if (fixRes.ok) {
+                            showToast("Applying Patch...", "info");
+                            setTimeout(() => toggleSchoolLockFromList(schoolId, isLocked, schoolName), 1000);
+                            return;
+                        }
+                    }
+                    alert("Failed: " + (d.error || "Unknown Error"));
+                }
+            } catch (e) {
+                alert("Error: " + e.message);
+            }
+        }
 
         async function toggleSchoolLock(isRetry = false) {
             if (!currentSchoolDetails.id) return;
