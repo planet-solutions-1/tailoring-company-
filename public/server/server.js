@@ -4,6 +4,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const multer = require('multer');
+const rateLimit = require('express-rate-limit');
 const fs = require('fs');
 const path = require('path');
 
@@ -14,9 +15,35 @@ const { authenticateToken } = require('./middleware/auth');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Security: Rate Limiters
+// 1. Strict Limiter for Login (Anti-Brute Force)
+const loginLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 5, // Limit each IP to 5 requests per windowMs
+    message: { error: "Too many login attempts, please try again after 15 minutes" },
+    standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+    legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+});
+
+// 2. General Limiter for API (Anti-DDoS)
+const apiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 300, // Limit each IP to 300 requests per windowMs
+    message: { error: "Too many requests from this IP, please try again later" },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
+// Trust Proxy (Required for Rate Limit behind Revers Proxy like Railway)
+app.set('trust proxy', 1);
+
 // Fix: Increase Body Limit (Fixing 413 Error for Large Syncs)
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// Apply Limiters
+app.use('/api/auth/login', loginLimiter); // Apply strict limit to login
+app.use('/api/', apiLimiter); // Apply general limit to all API routes
 
 // Multer Storage
 const UPLOAD_PATH = path.join(process.cwd(), 'public', 'uploads');
@@ -38,6 +65,8 @@ const upload = multer({ storage: storage });
 app.use(helmet({
     contentSecurityPolicy: false,
     crossOriginResourcePolicy: false,
+    hsts: true, // Enable HSTS for HTTPS security
+    frameguard: { action: 'deny' } // Prevent Clickjacking
 }));
 app.use(cors());
 app.use(morgan('dev'));
