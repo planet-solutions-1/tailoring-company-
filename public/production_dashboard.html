@@ -462,7 +462,7 @@
                                 Pause
                             </button>
 
-                            <button onclick="openEndorseModal()"
+                            <button onclick="openEndorseModal(CURRENT_BATCH.id)"
                                 class="text-xs bg-gradient-to-r from-yellow-400 to-orange-500 hover:scale-105 text-white shadow-lg shadow-yellow-500/30 px-4 py-1.5 rounded-lg flex items-center gap-1 transition font-bold ml-2 admin-only ring-2 ring-white">
                                 <svg class="w-3.5 h-3.5 animate-pulse" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd"
@@ -481,7 +481,7 @@
                                 Report Issue
                             </button>
 
-                            <button onclick="reportDelay()"
+                            <button onclick="logDelay(CURRENT_BATCH.id)"
                                 class="text-xs bg-orange-50 hover:bg-orange-100 text-orange-600 px-3 py-1.5 rounded-lg flex items-center gap-1 transition font-bold border border-orange-200 ml-2 admin-only">
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -490,7 +490,7 @@
                                 Log Delay
                             </button>
 
-                            <button onclick="deleteBatch()"
+                            <button onclick="deleteBatch(CURRENT_BATCH.id)"
                                 class="text-xs bg-red-50 hover:bg-red-100 text-red-600 px-3 py-1.5 rounded-lg flex items-center gap-1 transition font-bold ml-2 border border-red-200">
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -1458,6 +1458,22 @@
                             btnPause.className = "text-xs bg-slate-50 hover:bg-slate-100 text-slate-600 px-3 py-1.5 rounded-lg flex items-center gap-1 transition font-bold border border-slate-200 ml-2";
                         }
                     }
+
+                    // --- INJECT ACTION BUTTONS IF MISSING ---
+                    const actionContainer = document.getElementById('detail-actions');
+                    if (actionContainer) {
+                        actionContainer.innerHTML = `
+                            <button onclick="logDelay('${g.id}')" class="text-xs bg-slate-50 text-slate-500 hover:text-slate-700 px-3 py-1.5 rounded-lg font-bold border border-slate-200 shadow-sm transition flex items-center gap-1">
+                                <i class="fa-solid fa-clock"></i> Log Delay
+                            </button>
+                            <button onclick="openEndorseModal('${g.id}')" class="text-xs bg-yellow-50 text-yellow-600 hover:text-yellow-700 px-3 py-1.5 rounded-lg font-bold border border-yellow-200 shadow-sm transition flex items-center gap-1">
+                                <i class="fa-solid fa-star"></i> Reward Team
+                            </button>
+                            <button onclick="openEditWizard('${g.id}')" class="text-xs bg-slate-50 text-slate-500 hover:text-blue-600 px-3 py-1.5 rounded-lg font-bold border border-slate-200 shadow-sm transition">
+                                <i class="fa-solid fa-pen"></i> Edit
+                            </button>
+                        `;
+                    }
                 }
 
                 switchTab('detail');
@@ -1639,6 +1655,20 @@
                                     <div id="daily-progress-bar-${g.id}" class="h-full ${dailyColor} transition-all duration-500" style="width: ${Math.min(dailyPct, 100)}%"></div>
                                 </div>
                                 <div class="text-[9px] text-center font-bold text-slate-400" id="daily-progress-text-${g.id}">${dailyPct}% Achieved</div>
+                                
+                                <!-- BOOST REWARD LOGIC -->
+                                ${dailyPct >= 100 ? `
+                                    <div class="mt-2 flex gap-1 justify-center animate-fade-in">
+                                        <button onclick="boostTarget('${g.id}', ${g.daily_target || 0})" 
+                                            class="text-[10px] font-bold bg-indigo-50 text-indigo-600 px-2 py-1 rounded border border-indigo-100 hover:bg-indigo-100 transition flex items-center gap-1">
+                                            <i class="fa-solid fa-bolt"></i> Boost
+                                        </button>
+                                        <button onclick="claimBonus('${g.id}')" 
+                                            class="text-[10px] font-bold bg-yellow-50 text-yellow-600 px-2 py-1 rounded border border-yellow-100 hover:bg-yellow-100 transition flex items-center gap-1">
+                                            <i class="fa-solid fa-gift"></i> Bonus
+                                        </button>
+                                    </div>
+                                ` : ''}
                             </div>
                         `;
                 }
@@ -3051,6 +3081,63 @@
         }
 
         function logout() { sessionStorage.clear(); window.location = 'login.html'; }
+
+        // --- ENDORSE / REWARD LOGIC ---
+        let CURRENT_ENDORSE_ID = null;
+
+        function openEndorseModal(id) {
+            CURRENT_ENDORSE_ID = id;
+            const g = ALL_GROUPS.find(i => i.id == id);
+            document.getElementById('endorse-modal').classList.remove('hidden');
+            if (g) document.getElementById('endorse-batch-name').textContent = g.group_name || g.id;
+        }
+
+        function closeEndorseModal() {
+            document.getElementById('endorse-modal').classList.add('hidden');
+            CURRENT_ENDORSE_ID = null;
+        }
+
+        async function submitEndorsement(type) {
+            if (!CURRENT_ENDORSE_ID) return;
+
+            let points = 10;
+            if (type === 'speed') points = 20;
+            if (type === 'quality') points = 50;
+            if (type === 'teamwork') points = 15;
+            if (type === 'bonus') points = 10; // "Give 10"
+
+            try {
+                const res = await fetchAuth(`${API}/groups/${CURRENT_ENDORSE_ID}/reward`, {
+                    method: 'POST',
+                    body: JSON.stringify({ points, reason: type })
+                });
+
+                if (res.ok) {
+                    showToast(`Awarded ${points} Points! 🎉`);
+                    closeEndorseModal();
+                    // Refresh data
+                    renderDashboard();
+                } else {
+                    showToast("Failed to award points", "error");
+                }
+            } catch (e) {
+                showToast(e.message, "error");
+            }
+        }
+
+        async function boostTarget(id, current) {
+            const newTarget = Math.ceil((parseInt(current) || 100) * 1.1); // +10%
+            if (!confirm(`🚀 Validated Speed!\n\nBoost Daily Target to ${newTarget}?`)) return;
+
+            updateDailyTarget(id, newTarget); // Re-use existing function
+            showToast("Target Boosted! Go for the extra reward! 🏆");
+        }
+
+        async function claimBonus(id) {
+            // Direct "Give 10" action
+            CURRENT_ENDORSE_ID = id;
+            await submitEndorsement('bonus');
+        }
     </script>
     <!-- ENDORSE MODAL -->
     <div id="endorse-modal"
