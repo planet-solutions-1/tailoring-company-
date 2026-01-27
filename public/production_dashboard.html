@@ -3908,6 +3908,12 @@
                     fixAllBtn.classList.toggle('hidden', this.issues.length === 0);
                 }
 
+                // Download Button (Always Visible if present)
+                const downloadBtn = document.getElementById('ai-download-btn');
+                if (downloadBtn) {
+                    downloadBtn.classList.remove('hidden');
+                }
+
                 // List
                 if (list) {
                     if (this.issues.length === 0) {
