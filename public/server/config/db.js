@@ -44,15 +44,35 @@ if (process.env.RAILWAY_ENVIRONMENT || process.env.NODE_ENV === 'production') {
     // Map common methods to match SQLite style (helper wrapper)
     db = {
         get: async (sql, params, callback) => {
-            if (typeof params === 'function') { callback = params; params = []; }
+            console.log("DB_GET_CALLED", { sql, paramsType: typeof params, callbackType: typeof callback, paramsIsArray: Array.isArray(params) });
+
+            if (typeof params === 'function') {
+                callback = params;
+                params = [];
+                console.log("DB_GET_SHIFTED_ARGS");
+            }
+
             try {
-                if (!promisePool) return callback(new Error("Database not connected (No PromisePool)"));
+                if (!promisePool) {
+                    console.error("DB_GET_NO_POOL");
+                    return callback(new Error("Database not connected (No PromisePool)"));
+                }
+
+                console.log("DB_GET_QUERY_START", { sql, params });
                 // Use .query instead of .execute to avoid "Malformed Packet" errors on Railway proxies
                 const [rows] = await promisePool.query(sql, params);
+                console.log("DB_GET_QUERY_SUCCESS", { rowsLength: rows ? rows.length : 'null' });
+
+                if (typeof callback !== 'function') {
+                    console.error("CRITICAL: Callback is NOT a function!", { callback });
+                    throw new Error("Callback is not a function (Logic Error)");
+                }
+
                 callback(null, rows ? rows[0] : null);
             } catch (e) {
-                console.error("DB GET Error:", e.message);
-                if (callback) callback(e, null);
+                console.error("DB_GET_EXCEPTION:", e);
+                console.error("Stack:", e.stack);
+                if (callback && typeof callback === 'function') callback(e, null);
             }
         },
         all: async (sql, params, callback) => {
