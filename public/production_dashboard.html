@@ -3964,6 +3964,43 @@
                     showToast("AI Fix Applied Successfully");
                 }
             }
+
+            downloadReport() {
+                const report = {
+                    title: "System Diagnostic Report",
+                    date: new Date().toLocaleString(),
+                    status: this.issues.length === 0 ? "HEALTHY" : "WARNING",
+                    issues_found: this.issues.length,
+                    active_issues: this.issues,
+                    system_stats: {
+                        total_batches: ALL_GROUPS.length,
+                        active_batches: ALL_GROUPS.filter(g => g.status === 'Active').length,
+                        user: document.getElementById('user-name')?.textContent || 'Unknown',
+                        app_version: '2.4.1'
+                    },
+                    security_check: {
+                        protocol: window.location.protocol,
+                        auth_token_present: !!TOKEN,
+                        secure: window.location.protocol === 'https:' || window.location.hostname === 'localhost'
+                    },
+                    logs: ALL_GROUPS.map(g => ({
+                        id: g.id,
+                        name: g.group_name,
+                        daily: g.daily_history,
+                        target: g.daily_target
+                    }))
+                };
+
+                const blob = new Blob([JSON.stringify(report, null, 2)], { type: "application/json" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `sys_report_${new Date().getTime()}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                showToast("Report Downloaded 📥");
+            }
         }
 
         // Helper for Silent Auto-Fix
