@@ -3756,23 +3756,23 @@
             if (newVal === null) return;
             const parsed = parseInt(newVal);
             if (isNaN(parsed) || parsed < 0) return;
-            
+
             const delta = parsed - current;
             if (delta === 0) return;
 
-             // Optimistic Update
+            // Optimistic Update
             const g = ALL_GROUPS.find(i => i.id == id);
-             const today = new Date().toISOString().split('T')[0];
-             if (g && g.daily_history) {
-                 const entry = g.daily_history.find(h => h.date === today);
-                 if (entry) entry.qty = parsed;
-                 else g.daily_history.push({ date: today, qty: parsed });
-             } else if (g) {
-                 g.daily_history = [{ date: today, qty: parsed }];
-             }
+            const today = new Date().toISOString().split('T')[0];
+            if (g && g.daily_history) {
+                const entry = g.daily_history.find(h => h.date === today);
+                if (entry) entry.qty = parsed;
+                else g.daily_history.push({ date: today, qty: parsed });
+            } else if (g) {
+                g.daily_history = [{ date: today, qty: parsed }];
+            }
 
-             // Refresh
-             openDetail(id);
+            // Refresh
+            openDetail(id);
 
             try {
                 await fetchAuth(`${API}/groups/${id}/update`, {
@@ -3833,7 +3833,7 @@
                                 desc: `Tracking says ${lastStageVal} items done today, but Daily Log has only ${dailyVal}.`,
                                 action: 'Sync Now',
                                 fix: async () => {
-                                    await editDailyOutput(g.id, lastStageVal); // Reuse existing logic
+                                    await autoFixDailySync(g.id, dailyVal, lastStageVal);
                                     this.scan(); // Re-scan
                                 }
                             });
@@ -3863,46 +3863,72 @@
             updateUI() {
                 const btn = document.getElementById('ai-manager-btn');
                 const badge = document.getElementById('ai-issue-count');
-                const modal = document.getElementById('ai-manager-modal');
                 const list = document.getElementById('ai-issue-list');
                 const scanText = document.getElementById('ai-scan-status');
+                const fixAllBtn = document.getElementById('ai-fix-all-btn');
 
+                // Update Status Text
                 if (this.isScanning) {
-                    if (scanText) scanText.textContent = "Scanning...";
+                    if (scanText) scanText.innerHTML = `<span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> Scanning...`;
                     if (btn) btn.classList.add('animate-pulse');
                     return;
+                } else {
+                    if (scanText) scanText.innerHTML = `<span class="w-2 h-2 rounded-full ${this.issues.length > 0 ? 'bg-red-500' : 'bg-green-500'}"></span> ${this.issues.length > 0 ? this.issues.length + ' Issues Found' : 'System Healthy'}`;
                 }
 
                 if (btn) btn.classList.remove('animate-pulse');
-                if (scanText) scanText.textContent = this.issues.length > 0 ? `${this.issues.length} Issues Found` : "All Systems Nominal";
 
+                // Badge
                 if (badge) {
                     badge.textContent = this.issues.length;
                     badge.classList.toggle('hidden', this.issues.length === 0);
                 }
 
+                // Fix All Button
+                if (fixAllBtn) {
+                    fixAllBtn.classList.toggle('hidden', this.issues.length === 0);
+                }
+
+                // List
                 if (list) {
                     if (this.issues.length === 0) {
                         list.innerHTML = `
                             <div class="text-center p-8 text-slate-400">
                                 <i class="fa-solid fa-check-circle text-4xl text-green-500 mb-3"></i>
-                                <p>System Healthy. AI is monitoring.</p>
+                                <p>All Systems Nominal.</p>
                             </div>
                         `;
                     } else {
                         list.innerHTML = this.issues.map((i, idx) => `
-                            <div class="bg-slate-800 p-4 rounded-lg border-l-4 border-amber-500 flex justify-between items-center animate-fade-in mb-2">
+                            <div class="bg-slate-800 p-4 rounded-lg border-l-4 border-amber-500 flex justify-between items-center animate-fade-in mb-2 group hover:bg-slate-750 transition">
                                 <div>
-                                    <h4 class="font-bold text-slate-100 text-sm">${i.title}</h4>
-                                    <p class="text-xs text-slate-400">${i.desc}</p>
+                                    <h4 class="font-bold text-slate-100 text-sm flex items-center gap-2">
+                                        ${i.title}
+                                    </h4>
+                                    <p class="text-xs text-slate-400 mt-0.5">${i.desc}</p>
                                 </div>
-                                <button onclick="window.AI_INSTANCE.runFix(${idx})" class="text-xs bg-amber-500 hover:bg-amber-400 text-white px-3 py-1.5 rounded font-bold shadow-lg shadow-amber-500/20 transition">
-                                    ${i.action} <i class="fa-solid fa-wand-magic-sparkles ml-1"></i>
+                                <button onclick="window.AI_INSTANCE.runFix(${idx})" class="text-xs bg-amber-500 hover:bg-amber-400 text-white px-3 py-1.5 rounded-lg font-bold shadow-lg shadow-amber-500/20 transition flex items-center gap-1">
+                                    ${i.action} <i class="fa-solid fa-wand-magic-sparkles"></i>
                                 </button>
                             </div>
                         `).join('');
                     }
                 }
+            }
+
+            async runFixAll() {
+                if (this.issues.length === 0) return;
+                const btn = document.getElementById('ai-fix-all-btn');
+                if (btn) btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Fixing All...`;
+
+                // Run sequentially
+                for (const issue of this.issues) {
+                    await issue.fix();
+                    await new Promise(r => setTimeout(r, 300)); // Stagger
+                }
+
+                showToast("All Issues Fixed! 🚀");
+                this.scan(); // Final Re-scan
             }
 
             async runFix(idx) {
@@ -3912,6 +3938,34 @@
                     await this.issues[idx].fix();
                     showToast("AI Fix Applied Successfully");
                 }
+            }
+        }
+
+        // Helper for Silent Auto-Fix
+        async function autoFixDailySync(id, currentVal, targetVal) {
+            const delta = targetVal - currentVal;
+            if (delta === 0) return;
+
+            // Optimistic Update
+            const g = ALL_GROUPS.find(i => i.id == id);
+            const today = new Date().toISOString().split('T')[0];
+
+            // Update Local Daily History
+            if (g && g.daily_history) {
+                const entry = g.daily_history.find(h => h.date === today);
+                if (entry) entry.qty = targetVal;
+                else g.daily_history.push({ date: today, qty: targetVal });
+            } else if (g) {
+                g.daily_history = [{ date: today, qty: targetVal }];
+            }
+
+            try {
+                await fetchAuth(`${API}/groups/${id}/update`, {
+                    method: 'POST',
+                    body: JSON.stringify({ daily_increment: delta })
+                });
+            } catch (e) {
+                console.error("Auto-fix failed", e);
             }
         }
 
@@ -3952,6 +4006,10 @@
                     <button onclick="window.AI_INSTANCE.scan()"
                         class="text-xs text-purple-400 hover:text-purple-300 font-bold bg-purple-500/10 px-3 py-1 rounded-lg border border-purple-500/20 transition hover:bg-purple-500/20">
                         <i class="fa-solid fa-rotate mr-1"></i> Re-scan
+                    </button>
+                    <button id="ai-fix-all-btn" onclick="window.AI_INSTANCE.runFixAll()"
+                        class="hidden text-xs text-white font-bold bg-amber-500 hover:bg-amber-400 px-3 py-1 rounded-lg shadow-lg shadow-amber-500/20 transition ml-2">
+                        <i class="fa-solid fa-wand-magic-sparkles mr-1"></i> Fix All
                     </button>
                 </div>
                 <div id="ai-issue-list" class="flex flex-col gap-3">
