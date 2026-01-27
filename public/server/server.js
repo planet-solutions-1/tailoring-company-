@@ -61,6 +61,41 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 
+// ---------------------------------------------------------
+// SECURITY: WAF-LITE (SQL Injection Blocker)
+// ---------------------------------------------------------
+const sqlBlocker = (req, res, next) => {
+    const maliciousPatterns = [
+        /\bUNION\s+SELECT\b/i,
+        /\bDROP\s+TABLE\b/i,
+        /\bDELETE\s+FROM\b/i,
+        /\bINSERT\s+INTO\b/i,
+        /\bUPDATE\s+\w+\s+SET\b/i,
+        /(\%27)|(\')|(\-\-)|(\%23)|(#)/i // Basic check for comments/quotes in odd places (Be careful with false positives in text)
+    ];
+
+    // Less aggressive regex for text content, strict for structure
+    const strictPatterns = [
+        /\bUNION\s+SELECT\b/i,
+        /\bDROP\s+TABLE\b/i,
+        /\bDELETE\s+FROM\b/i
+    ];
+
+    const check = (input) => {
+        if (!input) return false;
+        const str = typeof input === 'string' ? input : JSON.stringify(input);
+        return strictPatterns.some(regex => regex.test(str));
+    };
+
+    if (check(req.body) || check(req.query) || check(req.params)) {
+        console.warn(`[WAF] Blocked Malicious Request from ${req.ip}`);
+        return res.status(403).json({ error: "Security Alert: Malicious Pattern Detected" });
+    }
+    next();
+};
+
+app.use(sqlBlocker);
+
 // Middleware
 app.use(helmet({
     contentSecurityPolicy: false,
