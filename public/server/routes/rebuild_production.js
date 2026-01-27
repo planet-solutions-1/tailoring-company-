@@ -575,6 +575,58 @@ router.post('/groups/:id/reward', authenticateToken, async (req, res) => {
     }
 });
 
+// === NEW: GENERIC UPDATE + DAILY LOGGING ===
+router.post('/groups/:id/update', authenticateToken, async (req, res) => {
+    try {
+        const { completed_stages, status, delay_reason, daily_increment, notes } = req.body;
+        const id = req.params.id;
+
+        // 1. Handle Status / Delay
+        if (status) await query("UPDATE production_groups SET status = ? WHERE id = ?", [status, id]);
+        if (delay_reason) await query("UPDATE production_groups SET delay_reason = ? WHERE id = ?", [delay_reason, id]);
+        if (notes) await query("UPDATE production_groups SET notes = ? WHERE id = ?", [notes, id]);
+
+        // 2. Handle Progress (Production Progress Table)
+        if (completed_stages) {
+            const stagesJson = JSON.stringify(completed_stages);
+            // Upsert Progress
+            const exists = await query("SELECT id FROM production_progress WHERE group_id = ?", [id]);
+            if (exists.length > 0) {
+                await query("UPDATE production_progress SET completed_stages = ?, last_updated = CURRENT_TIMESTAMP WHERE group_id = ?", [stagesJson, id]);
+            } else {
+                await query("INSERT INTO production_progress (group_id, completed_stages) VALUES (?, ?)", [id, stagesJson]);
+            }
+        }
+
+        // 3. Handle Daily History (For today's velocity)
+        if (daily_increment) {
+            const inc = parseInt(daily_increment);
+            if (!isNaN(inc) && inc !== 0) {
+                // Fetch current history
+                const rows = await query("SELECT daily_history FROM production_groups WHERE id = ?", [id]);
+                let history = [];
+                try { history = JSON.parse(rows[0].daily_history || '[]'); } catch (e) { }
+
+                // Find today
+                const today = new Date().toISOString().split('T')[0];
+                let entry = history.find(h => h.date === today);
+                if (entry) {
+                    entry.qty += inc;
+                } else {
+                    history.push({ date: today, qty: inc });
+                }
+
+                // Save back
+                await query("UPDATE production_groups SET daily_history = ? WHERE id = ?", [JSON.stringify(history), id]);
+            }
+        }
+
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
 router.post('/groups/:id/delay', authenticateToken, async (req, res) => {
     try {
         const { reason } = req.body;

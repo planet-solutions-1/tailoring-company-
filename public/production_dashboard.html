@@ -1638,8 +1638,15 @@
                 // Daily Target Injection
                 const targetContainer = document.getElementById('detail-target-container');
                 if (targetContainer) {
-                    const lastStageVal = (g.completed_stages && g.completed_stages['manual_override']) || 0;
-                    const dailyPct = g.daily_target > 0 ? Math.round((lastStageVal / g.daily_target) * 100) : 0;
+                    // NEW: Calculate Today's Output from daily_history
+                    const today = new Date().toISOString().split('T')[0];
+                    let todayOutput = 0;
+                    if (g.daily_history && Array.isArray(g.daily_history)) {
+                        const entry = g.daily_history.find(h => h.date === today);
+                        if (entry) todayOutput = entry.qty || 0;
+                    }
+
+                    const dailyPct = g.daily_target > 0 ? Math.round((todayOutput / g.daily_target) * 100) : 0;
                     const dailyColor = dailyPct >= 100 ? 'bg-green-500' : 'bg-indigo-500';
 
                     targetContainer.innerHTML = `
@@ -2169,12 +2176,28 @@
 
             updateStageProgress.timers[key] = setTimeout(async () => {
                 try {
+                    // NEW: Calculate Daily Delta
+                    let dailyInc = 0;
+                    if (isLastStage) { // Only count final stage output as "production"
+                        const oldRaw = g.last_stage_val_cache || 0; // Need to cache this?
+                        // Better: We know val is the NEW value. Retrieve OLD value from initial load?
+                        // Hack: For now, assuming standard flow. If user jumps 10->20, inc is 10.
+                        // But wait, g.completed_stages was already updated in memory above.
+                        // We need the value BEFORE this update.
+                        // Actually, 'oldVal' variable exists at start of function!
+                        const delta = val - oldVal;
+                        if (delta > 0) dailyInc = delta;
+                    }
+
+                    const payload = {
+                        completed_stages: g.completed_stages,
+                        notes: g.notes
+                    };
+                    if (dailyInc > 0) payload.daily_increment = dailyInc;
+
                     const res = await fetchAuth(`${API}/groups/${groupId}/update`, {
-                        method: 'POST', body: JSON.stringify({ completed_stages: g.completed_stages, notes: g.notes })
+                        method: 'POST', body: JSON.stringify(payload)
                     });
-                    // If last stage, ensure backend knows it's a "Production Log" event too?
-                    // Backend usually handles logging based on delta? 
-                    // For now, simple state update is enough for V1.
                 } catch (e) { console.error(e); }
             }, 600);
         }
