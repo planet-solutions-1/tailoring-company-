@@ -567,7 +567,8 @@ router.post('/groups/:id/complete', authenticateToken, async (req, res) => {
 router.post('/groups/:id/reward', authenticateToken, async (req, res) => {
     try {
         const points = parseInt(req.body.points) || 10;
-        await query("UPDATE production_groups SET points = points + ? WHERE id = ?", [points, req.params.id]);
+        // Fix: Use COALESCE to handle NULL points
+        await query("UPDATE production_groups SET points = COALESCE(points, 0) + ? WHERE id = ?", [points, req.params.id]);
         res.json({ success: true, message: "Points Awarded" });
     } catch (err) {
         res.status(500).json({ error: err.message });
