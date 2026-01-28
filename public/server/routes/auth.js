@@ -68,7 +68,8 @@ router.post('/login', async (req, res) => {
         // ===============================================
 
         const user = await getUserByUsername(username);
-        if (!user) return res.status(400).json({ error: "User not found" });
+        // DEBUG: Return what we received to debug the mismatch
+        if (!user) return res.status(400).json({ error: `User not found. (Debug: Server saw '${safeUser}')` });
 
         if (await bcrypt.compare(password, user.password_hash)) {
             // Fetch School Name if applicable
