@@ -6431,6 +6431,34 @@
             reader.readAsText(file);
         }
 
+        async function resetDatabase() {
+            const confirmMsg = prompt("⚠️ EXTREME DANGER: This will delete ALL Schools, Students, and Measurements.\n\nType 'RESET' to confirm:");
+            if (confirmMsg !== 'RESET') {
+                if (confirmMsg !== null) alert("Cancelled. You must type 'RESET' exactly.");
+                return;
+            }
+
+            try {
+                showToast("Wiping Database...", "info");
+                const res = await fetch(`${API_BASE}/admin/reset`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.error || "Reset Failed");
+                }
+
+                alert("✅ System Reset Complete.\n\nAll operational data has been cleared.\nAudit Log recorded your IP/Device.");
+                window.location.reload();
+
+            } catch (e) {
+                console.error(e);
+                alert("Reset Error: " + e.message);
+            }
+        }
+
         async function cleanupLogs() {
             if (!confirm("Are you sure? This will delete all logs older than 7 days.")) return;
             try {

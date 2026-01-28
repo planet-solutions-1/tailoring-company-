@@ -116,4 +116,42 @@ router.post('/restore', authenticateToken, requireRole('company'), async (req, r
     }
 });
 
+// POST /api/admin/reset - Reset Database (Wipe Business Data)
+router.post('/reset', authenticateToken, requireRole('company'), async (req, res) => {
+    try {
+        // Collect Audit Info
+        const ip = req.ip || req.connection.remoteAddress;
+        const userAgent = req.get('User-Agent');
+        const auditInfo = `IP: ${ip} | User-Agent: ${userAgent}`; // MAC Address is not accessible in Web Apps
+
+        console.log(`[RESET DB] Initiated by ${req.user.username}. ${auditInfo}`);
+
+        // Tables to Wipe (Business Data Only - Keep Users/Settings/Logs to avoid bricking)
+        // We wipe 'schools' which cascades to 'students', 'orders' etc usually, but we explicit delete for safety.
+        const WIPE_TABLES = ['students', 'measurements', 'orders', 'complaints', 'schools', 'patterns'];
+
+        if (db.execute) await db.execute("SET FOREIGN_KEY_CHECKS = 0");
+        else await exec("PRAGMA foreign_keys = OFF");
+
+        for (const table of WIPE_TABLES) {
+            await exec(`DELETE FROM ${table}`);
+            if (!db.execute) await exec(`DELETE FROM sqlite_sequence WHERE name=?`, [table]);
+        }
+
+        if (db.execute) await db.execute("SET FOREIGN_KEY_CHECKS = 1");
+        else await exec("PRAGMA foreign_keys = ON");
+
+        // Log Critical Action
+        if (db.logActivity) {
+            db.logActivity(req.user.id, req.user.username, 'DB_RESET', `WIPED ALL DATA. Audit: ${auditInfo}`);
+        }
+
+        res.json({ success: true, message: "Database Reset Complete. Operational data wiped." });
+
+    } catch (e) {
+        console.error("Reset Error:", e);
+        res.status(500).json({ error: "Reset Failed: " + e.message });
+    }
+});
+
 module.exports = router;
