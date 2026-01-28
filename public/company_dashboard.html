@@ -4823,8 +4823,16 @@
 
         function renderCharts() {
             const p = globalStudents.filter(s => s.is_packed).length, pe = globalStudents.length - p;
-            // Destroy exists?
+
+            // Destroy existing charts to prevent "Canvas is already in use" error
+            const chartPacking = Chart.getChart("chart-packing");
+            if (chartPacking) chartPacking.destroy();
+
+            const chartSchools = Chart.getChart("chart-schools");
+            if (chartSchools) chartSchools.destroy();
+
             new Chart(document.getElementById('chart-packing'), { type: 'doughnut', data: { labels: ['Packed', 'Pending'], datasets: [{ data: [p, pe], backgroundColor: ['#A8E6CF', '#FFD3B6'], borderWidth: 0 }] }, options: { maintainAspectRatio: false } });
+
             const sc = {}; globalStudents.forEach(s => { sc[s.school_name] = (sc[s.school_name] || 0) + 1 });
             new Chart(document.getElementById('chart-schools'), { type: 'bar', data: { labels: Object.keys(sc), datasets: [{ label: 'Student Count', data: Object.values(sc), backgroundColor: '#AA96DA', borderRadius: 4 }] }, options: { maintainAspectRatio: false, scales: { y: { beginAtZero: true } } } });
         }
