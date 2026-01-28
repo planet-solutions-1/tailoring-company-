@@ -533,7 +533,8 @@ router.put('/users/:id/toggle', authenticateToken, requireRole('company'), (req,
 
     db.run("UPDATE users SET is_active = ? WHERE id = ?", [is_active ? 1 : 0, id], (err) => {
         if (err) return res.status(500).json({ error: err.message });
-        if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'TOGGLE_USER', `User #${id} access: ${is_active}`);
+        const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+        if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'TOGGLE_USER', `User #${id} access: ${is_active}`, req.user.schoolId, req.user.role, ip);
         res.json({ message: `User access ${is_active ? 'ENABLED' : 'DISABLED'}` });
     });
 });
@@ -552,12 +553,34 @@ router.put('/users/:id/reset-password', authenticateToken, requireRole('company'
         const hash = await bcrypt.hash(new_password, 10);
         db.run("UPDATE users SET password_hash = ? WHERE id = ?", [hash, id], (err) => {
             if (err) return res.status(500).json({ error: err.message });
-            if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'RESET_PASSWORD', `Reset password for User #${id}`);
+            const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+            if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'RESET_PASSWORD', `Reset password for User #${id}`, req.user.schoolId, req.user.role, ip);
             res.json({ message: "Password reset successfully" });
         });
     } catch (e) {
         res.status(500).json({ error: "Hashing failed" });
     }
+});
+
+// DELETE /api/data/users/:id - Delete User
+router.delete('/users/:id', authenticateToken, requireRole('company'), async (req, res) => {
+    const { id } = req.params;
+
+    // Prevent self-delete
+    if (parseInt(id) === req.user.id) return res.status(400).json({ error: "Cannot delete your own account" });
+
+    // Verify user exists
+    db.get("SELECT username FROM users WHERE id = ?", [id], (err, row) => {
+        if (err) return res.status(500).json({ error: err.message });
+        if (!row) return res.status(404).json({ error: "User not found" });
+
+        db.run("DELETE FROM users WHERE id = ?", [id], (err) => {
+            if (err) return res.status(500).json({ error: err.message });
+            const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+            if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'DELETE_USER', `Deleted User: ${row.username} (ID: ${id})`, req.user.schoolId, req.user.role, ip);
+            res.json({ message: "User deleted successfully" });
+        });
+    });
 });
 
 // PUT /api/data/schools/:id/lock - Toggle Data Lock

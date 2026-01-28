@@ -3291,7 +3291,8 @@
                             <td class="p-4 text-center"><span class="px-3 py-1 rounded-full text-xs font-bold shadow-sm ${x.is_active !== false ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}">${x.is_active !== false ? 'Active' : 'Disabled'}</span></td>
                             <td class="p-4 text-right text-xs space-x-2">
                                  <button onclick="resetUserPassword(${x.id}, '${x.username}')" class="px-3 py-1.5 rounded-lg font-bold text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-colors shadow-sm border border-transparent hover:border-blue-100">Reset Pwd</button>
-                                 <button onclick="toggleUserStatus(${x.id},${!(x.is_active !== false)},'${x.username}')" class="px-3 py-1.5 rounded-lg font-bold shadow-sm ${x.is_active !== false ? 'text-red-500 bg-red-50 hover:bg-red-100' : 'text-green-500 bg-green-50 hover:bg-green-100'}">${x.is_active !== false ? 'Disable' : 'Enable'}</button>
+                                 <button onclick="toggleUserStatus(${x.id},${!(x.is_active !== false)},'${x.username}')" class="px-3 py-1.5 rounded-lg font-bold shadow-sm ${x.is_active !== false ? 'text-orange-500 bg-orange-50 hover:bg-orange-100' : 'text-green-500 bg-green-50 hover:bg-green-100'}">${x.is_active !== false ? 'Disable' : 'Enable'}</button>
+                                 <button onclick="deleteUser(${x.id}, '${x.username}')" class="px-3 py-1.5 rounded-lg font-bold text-red-500 bg-red-50 hover:bg-red-100 transition-colors shadow-sm">Delete</button>
                             </td>
                         </tr>`).join('');
                 }
@@ -5221,11 +5222,9 @@
 
 
         async function toggleUserStatus(id, active, username) {
-            // Note: We need an endpoint to update user status. 
-            // Assuming PUT /api/data/users/:id exists.
             if (!confirm(`Are you sure you want to ${active ? 'ENABLE' : 'DISABLE'} user ${username}?`)) return;
             try {
-                const r = await fetch(`${API_BASE}/data/users/${id}`, {
+                const r = await fetch(`${API_BASE}/data/users/${id}/toggle`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                     body: JSON.stringify({ is_active: active })
@@ -5233,6 +5232,27 @@
                 const d = await r.json();
                 if (r.ok) fetchUsers();
                 else alert("❌ Update Failed: " + (d.error || "Unknown Error"));
+            } catch (e) { console.error(e); alert("Client Error: " + e.message); }
+        }
+
+        async function deleteUser(id, username) {
+            if (!confirm(`⚠️ ARE YOU SURE?\n\nPermanently delete user '${username}'?\nThis action cannot be undone.`)) return;
+
+            const verify = prompt(`Type "${username}" to confirm deletion:`);
+            if (verify !== username) return alert("Deletion Cancelled: Username mismatch.");
+
+            try {
+                const r = await fetch(`${API_BASE}/data/users/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const d = await r.json();
+                if (r.ok) {
+                    alert("✅ User Deleted");
+                    fetchUsers();
+                } else {
+                    alert("❌ Delete Failed: " + (d.error || "Unknown Error"));
+                }
             } catch (e) { console.error(e); alert("Client Error: " + e.message); }
         }
 

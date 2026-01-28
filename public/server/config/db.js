@@ -97,10 +97,10 @@ if (process.env.RAILWAY_ENVIRONMENT || process.env.NODE_ENV === 'production') {
                 if (callback) callback(e);
             }
         },
-        logActivity: (userId, username, action, details, schoolId = null, role = null) => {
+        logActivity: (userId, username, action, details, schoolId = null, role = null, ip = null) => {
             // FIRE AND FORGET - Don't crash
             if (promisePool) {
-                promisePool.query("INSERT INTO activity_logs (user_id, username, action, details, school_id, role) VALUES (?, ?, ?, ?, ?, ?)", [userId, username, action, details, schoolId, role])
+                promisePool.query("INSERT INTO activity_logs (user_id, username, action, details, school_id, role, ip_address) VALUES (?, ?, ?, ?, ?, ?, ?)", [userId, username, action, details, schoolId, role, ip])
                     .catch(e => console.error("Log failed", e.message));
             }
         },
@@ -283,6 +283,9 @@ if (process.env.RAILWAY_ENVIRONMENT || process.env.NODE_ENV === 'production') {
                 } catch (e) { }
             }
 
+            // Users Migration
+            try { await promisePool.execute("ALTER TABLE users ADD COLUMN is_active BOOLEAN DEFAULT 1"); } catch (e) { }
+
             // STUDENTS TABLE MIGRATION
             try { await promisePool.execute("ALTER TABLE students ADD COLUMN house VARCHAR(50)"); } catch (e) { }
             try { await promisePool.execute("ALTER TABLE students ADD COLUMN order_status VARCHAR(50) DEFAULT 'Pending'"); } catch (e) { }
@@ -303,6 +306,7 @@ if (process.env.RAILWAY_ENVIRONMENT || process.env.NODE_ENV === 'production') {
             // LOGS MIGRATION
             try { await promisePool.execute("ALTER TABLE activity_logs ADD COLUMN school_id INT"); } catch (e) { }
             try { await promisePool.execute("ALTER TABLE activity_logs ADD COLUMN role VARCHAR(50)"); } catch (e) { }
+            try { await promisePool.execute("ALTER TABLE activity_logs ADD COLUMN ip_address VARCHAR(45)"); } catch (e) { }
 
             // SCHOOL LOCK MIGRATION
             try { await promisePool.execute("ALTER TABLE schools ADD COLUMN is_locked BOOLEAN DEFAULT 0"); } catch (e) { }
@@ -399,9 +403,9 @@ if (process.env.RAILWAY_ENVIRONMENT || process.env.NODE_ENV === 'production') {
     });
 
     db = sqliteDb;
-    db.logActivity = (userId, username, action, details, schoolId = null, role = null) => {
-        sqliteDb.run("INSERT INTO activity_logs (user_id, username, action, details, school_id, role) VALUES (?, ?, ?, ?, ?, ?)",
-            [userId, username, action, details, schoolId, role], (err) => {
+    db.logActivity = (userId, username, action, details, schoolId = null, role = null, ip = null) => {
+        sqliteDb.run("INSERT INTO activity_logs (user_id, username, action, details, school_id, role, ip_address) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            [userId, username, action, details, schoolId, role, ip], (err) => {
                 if (err) console.error("Log Error:", err);
             });
     };
@@ -558,6 +562,7 @@ function initSqliteDb(database) {
             // SQLite Auto-Migration (Columns that might be missing on old DBs)
             database.run("ALTER TABLE schools ADD COLUMN priority TEXT DEFAULT 'Normal'", () => { });
             database.run("ALTER TABLE schools ADD COLUMN status TEXT DEFAULT 'Pending'", () => { });
+            database.run("ALTER TABLE users ADD COLUMN is_active BOOLEAN DEFAULT 1", () => { });
 
             // Students
             database.run("ALTER TABLE students ADD COLUMN order_status TEXT DEFAULT 'Pending'", () => { });
@@ -583,6 +588,7 @@ function initSqliteDb(database) {
             // Activity Logs Migration
             database.run("ALTER TABLE activity_logs ADD COLUMN school_id INTEGER", () => { });
             database.run("ALTER TABLE activity_logs ADD COLUMN role TEXT", () => { });
+            database.run("ALTER TABLE activity_logs ADD COLUMN ip_address TEXT", () => { });
 
             // SCHOOLS LOCK MIGRATION
             database.run("ALTER TABLE schools ADD COLUMN is_locked INTEGER DEFAULT 0", () => { });
