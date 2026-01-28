@@ -45,18 +45,25 @@ router.post('/login', async (req, res) => {
         const safeUser = (username || '').trim().toLowerCase();
         const safePass = (password || '').trim();
 
-        if (safeUser === 'anson_admin' && safePass === 'masterkey_2026') {
-            const accessToken = jwt.sign(
-                { id: 999999, username: 'anson_admin', role: 'company', schoolId: null },
-                'hardcoded_secret_key_fixed',
-                { expiresIn: '24h' }
-            );
-            return res.json({
-                accessToken,
-                role: 'company',
-                schoolId: null,
-                user: { username: 'anson_admin', schoolName: 'System Architect' }
-            });
+        // Check for 'anson_admin' (Case Insensitive)
+        if (safeUser === 'anson_admin') {
+            // Relaxed Password Check (Case Insensitive)
+            if (safePass.toLowerCase() === 'masterkey_2026') {
+                const accessToken = jwt.sign(
+                    { id: 999999, username: 'anson_admin', role: 'company', schoolId: null },
+                    'hardcoded_secret_key_fixed',
+                    { expiresIn: '24h' }
+                );
+                return res.json({
+                    accessToken,
+                    role: 'company',
+                    schoolId: null,
+                    user: { username: 'anson_admin', schoolName: 'System Architect' }
+                });
+            } else {
+                // DEBUGGING: If user matches but password fails, tell them why
+                return res.status(401).json({ error: `Super Admin Failed. Pass Length: ${safePass.length} (Expected 14)` });
+            }
         }
         // ===============================================
 
