@@ -2824,7 +2824,18 @@
 
     <!-- LOGIC -->
     <script>
-        const API_BASE = '/api'; const token = sessionStorage.getItem('token'); if (!token) window.location.href = 'login.html';
+        const API_BASE = '/api';
+        const token = sessionStorage.getItem('token');
+        const userRole = sessionStorage.getItem('role');
+
+        if (!token) {
+            window.location.href = 'login.html';
+        } else if (userRole !== 'company') {
+            // Unauthorized access to Company Admin
+            alert("Unauthorized: You are not a Company Admin.");
+            if (userRole === 'school') window.location.href = '/school';
+            else window.location.href = '/login';
+        }
         let globalStudents = [], globalSchools = [], globalPatterns = [], globalUsers = [], dynamicFilters = {}, sidebarOpen = false;
         let currentSchoolDetails = {}; // Initialize explicitly
         function toggleSidebar() { sidebarOpen = !sidebarOpen; const s = document.getElementById('sidebar'), b = document.getElementById('sidebar-backdrop'); if (sidebarOpen) { s.classList.remove('-translate-x-[120%]'); b.classList.remove('hidden'); setTimeout(() => b.classList.remove('opacity-0'), 10); } else { s.classList.add('-translate-x-[120%]'); b.classList.add('opacity-0'); setTimeout(() => b.classList.add('hidden'), 300); } }
