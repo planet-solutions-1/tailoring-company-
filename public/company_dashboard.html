@@ -3283,18 +3283,23 @@
 
                 const listBody = document.getElementById('user-list-body');
                 if (listBody) {
-                    listBody.innerHTML = u.map(x => `
+                    listBody.innerHTML = u.map(x => {
+                        // Fix: Interpreting DB boolean (0/1) or JSON boolean (false/true) or undefined (default active)
+                        const isActive = x.is_active !== 0 && x.is_active !== false;
+
+                        return `
                         <tr class="hover:bg-gray-50/50 group border-b border-gray-50">
                             <td class="p-4 font-bold text-gray-700">${x.username}</td>
                             <td class="p-4"><span class="px-3 py-1 rounded-full text-xs bg-gray-100/80 uppercase font-bold text-gray-500 shadow-inner">${x.role}</span></td>
                             <td class="p-4 text-gray-500">${x.school_name || '-'}</td>
-                            <td class="p-4 text-center"><span class="px-3 py-1 rounded-full text-xs font-bold shadow-sm ${x.is_active !== false ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}">${x.is_active !== false ? 'Active' : 'Disabled'}</span></td>
+                            <td class="p-4 text-center"><span class="px-3 py-1 rounded-full text-xs font-bold shadow-sm ${isActive ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}">${isActive ? 'Active' : 'Disabled'}</span></td>
                             <td class="p-4 text-right text-xs space-x-2">
                                  <button onclick="resetUserPassword(${x.id}, '${x.username}')" class="px-3 py-1.5 rounded-lg font-bold text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition-colors shadow-sm border border-transparent hover:border-blue-100">Reset Pwd</button>
-                                 <button onclick="toggleUserStatus(${x.id},${!(x.is_active !== false)},'${x.username}')" class="px-3 py-1.5 rounded-lg font-bold shadow-sm ${x.is_active !== false ? 'text-orange-500 bg-orange-50 hover:bg-orange-100' : 'text-green-500 bg-green-50 hover:bg-green-100'}">${x.is_active !== false ? 'Disable' : 'Enable'}</button>
+                                 <button onclick="toggleUserStatus(${x.id},${!isActive},'${x.username}')" class="px-3 py-1.5 rounded-lg font-bold shadow-sm ${isActive ? 'text-orange-500 bg-orange-50 hover:bg-orange-100' : 'text-green-500 bg-green-50 hover:bg-green-100'}">${isActive ? 'Disable' : 'Enable'}</button>
                                  <button onclick="deleteUser(${x.id}, '${x.username}')" class="px-3 py-1.5 rounded-lg font-bold text-red-500 bg-red-50 hover:bg-red-100 transition-colors shadow-sm">Delete</button>
                             </td>
-                        </tr>`).join('');
+                        </tr>`;
+                    }).join('');
                 }
             } catch (e) {
                 console.error("Fetch Users Exception:", e);
