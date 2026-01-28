@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Whitepaper - Planet Solutions</title>
+    <!-- Mermaid JS -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <!-- html2pdf.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'neutral',
+            securityLevel: 'loose',
+            flowchart: { useMaxWidth: true }
+        });
+    </script>
+    <style>
+        /* --- PROFESSIONAL PRINT STYLING --- */
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Montserrat:wght@400;600;800&display=swap');
+
+        :root {
+            --primary: #1a365d;
+            --secondary: #2b6cb0;
+            --accent: #ed8936;
+            --text-main: #2d3748;
+            --text-light: #718096;
+            --bg-light: #f7fafc;
+            --border: #e2e8f0;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            color: var(--text-main);
+            line-height: 1.6;
+            max-width: 900px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 40px;
+        }
+
+        /* Cover Page */
+        .cover-page {
+            height: 90vh;
+            /* Viewport height for screen */
+            min-height: 900px;
+            /* Fixed height for PDF constancy */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            border: 1px solid var(--border);
+            padding: 40px;
+            background: linear-gradient(to bottom right, #f7fafc, #fff);
+            margin-bottom: 40px;
+            page-break-after: always;
+        }
+
+        .cover-logo {
+            font-size: 5rem;
+            margin-bottom: 20px;
+        }
+
+        .cover-title {
+            font-family: 'Montserrat', sans-serif;
+            font-size: 3.5rem;
+            font-weight: 800;
+            color: var(--primary);
+            line-height: 1.2;
+            margin-bottom: 10px;
+        }
+
+        .cover-subtitle {
+            font-size: 1.5rem;
+            color: var(--secondary);
+            font-weight: 300;
+            margin-bottom: 60px;
+        }
+
+        .cover-meta {
+            text-align: left;
+            width: 100%;
+            max-width: 500px;
+            border-top: 2px solid var(--accent);
+            padding-top: 20px;
+        }
+
+        .meta-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+        }
+
+        .meta-label {
+            font-weight: 600;
+            color: var(--text-light);
+        }
+
+        /* Chapters */
+        h1,
+        h2,
+        h3,
+        h4 {
+            font-family: 'Montserrat', sans-serif;
+            color: var(--primary);
+        }
+
+        h1.chapter-title {
+            font-size: 2.5rem;
+            border-bottom: 3px solid var(--primary);
+            padding-bottom: 15px;
+            margin-top: 0;
+            margin-bottom: 30px;
+            page-break-before: always;
+            /* Ensure chapters start on new page */
+            padding-top: 40px;
+        }
+
+        /* Exception for first chapter after ToC */
+        h1#ch1 {
+            page-break-before: always;
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            margin-top: 40px;
+            color: var(--secondary);
+        }
+
+        h3 {
+            font-size: 1.3rem;
+            margin-top: 30px;
+            color: var(--text-main);
+            font-weight: 600;
+        }
+
+        p {
+            margin-bottom: 15px;
+            text-align: justify;
+        }
+
+        /* Components */
+        .info-box {
+            background: #ebf8ff;
+            border-left: 4px solid var(--secondary);
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 0 4px 4px 0;
+            page-break-inside: avoid;
+        }
+
+        .warning-box {
+            background: #fffaf0;
+            border-left: 4px solid var(--accent);
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 0 4px 4px 0;
+            page-break-inside: avoid;
+        }
+
+        .box-title {
+            font-weight: 700;
+            display: block;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            letter-spacing: 1px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 25px 0;
+            font-size: 0.9rem;
+            page-break-inside: auto;
+        }
+
+        th {
+            background: var(--primary);
+            color: white;
+            padding: 12px;
+            text-align: left;
+        }
+
+        td {
+            border: 1px solid var(--border);
+            padding: 10px;
+            vertical-align: top;
+        }
+
+        tr:nth-child(even) {
+            background: var(--bg-light);
+        }
+
+        tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
+        }
+
+        /* Diagrams */
+        .diagram-wrapper {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            text-align: center;
+            background: #fff;
+            page-break-inside: avoid;
+        }
+
+        .diagram-caption {
+            display: block;
+            margin-top: 10px;
+            font-size: 0.85rem;
+            color: var(--text-light);
+            font-style: italic;
+        }
+
+        /* ToC */
+        .toc {
+            background: var(--bg-light);
+            padding: 30px;
+            border-radius: 8px;
+            page-break-after: always;
+        }
+
+        .toc h3 {
+            margin-top: 0;
+        }
+
+        .toc ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .toc li {
+            margin-bottom: 10px;
+            border-bottom: 1px dashed var(--border);
+            padding-bottom: 5px;
+        }
+
+        .toc a {
+            text-decoration: none;
+            color: var(--primary);
+            font-weight: 500;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .toc a:hover {
+            color: var(--accent);
+        }
+
+        /* Buttons (Fixed Position) */
+        .btn-container {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 1000;
+            display: flex;
+            gap: 15px;
+        }
+
+        .download-btn {
+            background: var(--primary);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 50px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .download-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+            background: var(--secondary);
+        }
+
+        .print-btn {
+            background: white;
+            color: var(--primary);
+            padding: 15px 20px;
+            border-radius: 50px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            font-weight: 600;
+            border: 1px solid var(--border);
+            cursor: pointer;
+        }
+
+        .print-btn:hover {
+            background: var(--bg-light);
+        }
+
+        /* Loader */
+        #loader {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.9);
+            z-index: 2000;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* PDF Generation Classes */
+        .pdf-content {
+            background: white;
+            /* No margin/padding reset here, handled by tool options */
+        }
+
+        /* PDF Generation Specifc Fixes */
+        /* REMOVED: .pdf-mode caused rendering issues. Reverted to standard layout. */
+    </style>
+</head>
+
+<body>
+
+    <!-- Loading Overlay -->
+    <div id="loader">
+        <div class="spinner"></div>
+        <h3 style="color: var(--primary);">Generating PDF...</h3>
+        <p>Please wait while we render the document.</p>
+    </div>
+
+    <!-- Actions -->
+    <div class="btn-container" data-html2canvas-ignore="true">
+        <button onclick="window.print()" class="print-btn">🖨️ Simple Print (Recommended)</button>
+        <button onclick="triggerPrint()" class="download-btn">
+            <span>📥</span> Download PDF
+        </button>
+    </div>
+
+    <!-- Main Content Wrapper -->
+    <div id="document-body" class="pdf-content">
+
+        <!-- COVER PAGE -->
+        <div class="cover-page">
+            <div class="cover-logo">🌐</div>
+            <div class="cover-title">PLANET SOLUTIONS</div>
+            <div class="cover-subtitle">Technical Whitepaper & User Manual</div>
+
+            <div class="cover-meta">
+                <div class="meta-row"><span class="meta-label">Software Version</span> <span>v1.2.0 (Stable
+                        Release)</span></div>
+                <div class="meta-row"><span class="meta-label">Document Date</span> <span>January 28, 2026</span></div>
+                <div class="meta-row"><span class="meta-label">Architect</span> <span>Anson Saju</span></div>
+                <div class="meta-row"><span class="meta-label">Classification</span> <span>Confidential - Internal Use
+                        Only</span></div>
+            </div>
+        </div>
+
+        <!-- TABLE OF CONTENTS -->
+        <div class="toc">
+            <h3>Table of Contents</h3>
+            <ul>
+                <li><a href="#ch1">1. Executive Summary & Architecture</a> <span>3</span></li>
+                <li><a href="#ch2">2. Security & Compliance</a> <span>4</span></li>
+                <li><a href="#ch3">3. The Auto-Heal Engine (Anson's Design)</a> <span>5</span></li>
+                <li><a href="#ch4">4. The Dashboard Ecosystem</a> <span>6</span></li>
+                <li><a href="#ch5">5. Company Dashboard (Command Center)</a> <span>7</span></li>
+                <li><a href="#ch6">6. Production Dashboard (The Floor)</a> <span>8</span></li>
+                <li><a href="#ch7">7. Packing & Logistics Engine</a> <span>9</span></li>
+                <li><a href="#ch8">8. Planet Editor (Pattern Lab)</a> <span>10</span></li>
+                <li><a href="#ch9">9. Advanced Workflows</a> <span>11</span></li>
+                <li><a href="#ch10">10. Troubleshooting & Maintenance</a> <span>12</span></li>
+            </ul>
+        </div>
+
+        <!-- CHAPTER 1: ARCHITECTURE -->
+        <h1 id="ch1" class="chapter-title">1. Executive Summary & Architecture</h1>
+
+        <p>The <strong>Planet Solutions Uniform Management System</strong> is a centralized Enterprise Resource Planning
+            (ERP) platform designed to replace fragmented legacy workflows (Excel, paper slips) with a unified,
+            real-time cloud database. It orchestrates the entire lifecycle of uniform manufacturing—from student data
+            collection to final dispatch.</p>
+
+        <h3>1.1 System Architecture & Development</h3>
+        <p>This entire software ecosystem was <strong>architected, built, and deployed by Anson Saju</strong>. It
+            utilizes a custom-built event-driven framework to handle high-concurrency manufacturing data (5000+
+            units/day).</p>
+
+        <div class="diagram-wrapper">
+            <div class="mermaid">
+                graph TD
+                subgraph Cloud [Global Cloud Infrastructure]
+                LB[Load Balancer]
+                API[Node.js API Endpoint]
+                DB[(MySQL Master Database)]
+                end
+                subgraph Floor [Factory Floor]
+                Prod[Production Dashboard]
+                Pack[Packing Terminals]
+                end
+                subgraph Office [Design Office]
+                Edit[Planet Editor]
+                Sync[Sync Engine]
+                end
+
+                LB --> API
+                API --> DB
+                Prod <-->|Real-time Updates| API
+                    Pack <-->|Scanning| API
+                        Edit <-->|Local Cache| Sync
+                            Sync -->|Batch Upload| API
+            </div>
+            <div class="diagram-caption">Figure 1.1: System Network Topology</div>
+        </div>
+
+        <h3>1.2 Database Schema Specification</h3>
+        <p>The backbone of the system is a relational schema optimized for high transaction volume. Key tables include:
+        </p>
+        <table>
+            <tr>
+                <th>Table Name</th>
+                <th>Purpose</th>
+                <th>Key Columns</th>
+            </tr>
+            <tr>
+                <td><code>schools</code></td>
+                <td>Client Entities</td>
+                <td><code>id</code>, <code>username</code>, <code>is_locked</code>, <code>priority</code></td>
+            </tr>
+            <tr>
+                <td><code>students</code></td>
+                <td>Master Record</td>
+                <td><code>roll_no</code>, <code>production_data</code>, <code>order_status</code></td>
+            </tr>
+            <tr>
+                <td><code>production_groups</code></td>
+                <td>Kanban Batches</td>
+                <td><code>sku</code>, <code>daily_target</code>, <code>required_stages</code></td>
+            </tr>
+            <tr>
+                <td><code>access_codes</code></td>
+                <td>Security Tokens</td>
+                <td><code>code</code>, <code>expires_at</code>, <code>type</code></td>
+            </tr>
+        </table>
+
+        <!-- CHAPTER 2: SECURITY -->
+        <h1 id="ch2" class="chapter-title">2. Security & Compliance</h1>
+
+        <p>Security is not an afterthought but a core architectural pillar. The system implements a Zero-Trust model
+            where every request is verified.</p>
+
+        <h3>2.1 Authentication Flow</h3>
+        <p>We use <strong>JSON Web Tokens (JWT)</strong> for stateless authentication. This allows the API to scale
+            infinitely without server-side session storage bottlenecks.</p>
+
+        <div class="info-box">
+            <span class="box-title">Security Feature: IP Rate Limiting</span>
+            To prevent brute-force attacks, the firewall monitors login attempts. If an IP fails 5 times within 1
+            minute, it is automatically blocked for 60 minutes. This happens at the infrastructure layer, protecting the
+            database from load.
+        </div>
+
+        <h3>2.2 Role-Based Access Control (RBAC)</h3>
+        <p>The system enforces strict permission scopes:</p>
+        <ul>
+            <li><strong>Company Admin:</strong> Full CRUD access to all tables. Can "Lock" schools.</li>
+            <li><strong>School User:</strong> Read/Write to their own students <em>only</em>. When
+                <code>is_locked=1</code>, they are downgraded to Read-Only.
+            </li>
+            <li><strong>Production Staff:</strong> Write access <em>only</em> to <code>status</code> fields. Cannot
+                delete data.</li>
+        </ul>
+
+        <!-- CHAPTER 3: AUTO-HEAL -->
+        <h1 id="ch3" class="chapter-title">3. High-Performance Features</h1>
+
+        <h3>3.1 Auto-Heal Engine ("The Brain")</h3>
+        <p>A distinctive feature of this system is the <strong>Auto-Heal Engine</strong>, a proprietary self-repairing
+            reliability layer <strong>designed and built by Anson Saju</strong>.</p>
+
+        <div class="warning-box">
+            <span class="box-title">Architected by Anson Saju</span>
+            The "Brain" runs on every server restart. It proactively:
+            <ul>
+                <li><strong>Verifies Schema Integrity:</strong> Checks 50+ columns for data type mismatches.</li>
+                <li><strong>Re-Seeds Configuration:</strong> If critical rows (like Production Stages) are deleted, it
+                    regenerates them from an immutable code backup within 50ms.</li>
+                <li><strong>Prevents Downtime:</strong> This design ensures zero downtime even during database glitches.
+                </li>
+            </ul>
+        </div>
+
+        <h3>3.2 Global Deployment & Data Freedom</h3>
+        <ul>
+            <li><strong>Containerization:</strong> The app runs in Docker containers, making it agnostic to the host OS.
+            </li>
+            <li><strong>Full Data Dump:</strong> Admins can export the <em>entire</em> database state to JSON/SQL at any
+                time, ensuring you are never locked into a single hosting provider.</li>
+        </ul>
+
+        <!-- CHAPTER 4: DASHBOARD OVERVIEW -->
+        <h1 id="ch4" class="chapter-title">4. The Dashboard Ecosystem</h1>
+        <p>The UX is split into 6 specialized interfaces to reduce cognitive load on operators.</p>
+
+        <!-- FIXED DIAGRAM SYNTAX (Graph instead of Mindmap for stability) -->
+        <div class="diagram-wrapper">
+            <div class="mermaid">
+                graph TD
+                Root((Planet ERP))
+
+                Root --> Comp[Company Dashboard]
+                Comp --> C1[School Mgmt]
+                Comp --> C2[Master Logs]
+
+                Root --> Prod[Production Dashboard]
+                Prod --> P1[Kanban Flow]
+                Prod --> P2[Urgent Flags]
+
+                Root --> Pack[Packing Dashboard]
+                Pack --> K1[Stickers]
+                Pack --> K2[Invoicing]
+
+                Root --> Edit[Planet Editor]
+                Edit --> E1[Data Entry]
+                Edit --> E2[Math Engine]
+            </div>
+            <div class="diagram-caption">Figure 4.1: The 6 Modules of Planet Solutions</div>
+        </div>
+
+        <!-- CHAPTER 5: COMPANY DASHBOARD -->
+        <h1 id="ch5" class="chapter-title">5. Company Dashboard</h1>
+        <p>The <strong>Company Dashboard</strong> (`company_dashboard.html`) is the Command Center.</p>
+
+        <h3>5.1 Managing Schools</h3>
+        <p>This panel allows the creation of client accounts. Important actions:</p>
+        <ul>
+            <li><strong>Add School:</strong> Creates a new tenant partition in the database.</li>
+            <li><strong>Lockdown Mode:</strong> The "Lock" icon toggles the <code>is_locked</code> flag. When active,
+                the School Principal cannot modify any measurements. Use this after the "Final Measurement Date" has
+                passed.</li>
+        </ul>
+
+        <h3>5.2 Activity Logs</h3>
+        <p>The "Logs" tab is the "Black Box" of the system. It records:</p>
+        <ul>
+            <li><strong>Who:</strong> Username and IP.</li>
+            <li><strong>What:</strong> Specific action (e.g., "Deleted Student ID 554").</li>
+            <li><strong>When:</strong> Timestamp to the second.</li>
+        </ul>
+
+        <!-- CHAPTER 6: PRODUCTION -->
+        <h1 id="ch6" class="chapter-title">6. Production Dashboard</h1>
+        <p>Designed for touchscreens on the factory floor, this dashboard uses a Kanban board card layout.</p>
+
+        <h3>6.1 The "Urgent" Workflow</h3>
+        <ol>
+            <li>Operator identifies a priority delivery.</li>
+            <li>Clicks the <strong>Star (⭐️)</strong> icon on the card.</li>
+            <li><strong>System Response:</strong>
+                <ul>
+                    <li>The batch moves to the absolute top of the list.</li>
+                    <li>The border turns <strong>Red</strong>.</li>
+                    <li>The status text appends <code>[PRIORITY]</code>.</li>
+                </ul>
+            </li>
+        </ol>
+
+        <!-- CHAPTER 7: PACKING -->
+        <h1 id="ch7" class="chapter-title">7. Packing & Logistics Engine</h1>
+        <p>The final step before dispatch. This module ensures 100% accuracy in deliveries.</p>
+
+        <h3>7.1 The "Pack Visible" Algorithm</h3>
+        <p>To speed up logistics, the "Pack Visible" button performs a bulk transaction:</p>
+        <div class="info-box">
+            1. It identifies all currently filtered students (e.g., "Class 10-A, House Red").<br>
+            2. It verifies their Production Status is "Finished".<br>
+            3. It updates their `order_status` to "Packed" in a single ACID transaction.<br>
+            4. It generates a packing list PDF instantly.
+        </div>
+
+        <h3>7.2 Sticker Generation</h3>
+        <p>The system generates distinct PDF stickers for every uniform bag. Each sticker contains: Student Name, Class,
+            School Name, and a unique QR Code for tracking.</p>
+
+        <!-- CHAPTER 8: PLANET EDITOR -->
+        <h1 id="ch8" class="chapter-title">8. Planet Editor (Pattern Lab)</h1>
+        <p>The <strong>Planet Editor</strong> is a browser-based spreadsheet designed for the Pattern Master.</p>
+
+        <h3>8.1 Math Engine & Auto-Calc</h3>
+        <p>The editor doesn't just store numbers; it understands them. When a pattern type (e.g., "Shirt Size 32") is
+            selected, the system:</p>
+        <ul>
+            <li>Looks up the "Cloth Consumption" factor (e.g., 1.25 meters).</li>
+            <li>Multiplies by the number of students.</li>
+            <li>Displays the <strong>Total Fabric Required</strong> in real-time.</li>
+        </ul>
+
+        <div class="diagram-wrapper">
+            <div class="mermaid">
+                sequenceDiagram
+                participant User
+                participant Editor
+                participant Cloud
+                User->>Editor: Edits Measurement
+                Editor->>Editor: Auto-Saves to LocalStorage (Instant)
+                User->>Editor: Clicks "Sync Cloud"
+                Editor->>Cloud: POST /api/sync_batch
+                Cloud-->>Editor: 200 OK (Success)
+                Editor->>User: Green Checkmark
+            </div>
+            <div class="diagram-caption">Figure 8.1: Sync Workflow</div>
+        </div>
+
+        <!-- CHAPTER 9: ADVANCED -->
+        <h1 id="ch9" class="chapter-title">9. Advanced Workflows</h1>
+
+        <h3>9.1 Disaster Recovery (Process)</h3>
+        <p>If a school deletes their student list by mistake:</p>
+        <ol>
+            <li>Admin logs into Company Dashboard.</li>
+            <li>Navigates to <strong>"Recycle Bin"</strong>.</li>
+            <li>Locates the deleted batch (retained for 5 days).</li>
+            <li>Clicks <strong>"Restore"</strong>.</li>
+            <li>Data reappears instantly in the school's portal.</li>
+        </ol>
+
+        <!-- CHAPTER 10: TROUBLESHOOTING -->
+        <h1 id="ch10" class="chapter-title">10. Troubleshooting & Maintenance</h1>
+
+        <h3>10.1 Diagnostics Matrix</h3>
+        <table>
+            <tr>
+                <th>Error Message</th>
+                <th>Technical Cause</th>
+                <th>Resolution Step</th>
+            </tr>
+            <tr>
+                <td><code>Canvas is already in use</code></td>
+                <td>Chart.js instance collision.</td>
+                <td>Refresh page (Fixed in v1.2.0 patch).</td>
+            </tr>
+            <tr>
+                <td><code>Sync Failed: Network Error</code></td>
+                <td>API unreachable (Offline).</td>
+                <td>Check internet. Data is safe locally. Retry when online.</td>
+            </tr>
+            <tr>
+                <td><code>Invalid Token</code></td>
+                <td>JWT Expired (24 hours).</td>
+                <td>Logout and Login again.</td>
+            </tr>
+            <tr>
+                <td><code>School Locked</code></td>
+                <td><code>is_locked</code> flag active.</td>
+                <td>Contact Company Admin to unlock.</td>
+            </tr>
+        </table>
+
+        <hr style="margin-top: 50px; margin-bottom: 20px;">
+        <p style="text-align: center; color: var(--text-light); font-size: 0.8rem;">
+            &copy; 2026 Planet Solutions. All Rights Reserved.<br>
+            <em>System Architecture by Anson Saju.</em><br>
+            Generated for Internal Distribution.
+        </p>
+
+    </div>
+
+    <!-- SCRIPT: GENERATE PDF -->
+    <script>
+        // Native Print Function - The most reliable method
+        function triggerPrint() {
+            window.print();
+        }
+    </script>
+</body>
+
+</html>
