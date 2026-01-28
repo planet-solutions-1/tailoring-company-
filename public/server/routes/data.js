@@ -1848,6 +1848,60 @@ router.get('/schools/:id/export', authenticateToken, requireRole('company'), asy
     }
 });
 
+// GET /api/data/system_config - Fetch Special Config School (Auto-Restore)
+router.get('/system_config', authenticateToken, async (req, res) => {
+    try {
+        let school;
+        // Search by username 'system_config'
+        const sql = "SELECT * FROM schools WHERE username = 'system_config'";
+
+        if (db.execute) {
+            const [rows] = await db.execute(sql);
+            school = rows[0];
+        } else {
+            school = await new Promise(r => db.get(sql, [], (e, row) => r(row)));
+        }
+
+        if (!school) {
+            console.log("System Config Missing. Auto-Restoring...");
+            // Restore Default Config
+            const defaultConfig = {
+                name: 'System Configuration',
+                username: 'system_config',
+                password_hash: 'LOCKED', // Cannot login
+                role: 'school', // Technical role
+                address: JSON.stringify({
+                    items: [
+                        "BOYS - SHIRT", "BOYS - TROUSER", "BOYS - SHORT", "BOYS - TUNIC",
+                        "GIRLS - SKIRT", "GIRLS - SHIRT", "GIRLS - PINAFORE", "GIRLS - TROUSER", "GIRLS - VEST"
+                    ],
+                    hidden_items: []
+                }) // Default Item Config
+            };
+
+            const insertSql = `INSERT INTO schools (name, username, password_hash, address) VALUES (?, ?, ?, ?)`;
+            const params = [defaultConfig.name, defaultConfig.username, defaultConfig.password_hash, defaultConfig.address];
+
+            if (db.execute) await db.execute(insertSql, params);
+            else await new Promise((resolve) => db.run(insertSql, params, resolve));
+
+            // Fetch again
+            if (db.execute) {
+                const [rows] = await db.execute(sql);
+                school = rows[0];
+            } else {
+                school = await new Promise(r => db.get(sql, [], (e, row) => r(row)));
+            }
+        }
+
+        res.json(school);
+
+    } catch (e) {
+        console.error("Config Error:", e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // PUT /api/data/schools/:id/lock - Toggle School Lock & Set Message
 router.put('/schools/:id/lock', authenticateToken, requireRole('company'), async (req, res) => {
     const { id } = req.params;

@@ -134,8 +134,12 @@ router.post('/reset', authenticateToken, requireRole('company'), async (req, res
         else await exec("PRAGMA foreign_keys = OFF");
 
         for (const table of WIPE_TABLES) {
-            await exec(`DELETE FROM ${table}`);
-            if (!db.execute) await exec(`DELETE FROM sqlite_sequence WHERE name=?`, [table]);
+            if (table === 'schools') {
+                await exec(`DELETE FROM schools WHERE username != 'system_config'`);
+            } else {
+                await exec(`DELETE FROM ${table}`);
+            }
+            if (!db.execute && table !== 'schools') await exec(`DELETE FROM sqlite_sequence WHERE name=?`, [table]);
         }
 
         if (db.execute) await db.execute("SET FOREIGN_KEY_CHECKS = 1");
