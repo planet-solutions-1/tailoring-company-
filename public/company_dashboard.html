@@ -8367,7 +8367,7 @@
         empty.classList.add('hidden');
 
         try {
-            const res = await fetch(`/api/data/trash/${type}`);
+            const res = await fetch(`/api/data/trash/${type}`, { credentials: 'include' });
             if (!res.ok) throw new Error('Failed to fetch trash');
             const items = await res.json();
 
@@ -8401,7 +8401,10 @@
     async function restoreItem(type, id) {
         if (!confirm(`Restore this ${type.slice(0, -1)}?`)) return;
         try {
-            const res = await fetch(`/api/data/restore/${type}/${id}`, { method: 'POST' });
+            const res = await fetch(`/api/data/restore/${type}/${id}`, {
+                method: 'POST',
+                credentials: 'include'
+            });
             const d = await res.json();
             if (res.ok) {
                 alert(d.message);
@@ -8417,7 +8420,10 @@
     async function permanentDelete(type, id) {
         if (!confirm(`PERMANENTLY DELETE this ${type.slice(0, -1)}? This cannot be undone!`)) return;
         try {
-            const res = await fetch(`/api/data/trash/${type}/${id}`, { method: 'DELETE' });
+            const res = await fetch(`/api/data/trash/${type}/${id}`, {
+                method: 'DELETE',
+                credentials: 'include'
+            });
             const d = await res.json();
             if (res.ok) {
                 alert(d.message);
