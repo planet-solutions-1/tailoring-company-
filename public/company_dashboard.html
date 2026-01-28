@@ -8368,7 +8368,10 @@
 
         try {
             const res = await fetch(`/api/data/trash/${type}`, { credentials: 'include' });
-            if (!res.ok) throw new Error('Failed to fetch trash');
+            if (!res.ok) {
+                const errData = await res.json().catch(() => ({}));
+                throw new Error(errData.error || `Server Error: ${res.status}`);
+            }
             const items = await res.json();
 
             loading.classList.add('hidden');
