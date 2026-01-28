@@ -16,23 +16,21 @@
     <style>
         body {
             font-family: 'Outfit', sans-serif;
-            background-color: #0f172a;
-            /* Fallback */
-            color: white;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            color: #1e293b;
+            /* Slate 800 */
             overflow: hidden;
-            /* Prevent scroll */
         }
 
-        /* 3D Glass Card */
+        /* 3D Glass Card (Light) */
         .glass-card {
-            background: rgba(30, 41, 59, 0.4);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.65);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
             box-shadow:
-                0 25px 50px -12px rgba(0, 0, 0, 0.5),
-                0 0 100px -20px rgba(99, 102, 241, 0.3) inset;
-            /* Indigo Glow */
+                0 25px 50px -12px rgba(148, 163, 184, 0.35),
+                0 0 100px -20px rgba(255, 255, 255, 0.5) inset;
             transform-style: preserve-3d;
             perspective: 1000px;
         }
@@ -45,19 +43,27 @@
         .input-field {
             width: 100%;
             padding: 1rem 1.25rem;
-            background: rgba(15, 23, 42, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(241, 245, 249, 0.6);
+            /* Slate 100 */
+            border: 1px solid rgba(203, 213, 225, 0.6);
+            /* Slate 300 */
             border-radius: 1rem;
-            color: white;
+            color: #334155;
+            /* Slate 700 */
+            font-weight: 600;
             outline: none;
             transition: all 0.3s ease;
         }
 
         .input-field:focus {
             border-color: #6366f1;
-            /* Indigo 500 */
-            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2);
-            background: rgba(15, 23, 42, 0.8);
+            background: rgba(255, 255, 255, 0.9);
+            box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
+        }
+
+        .input-field::placeholder {
+            opacity: 0;
+            /* Hide default placeholder for float effect */
         }
 
         .input-label {
@@ -65,12 +71,13 @@
             left: 1.25rem;
             top: 1rem;
             font-size: 0.875rem;
-            color: #94a3b8;
-            /* Slate 400 */
+            color: #64748b;
+            /* Slate 500 */
             pointer-events: none;
             transition: all 0.3s ease;
             background: transparent;
             padding: 0 0.25rem;
+            font-weight: 500;
         }
 
         /* Float Label Logic */
@@ -79,23 +86,26 @@
             top: -0.6rem;
             left: 1rem;
             font-size: 0.75rem;
-            color: #818cf8;
-            /* Indigo 400 */
-            background: #0f172a;
-            font-weight: 600;
+            color: #4f46e5;
+            background: linear-gradient(to bottom, transparent 50%, #f8fafc 50%);
+            /* Mock transparent feeling */
+            background: #ffffff;
+            /* Simplest fix for line-through look */
+            font-weight: 700;
             border-radius: 4px;
+            padding: 0 4px;
         }
 
         /* Button Glow */
         .btn-3d {
-            background: linear-gradient(135deg, #6366f1, #4f46e5);
-            box-shadow: 0 10px 20px -10px rgba(99, 102, 241, 0.6);
+            background: linear-gradient(135deg, #4f46e5, #4338ca);
+            box-shadow: 0 10px 20px -10px rgba(79, 70, 229, 0.4);
             transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
         .btn-3d:hover {
             transform: translateY(-2px) scale(1.02);
-            box-shadow: 0 20px 30px -10px rgba(99, 102, 241, 0.8);
+            box-shadow: 0 20px 30px -10px rgba(79, 70, 229, 0.6);
         }
 
         .btn-3d:active {
@@ -146,7 +156,7 @@
 <body class="min-h-screen flex items-center justify-center p-4 relative">
 
     <!-- 3D Background Canvas -->
-    <div id="canvas-container" class="absolute inset-0 z-0 bg-[#0f172a]"></div>
+    <div id="canvas-container" class="absolute inset-0 z-0"></div>
 
     <!-- Main Card -->
     <div class="glass-card w-full max-w-[420px] p-8 md:p-12 rounded-3xl relative z-10 float-anim" data-tilt
@@ -310,14 +320,14 @@
 
     <!-- NEW 3D BACKGROUND LOGIC (THREE.JS) -->
     <script>
-        // Init 3D Scene
+        // NEW 3D BACKGROUND LOGIC (THREE.JS) - LIGHT MODE
         const initThreeJS = () => {
             const container = document.getElementById('canvas-container');
             if (!container) return;
 
             const scene = new THREE.Scene();
-            // Fog for depth
-            scene.fog = new THREE.FogExp2(0x0f172a, 0.002);
+            // Fog for depth (Light Mode: Slate-50)
+            scene.fog = new THREE.FogExp2(0xf8fafc, 0.002);
 
             const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
             camera.position.z = 50;
@@ -333,7 +343,6 @@
             const posArray = new Float32Array(particlesCount * 3);
 
             for (let i = 0; i < particlesCount * 3; i++) {
-                // Spread particles in a wide volume
                 posArray[i] = (Math.random() - 0.5) * 150;
             }
 
@@ -341,7 +350,7 @@
 
             const material = new THREE.PointsMaterial({
                 size: 0.25,
-                color: 0x6366f1, // Indigo
+                color: 0x4f46e5, // Indigo-600 (Darker for contrast on white)
                 transparent: true,
                 opacity: 0.8,
             });
@@ -349,16 +358,13 @@
             const particlesMesh = new THREE.Points(geometry, material);
             scene.add(particlesMesh);
 
-            // Lines connecting particles (Mesh Network)
-            // Too heavy for CPU to calculate all connections. 
-            // Let's create a secondary Icosahedron wireframe for the "Tech Planet" feel.
-
+            // Tech Planet (Wireframe)
             const planetGeo = new THREE.IcosahedronGeometry(15, 2);
             const planetMat = new THREE.MeshBasicMaterial({
-                color: 0x6366f1,
+                color: 0xcbd5e1, // Slate-300 (Subtle Grey)
                 wireframe: true,
                 transparent: true,
-                opacity: 0.1
+                opacity: 0.4
             });
             const planet = new THREE.Mesh(planetGeo, planetMat);
             scene.add(planet);
@@ -391,7 +397,7 @@
                 planet.rotation.y += 0.002;
                 planet.rotation.x += 0.001;
 
-                // Move Particles - Wave Effect
+                // Move Particles
                 particlesMesh.rotation.y = -0.1 * elapsedTime;
 
                 // Mouse Interaction
