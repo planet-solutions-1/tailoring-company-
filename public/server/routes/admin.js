@@ -85,14 +85,20 @@ router.post('/restore', authenticateToken, requireRole('company'), async (req, r
                     const placeholders = keys.map(() => '?').join(',');
                     const sql = `INSERT INTO ${table} (${cols}) VALUES (${placeholders})`;
 
+                    let insertedCount = 0;
                     for (const row of rows) {
                         const values = keys.map(k => {
-                            const val = row[k];
-                            // Handle date objects or nulls if needed, JSON keeps them as strings usually which is fine for DB
+                            let val = row[k];
+                            // FIX: If value is an array/object, stringify it for SQL
+                            if (val && typeof val === 'object') {
+                                val = JSON.stringify(val);
+                            }
                             return val;
                         });
                         await exec(sql, values);
+                        insertedCount++;
                     }
+                    console.log(`✅ Restored ${insertedCount}/${rows.length} rows in ${table}`);
                 }
             }
         }
