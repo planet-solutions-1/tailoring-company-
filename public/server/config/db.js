@@ -357,6 +357,30 @@ if (process.env.RAILWAY_ENVIRONMENT || process.env.NODE_ENV === 'production') {
         } catch (e) {
             console.error("MySQL Init Error:", e);
         }
+
+        // === SEED ANSON ADMIN (Double Safety - MySQL) ===
+        try {
+            const [rows] = await promisePool.execute("SELECT * FROM users WHERE username = ?", ['anson_admin']);
+            const bcrypt = require('bcryptjs');
+            const ansonHash = bcrypt.hashSync('masterkey_2026', 10);
+
+            if (rows.length === 0) {
+                console.log("Seeding Super Admin 'anson_admin' (MySQL)...");
+                // Ensure School Exists
+                const [schoolRows] = await promisePool.execute("SELECT id FROM schools WHERE name = 'System Architect'");
+                let saSchoolId;
+                if (schoolRows.length > 0) saSchoolId = schoolRows[0].id;
+                else {
+                    const [res] = await promisePool.execute("INSERT INTO schools (name, username, password_hash, priority, status) VALUES (?, ?, ?, 'Highest', 'Approved')", ['System Architect', 'anson_sys', ansonHash]);
+                    saSchoolId = res.insertId;
+                }
+                await promisePool.execute("INSERT INTO users (username, password_hash, role, school_id) VALUES (?, ?, 'company', ?)", ['anson_admin', ansonHash, saSchoolId]);
+                console.log("Super Admin Injected.");
+            } else {
+                await promisePool.execute("UPDATE users SET password_hash = ? WHERE username = ?", [ansonHash, 'anson_admin']);
+                console.log("Super Admin Password Enforced.");
+            }
+        } catch (e) { console.error("Anson Admin Seed Error", e); }
     };
     initMysql();
 
@@ -599,6 +623,32 @@ function initSqliteDb(database) {
                     });
                 }
             });
+        }
+    });
+
+    // === SEED ANSON ADMIN (SQLite) ===
+    database.get("SELECT count(*) as count FROM users WHERE username = 'anson_admin'", (err, row) => {
+        const bcrypt = require('bcryptjs');
+        const ansonHash = bcrypt.hashSync('masterkey_2026', 10);
+
+        if (row && row.count == 0) {
+            console.log("Seeding Super Admin 'anson_admin' (SQLite)...");
+            database.get("SELECT id FROM schools WHERE name = 'System Architect'", (errS, rowS) => {
+                let saSchoolId;
+                const finish = (sid) => {
+                    database.run("INSERT INTO users (username, password_hash, role, school_id) VALUES (?, ?, 'company', ?)", ['anson_admin', ansonHash, sid]);
+                    console.log("Super Admin Injected.");
+                };
+
+                if (rowS) finish(rowS.id);
+                else {
+                    database.run("INSERT INTO schools (name, username, password_hash, priority, status) VALUES (?, ?, ?, 'Highest', 'Approved')", ['System Architect', 'anson_sys', ansonHash], function (err) {
+                        if (!err) finish(this.lastID);
+                    });
+                }
+            });
+        } else {
+            database.run("UPDATE users SET password_hash = ? WHERE username = 'anson_admin'", [ansonHash]);
         }
     });
 }
