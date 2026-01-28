@@ -69,7 +69,7 @@ router.post('/login', async (req, res) => {
 
         const user = await getUserByUsername(username);
         // DEBUG: Return what we received to debug the mismatch
-        if (!user) return res.status(400).json({ error: `User not found. (Debug: Server saw '${safeUser}')` });
+        if (!user) return res.status(400).json({ error: `LOGIN FAILED (DEBUG MODE: Server saw '${safeUser}')` });
 
         if (await bcrypt.compare(password, user.password_hash)) {
             // Fetch School Name if applicable

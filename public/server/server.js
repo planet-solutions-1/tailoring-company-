@@ -1,4 +1,5 @@
 require('dotenv').config();
+console.log("--- SYSTEM RESTART v1.2.0 ---");
 const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
