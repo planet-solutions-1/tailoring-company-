@@ -8518,7 +8518,9 @@
 
         } catch (err) {
             console.error("Trash Error", err);
-            loading.innerText = "Error loading trash";
+            loading.innerText = "Error: " + err.message;
+            // Also show toast
+            showToast("Failed to load trash: " + err.message, true);
         }
     }
 
