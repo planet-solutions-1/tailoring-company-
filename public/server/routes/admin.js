@@ -93,6 +93,10 @@ router.post('/restore', authenticateToken, requireRole('company'), async (req, r
                             if (val && typeof val === 'object') {
                                 val = JSON.stringify(val);
                             }
+                            // FIX: Convert ISO Date strings (YYYY-MM-DDTHH:mm:ss.sssZ) to MySQL (YYYY-MM-DD HH:mm:ss)
+                            if (typeof val === 'string' && val.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/)) {
+                                val = val.slice(0, 19).replace('T', ' ');
+                            }
                             return val;
                         });
                         await exec(sql, values);
