@@ -500,7 +500,7 @@ app.use((req, res, next) => {
 });
 
 // 2. Map Clean Routes to Html Files (PROTECTED)
-app.get('/company', requireCookieAuth, (req, res) => res.sendFile(path.join(__dirname, '../dashboard_fixed.html')));
+app.get('/company', requireCookieAuth, (req, res) => res.sendFile(path.join(__dirname, '../company_dashboard.html')));
 app.get('/school', requireCookieAuth, (req, res) => res.sendFile(path.join(__dirname, '../school_dashboard.html')));
 app.get('/production', requireCookieAuth, (req, res) => res.sendFile(path.join(__dirname, '../production_dashboard.html')));
 app.get('/packing', requireCookieAuth, (req, res) => res.sendFile(path.join(__dirname, '../packing_dashboard.html')));
