@@ -475,6 +475,9 @@ app.use('/api/auth', authRoutes);
 app.use('/api/data', dataRoutes);
 app.use('/api/public', publicRoutes);
 app.use('/api/production', productionRoutes);
+// Admin & Backup Routes
+const adminRoutes = require('./routes/admin');
+app.use('/api/admin', adminRoutes);
 
 // UPLOAD ENDPOINT
 app.post('/api/data/upload', upload.array('images', 5), (req, res) => {

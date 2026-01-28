@@ -1839,13 +1839,27 @@
                                 <h4 class="font-bold text-rose-600 text-sm mb-2">Danger Zone</h4>
                                 <p class="text-xs text-gray-500 mb-4 leading-relaxed">Irreversibly destructive actions.
                                     Proceed with extreme caution.</p>
-                                <div class="flex gap-4">
-                                    <button onclick="fixDatabase()"
-                                        class="px-4 py-2 border border-orange-200 text-orange-500 hover:bg-orange-50 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors">Run
-                                        Diagnostics</button>
-                                    <button onclick="resetDatabase()"
-                                        class="px-4 py-2 bg-rose-50 border border-rose-200 text-rose-600 hover:bg-rose-600 hover:text-white rounded-lg text-xs font-bold uppercase tracking-wider transition-colors shadow-sm">Reset
-                                        Database</button>
+                                <div class="flex flex-col gap-3">
+                                    <div class="flex gap-4">
+                                        <button onclick="downloadBackup()"
+                                            class="px-4 py-2 border border-blue-200 text-blue-600 hover:bg-blue-50 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors">
+                                            Download Backup (JSON)
+                                        </button>
+                                        <button onclick="document.getElementById('restore-file').click()"
+                                            class="px-4 py-2 border border-orange-200 text-orange-500 hover:bg-orange-50 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors">
+                                            Restore Backup
+                                        </button>
+                                        <input type="file" id="restore-file" class="hidden" accept=".json"
+                                            onchange="restoreBackup(this)">
+                                    </div>
+                                    <div class="flex gap-4">
+                                        <button onclick="fixDatabase()"
+                                            class="px-4 py-2 border border-gray-200 text-gray-500 hover:bg-gray-50 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors">Run
+                                            Diagnostics</button>
+                                        <button onclick="resetDatabase()"
+                                            class="px-4 py-2 bg-rose-50 border border-rose-200 text-rose-600 hover:bg-rose-600 hover:text-white rounded-lg text-xs font-bold uppercase tracking-wider transition-colors shadow-sm">Reset
+                                            Database</button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -6347,6 +6361,74 @@
                     <td class="p-4 text-xs text-gray-500 truncate max-w-xs" title="${l.details}">${l.details}</td>
                 </tr>
             `}).join('');
+        }
+
+        // === BACKUP & RESTORE ===
+        async function downloadBackup() {
+            try {
+                showToast("Generating Backup...", "info");
+                const res = await fetch(`${API_BASE}/admin/backup`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!res.ok) throw new Error("Backup Failed");
+
+                const blob = await res.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `planet_full_backup_${new Date().toISOString().slice(0, 10)}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                showToast("Backup Downloaded!", "success");
+            } catch (e) {
+                console.error(e);
+                showToast("Backup Failed!", true);
+            }
+        }
+
+        async function restoreBackup(input) {
+            const file = input.files[0];
+            if (!file) return;
+
+            if (!confirm("⚠️ DANGER: This will WIPE ALL CURRENT DATA and replace it with the backup. Are you sure?")) {
+                input.value = ''; // Reset
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = async function (e) {
+                try {
+                    const json = JSON.parse(e.target.result);
+                    showToast("Restoring Data... This may take a minute.", "info");
+
+                    const res = await fetch(`${API_BASE}/admin/restore`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ data: json }) // Wrapper
+                    });
+
+                    if (!res.ok) {
+                        const err = await res.json();
+                        throw new Error(err.error || "Restore Failed");
+                    }
+
+                    showToast("System Restored Successfully! Reloading...", "success");
+                    setTimeout(() => window.location.reload(), 2000);
+
+                } catch (err) {
+                    console.error(err);
+                    showToast("Restore Failed: " + err.message, true);
+                    alert("Restore Failed: " + err.message);
+                } finally {
+                    input.value = ''; // Reset
+                }
+            };
+            reader.readAsText(file);
         }
 
         async function cleanupLogs() {
