@@ -8488,7 +8488,9 @@
         empty.classList.add('hidden');
 
         try {
-            const res = await fetch(`/api/data/trash/${type}`, { credentials: 'include' });
+            const res = await fetch(`/api/data/trash/${type}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
             if (!res.ok) {
                 const errData = await res.json().catch(() => ({}));
                 throw new Error(errData.error || `Server Error: ${res.status}`);
@@ -8529,7 +8531,7 @@
         try {
             const res = await fetch(`/api/data/restore/${type}/${id}`, {
                 method: 'POST',
-                credentials: 'include'
+                headers: { 'Authorization': `Bearer ${token}` }
             });
             const d = await res.json();
             if (res.ok) {
@@ -8548,7 +8550,7 @@
         try {
             const res = await fetch(`/api/data/trash/${type}/${id}`, {
                 method: 'DELETE',
-                credentials: 'include'
+                headers: { 'Authorization': `Bearer ${token}` }
             });
             const d = await res.json();
             if (res.ok) {
