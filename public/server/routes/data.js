@@ -779,9 +779,9 @@ router.delete('/students/:id', authenticateToken, async (req, res) => {
 
         // SOFT DELETE IMPLEMENTATION
         if (db.execute) {
-            await db.execute("UPDATE students SET is_deleted = 1, deleted_at = CURRENT_TIMESTAMP WHERE id = ?", [id]);
+            await db.execute("UPDATE students SET is_deleted = 1, deleted_at = CURRENT_TIMESTAMP WHERE id = ?", [row.id]);
         } else {
-            db.run("UPDATE students SET is_deleted = 1, deleted_at = CURRENT_TIMESTAMP WHERE id = ?", [id]);
+            db.run("UPDATE students SET is_deleted = 1, deleted_at = CURRENT_TIMESTAMP WHERE id = ?", [row.id]);
         }
 
         if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'DELETE_STUDENT', `Soft Deleted Student #${id}`, row.school_id, req.user.role);
