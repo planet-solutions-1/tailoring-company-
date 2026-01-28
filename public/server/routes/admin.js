@@ -158,4 +158,54 @@ router.post('/reset', authenticateToken, requireRole('company'), async (req, res
     }
 });
 
+// POST /api/admin/heal - AI Brain Action Endpoint
+router.post('/heal', authenticateToken, requireRole('company'), async (req, res) => {
+    const { issue } = req.body;
+    console.log(`[AI BRAIN] Received Heal Request: ${issue}`);
+
+    try {
+        if (issue === 'config') {
+            // Force Repair System Config
+            if (db.execute) {
+                // MySQL
+                await db.execute("DELETE FROM schools WHERE username = 'system_config'");
+            } else {
+                // SQLite
+                await exec("DELETE FROM schools WHERE username = 'system_config'");
+            }
+
+            // Re-insert
+            const defaultConfig = {
+                name: 'System Configuration',
+                username: 'system_config',
+                password_hash: 'LOCKED',
+                role: 'school',
+                address: JSON.stringify({
+                    items: [
+                        "BOYS - SHIRT", "BOYS - TROUSER", "BOYS - SHORT", "BOYS - TUNIC",
+                        "GIRLS - SKIRT", "GIRLS - SHIRT", "GIRLS - PINAFORE", "GIRLS - TROUSER", "GIRLS - VEST"
+                    ],
+                    hidden_items: []
+                })
+            };
+
+            const sql = `INSERT INTO schools (name, username, password_hash, address) VALUES (?, ?, ?, ?)`;
+            const params = [defaultConfig.name, defaultConfig.username, defaultConfig.password_hash, defaultConfig.address];
+
+            if (db.execute) await db.execute(sql, params);
+            else await exec(sql, params);
+
+            if (db.logActivity) db.logActivity(req.user.id, req.user.username, 'AUTO_HEAL', 'AI Brain fixed missing config.');
+
+            return res.json({ success: true, message: "Config Repaired" });
+        }
+
+        res.status(400).json({ error: "Unknown issue type" });
+
+    } catch (e) {
+        console.error("Heal Error:", e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
 module.exports = router;
