@@ -21,8 +21,6 @@ router.get('/measurements/:school_id', async (req, res) => {
         let school, students;
 
         // DB Abstraction - Handling both Promise (MySQL) and Callback (SQLite) styles roughly
-        // Ideally rely on the uniform `db.query` or `db.get/all` wrapper if it supports promises.
-        // Assuming db.query returns a promise based on previous file inspection:
         if (db.query) {
             const [sRows] = await db.query(schoolQuery, [school_id]);
             school = sRows[0];
@@ -96,28 +94,42 @@ router.post('/measurements', upload.single('file'), async (req, res) => {
         const sheet = wb.Sheets[wb.SheetNames[0]];
         const data = xlsx.utils.sheet_to_json(sheet, { header: 1, defval: "" });
 
-        // Find Header Row (Look for "Student Name")
+        // Find Header Row (Robust Fuzzy Match)
         let headerIndex = -1;
         for (let i = 0; i < Math.min(data.length, 20); i++) {
-            if (data[i].includes("Student Name") || data[i].includes("ID (DO NOT EDIT)")) {
+            const row = data[i];
+            // Check if any cell contains "Student Name" or "ID" (Case Insensitive)
+            const hasName = row.some(c => c && c.toString().toLowerCase().includes("student name"));
+            const hasID = row.some(c => c && c.toString().toLowerCase().includes("id"));
+
+            if (hasName || hasID) {
                 headerIndex = i;
                 break;
             }
         }
 
-        if (headerIndex === -1) return res.status(400).json({ error: "Invalid File Format: Could not find header row." });
+        if (headerIndex === -1) return res.status(400).json({ error: "Invalid File Format: Could not find 'Student Name' header row." });
 
         const headers = data[headerIndex];
         const rows = data.slice(headerIndex + 1);
 
+        // Helper: Find Column Index by keywords (Case Insensitive, Partial Match)
+        const getColIndex = (keywords) => {
+            if (!Array.isArray(keywords)) keywords = [keywords];
+            return headers.findIndex(h => h && keywords.some(k => h.toString().toLowerCase().includes(k.toLowerCase())));
+        };
+
         let updatedCount = 0;
 
         for (let row of rows) {
-            // Map columns roughly based on known structure or index
-            const idIndex = headers.indexOf("ID (DO NOT EDIT)");
-            const rollIndex = headers.indexOf("Roll No");
-            const admIndex = headers.indexOf("Admission No");
-            const nameIndex = headers.indexOf("Student Name");
+            // Map columns dynamically using fuzzy search
+            const idIndex = getColIndex(["ID", "id ("]);
+            const rollIndex = getColIndex(["Roll No", "Roll"]);
+            const admIndex = getColIndex(["Admission No", "Admission"]);
+            const nameIndex = getColIndex(["Student Name", "Name", "Student"]);
+            const classIndex = getColIndex(["Class", "Grade"]);
+            const secIndex = getColIndex(["Section", "Sec"]);
+            const genIndex = getColIndex(["Gender", "Sex"]);
 
             // 1. Try Primary ID
             let studentId = idIndex > -1 ? row[idIndex] : null;
@@ -126,23 +138,22 @@ router.post('/measurements', upload.single('file'), async (req, res) => {
             if (!studentId && (admIndex > -1 || nameIndex > -1)) {
                 const admNo = admIndex > -1 ? row[admIndex] : null;
                 const name = nameIndex > -1 ? row[nameIndex] : null;
-                const cls = row[headers.indexOf("Class")];
-                const section = row[headers.indexOf("Section")];
+                const cls = classIndex > -1 ? row[classIndex] : null;
+                const section = secIndex > -1 ? row[secIndex] : null;
 
                 let matchQuery = "";
                 let matchParams = [];
 
                 if (admNo) {
                     matchQuery = "SELECT id FROM students WHERE admission_no = ? AND school_id = ?";
-                    matchParams = [admNo, req.body.school_id || null]; // school_id from form-data
+                    matchParams = [admNo, req.body.school_id || null];
                 } else if (name && cls) {
                     matchQuery = "SELECT id FROM students WHERE name = ? AND class = ? AND section = ? AND school_id = ?";
-                    matchParams = [name, cls, section, req.body.school_id || null];
+                    matchParams = [name, cls, section || '', req.body.school_id || null];
                 }
 
                 if (matchQuery) {
                     const matched = await new Promise((resolve) => {
-                        // DB Wrapper Helper
                         if (db.query) {
                             db.query(matchQuery, matchParams).then(([r]) => resolve(r[0])).catch(e => resolve(null));
                         } else {
@@ -153,37 +164,42 @@ router.post('/measurements', upload.single('file'), async (req, res) => {
                 }
             }
 
-            // Construct Measurements Object
+            // Construct Measurements Object (Using fuzzy headers)
+            const getM = (keys) => {
+                const idx = getColIndex(keys);
+                return idx > -1 ? row[idx] : undefined;
+            }
+
             const m = {
-                u1: row[headers.indexOf("U1 (SHIRT LENGTH)")],
-                u2: row[headers.indexOf("U2 (CHEST)")],
-                u3: row[headers.indexOf("U3 (STOMACH)")],
-                u4: row[headers.indexOf("U4 (SHOULDER)")],
-                u5: row[headers.indexOf("U5 (FULL SLEEVE)")],
-                u6: row[headers.indexOf("U6 (HALF SLEEVE)")],
-                u7: row[headers.indexOf("U7 (KURTHA/SPECIAL)")],
-                u8: row[headers.indexOf("U8 (EXTRA)")],
-                l1: row[headers.indexOf("L1 (PANT LENGTH)")],
-                l2: row[headers.indexOf("L2 (WAIST)")],
-                l3: row[headers.indexOf("L3 (SHORTS LENGTH)")],
-                l4: row[headers.indexOf("L4 (PINOFORE LENGTH)")],
-                l5: row[headers.indexOf("L5 (SKIRT LENGTH)")],
-                l6: row[headers.indexOf("L6 (HIP)")],
-                l7: row[headers.indexOf("L7 (THIGH)")],
-                l8: row[headers.indexOf("L8 (EXTRA)")]
+                u1: getM(["U1", "Shirt Length"]),
+                u2: getM(["U2", "Chest"]),
+                u3: getM(["U3", "Stomach"]),
+                u4: getM(["U4", "Shoulder"]),
+                u5: getM(["U5", "Full Sleeve"]),
+                u6: getM(["U6", "Half Sleeve"]),
+                u7: getM(["U7", "Kurtha"]),
+                u8: getM(["U8", "Extra"]),
+                l1: getM(["L1", "Pant Length"]),
+                l2: getM(["L2", "Waist"]),
+                l3: getM(["L3", "Shorts"]),
+                l4: getM(["L4", "Pinofore"]),
+                l5: getM(["L5", "Skirt"]),
+                l6: getM(["L6", "Hip"]),
+                l7: getM(["L7", "Thigh"]),
+                l8: getM(["L8", "Extra"])
             };
 
             // Remove empty/undefined
             Object.keys(m).forEach(key => (m[key] === undefined || m[key] === "") && delete m[key]);
 
             // 3. AUTO-CREATE STUDENT IF MISSING (Bulk Upload Helper)
-            if (!studentId && row[nameIndex]) {
+            if (!studentId && nameIndex > -1 && row[nameIndex]) {
                 const name = row[nameIndex];
-                const cls = row[headers.indexOf("Class")] || "";
-                const section = row[headers.indexOf("Section")] || "";
-                const gender = row[headers.indexOf("Gender")] || "Unspecified";
-                const rollNo = row[rollIndex] || "";
-                const admNo = row[headers.indexOf("Admission No")] || `AUTO-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+                const cls = classIndex > -1 ? row[classIndex] : "";
+                const section = secIndex > -1 ? row[secIndex] : "";
+                const gender = genIndex > -1 ? row[genIndex] : "Unspecified";
+                const rollNo = rollIndex > -1 ? row[rollIndex] : "";
+                const admNo = admIndex > -1 ? row[admIndex] : `AUTO-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
                 const schoolId = req.body.school_id; // Mandatory
 
                 if (schoolId) {
