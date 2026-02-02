@@ -94,21 +94,32 @@ router.post('/measurements', upload.single('file'), async (req, res) => {
         const sheet = wb.Sheets[wb.SheetNames[0]];
         const data = xlsx.utils.sheet_to_json(sheet, { header: 1, defval: "" });
 
-        // Find Header Row (Robust Fuzzy Match)
+        // Find Header Row (Score-based)
         let headerIndex = -1;
+        let maxScore = 0;
+
+        // Keywords to look for in a header row
+        const keywords = ["name", "student", "roll", "admission", "class", "section", "gender", "id", "u1", "l1"];
+
         for (let i = 0; i < Math.min(data.length, 20); i++) {
             const row = data[i];
-            // Check if any cell contains "Student Name" or "ID" (Case Insensitive)
-            const hasName = row.some(c => c && c.toString().toLowerCase().includes("student name"));
-            const hasID = row.some(c => c && c.toString().toLowerCase().includes("id"));
+            let score = 0;
+            // Convert row to a single low-case string for checking
+            const rowStr = row.map(c => c ? c.toString().toLowerCase() : "").join(" ");
 
-            if (hasName || hasID) {
+            keywords.forEach(k => {
+                if (rowStr.includes(k)) score++;
+            });
+
+            // If we find at least 2 keywords, it's a candidate. Pick the one with most matches.
+            // Prioritize rows that have 'name'
+            if (score > maxScore && score >= 2) {
+                maxScore = score;
                 headerIndex = i;
-                break;
             }
         }
 
-        if (headerIndex === -1) return res.status(400).json({ error: "Invalid File Format: Could not find 'Student Name' header row." });
+        if (headerIndex === -1) return res.status(400).json({ error: "Invalid File Format: Could not detect header row (Missing Name/Class/Roll columns)." });
 
         const headers = data[headerIndex];
         const rows = data.slice(headerIndex + 1);
@@ -124,12 +135,12 @@ router.post('/measurements', upload.single('file'), async (req, res) => {
         for (let row of rows) {
             // Map columns dynamically using fuzzy search
             const idIndex = getColIndex(["ID", "id ("]);
-            const rollIndex = getColIndex(["Roll No", "Roll"]);
-            const admIndex = getColIndex(["Admission No", "Admission"]);
-            const nameIndex = getColIndex(["Student Name", "Name", "Student"]);
-            const classIndex = getColIndex(["Class", "Grade"]);
-            const secIndex = getColIndex(["Section", "Sec"]);
-            const genIndex = getColIndex(["Gender", "Sex"]);
+            const rollIndex = getColIndex(["Roll No", "Roll", "roll"]);
+            const admIndex = getColIndex(["Admission No", "Admission", "adm"]);
+            const nameIndex = getColIndex(["Student Name", "Name", "Student", "name"]);
+            const classIndex = getColIndex(["Class", "Grade", "class"]);
+            const secIndex = getColIndex(["Section", "Sec", "sec"]);
+            const genIndex = getColIndex(["Gender", "Sex", "gender"]);
 
             // 1. Try Primary ID
             let studentId = idIndex > -1 ? row[idIndex] : null;
