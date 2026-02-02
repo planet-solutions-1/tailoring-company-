@@ -15,7 +15,7 @@ router.get('/measurements/:school_id', async (req, res) => {
 
     try {
         // 1. Fetch School & Students
-        const schoolQuery = "SELECT name, district FROM schools WHERE id = ?";
+        const schoolQuery = "SELECT name, address FROM schools WHERE id = ?";
         const studentsQuery = "SELECT * FROM students WHERE school_id = ? AND is_active = 1 AND is_deleted = 0 ORDER BY class, section, roll_no";
 
         let school, students;
@@ -41,7 +41,7 @@ router.get('/measurements/:school_id', async (req, res) => {
             ["FILE METADATA"],
             ["School ID:", school_id],
             ["School Name:", school.name],
-            ["Location:", school.district],
+            ["Location:", school.address || ""],
             ["Generated On:", new Date().toLocaleString()],
             [] // Spacer
         ];
