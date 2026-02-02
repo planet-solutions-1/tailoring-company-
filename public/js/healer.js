@@ -54,53 +54,71 @@ class AutoHealer {
 
                 // ERROR DETECTION
                 if (!response.ok) {
-                    await this.analyzeError(response, args);
+                    // Clone response for analysis so original stream remains usable by app
+                    const clonedRes = response.clone();
+                    this.analyzeError(clonedRes, args);
                 }
 
                 return response;
             } catch (error) {
-                // Network Failures
-                console.error("Brain intercepted network error:", error);
+                // Network Failures (Offline, DNS)
+                // console.error("Brain intercepted network error:", error);
+                this.notify("Network Error: Check Connection");
                 throw error;
             }
         };
     }
 
     async analyzeError(response, args) {
-        if (this.isHealing) return; // Don't loop
+        if (this.isHealing) return;
 
         const url = response.url;
         const status = response.status;
+        let errorBody = "";
 
-        console.warn(`🧠 Brain detected ${status} on ${url}`);
-
-        // CASE 1: SYSTEM CONFIG MISSING (404)
-        if (url.includes('system_config') && status === 404) {
-            this.isHealing = true;
-            this.notify("Missing Config detected. Attempting Auto-Repair...");
-
-            const success = await this.triggerHeal('config');
-            if (success) {
-                this.notify("Config Restored! Reloading...");
-                setTimeout(() => window.location.reload(), 1500);
-            } else {
-                this.notify("Auto-Repair Failed.");
-            }
-            this.isHealing = false;
+        try {
+            const data = await response.json();
+            errorBody = data.error || JSON.stringify(data);
+        } catch (e) {
+            try { errorBody = await response.text(); } catch (e2) { }
         }
 
-        // CASE 2: GENERIC DATABASE ERROR (500)
+        console.warn(`🧠 Brain detected ${status} on ${url}:`, errorBody);
+
+        // --- STRATEGY: RATE LIMITING (429) ---
+        if (status === 429) {
+            this.notify("System Busy (Rate Limit). Slowing down...");
+            return; // No auto-fix for rate limits, just inform user
+        }
+
+        // --- STRATEGY: MISSING CONFIG (404) ---
+        if (url.includes('system_config') && status === 404) {
+            this.isHealing = true;
+            this.notify("Critical Config Missing. Auto-Repairing...");
+            await this.attemptAutoFix('config');
+            return;
+        }
+
+        // --- STRATEGY: SERVER/DATABASE ERRORS (500) ---
         if (status === 500) {
-            // Check if schema related (basic assumption)
-            this.notify("Database instability detected. Checking Schema...");
-            // We could trigger a schema refresh, but let's be conservative
+            if (errorBody.includes("Unknown column") || errorBody.includes("no such column") || errorBody.includes("Table") && errorBody.includes("doesn't exist")) {
+                this.isHealing = true;
+                this.notify("Database Schema Mismatch. Applying Patch...");
+                await this.attemptAutoFix('fix_db');
+            } else if (errorBody.includes("Incorrect datetime value")) {
+                this.notify("Code Error Detected (Date Format). Please Restart Server.");
+            } else {
+                this.notify(`Server Error: ${errorBody.substring(0, 30)}...`);
+            }
         }
     }
 
-    async triggerHeal(type) {
+    async attemptAutoFix(type) {
+        const route = type === 'fix_db' ? '/api/data/fix_db' : '/api/admin/heal'; // Differing endpoints based on issue
+
         try {
             const token = sessionStorage.getItem('token');
-            const res = await fetch(`${this.apiBase}/admin/heal`, {
+            const res = await fetch(route, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -108,12 +126,18 @@ class AutoHealer {
                 },
                 body: JSON.stringify({ issue: type })
             });
-            const data = await res.json();
-            console.log("Healing Result:", data);
-            return data.success;
+
+            if (res.ok) {
+                this.notify("Fix Applied Successfully! Reloading...");
+                setTimeout(() => window.location.reload(), 2000);
+            } else {
+                this.notify("Auto-Fix Failed. Contact Admin.");
+            }
         } catch (e) {
-            console.error("Heal RPC Failed:", e);
-            return false;
+            console.error("Heal Failed:", e);
+            this.notify("Healer Connection Failed.");
+        } finally {
+            this.isHealing = false;
         }
     }
 }

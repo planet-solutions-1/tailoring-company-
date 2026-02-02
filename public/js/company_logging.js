@@ -140,7 +140,8 @@ async function fetchRecentIssues() {
     try {
         const r = await fetch(`${API_BASE}/data/logs?limit=20`, { headers: { 'Authorization': `Bearer ${token}` } });
         const logs = await r.json();
-        const errors = logs.filter(l => l.action.includes('ERROR') || l.action.includes('DELETE') || l.details.includes('Failed')).slice(0, 5);
+        // Defensive check: Ensure logs is an array before filtering
+        const errors = (Array.isArray(logs) ? logs : []).filter(l => l.action.includes('ERROR') || l.action.includes('DELETE') || l.details.includes('Failed')).slice(0, 5);
 
         if (errors.length > 0) {
             content += `<p class="text-[10px] uppercase font-bold text-gray-400 mb-2 mt-4">System Alerts</p>`;
