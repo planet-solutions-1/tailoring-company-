@@ -244,7 +244,15 @@
                 // ...
 
                 if (res.ok) {
-                    alert('Success! ' + data.message);
+                    let msg = 'Success! ' + data.message;
+                    if (data.debug && data.debug.skippedCount > 0) {
+                        msg += `\n\n⚠️ Skipped ${data.debug.skippedCount} rows (Likely Not Students).`;
+                        if (data.debug.firstSkippedReasons && data.debug.firstSkippedReasons.length > 0) {
+                            msg += `\n\nReason Examples:\n- ${data.debug.firstSkippedReasons.join('\n- ')}`;
+                            msg += `\n\nCheck your file: Are you uploading an Invoice instead of a Student List?`;
+                        }
+                    }
+                    alert(msg);
                     status.innerText = "Upload Complete";
                 } else {
                     throw new Error(data.error || "Upload Failed");

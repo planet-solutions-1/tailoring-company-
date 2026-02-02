@@ -165,6 +165,7 @@ router.post('/measurements', upload.single('file'), async (req, res) => {
         let updatedCount = 0;
         let skippedCount = 0;
         let createdCount = 0;
+        let debugSkipped = []; // Debug info accumulator
 
         for (const row of rows) {
             if (!row || row.length === 0) continue;
@@ -178,14 +179,17 @@ router.post('/measurements', upload.single('file'), async (req, res) => {
 
             // 1. BAD KEYWORDS (Product/Header detection)
             const BAD_CONTENT = ['|', 'shirt', 'pant', 'trouser', 'frock', 'skirt', 'boys', 'girls', 'item', 'size', 'total', 'amount', 'qty', 'rate', 'mrp'];
-            if (BAD_CONTENT.some(bad => lowerName.includes(bad))) {
-                // console.log(`⚠️ Skipped Garbage Row: "${nameStr}" (Detected as Product data)`);
+            const matchedBad = BAD_CONTENT.find(bad => lowerName.includes(bad));
+
+            if (matchedBad) {
+                if (skippedCount < 5) debugSkipped.push(`"${nameStr}" (Matched '${matchedBad}')`);
                 skippedCount++;
                 continue;
             }
 
             // 2. TOO SHORT / NUMERIC (e.g. "12", "A")
             if (nameStr.length < 2 || !isNaN(nameStr)) {
+                if (skippedCount < 5) debugSkipped.push(`"${nameStr}" (Too Short/Numeric)`);
                 skippedCount++;
                 continue;
             }
@@ -261,8 +265,14 @@ router.post('/measurements', upload.single('file'), async (req, res) => {
             }
         }
 
-        console.log(`✅ Import Summary: ${updatedCount} Updated, ${createdCount} Created, ${skippedCount} Skipped (Garbage).`);
-        res.json({ message: `Success! ${createdCount} new students added, ${updatedCount} updated. (Skipped ${skippedCount} invalid rows)` });
+        console.log(`✅ Import Summary: ${updatedCount} Updated, ${createdCount} Created, ${skippedCount} Skipped.`);
+        res.json({
+            message: `Success! ${createdCount} new students added, ${updatedCount} updated.`,
+            debug: {
+                skippedCount,
+                firstSkippedReasons: debugSkipped
+            }
+        });
 
     } catch (e) {
         console.error("Import Error:", e);
