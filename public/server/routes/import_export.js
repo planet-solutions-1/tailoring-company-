@@ -180,7 +180,18 @@ router.post('/production-plan', upload.single('file'), async (req, res) => {
                 const count = parseInt(row['Student Count'] || 0);
 
                 if (groupName && count > 0) {
-                    // Check existing first? (Optional duplication prevention)
+                    // 1. Auto-Register Dress Type if New
+                    const [configExists] = await db.query("SELECT id FROM production_config WHERE dress_type = ?", [dressType]);
+                    if (!configExists || configExists.length === 0) {
+                        const defaultS = JSON.stringify(Array(20).fill('').map((_, i) => `Stage ${i + 1}`));
+                        const defaultP = JSON.stringify(Array(20).fill('').map((_, i) => `Process ${i + 1}`));
+                        await db.query("INSERT INTO production_config (dress_type, s_labels, p_labels) VALUES (?, ?, ?)", [dressType, defaultS, defaultP]);
+                    }
+
+                    // 2. Check existing group to prevent duplicates (Optional but good)
+                    const [existingGroup] = await db.query("SELECT id FROM production_groups WHERE group_name = ?", [groupName]);
+                    if (existingGroup && existingGroup.length > 0) continue; // Skip if group name already exists
+
                     const [res] = await db.query(
                         "INSERT INTO production_groups (group_name, dress_type, daily_target, quantity, status, notes) VALUES (?, ?, ?, ?, 'Active', ?)",
                         [groupName, dressType, Math.ceil(count * 0.1), count, "Imported from Master Plan"]
