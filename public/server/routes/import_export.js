@@ -176,6 +176,43 @@ router.post('/measurements', upload.single('file'), async (req, res) => {
             // Remove empty/undefined
             Object.keys(m).forEach(key => (m[key] === undefined || m[key] === "") && delete m[key]);
 
+            // 3. AUTO-CREATE STUDENT IF MISSING (Bulk Upload Helper)
+            if (!studentId && row[nameIndex]) {
+                const name = row[nameIndex];
+                const cls = row[headers.indexOf("Class")] || "";
+                const section = row[headers.indexOf("Section")] || "";
+                const gender = row[headers.indexOf("Gender")] || "Unspecified";
+                const rollNo = row[rollIndex] || "";
+                const admNo = row[headers.indexOf("Admission No")] || `AUTO-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+                const schoolId = req.body.school_id; // Mandatory
+
+                if (schoolId) {
+                    try {
+                        const insertSql = "INSERT INTO students (school_id, name, class, section, roll_no, admission_no, gender, is_active, measurements) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)";
+                        const params = [schoolId, name, cls, section, rollNo, admNo, gender, JSON.stringify(m)];
+
+                        if (db.query) {
+                            const [res] = await db.query(insertSql, params);
+                            studentId = res.insertId;
+                        } else {
+                            await new Promise((resolve, reject) => {
+                                db.run(insertSql, params, function (err) {
+                                    if (err) reject(err);
+                                    else {
+                                        studentId = this.lastID;
+                                        resolve();
+                                    }
+                                });
+                            });
+                        }
+                        updatedCount++;
+                        continue; // Already saved measurements in INSERT, skip update
+                    } catch (e) {
+                        console.error("Auto-Create Failed for:", name, e.message);
+                    }
+                }
+            }
+
             if (studentId) {
                 // Update by ID
                 if (db.query) {
