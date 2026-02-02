@@ -3690,7 +3690,7 @@
 
         async function resetSchoolData() {
             if (!confirm("⚠️ DANGER: Are you sure you want to delete ALL students and measurements? This cannot be undone.")) return;
-            if (!confirm("re you really sure? This will wipe the database for this school.")) return;
+            if (!confirm("Are you really sure? This will wipe the database for this school.")) return;
 
             const btn = event.target;
             const originalText = btn.innerText;
@@ -3708,10 +3708,16 @@
 
                 alert("Success: " + data.message);
 
-                // Clear Local State
+                // Clear ALL Local State & Backups
                 allStudents = [];
-                renderStudents(); // Update UI
-                window.location.reload(); // Fresh start
+
+                // CRITICAL: Wipe potential zombies from storage
+                localStorage.removeItem('student_backups');
+                localStorage.removeItem(`school_cache_${schoolId}`);
+                localStorage.removeItem('offline_queue');
+
+                renderStudents();
+                window.location.reload();
 
             } catch (err) {
                 console.error("Reset Error", err);
