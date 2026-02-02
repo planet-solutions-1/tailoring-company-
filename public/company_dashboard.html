@@ -8738,8 +8738,73 @@
     }
 
     // Placeholder for list fetching
-    function fetchAccessCodes() {
-        console.warn("Listing historic codes not supported by current API.");
+    async function fetchAccessCodes() {
+        const tbody = document.getElementById('access-code-list');
+        if (!tbody) return;
+
+        try {
+            const res = await fetch(`${API_BASE}/auth/access-codes`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (!res.ok) return; // Silent fail or empty
+
+            const codes = await res.json();
+            tbody.innerHTML = ''; // Clear current
+
+            codes.forEach(c => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-gray-50 transition-colors border-b border-gray-50";
+                const dateExp = new Date(c.expires_at).toLocaleString();
+                const isExpired = new Date(c.expires_at) < new Date();
+
+                tr.innerHTML = `
+                        <td class="py-3 px-2 text-gray-700 font-bold text-xs">${c.school_name || 'Unknown'}</td>
+                        <td class="py-3 px-2"><span class="font-mono bg-blue-50 text-blue-600 px-2 py-1 rounded border border-blue-100 font-bold select-all text-xs">${c.code}</span></td>
+                        <td class="py-3 px-2 uppercase text-[10px] font-bold text-gray-500">${c.type}</td>
+                        <td class="py-3 px-2 text-center">
+                            ${isExpired
+                        ? '<span class="bg-red-100 text-red-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase">Expired</span>'
+                        : '<span class="bg-emerald-100 text-emerald-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase">Active</span>'}
+                        </td>
+                        <td class="py-3 px-2 text-right flex flex-col items-end gap-1">
+                            <span class="text-[9px] text-gray-400 block">Expires: ${dateExp}</span>
+                            <button onclick="revokeCode('${c.code}')" class="text-[10px] text-red-400 hover:text-red-600 underline font-bold px-1">Revoke</button>
+                        </td>
+                    `;
+                tbody.appendChild(tr);
+            });
+
+        } catch (e) {
+            console.error("Failed to load codes", e);
+        }
+    }
+
+    async function revokeCode(code) {
+        if (!confirm("Are you sure you want to revoke this code? It will stop working immediately.")) return;
+
+        try {
+            const res = await fetch(`${API_BASE}/auth/access-code/${code}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+
+            if (res.ok) {
+                if (window.showToast) showToast("Code Revoked", "success");
+                fetchAccessCodes(); // Refresh
+            } else {
+                alert("Failed to revoke");
+            }
+        } catch (e) {
+            alert("Error: " + e.message);
+        }
+    }
+
+    // Auto-load on init
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', fetchAccessCodes);
+    } else {
+        fetchAccessCodes();
     }
 </script>
 </body>

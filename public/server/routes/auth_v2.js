@@ -194,4 +194,45 @@ router.post('/generate-code', (req, res) => {
     });
 });
 
+// GET /api/auth/access-codes (List active codes)
+router.get('/access-codes', (req, res) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    if (!token) return res.sendStatus(401);
+
+    jwt.verify(token, 'hardcoded_secret_key_fixed', (err, user) => {
+        if (err || user.role !== 'company') return res.sendStatus(403);
+
+        const sql = `
+            SELECT ac.code, ac.type, ac.expires_at, s.name as school_name 
+            FROM access_codes ac 
+            LEFT JOIN schools s ON ac.school_id = s.id 
+            WHERE ac.is_active = 1 
+            ORDER BY ac.expires_at DESC
+        `;
+
+        db.all(sql, [], (err, rows) => {
+            if (err) return res.status(500).json({ error: err.message });
+            res.json(rows);
+        });
+    });
+});
+
+// DELETE /api/auth/access-code/:code (Revoke Code)
+router.delete('/access-code/:code', (req, res) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    if (!token) return res.sendStatus(401);
+
+    jwt.verify(token, 'hardcoded_secret_key_fixed', (err, user) => {
+        if (err || user.role !== 'company') return res.sendStatus(403);
+
+        const code = req.params.code;
+        db.run("UPDATE access_codes SET is_active = 0 WHERE code = ?", [code], function (err) {
+            if (err) return res.status(500).json({ error: err.message });
+            res.json({ message: "Code revoked" });
+        });
+    });
+});
+
 module.exports = router;
