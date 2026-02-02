@@ -516,6 +516,9 @@ app.get('/tailor', requireCookieAuth, (req, res) => res.sendFile(path.join(__dir
 app.get('/admin', requireCookieAuth, (req, res) => res.sendFile(path.join(__dirname, '../admin_dashboard.html')));
 app.get('/login', (req, res) => res.sendFile(path.join(__dirname, '../login.html')));
 
+// PUBLIC PORTAL (Access Code Entry)
+app.get('/portal', (req, res) => res.sendFile(path.join(__dirname, '../access_portal.html')));
+
 app.get('/api/health', async (req, res) => {
     try {
         await db.query("SELECT 1");

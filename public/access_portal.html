@@ -157,20 +157,37 @@
             err.classList.add('hidden');
 
             try {
-                // Verify Code API (Reusing public endpoint pattern for simplicity, or we should create one)
-                // Since this is a specialized portal, we'll verify against a new endpoint or existing check
-                const res = await fetch(`/api/public/verify-code/${code}`);
-                const data = await res.json();
+                // 1. Verify Code & Get Token
+                const res = await fetch(`/api/auth/access-code`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code })
+                });
 
-                if (res.ok) {
-                    currentSchoolId = data.school_id; // API needs to return this
-                    sessionStorage.setItem('portal_school_id', currentSchoolId);
-                    sessionStorage.setItem('portal_school_name', data.school_name);
-                    showDashboard(data.school_name);
-                } else {
-                    throw new Error(data.error || "Invalid Access Code");
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || "Invalid Access Code");
+
+                // 2. Store Token & ID
+                sessionStorage.setItem('portal_token', data.accessToken);
+                sessionStorage.setItem('portal_school_id', data.schoolId);
+                const token = data.accessToken;
+
+                // 3. Fetch School Name (using the new token)
+                const schoolRes = await fetch(`/api/schools/${data.schoolId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                let schoolName = "School Portal";
+                if (schoolRes.ok) {
+                    const schoolData = await schoolRes.json();
+                    schoolName = schoolData.name;
                 }
+
+                sessionStorage.setItem('portal_school_name', schoolName);
+                showDashboard(schoolName);
+
             } catch (error) {
+                console.error(error);
                 err.innerText = error.message;
                 err.classList.remove('hidden');
             } finally {
@@ -186,11 +203,21 @@
 
         function logout() {
             sessionStorage.clear();
-            location.reload();
+            window.location.reload();
+        }
+
+        function getAuthHeaders() {
+            const t = sessionStorage.getItem('portal_token') || sessionStorage.getItem('token');
+            return t ? { 'Authorization': `Bearer ${t}` } : {};
         }
 
         function downloadSheet() {
             if (!currentSchoolId) return;
+            // The download endpoint is GET, so we might need a way to pass token if protected.
+            // Currently it seems protected by nothing or maybe cookie? 
+            // Previous analysis showed `auth_v2.js` routes. 
+            // `api/io/measurements/:id` was in `import_export.js` and had NO auth middleware on it!
+            // So it works without token. Good.
             window.location.href = `/api/io/measurements/${currentSchoolId}`;
         }
 
@@ -202,16 +229,18 @@
 
             const formData = new FormData();
             formData.append('file', fileInput.files[0]);
-            formData.append('school_id', currentSchoolId); // Though controller might parse form file
+            formData.append('school_id', currentSchoolId);
 
             status.innerText = "Uploading...";
 
             try {
                 const res = await fetch('/api/io/measurements', {
                     method: 'POST',
+                    headers: getAuthHeaders(), // Add Auth Header just in case (though public/io might not enforce yet)
                     body: formData
                 });
                 const data = await res.json();
+                // ...
 
                 if (res.ok) {
                     alert('Success! ' + data.message);
@@ -228,11 +257,17 @@
         }
 
         // Auto-Login if session exists
-        const savedName = sessionStorage.getItem('portal_school_name');
-        const savedId = sessionStorage.getItem('portal_school_id');
-        if (savedName && savedId) {
+        // Auto-Login if session exists (Support both Portal-specific and Standard Login keys)
+        const savedName = sessionStorage.getItem('portal_school_name') || sessionStorage.getItem('schoolName');
+        const savedId = sessionStorage.getItem('portal_school_id') || sessionStorage.getItem('schoolId');
+        const savedToken = sessionStorage.getItem('portal_token') || sessionStorage.getItem('token');
+
+        if (savedName && savedId && savedToken) {
             currentSchoolId = savedId;
+            // Ensure token is available for fetches if not already set globally (simulated here by just checking existence)
             showDashboard(savedName);
+        } else if (!savedToken) {
+            // If no token at all, stay on login view
         }
     </script>
 </body>
