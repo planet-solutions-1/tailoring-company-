@@ -160,43 +160,107 @@ router.post('/measurements', upload.single('file'), async (req, res) => {
 // POST /api/io/production-plan
 router.post('/production-plan', upload.single('file'), async (req, res) => {
     const { school_id } = req.body;
-    if (!school_id) return res.status(400).json({ error: "School ID is required" });
+    if (!school_id) return res.status(400).json({ error: "School ID is required for Master Plan Import" });
     if (!req.file) return res.status(400).json({ error: "No file uploaded" });
 
     try {
         const wb = xlsx.read(req.file.buffer, { type: 'buffer' });
-        const sheet = wb.Sheets[wb.SheetNames[0]];
-        const data = xlsx.utils.sheet_to_json(sheet); // Assume standard Key-Value headers on Row 1
 
         let createdBatches = 0;
+        let createdStudents = 0;
 
-        for (let row of data) {
-            // Mapping based on user file: 'Group Name', 'Dress Type', 'Student Count'
-            const groupName = row['Group Name'];
-            const dressType = row['Dress Type'] || "Standard";
-            const count = parseInt(row['Student Count'] || 0);
+        // 1. Process Overview (Batches)
+        const overviewSheet = wb.Sheets[wb.SheetNames[0]]; // Assume First Sheet is Overview
+        if (overviewSheet) {
+            const batchData = xlsx.utils.sheet_to_json(overviewSheet);
+            for (let row of batchData) {
+                // Key Mapping: 'Group Name', 'Dress Type', 'Student Count'
+                const groupName = row['Group Name'];
+                const dressType = row['Dress Type'] || "Standard";
+                const count = parseInt(row['Student Count'] || 0);
 
-            if (groupName && count > 0) {
-                // Create Production Group
-                const [res] = await db.query(
-                    "INSERT INTO production_groups (group_name, dress_type, daily_target, quantity, status, notes) VALUES (?, ?, ?, ?, 'Active', ?)",
-                    [groupName, dressType, Math.ceil(count * 0.1), count, "Imported from Master Plan"]
-                );
-                const newGroupId = res.insertId;
+                if (groupName && count > 0) {
+                    // Check existing first? (Optional duplication prevention)
+                    const [res] = await db.query(
+                        "INSERT INTO production_groups (group_name, dress_type, daily_target, quantity, status, notes) VALUES (?, ?, ?, ?, 'Active', ?)",
+                        [groupName, dressType, Math.ceil(count * 0.1), count, "Imported from Master Plan"]
+                    );
+                    const newGroupId = res.insertId;
 
-                // Init Progress
-                const stages = ["Measurements", "Pattern", "Cutting", "Stitching", "Finishing", "Packing", "Dispatch"];
-                const stageMap = { "Measurements": "Pending", "Pattern": "Pending", "Cutting": "Pending" }; // Default start
-                await db.query(
-                    "INSERT INTO production_progress (group_id, completed_stages) VALUES (?, ?)",
-                    [newGroupId, JSON.stringify(stageMap)]
-                );
-
-                createdBatches++;
+                    // Init Progress
+                    const stageMap = { "Measurements": "Pending", "Pattern": "Pending", "Cutting": "Pending" };
+                    await db.query("INSERT INTO production_progress (group_id, completed_stages) VALUES (?, ?)", [newGroupId, JSON.stringify(stageMap)]);
+                    createdBatches++;
+                }
             }
         }
 
-        res.json({ message: `Production Plan Imported. Created ${createdBatches} new batches.` });
+        // 2. Process Students ("All Students" Sheet or Index 1)
+        let studentSheet = wb.Sheets["All Students"];
+        if (!studentSheet && wb.SheetNames.length > 1) {
+            studentSheet = wb.Sheets[wb.SheetNames[1]]; // Fallback to 2nd sheet
+        }
+
+        if (studentSheet) {
+            // Headerless read or Assumption based on inspection
+            // Row Format: Group | Dress | Sn | Name | Class | Section | Gender | Qty | U1..U8 | L1..L8
+            const rawData = xlsx.utils.sheet_to_json(studentSheet, { header: 1, defval: "" });
+
+            // Skip Header Row if it exists (Check if Row 0 col 0 is 'Group Name' or similar)
+            let startRow = 0;
+            if (rawData.length > 0 && (rawData[0][0] || "").toString().toLowerCase().includes("group")) {
+                startRow = 1;
+            }
+
+            for (let i = startRow; i < rawData.length; i++) {
+                const row = rawData[i];
+                if (!row || row.length < 5) continue; // Skip empty rows
+
+                // Column Mapping (based on 24-col pattern)
+                // 0:Group, 1:Dress, 2:Sn, 3:Name, 4:Class, 5:Section, 6:Gender, 7:Qty
+                // 8-15: U1-U8, 16-23: L1-L8
+
+                const name = row[3];
+                const cls = row[4];
+                const section = row[5];
+
+                if (!name) continue;
+
+                // Measurements
+                const m = {
+                    u1: row[8], u2: row[9], u3: row[10], u4: row[11], u5: row[12], u6: row[13], u7: row[14], u8: row[15],
+                    l1: row[16], l2: row[17], l3: row[18], l4: row[19], l5: row[20], l6: row[21], l7: row[22], l8: row[23]
+                };
+
+                // Remove undefined
+                Object.keys(m).forEach(k => (m[k] === undefined || m[k] === "") && delete m[k]);
+
+                // UPSERT Logic (Check if student exists in School)
+                // Match by Name + Class + Section (Best effort)
+                const [existing] = await db.query(
+                    "SELECT id FROM students WHERE school_id = ? AND name = ? AND class = ? AND section = ?",
+                    [school_id, name, cls, section]
+                );
+
+                if (existing && existing.length > 0) {
+                    // Update
+                    await db.query("UPDATE students SET measurements = ? WHERE id = ?", [JSON.stringify(m), existing[0].id]);
+                } else {
+                    // Insert
+                    // Use S.No (row[2]) as Roll No if available
+                    const rollNo = row[2] || "";
+                    const admNo = `IMP-${Date.now()}-${Math.floor(Math.random() * 1000)}`; // Auto-gen Admission No to pass Not Null constraint
+
+                    await db.query(
+                        "INSERT INTO students (school_id, name, class, section, gender, roll_no, admission_no, measurements, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)",
+                        [school_id, name, cls, section, row[6] || 'Unspecified', rollNo, admNo, JSON.stringify(m)]
+                    );
+                    createdStudents++;
+                }
+            }
+        }
+
+        res.json({ message: `Import Complete. Created ${createdBatches} Batches and ${createdStudents} New Students.` });
 
     } catch (e) {
         console.error("Plan Import Error:", e);
