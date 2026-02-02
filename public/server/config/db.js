@@ -189,6 +189,7 @@ if (process.env.RAILWAY_ENVIRONMENT || process.env.NODE_ENV === 'production') {
                     section VARCHAR(50),
                     house VARCHAR(50),
                     gender VARCHAR(50),
+                    measurements TEXT,
                     order_status VARCHAR(50) DEFAULT 'Pending',
                     is_active BOOLEAN DEFAULT 1,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -307,6 +308,8 @@ if (process.env.RAILWAY_ENVIRONMENT || process.env.NODE_ENV === 'production') {
             try { await promisePool.execute("ALTER TABLE activity_logs ADD COLUMN school_id INT"); } catch (e) { }
             try { await promisePool.execute("ALTER TABLE activity_logs ADD COLUMN role VARCHAR(50)"); } catch (e) { }
             try { await promisePool.execute("ALTER TABLE activity_logs ADD COLUMN ip_address VARCHAR(45)"); } catch (e) { }
+            try { await promisePool.execute("ALTER TABLE students ADD COLUMN measurements TEXT"); } catch (e) { }
+
 
             // SCHOOL LOCK MIGRATION
             try { await promisePool.execute("ALTER TABLE schools ADD COLUMN is_locked BOOLEAN DEFAULT 0"); } catch (e) { }

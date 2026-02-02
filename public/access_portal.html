@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planet Access Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
+
+        :root {
+            --clay-bg: #f2fcf0;
+            --clay-surface: #ffffff;
+            --shadow-light: 10px 10px 30px rgba(160, 175, 165, 0.4), -10px -10px 30px rgba(255, 255, 255, 0.8);
+            --shadow-pressed: inset 6px 6px 10px rgba(160, 175, 165, 0.2), inset -6px -6px 10px rgba(255, 255, 255, 1);
+        }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: var(--clay-bg);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .clay-card {
+            background: var(--clay-surface);
+            border-radius: 30px;
+            box-shadow: var(--shadow-light);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+        }
+
+        .clay-btn {
+            background: var(--clay-surface);
+            border-radius: 20px;
+            padding: 12px 24px;
+            font-weight: 800;
+            box-shadow: var(--shadow-light);
+            transition: all 0.1s;
+            cursor: pointer;
+        }
+
+        .clay-btn:active {
+            box-shadow: var(--shadow-pressed);
+            transform: scale(0.95);
+        }
+
+        .clay-input {
+            background: var(--clay-surface);
+            border-radius: 15px;
+            padding: 16px 20px;
+            box-shadow: var(--shadow-pressed);
+            width: 100%;
+            outline: none;
+        }
+
+        .slide-up {
+            animation: slideUp 0.5s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- LOGIN SECTION -->
+    <div id="login-view" class="w-full max-w-md p-6 slide-up">
+        <div class="clay-card p-8 text-center">
+            <div
+                class="w-16 h-16 rounded-2xl bg-blue-400 text-white flex items-center justify-center text-3xl font-bold mx-auto mb-6 shadow-inner">
+                P</div>
+            <h1 class="text-2xl font-extrabold text-gray-700 mb-2">Access Portal</h1>
+            <p class="text-sm text-gray-400 mb-8 font-bold">Enter your Access Code to manage school data.</p>
+
+            <form onsubmit="verifyCode(event)" class="space-y-6">
+                <input type="text" id="access-code" placeholder="Enter Access Code (e.g., SCH-1234)"
+                    class="clay-input text-center text-xl font-bold tracking-widest uppercase" required>
+                <button type="submit" class="clay-btn w-full text-blue-500">Verify Access</button>
+            </form>
+            <p id="login-error" class="text-red-400 text-xs font-bold mt-4 hidden"></p>
+        </div>
+    </div>
+
+    <!-- DASHBOARD SECTION -->
+    <div id="dashboard-view" class="w-full max-w-4xl p-6 hidden slide-up">
+        <div class="flex justify-between items-center mb-8">
+            <div>
+                <h1 class="text-3xl font-extrabold text-gray-700">Measurement Manager</h1>
+                <p id="school-name-display" class="text-blue-400 font-bold uppercase tracking-wider text-sm">Loading
+                    School...</p>
+            </div>
+            <button onclick="logout()" class="clay-btn text-red-400 text-sm">Exit Portal</button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <!-- 1. DOWNLOAD -->
+            <div class="clay-card p-8 flex flex-col items-center text-center">
+                <div
+                    class="w-16 h-16 rounded-full bg-emerald-100 text-emerald-500 flex items-center justify-center text-2xl mb-4">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-gray-700 mb-2">Download Sheet</h3>
+                <p class="text-sm text-gray-400 mb-6 font-semibold">Get the latest student list template. Fill in the
+                    U1-U8 & L1-L8 measurements.</p>
+                <button onclick="downloadSheet()" class="clay-btn w-full text-emerald-600">Download Excel</button>
+            </div>
+
+            <!-- 2. UPLOAD -->
+            <div class="clay-card p-8 flex flex-col items-center text-center">
+                <div
+                    class="w-16 h-16 rounded-full bg-blue-100 text-blue-500 flex items-center justify-center text-2xl mb-4">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12">
+                        </path>
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-gray-700 mb-2">Upload Data</h3>
+                <p class="text-sm text-gray-400 mb-6 font-semibold">Upload the filled Excel sheet to update student
+                    records automatically.</p>
+                <input type="file" id="upload-file" class="hidden" accept=".xlsx" onchange="uploadSheet()">
+                <button onclick="document.getElementById('upload-file').click()"
+                    class="clay-btn w-full text-blue-600">Select File</button>
+                <p id="upload-status" class="text-xs font-bold text-gray-400 mt-4"></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- CODE -->
+    <script>
+        let currentSchoolId = null;
+
+        async function verifyCode(e) {
+            e.preventDefault();
+            const code = document.getElementById('access-code').value.trim();
+            const btn = e.target.querySelector('button');
+            const err = document.getElementById('login-error');
+
+            btn.innerText = "Verifying...";
+            err.classList.add('hidden');
+
+            try {
+                // Verify Code API (Reusing public endpoint pattern for simplicity, or we should create one)
+                // Since this is a specialized portal, we'll verify against a new endpoint or existing check
+                const res = await fetch(`/api/public/verify-code/${code}`);
+                const data = await res.json();
+
+                if (res.ok) {
+                    currentSchoolId = data.school_id; // API needs to return this
+                    sessionStorage.setItem('portal_school_id', currentSchoolId);
+                    sessionStorage.setItem('portal_school_name', data.school_name);
+                    showDashboard(data.school_name);
+                } else {
+                    throw new Error(data.error || "Invalid Access Code");
+                }
+            } catch (error) {
+                err.innerText = error.message;
+                err.classList.remove('hidden');
+            } finally {
+                btn.innerText = "Verify Access";
+            }
+        }
+
+        function showDashboard(name) {
+            document.getElementById('login-view').classList.add('hidden');
+            document.getElementById('dashboard-view').classList.remove('hidden');
+            document.getElementById('school-name-display').innerText = name;
+        }
+
+        function logout() {
+            sessionStorage.clear();
+            location.reload();
+        }
+
+        function downloadSheet() {
+            if (!currentSchoolId) return;
+            window.location.href = `/api/io/measurements/${currentSchoolId}`;
+        }
+
+        async function uploadSheet() {
+            const fileInput = document.getElementById('upload-file');
+            const status = document.getElementById('upload-status');
+
+            if (fileInput.files.length === 0) return;
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            formData.append('school_id', currentSchoolId); // Though controller might parse form file
+
+            status.innerText = "Uploading...";
+
+            try {
+                const res = await fetch('/api/io/measurements', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    alert('Success! ' + data.message);
+                    status.innerText = "Upload Complete";
+                } else {
+                    throw new Error(data.error || "Upload Failed");
+                }
+            } catch (e) {
+                alert(e.message);
+                status.innerText = "Error";
+            }
+
+            fileInput.value = ''; // Reset
+        }
+
+        // Auto-Login if session exists
+        const savedName = sessionStorage.getItem('portal_school_name');
+        const savedId = sessionStorage.getItem('portal_school_id');
+        if (savedName && savedId) {
+            currentSchoolId = savedId;
+            showDashboard(savedName);
+        }
+    </script>
+</body>
+
+</html>

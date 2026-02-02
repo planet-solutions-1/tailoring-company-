@@ -470,12 +470,16 @@ const authRoutes = require('./routes/auth_v2');
 const dataRoutes = require('./routes/data');
 const publicRoutes = require('./routes/public');
 const productionRoutes = require('./routes/rebuild_production');
+const reportRoutes = require('./routes/reports');
+const ioRoutes = require('./routes/import_export');
 
 console.log("Mounting /api/auth, /api/data, /api/public, and /api/production routes...");
 app.use('/api/auth', authRoutes);
 app.use('/api/data', dataRoutes);
 app.use('/api/public', publicRoutes);
 app.use('/api/production', productionRoutes);
+app.use('/api/reports', reportRoutes);
+app.use('/api/io', ioRoutes);
 // Admin & Backup Routes
 const adminRoutes = require('./routes/admin');
 app.use('/api/admin', adminRoutes);

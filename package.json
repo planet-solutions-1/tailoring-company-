@@ -19,7 +19,8 @@
         "multer": "^2.0.2",
         "mysql2": "^3.6.5",
         "sequelize": "^6.35.1",
-        "sqlite3": "^5.1.6"
+        "sqlite3": "^5.1.6",
+        "xlsx": "^0.18.5"
     },
     "engines": {
         "node": "18.x"
