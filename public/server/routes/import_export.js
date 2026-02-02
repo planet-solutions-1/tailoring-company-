@@ -88,6 +88,7 @@ router.get('/measurements/:school_id', async (req, res) => {
 // POST /api/io/measurements
 router.post('/measurements', upload.single('file'), async (req, res) => {
     try {
+        console.log("🚀 SMART IMPORT v2.1: Starting Process (Exclusion Checked)...");
         if (!req.file) return res.status(400).json({ error: "No file uploaded" });
 
         const wb = xlsx.read(req.file.buffer, { type: 'buffer' });
