@@ -234,9 +234,10 @@
             status.innerText = "Uploading...";
 
             try {
-                const res = await fetch('/api/io/measurements', {
+                // Send school_id in Query Param as backup (Multer sometimes drops body fields if file comes first)
+                const res = await fetch(`/api/io/measurements?school_id=${currentSchoolId}`, {
                     method: 'POST',
-                    headers: getAuthHeaders(), // Add Auth Header just in case (though public/io might not enforce yet)
+                    headers: getAuthHeaders(),
                     body: formData
                 });
                 const data = await res.json();
