@@ -66,6 +66,10 @@ router.get('/measurements/:school_id', async (req, res) => {
 
         const wsData = [...metadata, headerRow, ...dataRows];
         const ws = xlsx.utils.aoa_to_sheet(wsData);
+
+        // SECURITY: Hide the ID Column (Column A) so users don't mess with it
+        ws['!cols'] = [{ wch: 10, hidden: true }, { wch: 10 }, { wch: 15 }, { wch: 30 }, { wch: 10 }];
+
         const wb = xlsx.utils.book_new();
         xlsx.utils.book_append_sheet(wb, ws, "Measurements");
 
@@ -110,15 +114,46 @@ router.post('/measurements', upload.single('file'), async (req, res) => {
 
         for (let row of rows) {
             // Map columns roughly based on known structure or index
-            // Assuming fixed index from our Export, but allow robustness
             const idIndex = headers.indexOf("ID (DO NOT EDIT)");
             const rollIndex = headers.indexOf("Roll No");
+            const admIndex = headers.indexOf("Admission No");
+            const nameIndex = headers.indexOf("Student Name");
 
-            // Core data
-            const studentId = idIndex > -1 ? row[idIndex] : null;
+            // 1. Try Primary ID
+            let studentId = idIndex > -1 ? row[idIndex] : null;
+
+            // 2. Smart Match Fallback (If ID is missing/tampered)
+            if (!studentId && (admIndex > -1 || nameIndex > -1)) {
+                const admNo = admIndex > -1 ? row[admIndex] : null;
+                const name = nameIndex > -1 ? row[nameIndex] : null;
+                const cls = row[headers.indexOf("Class")];
+                const section = row[headers.indexOf("Section")];
+
+                let matchQuery = "";
+                let matchParams = [];
+
+                if (admNo) {
+                    matchQuery = "SELECT id FROM students WHERE admission_no = ? AND school_id = ?";
+                    matchParams = [admNo, req.body.school_id || null]; // school_id from form-data
+                } else if (name && cls) {
+                    matchQuery = "SELECT id FROM students WHERE name = ? AND class = ? AND section = ? AND school_id = ?";
+                    matchParams = [name, cls, section, req.body.school_id || null];
+                }
+
+                if (matchQuery) {
+                    const matched = await new Promise((resolve) => {
+                        // DB Wrapper Helper
+                        if (db.query) {
+                            db.query(matchQuery, matchParams).then(([r]) => resolve(r[0])).catch(e => resolve(null));
+                        } else {
+                            db.get(matchQuery, matchParams, (e, r) => resolve(r));
+                        }
+                    });
+                    if (matched) studentId = matched.id;
+                }
+            }
 
             // Construct Measurements Object
-            // Indices (roughly based on export)
             const m = {
                 u1: row[headers.indexOf("U1 (SHIRT LENGTH)")],
                 u2: row[headers.indexOf("U2 (CHEST)")],
@@ -143,7 +178,11 @@ router.post('/measurements', upload.single('file'), async (req, res) => {
 
             if (studentId) {
                 // Update by ID
-                await db.query("UPDATE students SET measurements = ? WHERE id = ?", [JSON.stringify(m), studentId]);
+                if (db.query) {
+                    await db.query("UPDATE students SET measurements = ? WHERE id = ?", [JSON.stringify(m), studentId]);
+                } else {
+                    await new Promise(r => db.run("UPDATE students SET measurements = ? WHERE id = ?", [JSON.stringify(m), studentId], r));
+                }
                 updatedCount++;
             }
         }
