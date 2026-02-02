@@ -174,6 +174,9 @@ router.post('/generate-code', (req, res) => {
         if (err || user.role !== 'company') return res.sendStatus(403);
 
         const { schoolId, type, durationHours } = req.body; // type: 'editor' | 'packing'
+        console.log(`[DEBUG] Generating Code for SchoolID: ${schoolId}, Type: ${type} by User: ${user.username}`);
+
+        if (!schoolId) return res.status(400).json({ error: "School ID is missing" });
 
         // Generate Code
         const code = Math.random().toString(36).substring(2, 8).toUpperCase(); // e.g., "X7Z9A2"
