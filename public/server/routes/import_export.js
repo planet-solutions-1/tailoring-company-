@@ -124,22 +124,32 @@ router.post('/measurements', upload.single('file'), async (req, res) => {
         const headers = data[headerIndex];
         const rows = data.slice(headerIndex + 1);
 
-        // Helper: Find Column Index by keywords (Case Insensitive, Partial Match)
-        const getColIndex = (keywords) => {
+        // Helper: Find Column Index by keywords (Case Insensitive, Partial Match) with Exclusions
+        const getColIndex = (keywords, excludeKeywords = []) => {
             if (!Array.isArray(keywords)) keywords = [keywords];
-            return headers.findIndex(h => h && keywords.some(k => h.toString().toLowerCase().includes(k.toLowerCase())));
+            if (!Array.isArray(excludeKeywords)) excludeKeywords = [excludeKeywords];
+
+            return headers.findIndex(h => {
+                if (!h) return false;
+                const hLower = h.toString().toLowerCase();
+                // 1. Check strict exclusions
+                if (excludeKeywords.some(ex => hLower.includes(ex.toLowerCase()))) return false;
+                // 2. Check matches
+                return keywords.some(k => hLower.includes(k.toLowerCase()));
+            });
         };
 
         let updatedCount = 0;
 
         for (let row of rows) {
             // Map columns dynamically using fuzzy search
-            const idIndex = getColIndex(["ID", "id ("]);
-            const rollIndex = getColIndex(["Roll No", "Roll", "roll"]);
+            const idIndex = getColIndex(["ID", "id ("], ["user", "school"]); // Exclude User ID
+            const rollIndex = getColIndex(["Roll No", "Roll", "roll"], ["enroll"]);
             const admIndex = getColIndex(["Admission No", "Admission", "adm"]);
-            const nameIndex = getColIndex(["Student Name", "Name", "Student", "name"]);
-            const classIndex = getColIndex(["Class", "Grade", "class"]);
-            const secIndex = getColIndex(["Section", "Sec", "sec"]);
+            // CRITICAL FIX: Exclude "Group" to prevent "Group Name" being picked as Name
+            const nameIndex = getColIndex(["Student Name", "Name", "Student", "name"], ["Group", "School", "Father", "Mother", "Class", "Section"]);
+            const classIndex = getColIndex(["Class", "Grade", "class"], ["Classic"]);
+            const secIndex = getColIndex(["Section", "Sec", "sec"], ["Sector"]);
             const genIndex = getColIndex(["Gender", "Sex", "gender"]);
 
             // 1. Try Primary ID
