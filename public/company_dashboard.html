@@ -8659,6 +8659,89 @@
 </script>
 <!-- AI Self-Healing Brain -->
 <script src="js/healer.js"></script>
+
+<!-- CORE LOGIC FIX: Access Code Generation -->
+<script>
+    // Implemented to fix "Invalid School ID" and missing function error
+    const API_BASE_AUTH = '/api'; // Ensure accessible scope or use existing API_BASE
+
+    async function generateCode() {
+        // IDs verified in previous steps
+        const schoolSelect = document.getElementById('access-school-select');
+        const typeSelect = document.getElementById('access-type');
+        const expirySelect = document.getElementById('access-expiry');
+
+        // Defensive check for elements
+        if (!schoolSelect || !typeSelect) return alert("System Error: UI Elements missing (School/Type Select). Refresh page.");
+
+        const schoolId = schoolSelect.value;
+        const type = typeSelect.value;
+        const duration = expirySelect ? expirySelect.value : 24;
+
+        if (!schoolId || schoolId === 'All' || schoolId === '') return alert("Please select a valid target school first.");
+
+        const btn = document.querySelector('button[onclick="generateCode()"]');
+        let originalText = "GENERATE";
+        if (btn) {
+            originalText = btn.innerText;
+            btn.innerText = "Generating...";
+            btn.disabled = true;
+        }
+
+        try {
+            // Using API_BASE from global scope usually, referencing '/api' directly to be safe if variable missing
+            const res = await fetch(`${API_BASE}/auth/generate-code`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                // Backend expects 'durationHours'
+                body: JSON.stringify({ schoolId, type, durationHours: parseInt(duration) })
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                if (window.showToast) showToast("Access Link Generated!", "success");
+                else alert("Access Link Generated!");
+
+                // Add to table safely (Client-Side Update)
+                const tbody = document.getElementById('access-code-list');
+                if (tbody) {
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-gray-50 transition-colors animate-fade-in border-b border-gray-50";
+                    const schoolName = schoolSelect.options[schoolSelect.selectedIndex].text;
+                    const dateExp = new Date(data.expiresAt || Date.now() + duration * 3600000).toLocaleString();
+
+                    tr.innerHTML = `
+                            <td class="py-3 px-2 text-gray-700 font-bold text-xs">${schoolName}</td>
+                            <td class="py-3 px-2"><span class="font-mono bg-blue-50 text-blue-600 px-2 py-1 rounded border border-blue-100 font-bold select-all text-xs">${data.code}</span></td>
+                            <td class="py-3 px-2 uppercase text-[10px] font-bold text-gray-500">${data.type}</td>
+                            <td class="py-3 px-2 text-center"><span class="bg-emerald-100 text-emerald-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase">Active</span></td>
+                            <td class="py-3 px-2 text-right">
+                                <span class="text-[9px] text-gray-400 block mb-1">Expires: ${dateExp}</span>
+                            </td>
+                        `;
+                    // Insert at top
+                    tbody.insertBefore(tr, tbody.firstChild);
+                }
+            } else {
+                throw new Error(data.error || "Generation Failed");
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Error: " + e.message);
+        } finally {
+            if (btn) {
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }
+        }
+    }
+
+    // Placeholder for list fetching
+    function fetchAccessCodes() {
+        console.warn("Listing historic codes not supported by current API.");
+    }
+</script>
 </body>
 
 </html>
