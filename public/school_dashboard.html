@@ -1327,6 +1327,56 @@
 
     </template>
 
+    <template id="view-settings">
+        <div class="max-w-4xl mx-auto space-y-8">
+            <h2 class="font-brand text-3xl font-bold text-slate-800">Settings</h2>
+
+            <!-- General Settings -->
+            <div class="clay-card p-8 bg-white">
+                <h3 class="font-brand text-xl font-bold text-slate-700 mb-4">General Configuration</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">School
+                            Name</label>
+                        <p class="text-lg font-bold text-slate-700" id="settingsSchoolName">Loading...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Danger Zone -->
+            <div class="clay-card p-8 bg-rose-50 border border-rose-100">
+                <div class="flex items-start gap-4">
+                    <div class="p-3 bg-rose-100 rounded-xl text-rose-500">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path
+                                d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z">
+                            </path>
+                            <line x1="12" y1="9" x2="12" y2="13"></line>
+                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                        </svg>
+                    </div>
+                    <div class="flex-1">
+                        <h3 class="font-brand text-xl font-bold text-rose-700 mb-1">Danger Zone</h3>
+                        <p class="text-sm text-rose-600 mb-6 font-medium">Irreversible actions. Please be careful.</p>
+
+                        <div
+                            class="flex items-center justify-between bg-white p-4 rounded-xl border border-rose-100 shadow-sm">
+                            <div>
+                                <h4 class="font-bold text-slate-700">Reset School Data</h4>
+                                <p class="text-xs text-slate-400">Permanently delete ALL students and measurements.</p>
+                            </div>
+                            <button onclick="resetSchoolData()"
+                                class="px-4 py-2 bg-rose-500 hover:bg-rose-600 text-white font-bold rounded-lg shadow-lg shadow-rose-200 transition-all active:scale-95">
+                                Reset Data
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
     <script>
         // === DATA STORE ===
         let allStudents = [];
@@ -3627,6 +3677,47 @@
         class="px-4 py-2 bg-white border border-rose-200 rounded-full text-xs font-bold hover:bg-rose-100 transition-colors">Retry</button>
 </div>
 `;
+            }
+        }
+
+        // === SETTINGS LOGIC ===
+        function renderSettings() {
+            // Update School Name in Settings
+            const name = sessionStorage.getItem('schoolName') || 'Loading...';
+            const el = document.getElementById('settingsSchoolName');
+            if (el) el.innerText = name;
+        }
+
+        async function resetSchoolData() {
+            if (!confirm("⚠️ DANGER: Are you sure you want to delete ALL students and measurements? This cannot be undone.")) return;
+            if (!confirm("re you really sure? This will wipe the database for this school.")) return;
+
+            const btn = event.target;
+            const originalText = btn.innerText;
+            btn.innerText = "Deleting...";
+            btn.disabled = true;
+
+            try {
+                const res = await fetch(`/api/io/reset-school-data?school_id=${schoolId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || "Reset failed");
+
+                alert("Success: " + data.message);
+
+                // Clear Local State
+                allStudents = [];
+                renderStudents(); // Update UI
+                window.location.reload(); // Fresh start
+
+            } catch (err) {
+                console.error("Reset Error", err);
+                alert("Failed to reset data: " + err.message);
+                btn.innerText = originalText;
+                btn.disabled = false;
             }
         }
 

@@ -88,36 +88,38 @@ router.get('/measurements/:school_id', async (req, res) => {
 // POST /api/io/measurements
 router.post('/measurements', upload.single('file'), async (req, res) => {
     try {
-        console.log("🚀 SMART IMPORT v2.1: Starting Process (Exclusion Checked)...");
+        console.log("🚀 SMART IMPORT v2.2: Starting 'Bulletproof' Process...");
         if (!req.file) return res.status(400).json({ error: "No file uploaded" });
 
         const wb = xlsx.read(req.file.buffer, { type: 'buffer' });
-        const sheet = wb.Sheets[wb.SheetNames[0]];
-        const data = xlsx.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+        const sheetName = wb.SheetNames[0];
+        const sheet = wb.Sheets[sheetName];
+        let data = xlsx.utils.sheet_to_json(sheet, { header: 1 });
 
-        // Find Header Row (Score-based)
+        // SCORE-BASED HEADER DETECTION
         let headerIndex = -1;
         let maxScore = 0;
+        const searchTerms = ['name', 'class', 'roll', 'admission', 'student'];
 
-        // Keywords to look for in a header row
-        const keywords = ["name", "student", "roll", "admission", "class", "section", "gender", "id", "u1", "l1"];
-
-        for (let i = 0; i < Math.min(data.length, 20); i++) {
-            const row = data[i];
+        // Scan first 20 rows
+        for (let i = 0; i < Math.min(20, data.length); i++) {
+            const rowStr = (data[i] || []).map(c => String(c).toLowerCase()).join(' ');
             let score = 0;
-            // Convert row to a single low-case string for checking
-            const rowStr = row.map(c => c ? c.toString().toLowerCase() : "").join(" ");
-
-            keywords.forEach(k => {
-                if (rowStr.includes(k)) score++;
+            searchTerms.forEach(term => {
+                if (rowStr.includes(term)) score += 2; // Strong match
             });
+            // Penalty for "Group Name" being present (it's a summary row usually)
+            if (rowStr.includes('group name')) score -= 5;
 
-            // If we find at least 2 keywords, it's a candidate. Pick the one with most matches.
-            // Prioritize rows that have 'name'
-            if (score > maxScore && score >= 2) {
+            if (score > maxScore) {
                 maxScore = score;
                 headerIndex = i;
             }
+        }
+
+        if (headerIndex === -1 && data.length > 0) {
+            // Fallback to row 0
+            headerIndex = 0;
         }
 
         if (headerIndex === -1) return res.status(400).json({ error: "Invalid File Format: Could not detect header row (Missing Name/Class/Roll columns)." });
@@ -130,66 +132,81 @@ router.post('/measurements', upload.single('file'), async (req, res) => {
             if (!Array.isArray(keywords)) keywords = [keywords];
             if (!Array.isArray(excludeKeywords)) excludeKeywords = [excludeKeywords];
 
+            // Critical Exclusions for Name Column - GLOBAL BLOCKLIST
+            const GLOBAL_EXCLUDES = ['Group', 'Item', 'Product', 'Pattern', 'Description', 'Particulars', 'Rate', 'Amount'];
+
             return headers.findIndex(h => {
                 if (!h) return false;
                 const hLower = h.toString().toLowerCase();
-                // 1. Check strict exclusions
-                if (excludeKeywords.some(ex => hLower.includes(ex.toLowerCase()))) return false;
+
+                // 1. Check strict exclusions (Passed + Global)
+                if ([...excludeKeywords, ...GLOBAL_EXCLUDES].some(ex => hLower.includes(ex.toLowerCase()))) return false;
+
                 // 2. Check matches
                 return keywords.some(k => hLower.includes(k.toLowerCase()));
             });
         };
 
+        // IDENTIFY COLUMNS
+        const idIdx = getColIndex(["ID", "id (", "System ID"], ["user", "school"]);
+        const rollIdx = getColIndex(['Roll', 'Id', 'Seq'], ["enroll"]);
+        const admIdx = getColIndex(['Adm', 'Reg', 'Enrol']);
+        // Crucial: Exclude everything that sounds like a parent or metadata
+        const nameIdx = getColIndex(['Name', 'Student', 'Candidate'], ['Father', 'Mother', 'Group', 'School', 'Class', 'Section', 'Guardian']);
+        const classIdx = getColIndex(['Class', 'Standard', 'Grade'], ["Classic"]);
+        const secIdx = getColIndex(["Section", "Sec", 'Batch'], ["Sector"]);
+        const genIdx = getColIndex(['Gender', 'Sex']);
+
+        if (nameIdx === -1) {
+            console.log("❌ REJECTED: Could not find valid 'Student Name' column.");
+            return res.status(400).json({ error: "Invalid File: Could not find a valid 'Student Name' column. Please rename your header to 'Student Name'." });
+        }
+
         let updatedCount = 0;
+        let skippedCount = 0;
+        let createdCount = 0;
 
-        for (let row of rows) {
-            // Map columns dynamically using fuzzy search
-            const idIndex = getColIndex(["ID", "id ("], ["user", "school"]); // Exclude User ID
-            const rollIndex = getColIndex(["Roll No", "Roll", "roll"], ["enroll"]);
-            const admIndex = getColIndex(["Admission No", "Admission", "adm"]);
-            // CRITICAL FIX: Exclude "Group" to prevent "Group Name" being picked as Name
-            const nameIndex = getColIndex(["Student Name", "Name", "Student", "name"], ["Group", "School", "Father", "Mother", "Class", "Section"]);
-            const classIndex = getColIndex(["Class", "Grade", "class"], ["Classic"]);
-            const secIndex = getColIndex(["Section", "Sec", "sec"], ["Sector"]);
-            const genIndex = getColIndex(["Gender", "Sex", "gender"]);
+        for (const row of rows) {
+            if (!row || row.length === 0) continue;
 
-            // 1. Try Primary ID
-            let studentId = idIndex > -1 ? row[idIndex] : null;
+            const rawName = row[nameIdx];
+            if (!rawName) continue;
 
-            // 2. Smart Match Fallback (If ID is missing/tampered)
-            if (!studentId && (admIndex > -1 || nameIndex > -1)) {
-                const admNo = admIndex > -1 ? row[admIndex] : null;
-                const name = nameIndex > -1 ? row[nameIndex] : null;
-                const cls = classIndex > -1 ? row[classIndex] : null;
-                const section = secIndex > -1 ? row[secIndex] : null;
+            // --- BULLETPROOF CONTENT VALIDATION ---
+            const nameStr = String(rawName).trim();
+            const lowerName = nameStr.toLowerCase();
 
-                let matchQuery = "";
-                let matchParams = [];
-
-                if (admNo) {
-                    matchQuery = "SELECT id FROM students WHERE admission_no = ? AND school_id = ?";
-                    matchParams = [admNo, req.body.school_id || null];
-                } else if (name && cls) {
-                    matchQuery = "SELECT id FROM students WHERE name = ? AND class = ? AND section = ? AND school_id = ?";
-                    matchParams = [name, cls, section || '', req.body.school_id || null];
-                }
-
-                if (matchQuery) {
-                    const matched = await new Promise((resolve) => {
-                        if (db.query) {
-                            db.query(matchQuery, matchParams).then(([r]) => resolve(r[0])).catch(e => resolve(null));
-                        } else {
-                            db.get(matchQuery, matchParams, (e, r) => resolve(r));
-                        }
-                    });
-                    if (matched) studentId = matched.id;
-                }
+            // 1. BAD KEYWORDS (Product/Header detection)
+            const BAD_CONTENT = ['|', 'shirt', 'pant', 'trouser', 'frock', 'skirt', 'boys', 'girls', 'item', 'size', 'total', 'amount', 'qty', 'rate', 'mrp'];
+            if (BAD_CONTENT.some(bad => lowerName.includes(bad))) {
+                // console.log(`⚠️ Skipped Garbage Row: "${nameStr}" (Detected as Product data)`);
+                skippedCount++;
+                continue;
             }
 
-            // Construct Measurements Object (Using fuzzy headers)
+            // 2. TOO SHORT / NUMERIC (e.g. "12", "A")
+            if (nameStr.length < 2 || !isNaN(nameStr)) {
+                skippedCount++;
+                continue;
+            }
+
+            // --- EXTRACT DATA ---
+            const studentId = idIdx > -1 ? row[idIdx] : null;
+            let cls = classIdx !== -1 ? (row[classIdx] || 'N/A') : 'N/A';
+            const section = secIdx > -1 ? (row[secIdx] || '') : '';
+            const rollNo = rollIdx > -1 ? (row[rollIdx] || '') : '';
+            const admNo = admIdx > -1 ? (row[admIdx] || `AUTO-${Date.now()}-${Math.floor(Math.random() * 99999)}`) : `AUTO-${Date.now()}-${Math.floor(Math.random() * 99999)}`;
+            const gender = genIdx > -1 ? (row[genIdx] || 'Unspecified') : 'Unspecified';
+
+            // Correct Class (Handle common issues like user typing "Class 10" in the name column?? No, we trust our column logic now)
+            // Just ensure it's a string
+            cls = String(cls).trim();
+
+            // MEASUREMENTS (Fuzzy Match Headers)
             const getM = (keys) => {
                 const idx = getColIndex(keys);
-                return idx > -1 ? row[idx] : undefined;
+                const val = idx > -1 ? row[idx] : undefined;
+                return (val !== undefined && val !== null) ? String(val).trim() : undefined;
             }
 
             const m = {
@@ -210,59 +227,42 @@ router.post('/measurements', upload.single('file'), async (req, res) => {
                 l7: getM(["L7", "Thigh"]),
                 l8: getM(["L8", "Extra"])
             };
-
-            // Remove empty/undefined
+            // Clean empty
             Object.keys(m).forEach(key => (m[key] === undefined || m[key] === "") && delete m[key]);
 
-            // 3. AUTO-CREATE STUDENT IF MISSING (Bulk Upload Helper)
-            if (!studentId && nameIndex > -1 && row[nameIndex]) {
-                const name = row[nameIndex];
-                const cls = classIndex > -1 ? row[classIndex] : "";
-                const section = secIndex > -1 ? row[secIndex] : "";
-                const gender = genIndex > -1 ? row[genIndex] : "Unspecified";
-                const rollNo = rollIndex > -1 ? row[rollIndex] : "";
-                const admNo = admIndex > -1 ? row[admIndex] : `AUTO-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-                const schoolId = req.body.school_id; // Mandatory
+            const schoolId = req.query.school_id || req.body.school_id;
 
-                if (schoolId) {
-                    try {
-                        const insertSql = "INSERT INTO students (school_id, name, class, section, roll_no, admission_no, gender, is_active, measurements) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)";
-                        const params = [schoolId, name, cls, section, rollNo, admNo, gender, JSON.stringify(m)];
-
-                        if (db.query) {
-                            const [res] = await db.query(insertSql, params);
-                            studentId = res.insertId;
-                        } else {
-                            await new Promise((resolve, reject) => {
-                                db.run(insertSql, params, function (err) {
-                                    if (err) reject(err);
-                                    else {
-                                        studentId = this.lastID;
-                                        resolve();
-                                    }
-                                });
-                            });
-                        }
-                        updatedCount++;
-                        continue; // Already saved measurements in INSERT, skip update
-                    } catch (e) {
-                        console.error("Auto-Create Failed for:", name, e.message);
-                    }
-                }
-            }
+            // --- DB OPERATION ---
 
             if (studentId) {
-                // Update by ID
+                // UPDATE
+                const sql = "UPDATE students SET measurements = ?, name = ?, class = ?, section = ?, gender = ? WHERE id = ? AND school_id = ?";
                 if (db.query) {
-                    await db.query("UPDATE students SET measurements = ? WHERE id = ?", [JSON.stringify(m), studentId]);
+                    await db.query(sql, [JSON.stringify(m), nameStr, cls, section, gender, studentId, schoolId]);
                 } else {
-                    await new Promise(r => db.run("UPDATE students SET measurements = ? WHERE id = ?", [JSON.stringify(m), studentId], r));
+                    await new Promise(r => db.run(sql, [JSON.stringify(m), nameStr, cls, section, gender, studentId, schoolId], r));
                 }
                 updatedCount++;
+            } else {
+                // INSERT (Auto-Create)
+                if (schoolId) {
+                    const insertSql = "INSERT INTO students (school_id, name, class, section, roll_no, admission_no, gender, is_active, measurements) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?)";
+                    const params = [schoolId, nameStr, cls, section, rollNo, admNo, gender, JSON.stringify(m)];
+
+                    if (db.query) {
+                        await db.query(insertSql, params);
+                    } else {
+                        await new Promise((resolve, reject) => {
+                            db.run(insertSql, params, (err) => err ? reject(err) : resolve());
+                        });
+                    }
+                    createdCount++;
+                }
             }
         }
 
-        res.json({ message: `Successfully updated ${updatedCount} student records.` });
+        console.log(`✅ Import Summary: ${updatedCount} Updated, ${createdCount} Created, ${skippedCount} Skipped (Garbage).`);
+        res.json({ message: `Success! ${createdCount} new students added, ${updatedCount} updated. (Skipped ${skippedCount} invalid rows)` });
 
     } catch (e) {
         console.error("Import Error:", e);
@@ -389,6 +389,40 @@ router.post('/production-plan', upload.single('file'), async (req, res) => {
 
     } catch (e) {
         console.error("Plan Import Error:", e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+router.get('/export-master-plan', async (req, res) => {
+    // ... (existing code for this not shown, essentially keeping end of file)
+});
+
+// === DATA RESET ===
+// DELETE /api/io/reset-school-data
+router.delete('/reset-school-data', async (req, res) => {
+    const { school_id } = req.query; // Or body
+    if (!school_id) return res.status(400).json({ error: "School ID is required." });
+
+    try {
+        console.log(`⚠️ RESET REQUEST: Clearing data for School ID ${school_id}`);
+
+        let deleted = 0;
+        if (db.query) {
+            const [result] = await db.query("DELETE FROM students WHERE school_id = ?", [school_id]);
+            deleted = result.affectedRows;
+        } else {
+            // SQLite
+            deleted = await new Promise((resolve, reject) => {
+                db.run("DELETE FROM students WHERE school_id = ?", [school_id], function (err) {
+                    if (err) reject(err);
+                    else resolve(this.changes);
+                });
+            });
+        }
+
+        res.json({ message: `Successfully deleted ${deleted} student records.` });
+    } catch (e) {
+        console.error("Reset Error:", e);
         res.status(500).json({ error: e.message });
     }
 });
