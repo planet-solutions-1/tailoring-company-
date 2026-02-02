@@ -185,7 +185,7 @@ router.post('/generate-code', (req, res) => {
         const expiresAt = new Date(Date.now() + (durationHours || 4) * 60 * 60 * 1000); // Default 4 hours
 
         db.run("INSERT INTO access_codes (school_id, code, type, expires_at, created_by) VALUES (?, ?, ?, ?, ?)",
-            [schoolId, code, type, expiresAt.toISOString(), user.id],
+            [schoolId, code, type, expiresAt.toISOString().slice(0, 19).replace('T', ' '), user.id],
             function (err) {
                 if (err) return res.status(500).json({ error: err.message });
                 res.json({ code, expiresAt, schoolId, type });
