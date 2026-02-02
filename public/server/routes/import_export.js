@@ -152,15 +152,19 @@ router.post('/measurements', upload.single('file'), async (req, res) => {
         const rollIdx = getColIndex(['Roll', 'Id', 'Seq'], ["enroll"]);
         const admIdx = getColIndex(['Adm', 'Reg', 'Enrol']);
         // Crucial: Exclude everything that sounds like a parent or metadata
-        const nameIdx = getColIndex(['Name', 'Student', 'Candidate'], ['Father', 'Mother', 'Group', 'School', 'Class', 'Section', 'Guardian']);
+        // Crucial: Exclude everything that sounds like a parent or metadata or ID
+        const nameIdx = getColIndex(['Name', 'Student', 'Candidate'], ['Father', 'Mother', 'Group', 'School', 'Class', 'Section', 'Guardian', 'ID', 'No', 'Number', 'Code', 'Reg', 'Roll']);
         const classIdx = getColIndex(['Class', 'Standard', 'Grade'], ["Classic"]);
         const secIdx = getColIndex(["Section", "Sec", 'Batch'], ["Sector"]);
         const genIdx = getColIndex(['Gender', 'Sex']);
 
         if (nameIdx === -1) {
             console.log("❌ REJECTED: Could not find valid 'Student Name' column.");
-            return res.status(400).json({ error: "Invalid File: Could not find a valid 'Student Name' column. Please rename your header to 'Student Name'." });
+            return res.status(400).json({ error: `Invalid File: Could not find a valid 'Student Name' column. (Detected Headers: ${headers.join(', ')})` });
         }
+
+        // DEBUG: Track what we found
+        const detectedNameHeader = headers[nameIdx];
 
         let updatedCount = 0;
         let skippedCount = 0;
@@ -270,7 +274,8 @@ router.post('/measurements', upload.single('file'), async (req, res) => {
             message: `Success! ${createdCount} new students added, ${updatedCount} updated.`,
             debug: {
                 skippedCount,
-                firstSkippedReasons: debugSkipped
+                firstSkippedReasons: debugSkipped,
+                detectedNameColumn: detectedNameHeader
             }
         });
 
