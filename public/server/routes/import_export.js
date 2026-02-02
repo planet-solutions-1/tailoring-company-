@@ -151,9 +151,9 @@ router.post('/measurements', upload.single('file'), async (req, res) => {
         const idIdx = getColIndex(["ID", "id (", "System ID"], ["user", "school"]);
         const rollIdx = getColIndex(['Roll', 'Id', 'Seq'], ["enroll"]);
         const admIdx = getColIndex(['Adm', 'Reg', 'Enrol']);
-        // Crucial: Exclude everything that sounds like a parent or metadata
         // Crucial: Exclude everything that sounds like a parent or metadata or ID
-        const nameIdx = getColIndex(['Name', 'Student', 'Candidate'], ['Father', 'Mother', 'Group', 'School', 'Class', 'Section', 'Guardian', 'ID', 'No', 'Number', 'Code', 'Reg', 'Roll']);
+        // NOTE: Do NOT use short keys like 'ID' or 'No' as they match 'Candidate' (id) or 'Notes' (no). Use specific compounds.
+        const nameIdx = getColIndex(['Name', 'Student', 'Candidate'], ['Father', 'Mother', 'Group', 'School', 'Class', 'Section', 'Guardian', 'Student ID', 'Student No', 'Candidate ID', 'Number', 'Code', 'Reg', 'Roll']);
         const classIdx = getColIndex(['Class', 'Standard', 'Grade'], ["Classic"]);
         const secIdx = getColIndex(["Section", "Sec", 'Batch'], ["Sector"]);
         const genIdx = getColIndex(['Gender', 'Sex']);
